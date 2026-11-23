@@ -469,7 +469,7 @@ svg.ico.sm{width:18px;height:18px}
 
       <span class="pill"><svg class="ico sm"><use href="#i-coin"/></svg><span id="coinN">0</span></span>
     </div>
-    <div class="bar" id="fortBar"><i id="fortFill"></i><span id="fortTxt">Bone King</span></div>
+    <div class="bar" id="fortBar"><i id="fortFill"></i><span id="fortTxt">Bone Castle</span></div>
     <span class="pill" id="parPill"><b>★</b><span id="parTxt">0:30</span></span>
     <div class="badge" id="fortBadge"><svg viewBox="0 0 48 52"><use href="#i-king"/></svg></div>
     <div class="bar" id="nestBar"><i id="nestFill"></i><span id="nestTxt">Your Camp</span></div>
@@ -5999,7 +5999,7 @@ function render() {
   const wlBar = WL.alive && WL.state !== 'enter'; // while a warlord fights, the top bar is his
   if (_hud.wlBar !== wlBar) { _hud.wlBar = wlBar; $('fortBar').classList.toggle('wl', wlBar); }
   if (wlBar) { setCss('fortFill', 'transform', `scaleX(${clamp(WL.hp / WL.max, 0, 1).toFixed(3)})`); setHud('fortTxt', wlName() + ' · ' + Math.max(0, Math.ceil(WL.hp))); }
-  else { setCss('fortFill', 'transform', `scaleX(${fp.toFixed(3)})`); setHud('fortTxt', 'Bone King · ' + Math.max(0, Math.ceil(G.fortHp))); }
+  else { setCss('fortFill', 'transform', `scaleX(${fp.toFixed(3)})`); setHud('fortTxt', 'Bone Castle · ' + Math.max(0, Math.ceil(G.fortHp))); }
   setCss('nestFill', 'transform', `scaleX(${np.toFixed(3)})`); setHud('nestTxt', 'Your Camp · ' + Math.max(0, Math.ceil(G.nestHp)));
   const gc = sendCharge(), pct = Math.round(100 * G.charge / gc);
   const gEl = $('giant'); if (_hud.gp !== pct) { _hud.gp = pct; gEl.style.setProperty('--p', pct); } gEl.classList.toggle('ready', pct >= 100 && G.mode === 'play'); { const ch = !palReady(); if (_hud.ch !== ch) { _hud.ch = ch; gEl.classList.toggle('champ', ch); for (const u of gEl.querySelectorAll('.hu')) u.setAttribute('href', ch ? '#i-champ' : '#i-horse'); gEl.setAttribute('aria-label', ch ? 'Send the Champion' : 'Send the Paladin'); } }
@@ -6487,7 +6487,7 @@ window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') 
 async function perfTest() {
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 8px);z-index:99;padding:10px 12px;border-radius:12px;background:rgba(8,12,30,.9);color:#fff;font:600 13px/1.45 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), rows = [];
-  box.textContent = 'Speed test v131: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
+  box.textContent = 'Speed test v132: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); box.textContent = 'Loading...'; G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 19; const on0 = MUS.on;
   save.up = { ...save.up, rate: 10, twin: 4, arsenal: 5 }; await Promise.race([loadLm('ember'), wait(8000)]); await wait(800);
   const pr = k => { pixelRatio = k; renderer.setPixelRatio(k); resize(); };
@@ -6508,7 +6508,7 @@ async function perfTest() {
   G.nestHp = G.nestMax = 30;
   await run('castle blows up', 4500, () => { G.fortMax = 100; G.fortHp = 0; });
   await wait(1500); save.level = 6; await run('new world', 5000, () => { $('result').classList.remove('on'); startPlay(); });
-  box.textContent = 'Speed test v131: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
+  box.textContent = 'Speed test v132: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
 }
 let last = performance.now();
 // keeps the frame rate smooth: renders at fewer pixels when a phone struggles, and at more (up to the screen's own sharpness) when it has headroom
