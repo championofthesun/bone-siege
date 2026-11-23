@@ -877,7 +877,7 @@ function painted(mat, amt = 1, scale = 1.5) {
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vPaint;').replace('#include <color_fragment>', `#include <color_fragment>
       diffuseColor.rgb *= vPaint;`);
   };
-  mat.customProgramCacheKey = () => 'painted' + amt + '_' + scale;
+  mat.customProgramCacheKey = () => 'painted' + amt + '_' + scale; mat.userData.painted = [amt, scale];
   return mat;
 }
 const softMat = (o = {}) => painted(std('#ffffff', .85, { vertexColors: true, ...o }));
@@ -1004,6 +1004,7 @@ function prepMat(mat, o) {
           diffuseColor.rgb = mix(diffuseColor.rgb, roofTint * lum * 2.4, bl); }`);
     }
   };
+  m.userData.kk = { tint: tint ? tint.toArray() : null, lk: tint ? +lk : 0, roof: roof ? roof.toArray() : null, snow: snow || 0, wind: wind === undefined ? null : wind };
   m.customProgramCacheKey = () => 'kk' + (tint ? lk : 0) + (roof ? 'r' : '') + (snow ? 's' + snow : '') + '_' + (wind === undefined ? 'n' : wind);
   return m;
 }
@@ -2219,6 +2220,133 @@ function noFarShadows(root) {
     if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere(); sp.copy(o.geometry.boundingSphere).applyMatrix4(o.matrixWorld);
     if (Math.abs(sp.center.x) - sp.radius > 30 || sp.center.z + sp.radius < -106) o.castShadow = false; });
 }
+/* ---- fewer draws ----
+   On an iPhone every draw is expensive (each one crosses into Safari's graphics process), and a battle took over 400. Three
+   helpers bring that down: bakeScenery joins the placed props (trees, rocks, houses...) into a few big meshes by area, fuse joins
+   the fixed pieces of one building, and the glow batch draws every soft light at once. */
+const SCN_MATS = { vs: `attribute vec4 aLeaf; attribute vec3 aRoof; attribute vec3 aFx; attribute vec3 aTint; uniform float uWind; varying vec3 vTint; varying vec4 vLeaf; varying vec3 vRoof; varying vec2 vSnow;\n`,
+  fs: 'varying vec3 vTint; varying vec4 vLeaf; varying vec3 vRoof; varying vec2 vSnow;\n' };
+function sceneryShader(m) { // prepMat's leaf, roof, snow and wind, with the settings carried by each vertex instead of each material
+  m.onBeforeCompile = sh => {
+    sh.uniforms.uWind = WIND;
+    sh.vertexShader = SCN_MATS.vs + sh.vertexShader.replace('#include <beginnormal_vertex>', `#include <beginnormal_vertex>
+      vTint = aTint; vLeaf = aLeaf; vRoof = aRoof; vSnow = vec2(aFx.z, normalize(objectNormal).y);`).replace('#include <begin_vertex>', `#include <begin_vertex>
+      transformed.x += sin(uWind * 1.6 + aFx.y) * .045 * aFx.x; transformed.z += cos(uWind * 1.25 + aFx.y) * .03 * aFx.x;`);
+    sh.fragmentShader = SCN_MATS.fs + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+      diffuseColor.rgb *= vTint;
+      if (vRoof.x > -.5) { float bl = clamp((diffuseColor.b - max(diffuseColor.r, diffuseColor.g)) * 5.0, 0.0, 1.0);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vRoof * dot(diffuseColor.rgb, vec3(.3, .59, .11)) * 2.4, bl); }
+      if (vLeaf.w > .5) { float gn = clamp((diffuseColor.g - max(diffuseColor.r, diffuseColor.b)) * vLeaf.w, 0.0, 1.0);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vLeaf.rgb * dot(diffuseColor.rgb, vec3(.3, .59, .11)) * 2.6, gn); }
+      if (vSnow.x > .01) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.9, .94, 1.0), smoothstep(.5 - .3 * vSnow.x, .95 - .3 * vSnow.x, vSnow.y) * .92);`);
+  };
+  m.customProgramCacheKey = () => 'scenery';
+}
+const FAR_CAST = []; // casters whose shadows fall outside what a battle shows: left out of the shadow redraw while you fight
+function bakeScenery(root) {
+  FAR_CAST.length = 0;
+  if (/[?&]nobake/.test(location.search)) return;
+  const DEF = THREE.Material.prototype.onBeforeCompile, cells = new Map(), mats = new Map(), mi = new THREE.Matrix4(), nm = new THREE.Matrix3(), v = new THREE.Vector3(), c = new THREE.Color(), gone = [];
+  for (const im of root.children) {
+    if (!im.isInstancedMesh || im.userData.dyn || !im.visible || Array.isArray(im.material)) continue;
+    const m = im.material, g = im.geometry, kk = m.userData.kk, pt = m.userData.painted, A = g.attributes;
+    if (m.transparent || m.alphaTest || m.emissiveMap || m.alphaMap || !(m.isMeshStandardMaterial || m.isMeshLambertMaterial)) continue;
+    if (m.onBeforeCompile !== DEF && !kk && !pt) continue;
+    if (!A.position || !A.normal || (m.map && !A.uv) || (kk && pt)) continue;
+    const mapped = !!m.map, cast = im.castShadow && !/^Grass/.test(im.name);
+    const key = [m.type, mapped ? m.map.uuid : '', m.normalMap ? m.normalMap.uuid : '', m.roughness, m.metalness, m.flatShading ? 1 : 0, m.side, m.emissive ? m.emissive.getHexString() + (m.emissiveIntensity || 0) : '', pt ? pt.join('_') : '', m.fog ? 1 : 0, cast ? 1 : 0, im.receiveShadow ? 1 : 0, mapped && (kk || m.isMeshStandardMaterial) ? 'k' : ''].join('|');
+    gone.push(im);
+    for (let i = 0; i < im.count; i++) {
+      im.getMatrixAt(i, mi); const e = mi.elements; if (!(Math.abs(mi.determinant()) > 1e-9)) continue; // (cleared to make room for a landmark)
+      const z = e[14], cell = key + '#' + (z > -14 ? 0 : z > -31 ? 1 : z > -50 ? 2 : 3) + (cast && (Math.abs(e[12]) > 17 || z < -43) ? 'f' : '');
+      let b = cells.get(cell); if (!b) { b = { key, far: /f$/.test(cell), m, im, cast, mapped, kk: mapped && (kk || m.isMeshStandardMaterial), pt, list: [], nv: 0, ni: 0 }; cells.set(cell, b); }
+      b.list.push([im, i]); b.nv += A.position.count; b.ni += g.index ? g.index.count : A.position.count;
+    }
+  }
+  for (const b of cells.values()) {
+    const pos = new Float32Array(b.nv * 3), nor = new Float32Array(b.nv * 3), col = new Float32Array(b.nv * 3), uv = b.mapped ? new Float32Array(b.nv * 2) : null, idx = b.nv > 65535 ? new Uint32Array(b.ni) : new Uint16Array(b.ni);
+    const leaf = b.kk ? new Float32Array(b.nv * 4) : null, roof = b.kk ? new Float32Array(b.nv * 3) : null, fx = b.kk ? new Float32Array(b.nv * 3) : null, tnt = b.kk ? new Float32Array(b.nv * 3) : null;
+    let vo = 0, io = 0;
+    for (const [im, i] of b.list) {
+      const m = im.material, g = im.geometry, P = g.attributes.position, N = g.attributes.normal, U = g.attributes.uv, Cc = m.vertexColors && g.attributes.color, kk = m.userData.kk;
+      im.getMatrixAt(i, mi); nm.getNormalMatrix(mi); const e = mi.elements, sc = Math.hypot(e[0], e[1], e[2]), ph = e[12] * .7 + e[14] * .45;
+      let r = 1, gg = 1, bb = 1; if (im.instanceColor) { im.getColorAt(i, c); r = c.r; gg = c.g; bb = c.b; } if (!b.kk) { r *= m.color.r; gg *= m.color.g; bb *= m.color.b; }
+      for (let k = 0; k < P.count; k++) {
+        const o = (vo + k) * 3; v.fromBufferAttribute(P, k); const py = v.y; v.applyMatrix4(mi); pos[o] = v.x; pos[o + 1] = v.y; pos[o + 2] = v.z;
+        v.fromBufferAttribute(N, k).applyMatrix3(nm).normalize(); nor[o] = v.x; nor[o + 1] = v.y; nor[o + 2] = v.z;
+        col[o] = Cc ? r * Cc.getX(k) : r; col[o + 1] = Cc ? gg * Cc.getY(k) : gg; col[o + 2] = Cc ? bb * Cc.getZ(k) : bb;
+        if (uv) { uv[(vo + k) * 2] = U.getX(k); uv[(vo + k) * 2 + 1] = U.getY(k); }
+        if (b.kk) {
+          const q = (vo + k) * 4; roof[o] = -1; tnt[o] = m.color.r; tnt[o + 1] = m.color.g; tnt[o + 2] = m.color.b;
+          if (kk) { if (kk.tint) { leaf[q] = kk.tint[0]; leaf[q + 1] = kk.tint[1]; leaf[q + 2] = kk.tint[2]; leaf[q + 3] = kk.lk; } if (kk.roof) { roof[o] = kk.roof[0]; roof[o + 1] = kk.roof[1]; roof[o + 2] = kk.roof[2]; }
+            if (kk.wind !== null) { fx[o] = Math.max(0, py - kk.wind) * sc; fx[o + 1] = ph; } fx[o + 2] = kk.snow; }
+        }
+      }
+      if (g.index) for (let k = 0; k < g.index.count; k++) idx[io++] = vo + g.index.getX(k); else for (let k = 0; k < P.count; k++) idx[io++] = vo + k;
+      vo += P.count;
+    }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); if (uv) geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    if (b.kk) { geo.setAttribute('aLeaf', new THREE.BufferAttribute(leaf, 4)); geo.setAttribute('aRoof', new THREE.BufferAttribute(roof, 3)); geo.setAttribute('aFx', new THREE.BufferAttribute(fx, 3)); geo.setAttribute('aTint', new THREE.BufferAttribute(tnt, 3)); }
+    geo.setIndex(new THREE.BufferAttribute(idx, 1)); geo.computeBoundingSphere();
+    let mat = mats.get(b.key); if (!mat) { mat = b.m.clone(); mat.userData = {}; mat.vertexColors = true; mat.color.set(0xffffff); if (b.kk) sceneryShader(mat); else if (b.pt) painted(mat, ...b.pt); mats.set(b.key, mat); }
+    const o = new THREE.Mesh(geo, mat); o.castShadow = b.cast; o.receiveShadow = b.im.receiveShadow; o.matrixAutoUpdate = false; o.userData.dyn = true; if (b.im.userData.sharedMaps) o.userData.sharedMaps = true; root.add(o); if (b.far) FAR_CAST.push(o);
+  }
+  for (const im of gone) { root.remove(im); im.dispose(); if (!im.userData.keepGeo) im.geometry.dispose(); if (!im.userData.keepMat) im.material.dispose(); }
+}
+// joins the fixed sculpted pieces under a group that share a material; skip(o) leaves a moving branch alone
+function fuse(root, skip = () => false) {
+  root.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(root.matrixWorld).invert(), by = new Map(), mw = new THREE.Matrix4(), nm = new THREE.Matrix3(), v = new THREE.Vector3();
+  (function walk(g) { for (const o of g.children) { if (!o.visible || skip(o)) continue; if (o.isMesh && !o.isInstancedMesh && !o.isSkinnedMesh && o.userData.dyn && !o.material.transparent && o.geometry.index && o.geometry.attributes.uv && !o.children.length) { const k = o.material.uuid + (o.castShadow ? 'c' : ''); if (!by.has(k)) by.set(k, []); by.get(k).push(o); } else walk(o); } })(root);
+  for (const list of by.values()) {
+    if (list.length < 2) continue; let nv = 0, ni = 0; for (const o of list) { nv += o.geometry.attributes.position.count; ni += o.geometry.index.count; }
+    const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), uv = new Float32Array(nv * 2), idx = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni); let vo = 0, io = 0;
+    for (const o of list) { const g = o.geometry, P = g.attributes.position, N = g.attributes.normal, U = g.attributes.uv; mw.multiplyMatrices(inv, o.matrixWorld); nm.getNormalMatrix(mw);
+      for (let k = 0; k < P.count; k++) { v.fromBufferAttribute(P, k).applyMatrix4(mw).toArray(pos, (vo + k) * 3); v.fromBufferAttribute(N, k).applyMatrix3(nm).normalize().toArray(nor, (vo + k) * 3); uv[(vo + k) * 2] = U.getX(k); uv[(vo + k) * 2 + 1] = U.getY(k); }
+      for (let k = 0; k < g.index.count; k++) idx[io++] = vo + g.index.getX(k); vo += P.count; }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); geo.setIndex(new THREE.BufferAttribute(idx, 1));
+    for (const o of list) o.parent.remove(o);
+    bdMesh(geo, list[0].material, 0, 0, 0, root, list[0].castShadow);
+  }
+}
+// every soft round light in one draw. The sprites stay in the scene as they were (moved, faded and hidden by the same code),
+// they just aren't drawn one by one: each frame the visible ones are copied into this mesh
+const GLOW = (() => {
+  const CAP = 400, g = new THREE.InstancedBufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-.5, -.5, 0, .5, -.5, 0, .5, .5, 0, -.5, .5, 0]), 3)); g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]), 2)); g.setIndex([0, 1, 2, 0, 2, 3]);
+  const at = (n, k) => { const a = new THREE.InstancedBufferAttribute(new Float32Array(CAP * k), k); a.setUsage(THREE.DynamicDrawUsage); g.setAttribute(n, a); return a; };
+  const iPos = at('iPos', 4), iScale = at('iScale', 2), iCol = at('iCol', 4); // iPos.w: 1 = fades with the fog
+  const m = new THREE.ShaderMaterial({ uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { map: { value: null } }]), fog: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false,
+    vertexShader: `attribute vec4 iPos; attribute vec2 iScale; attribute vec4 iCol; varying vec2 vUv; varying vec4 vCol; varying float vF;
+      #include <fog_pars_vertex>
+      void main() { vUv = uv; vCol = iCol; vF = iPos.w; vec4 mvPosition = viewMatrix * vec4(iPos.xyz, 1.0); mvPosition.xy += position.xy * iScale; gl_Position = projectionMatrix * mvPosition;
+      #include <fog_vertex>
+      }`,
+    fragmentShader: `uniform sampler2D map; varying vec2 vUv; varying vec4 vCol; varying float vF;
+      #include <fog_pars_fragment>
+      void main() { vec4 t = sRGBToLinear(texture2D(map, vUv)); vec3 c = vCol.rgb * t.rgb;
+      #ifdef USE_FOG
+        c = mix(c, fogColor, smoothstep(fogNear, fogFar, fogDepth) * vF);
+      #endif
+        gl_FragColor = vec4(c, vCol.a * t.a);
+      #include <encodings_fragment>
+      }` });
+  m.uniforms.map.value = glowTex;
+  const mesh = new THREE.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = .5; mesh.matrixAutoUpdate = false; mesh.userData.dyn = true; scene.add(mesh);
+  let list = [], n = 0;
+  const ok = o => { const q = o.material; return q.map === glowTex && q.blending === THREE.AdditiveBlending && q.depthTest && !q.depthWrite && !q.rotation && !q.toneMapped && q.sizeAttenuation && !o.renderOrder; };
+  return { mesh, get count() { return g.instanceCount; },
+    gather() { list = []; if (/[?&]nobake/.test(location.search)) return; scene.traverse(o => { if (o.isSprite && ok(o) && list.length < CAP) { o.layers.mask = 0; list.push(o); } }); n = 0; },
+    draw() {
+      if (/[?&]nobake/.test(location.search)) { mesh.visible = false; return; }
+      if (n-- <= 0) { this.gather(); n = 45; }
+      scene.updateMatrixWorld(); let k = 0;
+      for (const o of list) {
+        const q = o.material; if (q.opacity <= .003) continue; let p = o, up = null; while (p && p.visible) { up = p; p = p.parent; } if (p || up !== scene) continue; // hidden, or no longer in the scene
+        const e = o.matrixWorld.elements, a = k * 4; iPos.array[a] = e[12]; iPos.array[a + 1] = e[13]; iPos.array[a + 2] = e[14]; iPos.array[a + 3] = q.fog ? 1 : 0;
+        iScale.array[k * 2] = Math.hypot(e[0], e[1], e[2]); iScale.array[k * 2 + 1] = Math.hypot(e[4], e[5], e[6]); iCol.array[a] = q.color.r; iCol.array[a + 1] = q.color.g; iCol.array[a + 2] = q.color.b; iCol.array[a + 3] = q.opacity; k++;
+      }
+      g.instanceCount = k; mesh.visible = k > 0; for (const b of [iPos, iScale, iCol]) { b.updateRange.count = k * b.itemSize; b.needsUpdate = true; }
+    } };
+})();
 function bakeStatic(root) {
   const DEF = THREE.Material.prototype.onBeforeCompile, buckets = new Map(), pick = [], tmpN = new THREE.Matrix3(), inv = new THREE.Matrix4();
   root.updateMatrixWorld(true); inv.copy(root.matrixWorld).invert();
@@ -2443,7 +2571,7 @@ function applyWorld(i) {
   sun.color.copy(C(w.sun[0])); sun.intensity = w.sun[1]; renderer.toneMappingExposure = w.exposure;
   for (const m of fortWalls) m.color.copy(C(w.wall)).multiplyScalar(m.userData.k || 1); fortStone.color.copy(C(w.stone));
   moteMat.color.copy(C(w.motes.c)); moteMat.size = w.motes.size; moteMat.opacity = w.motes.op; moteMat.blending = w.motes.add ? THREE.AdditiveBlending : THREE.NormalBlending; moteMat.needsUpdate = true; moteCfg = w.motes;
-  { const lk = FOE_LOOKS[lookOf(i)]; if (lk && lk.tint) FOE_TINT.copy(C(lk.tint)); else FOE_TINT.copy(w.foeTint ? C(w.foeTint) : WHITE).multiply(FOE_WARM); } /* aged ivory bone, so the horde never reads as white ghosts (worlds with their own horde look bring their own tint) */ bakeFoes(lookOf(i)); /* and dressed for this world */ G.hex = !!MODELS["hex/hex_grass"]; CUR_DUSK = (HEX_DRESS[w.hex || 'meadow'].realm || {}).dusk || null; w.build(); if (G.hex) hexWorld(HEX_DRESS[w.hex || "meadow"]); redesignLandmarks(i); for (const [x, z, r] of LM_SPOTS) clearAround(x, z, r); addAmbient(i); if (G.hex) addSkyline(i); noFarShadows(world); G.baked = bakeStatic(world); applyVignette(i); applyGrade(i);
+  { const lk = FOE_LOOKS[lookOf(i)]; if (lk && lk.tint) FOE_TINT.copy(C(lk.tint)); else FOE_TINT.copy(w.foeTint ? C(w.foeTint) : WHITE).multiply(FOE_WARM); } /* aged ivory bone, so the horde never reads as white ghosts (worlds with their own horde look bring their own tint) */ bakeFoes(lookOf(i)); /* and dressed for this world */ G.hex = !!MODELS["hex/hex_grass"]; CUR_DUSK = (HEX_DRESS[w.hex || 'meadow'].realm || {}).dusk || null; w.build(); if (G.hex) hexWorld(HEX_DRESS[w.hex || "meadow"]); redesignLandmarks(i); for (const [x, z, r] of LM_SPOTS) clearAround(x, z, r); addAmbient(i); if (G.hex) addSkyline(i); noFarShadows(world); G.baked = bakeStatic(world); bakeScenery(world); GLOW.gather(); applyVignette(i); applyGrade(i);
   if (propShadows.length) { // one soft dark patch under every prop
     if (!propShMat) propShMat = new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false });
     propShMat.opacity = w.shade;
@@ -3340,6 +3468,18 @@ function dressKing(root, mat, crown = false) {
     const g = new THREE.BufferGeometry(), nv = gs[0].attributes.position.count; for (const [k, w] of [['position', 3], ['normal', 3], ['uv', 2]]) { const a = new Float32Array(nv * 2 * w); a.set(gs[0].attributes[k].array); a.set(gs[1].attributes[k].array, nv * w); g.setAttribute(k, new THREE.BufferAttribute(a, w)); }
     const x = gs[0].index.array, y = new Uint16Array(x.length * 2); y.set(x); for (let k = 0; k < x.length; k++) y[x.length + k] = x[k] + nv; g.setIndex(new THREE.BufferAttribute(y, 1)); return g; }, hi, 'King_Eyes', KINGM.eye).castShadow = false;
   for (const e of [-1, 1]) { const sp = new THREE.Sprite(KINGM.eyeGlow || (KINGM.eyeGlow = new THREE.SpriteMaterial({ map: glowTex, color: C('#ff3df0'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: .55, fog: false, toneMapped: false }))); sp.scale.setScalar(.34); sp.position.set(e * .163, 1.632 + e * .02, .40).applyMatrix4(HM); bones[hi].add(sp); }
+  if (!/[?&]nobake/.test(location.search)) { // his pieces are each fixed to one bone, so they can all be drawn as a single skinned mesh (it was 21 draws, and 21 more for his shadow)
+    const parts = []; root.traverse(o => { if (o.isMesh && o.material === mat) parts.push(o); });
+    const joints = parts.map(o => { if (o !== out.collar) return o.parent; const b = new THREE.Bone(); b.position.copy(o.position); b.quaternion.copy(o.quaternion); o.parent.add(b); return out.collar = b; });
+    const key = 'one@' + (crown ? 1 : 0), one = KINGM.geo[key] || (KINGM.geo[key] = (() => {
+      let nv = 0, ni = 0; for (const o of parts) { nv += o.geometry.attributes.position.count; ni += o.geometry.index.count; }
+      const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), uv = new Float32Array(nv * 2), si = new Uint16Array(nv * 4), sw = new Float32Array(nv * 4), idx = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni); let vo = 0, io = 0;
+      parts.forEach((o, j) => { const a = o.geometry.attributes, c = a.position.count; pos.set(a.position.array, vo * 3); nor.set(a.normal.array, vo * 3); uv.set(a.uv.array, vo * 2); for (let k = 0; k < c; k++) { si[(vo + k) * 4] = j; sw[(vo + k) * 4] = 1; } const x = o.geometry.index; for (let k = 0; k < x.count; k++) idx[io++] = vo + x.getX(k); vo += c; });
+      const g = new THREE.BufferGeometry(); for (const [n, d, w] of [['position', pos, 3], ['normal', nor, 3], ['uv', uv, 2], ['skinIndex', si, 4], ['skinWeight', sw, 4]]) g.setAttribute(n, new THREE.BufferAttribute(d, w)); g.setAttribute('uv2', g.attributes.uv); g.setIndex(new THREE.BufferAttribute(idx, 1)); return g; })());
+    const m2 = mat === KINGM.mat ? KINGM.skin || (KINGM.skin = mat.clone()) : mat; m2.skinning = true;
+    const sm = new THREE.SkinnedMesh(one, m2); sm.name = 'King_one'; sm.castShadow = sm.receiveShadow = true; sm.frustumCulled = false; root.add(sm); sm.bind(new THREE.Skeleton(joints, joints.map(() => new THREE.Matrix4())), new THREE.Matrix4());
+    for (const o of parts) o.parent.remove(o);
+  }
   const q = i => new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().extractRotation(sk.skeleton.boneInverses[i]));
   out.rest = q(bi('chest')).multiply(q(hi).invert()).invert(); // undoes the angle between chest and head in the rest pose
   return out;
@@ -5818,10 +5958,11 @@ function render() {
     // fit the shadow map to what's on screen (what cascaded shadows do in big engines): in a battle on a phone the view is
     // narrow, so the same 2048 map covers about half the area and its shadows come out about 1.6x sharper
     const fit = G.mode === 'play' && camera.aspect < .72, sW = fit ? 15 : 24, sH = fit ? 25 : 32, scm = sun.shadow.camera;
+    const cf = G.mode !== 'play' || G.introT > 0 || G.grandT > 0 || !!G.cine; if (G.castFar !== cf || G.castN !== FAR_CAST.length) { G.castFar = cf; G.castN = FAR_CAST.length; for (const o of FAR_CAST) o.castShadow = cf; G.shadowDirty = true; }
     if (scm.right !== sW) { scm.left = -sW; scm.right = sW; scm.top = sH; scm.bottom = -sH; scm.updateProjectionMatrix(); G.shadowDirty = true; } }
   if ((G.frameN = (G.frameN || 0) + 1) % 3 === 0 || (G.mode === 'won' ? G.frameN % 2 === 0 : G.shadowDirty)) { renderer.shadowMap.needsUpdate = true; G.shadowDirty = false; }
   spriteMat.uniforms.uSoft.value = foeSpriteMat.uniforms.uSoft.value = POST.on && !G.lowQ && POST.msaa ? 1 : 0; // soft, anti-aliased crowd edges only where there is multisampling to resolve them
-  trimUploads();
+  trimUploads(); GLOW.draw();
   if (POST.on && !G.lowQ) { renderer.setRenderTarget(POST.rt); renderer.render(scene, camera); POST.run(); }
   else renderer.render(scene, camera);
 
@@ -6308,7 +6449,7 @@ window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') 
 async function perfTest() {
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 8px);z-index:99;padding:10px 12px;border-radius:12px;background:rgba(8,12,30,.9);color:#fff;font:600 13px/1.45 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), rows = [];
-  box.textContent = 'Speed test 2: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
+  box.textContent = 'Speed test v129: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); box.textContent = 'Loading...'; G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 19; const on0 = MUS.on;
   save.up = { ...save.up, rate: 10, twin: 4, arsenal: 5 }; await Promise.race([loadLm('ember'), wait(8000)]); await wait(800);
   const pr = k => { pixelRatio = k; renderer.setPixelRatio(k); resize(); };
@@ -6329,7 +6470,7 @@ async function perfTest() {
   G.nestHp = G.nestMax = 30;
   await run('castle blows up', 4500, () => { G.fortMax = 100; G.fortHp = 0; });
   await wait(1500); save.level = 6; await run('new world', 5000, () => { $('result').classList.remove('on'); startPlay(); });
-  box.textContent = 'Speed test 2: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
+  box.textContent = 'Speed test v129: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
 }
 let last = performance.now();
 // keeps the frame rate smooth: renders at fewer pixels when a phone struggles, and at more (up to the screen's own sharpness) when it has headroom
@@ -6495,7 +6636,7 @@ function endFinale() {
   showMenu(); // the real save is back (practice round)
 }
 function boot() {
-  setTimeout(lmRest, 4000); if (BART.camp) buildCampArt(); dressFort(); dressTower(); dressHoard(); for (const g of [fort, hoard, nest, launcher, campWall]) bakeStatic(g); resize(); syncAudioUi(); applyStyle(save.style);
+  setTimeout(lmRest, 4000); if (BART.camp) buildCampArt(); dressFort(); dressTower(); dressHoard(); for (const g of [fort, hoard, nest, launcher, campWall]) bakeStatic(g); if (!/[?&]nobake/.test(location.search)) { fuse(fort, o => o === king || roofs.includes(o)); fuse(campWall); } resize(); syncAudioUi(); applyStyle(save.style);
   if (cineDue()) { // the day's first launch: a "tap to begin" card (the tap also lets the sound play), then the opening cinematic
     setupLevel(save.level); render(); requestAnimationFrame(frame); const l = $('loading');
     if (!l) { startCine(); return; }
