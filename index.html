@@ -714,7 +714,7 @@ function levelCfg(n, fails = 0) {
     archers: n < 7 ? 0 : Math.round(ARCH_K * Math.min(12, 5 + .3 * (n - 7))),  // and a row of bone archers at its back
     par: parOf(n), // seconds of play to beat for the third star (see PAR_T)
     surgeAt: Math.round(23 + .12 * n + (isBoss(n) ? 20 : 0)) * 1.6, // when a dragged-out battle makes the horde surge (unchanged; it used to ride on the old star time)
-    saws: n < 10 ? [] : [{ z: -8.8, range: 3.9, spd: .62 + Math.min(.6, .025 * (n - 10)) }], // the bone saw past the weapon row
+    saws: n < 10 ? [] : [{ z: -9.1, range: 3.9, spd: .62 + Math.min(.6, .025 * (n - 10)) }], // the bone saw past the weapon row
     charge: n < 6 ? null : { gap: Math.max(isBoss(n) ? 5.5 : 7, (11 - .1 * (n - 6)) * (isBoss(n) ? .75 : 1)), hp: Math.round(ease * CHARGE_HPK * (20 + 4 * n)), dbl: isBoss(n) ? .3 : n < 25 ? 0 : Math.min(.3, .1 + .01 * (n - 25)) }, // brute charges down the road edges
     beetleSpeed: 3 + Math.min(1.5, 0.05 * n),
     boss: isBoss(n),
@@ -752,7 +752,7 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.12;
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFShadowMap; renderer.shadowMap.autoUpdate = false; // shadows are redrawn a few times a second, not every frame
+renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false; // shadows are redrawn a few times a second, not every frame
 const MAX_ANISO = renderer.capabilities.getMaxAnisotropy();
 
 const C = hex => new THREE.Color(hex).convertSRGBToLinear();
@@ -778,7 +778,7 @@ const sun = new THREE.DirectionalLight(C('#fff2da'), 1.5);
 sun.position.set(9, 26, 6); sun.target.position.set(0, 0, -16);
 sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -24, right: 24, top: 32, bottom: -32, near: 1, far: 110 }); // wide enough for the far sides on a big screen
-sun.shadow.bias = -0.0006;
+sun.shadow.bias = -0.0006; sun.shadow.normalBias = .02; // (the soft filter hides the map's own stair-steps along the road)
 scene.add(sun, sun.target);
 
 const LANE = 5, FORT_Z = -36.8, NEST_Z = -2.8, US = 1.3;
@@ -1124,11 +1124,11 @@ function hexWorld(t) {
     if (z > -14 && out < 10) { if (d < .55) add(pick(t.home), x, z, s * HOME_K, y, Math.floor(rand() * 6) * Math.PI / 3); else if (d < .85) add(pick(t.wild), x, z, s, y); else add(pick(t.camp), x, z, s * 1.25, y); continue; } // your village
     if (d < .7) add(pick(t.wild), x, z, s, y); else if (d < .82) add(pick(t.home), x, z, s * HOME_K, y); else if (d < .92) add(pick(t.rock), x, z, s, y);
   }
-  if (LMART.lm) lmMesh('lm', 'skullrock', world, 12, H(0), HOARD_Z + 1.5, { s: .82, ry: -.5, tint: { magic: '#8c82a4', tar: '#a8846c', ice: '#c4d2ea', lava: '#6a5660' }[R.river || 'magic'] });
+  if (LMART.lm) lmMesh('lm', 'skullrock', world, 12, H(0), HOARD_Z + 1.5, { s: .82, ry: -.5, tint: { magic: '#a59ac0', tar: '#d8aa74', ice: '#b4c2dc', lava: '#94808e' }[R.river || 'magic'] });
   dressHomes(homes, add, tTop, t); groundCover(cover.filter(c => homes.every(h => (c[0] - h[0]) ** 2 + (c[1] - h[1]) ** 2 > 4.41)), t); /* (no tufts inside a house's cleared patch) */ /* clear the trees and clutter off every house, then give each a yard and a smoking chimney; then the ground cover */
   putM('hex/hex_grass', tiles, { leaf: t.tileLeaf || t.leaf, shadow: false, tile: true });
   if (worldIdx === 2 && MODELS['hex/trees_S']) for (const n of Object.keys(dress)) { const to = { trees_A_large: 'trees_S', trees_A_medium: 'trees_S', trees_B_large: 'trees_S', trees_B_medium: 'trees_S', tree_single_A: 'tree_single_S', tree_single_B: 'tree_single_S' }[n]; if (to) { (dress[to] = dress[to] || []).push(...dress[n]); delete dress[n]; } } // every tree in Frostbite carries real snow
-  for (const n in dress) { const k = n.startsWith('k:'), nm = k ? n.slice(2) : n, sy = nm.startsWith('sy_'); putM('hex/' + nm, dress[n], { leaf: sy ? t.syLeaf : t.leaf, wind: /tree|Tree|Palm|Bush|Birch/.test(nm) ? (sy ? .25 : .2) : undefined, roof: k ? KING_ROOF : undefined, bark: sy ? undefined : t.bark, snow: worldIdx === 2 && /tree|Tree|rock|Rock|destroyed|tower|home|well/.test(nm) && !/_S$/.test(nm) && MODELS['hex/' + nm] && MODELS['hex/' + nm].art ? .75 : undefined }); } // the 'sy_' pieces keep their own colours (no leaf or bark tint); snow settles on the sculpted ones in Frostbite // 'k:' = his: his purple roofs
+  for (const n in dress) { const k = n.startsWith('k:'), nm = k ? n.slice(2) : n, sy = nm.startsWith('sy_'); putM('hex/' + nm, dress[n], { leaf: sy ? t.syLeaf : t.leaf, wind: /tree|Tree|Palm|Bush|Birch/.test(nm) ? (sy ? .25 : .2) : undefined, roof: k ? KING_ROOF : undefined, bark: sy ? (/Dungeon_(Skull|Bones|Rocks)/.test(nm) ? [undefined, '#f6d3a0', undefined, undefined][worldIdx] : undefined) : t.bark, snow: worldIdx === 2 && /tree|Tree|rock|Rock|destroyed|tower|home|well/.test(nm) && !/_S$/.test(nm) && MODELS['hex/' + nm] && MODELS['hex/' + nm].art ? .75 : undefined }); } // the 'sy_' pieces keep their own colours (no leaf or bark tint); snow settles on the sculpted ones in Frostbite // 'k:' = his: his purple roofs
   for (const g of glows) halo(R.glow, 1 + rand() * .7, g[0], g[1] + .4 + rand() * .6, g[2], world, .65); // will-o'-wisps, lava cracks or ice glints
   for (const n in dress) if (/sy_Env_Dungeon_Crystal/.test(n)) dress[n].slice(0, 12).forEach(q => halo('#ff5a40', 1.4 + rand() * .5, q[0], q[1] + .65, q[2], world, .5)); // the Synty crystals glow like the hand-made ones
   // his land lies under a dusk shade: the world's ground sheet runs on bright (green lawn, pale sand) right up to the river,
@@ -2720,7 +2720,12 @@ const campWall = new THREE.Group(); scene.add(campWall);
   launcher.position.set(0, 0, CANNON_Z); launcher.scale.setScalar(CANNON_K);
 
   // the timber track it rolls on, across the road
-  for (const z of [-.4, .5]) mesh(bevelBox(9.6, .10, .16, .04), std('#8a6a3c', .45, { metalness: .45 }), 0, .03, CANNON_Z + z * CANNON_K, campWall).userData.rail = true; // two low iron rails across the road
+  { const parts = [], z0 = CANNON_Z - .40 * CANNON_K, z1 = CANNON_Z + .5 * CANNON_K, zm = (z0 + z1) / 2; // a bed of the camp wall's own stone, two bronze-topped iron rails on it, and a royal blue buffer at each end (it was a plain brown bar)
+    for (let r = 0; r < 2; r++) for (let k = 0; k < 9; k++) { const w = 9.9 / 9, off = r ? w * .5 : 0; if (r && k === 8) continue; parts.push({ g: bevelBox(w - .03, .10, (z1 - z0 + .70) / 2 - .02, .03), c: ['#a19d9a', '#aeaaa6', '#95918f', '#a8a4a0'][(k * 5 + r * 3) % 4], m: M(-4.95 + w * (k + .5) + off, .04, zm + (r - .5) * (z1 - z0 + .70) / 2) }); }
+    for (const e of [-1, 1]) parts.push({ g: bevelBox(.52, .10, (z1 - z0 + .70) / 2 - .02, .03), c: '#9c9895', m: M(e * 4.69, .04, zm + .25 * (z1 - z0 + .70)) });
+    for (const z of [z0, z1]) { parts.push({ g: bevelBox(9.5, .09, .20, .03), c: '#4a4452', m: M(0, .085, z) }, { g: bevelBox(9.5, .10, .10, .03), c: '#c3912f', m: M(0, .15, z) });
+      for (const e of [-1, 1]) parts.push({ g: bevelBox(.26, .42, .40, .05), c: '#2c5cc4', m: M(e * 4.78, .21, z) }, { g: bevelBox(.32, .09, .46, .03), c: '#e0a92e', m: M(e * 4.78, .45, z) }); }
+    mesh(merge(parts), std('#ffffff', .6, { vertexColors: true, metalness: .15 }), 0, 0, 0, campWall).userData.rail = true; }
   // the camp wall behind it: crenellated royal masonry with a gate, and a blue-roofed tower at each end of the road
   const WZ = NEST_Z + .2;
   for (const sx of [-1, 1]) mesh(new THREE.BoxGeometry(3.7, 1.1, .55), gateWall(3, 1), sx * 2.55, .55, WZ, campWall);
@@ -3591,9 +3596,10 @@ function lmWorld(i) { // called as a world is about to be built
 async function lmRest() { if (worldIdx >= 0) await loadLm(LM_SETS[(worldIdx + 1) % 4]); } // the next world's, so it is there when you reach it
 // one piece of a set. o: s scale (number or [x, y, z]), ry turn, tint colour, far (no fog, no shadow), basic (unlit)
 function lmMesh(k, node, parent, x, y, z, o = {}) {
-  const A = LMART[k], key = (o.tint || '') + (o.far ? 'f' : '') + (o.basic ? 'b' : '') + (o.emissive || ''), C0 = A.mats || (A.mats = {});
+  const snow = k === 'lm' && worldIdx === 2 && !o.far && !o.basic && /^(skull|mound|skullrock|column|columnb|obelisk)$/.test(node); // in Frostbite the old stones carry snow too
+  const A = LMART[k], key = (o.tint || '') + (o.far ? 'f' : '') + (o.basic ? 'b' : '') + (o.emissive || '') + (snow ? 's' : ''), C0 = A.mats || (A.mats = {});
   let m = C0[key];
-  if (!m) { m = C0[key] = o.basic ? new THREE.MeshBasicMaterial({ map: A.mat.map, toneMapped: false }) : A.mat.clone(); if (o.tint) m.color.copy(C(o.tint)); if (o.far) m.fog = false; if (o.emissive) { m.emissive = C(o.emissive); m.emissiveIntensity = .45; } }
+  if (!m) { m = C0[key] = o.basic ? new THREE.MeshBasicMaterial({ map: A.mat.map, toneMapped: false }) : A.mat.clone(); if (o.tint) m.color.copy(C(o.tint)); if (o.far) m.fog = false; if (o.emissive) { m.emissive = C(o.emissive); m.emissiveIntensity = .45; } if (snow) m = C0[key] = prepMat(m, { snow: .55 }); }
   const q = bdMesh(A.geo[node], m, x, y, z, parent, !o.far && !o.basic); if (Array.isArray(o.s)) q.scale.set(...o.s); else if (o.s) q.scale.setScalar(o.s); if (o.ry) q.rotation.y = o.ry; return q;
 }
 function bdMesh(geo, mat, x, y, z, parent, shadow = true) { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.castShadow = shadow; o.receiveShadow = true; o.userData.dyn = o.userData.keepGeo = o.userData.keepMat = true; parent.add(o); return o; }
@@ -4080,12 +4086,13 @@ function burst(x, y, z, color, n, speed = 4, o) {
   if (G.lowQ && n > 1) n = Math.ceil(n * .5);
   const kind = o && o.kind != null ? o.kind : o && o.g < 10 ? PK.SPARK : PK.ROCK; // hits throw bouncing chips (bone, armour) rather than goo
   if (P.n > 650) n = Math.min(n, 1);
+  let szk = 1; if (!G.sim && G.mode === 'play' && G.gates && y < 2.4) for (const g of G.gates) if (z > g.z - 1.5 && z < g.z + 1 && Math.abs(x - g.cx) < g.w / 2 + .3) { szk = .6; n = Math.ceil(n * .34); break; } // fewer and smaller round a gate, so its number stays readable
   for (let k = 0; k < n && P.n < PCAP; k++) {
     const i = P.n++; P.x[i] = x; P.y[i] = y; P.z[i] = z;
     const a = rand() * 6.28, sp = speed * (0.4 + rand() * 0.8);
     P.vx[i] = Math.cos(a) * sp; P.vz[i] = Math.sin(a) * sp; P.vy[i] = o ? o.vy * (0.6 + rand() * 0.6) : 3 + rand() * 4;
     if (o && o.sph) { const u = rand() * 2 - 1, r = Math.sqrt(1 - u * u), s2 = speed * (.75 + rand() * .35); P.vx[i] = r * Math.cos(a) * s2; P.vy[i] = u * s2; P.vz[i] = r * Math.sin(a) * s2; }
-    P.life[i] = P.max[i] = o ? o.life * (0.7 + rand() * 0.6) : 0.45 + rand() * 0.35; P.g[i] = o ? o.g : 18; P.sz[i] = o ? o.sz : 1;
+    P.life[i] = P.max[i] = o ? o.life * (0.7 + rand() * 0.6) : 0.45 + rand() * 0.35; P.g[i] = o ? o.g : 18; P.sz[i] = (o ? o.sz : .85) * szk;
     P.col[i].set(Array.isArray(color) ? color[k % color.length] : color).convertSRGBToLinear();
     P.kind[i] = kind; P.rot[i] = rand() * 6.28; P.spin[i] = (rand() - .5) * 16;
   }
@@ -4102,17 +4109,18 @@ function splat(x, z, color, size) {
 const LCAP = 240, litter = (() => {
   const B = (len, ang, x, z) => { const g = new THREE.CylinderGeometry(.045, .045, len, 6); g.rotateZ(Math.PI / 2); g.rotateY(ang); g.translate(x, .05, z); return g; };
   const K = (r, x, z, sy = 1) => { const g = new THREE.SphereGeometry(r, 8, 6); g.scale(1, sy, 1); g.translate(x, r * sy * .8, z); return g; };
-  const parts = [{ g: B(.56, .5, 0, 0), c: '#efe6d2' }, { g: B(.5, -.75, .04, .05), c: '#e6dcc4' }, { g: K(.075, .25, .13), c: '#f4ecda' }, { g: K(.075, -.24, -.14), c: '#f4ecda' }, { g: K(.07, -.2, .2), c: '#e6dcc4' }, { g: K(.07, .2, -.19), c: '#e6dcc4' },
+  const parts = [{ g: B(.56, .5, 0, 0), c: '#efe6d2' }, { g: B(.5, -.75, .04, .05), c: '#e6dcc4' }, { g: K(.06, .25, .13, .8), c: '#e8dcc2' }, { g: K(.06, -.24, -.14, .8), c: '#e8dcc2' }, { g: K(.055, -.2, .2, .8), c: '#d8ccb0' }, { g: K(.055, .2, -.19, .8), c: '#d8ccb0' },
     { g: K(.15, -.06, -.3, .85), c: '#f2e9d6' }, { g: K(.035, -.11, -.16), c: '#3a2e3c' }, { g: K(.035, 0, -.16), c: '#3a2e3c' }];
-  const m = instanced(merge(parts), new THREE.MeshLambertMaterial({ vertexColors: true }), LCAP); m.count = 0; m.userData.dyn = true; scene.add(m); return { m, k: 0, n: 0 };
-})();
+  const m = instanced(merge(parts), new THREE.MeshLambertMaterial({ vertexColors: true }), LCAP); m.count = 0; m.userData.dyn = true; scene.add(m); return { m, k: 0, n: 0, at: new Map() };
+})(), BONE_TINT = ['#efe4cf', '#e0c79c', '#c3bfdc', '#cdbcc2'].map(c => C(c));
 function dropBones(x, z, big) {
   if (G.sim) return;
+  const bc = Math.round(x * 1.7) * 1000 + Math.round(z * 1.7); if ((litter.at.get(bc) || 0) >= 2) return; litter.at.set(bc, (litter.at.get(bc) || 0) + 1); // (no more than a couple in one spot: they heaped up like popcorn)
   const i = litter.k; litter.k = (litter.k + 1) % LCAP; litter.n = Math.min(LCAP, litter.n + 1);
   const s = (big ? 1.4 : .7 + rand() * .2) * US; _q.setFromEuler(_e.set(0, rand() * 6.28, 0)); _m.compose(_v.set(x + (rand() - .5) * .3, 0, z + (rand() - .5) * .3), _q, _s.set(s, s, s));
-  litter.m.setMatrixAt(i, _m); litter.m.setColorAt(i, FOE_TINT); litter.m.count = litter.n; litter.m.instanceMatrix.needsUpdate = true; litter.m.instanceColor.needsUpdate = true;
+  litter.m.setMatrixAt(i, _m); litter.m.setColorAt(i, BONE_TINT[worldIdx] || FOE_TINT); litter.m.count = litter.n; litter.m.instanceMatrix.needsUpdate = true; litter.m.instanceColor.needsUpdate = true;
 }
-function clearBones() { litter.k = litter.n = 0; litter.m.count = 0; }
+function clearBones() { litter.at.clear(); litter.k = litter.n = 0; litter.m.count = 0; }
 
 /* ---------------- audio ---------------- */
 let actx = null, muted = save.sfx === false; const lastSfx = {};
@@ -4561,7 +4569,7 @@ function makeGateMesh(g) {
   const tex = canvasTex(Math.round(BW * 128), Math.round(H * 128), (x, w, h) => {
     const LH = h; // the height the label is laid out in
     rrect(x, 4, 4, w - 8, h - 8, 34);
-    const gr = x.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, col + 'f0'); gr.addColorStop(1, col + '80');
+    const gr = x.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, col + 'f0'); gr.addColorStop(1, col + 'b8'); // (solid enough that a crowd behind never muddies the number)
     x.fillStyle = gr; x.fill();
     x.save(); x.clip();
     x.fillStyle = 'rgba(255,255,255,.22)'; x.beginPath(); x.moveTo(w * .1, 0); x.lineTo(w * .32, 0); x.lineTo(w * .14, h); x.lineTo(-w * .08, h); x.fill();
@@ -4587,7 +4595,7 @@ function makeGateMesh(g) {
     sign.position.set(0, 2.95, .05); sign.rotation.x = -.45; sign.renderOrder = 4; grp.add(sign); // above the gold post caps (on this narrow gate they hid the J and the T)
   }
   const panel = new THREE.Mesh(new THREE.PlaneGeometry(BW, H), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }));
-  panel.position.y = 1.0; panel.rotation.x = -0.3; grp.add(panel); grp.userData.panel = panel;
+  panel.position.y = 1.0; panel.rotation.x = -0.3; panel.renderOrder = 2.6; grp.add(panel); grp.userData.panel = panel; // (after the ground shadows, splats and warning rings, which lie at 2 and below: they painted over the number)
   // the front row stands right at the muzzle, where the cannon barrel cut across its label. Its board rides a little higher and
   // further back between the posts instead (it used to draw over everything, which also hid knights fresh out of the cannon)
   if (g.z > MUZZLE_Z - 1.2) panel.position.set(0, panel.position.y + .32, -.42);
@@ -4601,8 +4609,8 @@ function makeGateMesh(g) {
     Object.assign(grp.userData, { bar, barFill: fill, barW: bw });
   }
   const shine = new THREE.Mesh(new THREE.PlaneGeometry(BW - .3, H - .3), shineMat); // a glint sweeps the glossy board
-  shine.position.set(0, panel.position.y + .006, panel.position.z + .025); shine.rotation.x = -0.3; shine.userData.keepMat = true; grp.add(shine);
-  lightPool(col, g.w + 1.6, 3, 0, .2, grp, .42); if (g.jack) { halo('#ffd84a', 2.6, 0, 1.3, -.7, grp, .14); lightPool('#ffd84a', 3, 4, 0, .2, grp, .4); } // the jackpot glows from a distance (a soft glow well behind the board, so the ×5 stays crisp)
+  shine.position.set(0, panel.position.y + .006, panel.position.z + .025); shine.rotation.x = -0.3; shine.renderOrder = 2.8; shine.userData.keepMat = true; grp.add(shine);
+  lightPool(col, g.w + 1.6, 3, 0, .2, grp, .25); if (g.jack) { halo('#ffd84a', 2.6, 0, 1.3, -.7, grp, .14); lightPool('#ffd84a', 3, 4, 0, .2, grp, .28); } // the jackpot glows from a distance (a soft glow well behind the board, so the ×5 stays crisp)
   // medieval frame: square oak posts banded in the gate's colour, gold caps, a pennant on each, and a stone footing
   const PH = 2.1, bandM = std(col, .4, { emissive: C(col), emissiveIntensity: .25 });
   for (const sx of [-1, 1]) {
@@ -4631,7 +4639,7 @@ function buildLaneWalls(n) {
   if (laneWalls) { disposeGroup(laneWalls); laneWalls = null; } G.walls = null;
   if (n < 4 || isBoss(n) || G.noWalls) return;
   const W = 1.45, z0 = -10, z1 = -17.6, L = z0 - z1, grp = new THREE.Group();
-  const wc0 = C(WORLDS[Math.max(0, worldIdx)].stone), stone = std('#ffffff', .9), cap = std('#ffffff', .85), dark = std('#ffffff', .9); stone.color.copy(wc0).multiplyScalar(.50); cap.color.copy(wc0).multiplyScalar(.92); dark.color.copy(wc0).multiplyScalar(.40); const /* the world's own stone */ shade = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: .13, depthWrite: false });
+  const wc0 = C(WORLDS[Math.max(0, worldIdx)].stone).multiplyScalar(worldIdx === 2 ? .74 : worldIdx === 1 ? .9 : 1), stone = std('#ffffff', .9), cap = std('#ffffff', .85), dark = std('#ffffff', .9); stone.color.copy(wc0).multiplyScalar(.50); cap.color.copy(wc0).multiplyScalar(.92); dark.color.copy(wc0).multiplyScalar(.40); const /* the world's own stone */ shade = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: .13, depthWrite: false });
   for (const s of [-1, 1]) { // kept low and plain: a kerb that marks the lanes rather than a wall that boxes them in
     { const n1 = Math.round(L / .66), n2 = Math.round(L / .86), im = new THREE.InstancedMesh(bevelBox(.27, .27, L / n1 - .02, .04), stone, n1), ic = new THREE.InstancedMesh(bevelBox(.35, .11, L / n2 - .02, .035), cap, n2); // laid stones with capstones (they were two long boxes)
       for (let k = 0; k < n1; k++) { wm.makeTranslation(s * W, .135, z0 - (k + .5) * L / n1); im.setMatrixAt(k, wm); wc.setScalar(.84 + rand() * .2); im.setColorAt(k, wc); }
@@ -5545,9 +5553,28 @@ function updateHazards(dt, play) {
    road just past the weapon row, cutting down any soldier it touches. Sweeping the stream blindly feeds it; steering round
    it doesn't. It speeds up with every level. */
 const sawGroup = new THREE.Group(); scene.add(sawGroup); let saws = [];
+let _sawArt = null;
+function sawArt() { // the sculpted disc, coloured to stand out on every road: dark iron, old yellowed tusks, blood on their tips
+  if (_sawArt) return _sawArt;
+  const g = BART.trees.geo.saw.clone(), P = g.attributes.position, c = new Float32Array(P.count * 3), A = C('#8d84a0'), B = C('#e6b878'), D = C('#8c1420'), t = new THREE.Color();
+  for (let i = 0; i < P.count; i++) { const r = Math.hypot(P.getX(i), P.getY(i)); if (r < .86) t.copy(A); else t.copy(B).lerp(D, clamp((r - .98) / .2, 0, 1)); t.toArray(c, i * 3); }
+  g.setAttribute('color', new THREE.BufferAttribute(c, 3)); const m = BART.trees.mat.clone(); m.vertexColors = true; return (_sawArt = [g, m]);
+}
+const _slotGeo = {};
+function sawSlot(w) { // the slot it runs in: a dark groove between two riveted iron lips, capped at both ends, the road round it stained
+  const g = new THREE.Group(), iron = '#6d667c', parts = [{ g: new THREE.BoxGeometry(w, .03, .30), c: '#140e18', m: M(0, .02, 0) }];
+  for (const e of [-1, 1]) { parts.push({ g: bevelBox(w + .1, .09, .13, .03), c: iron, m: M(0, .045, e * .21) }); for (let k = 0, n = Math.round(w / .62); k <= n; k++) parts.push({ g: new THREE.SphereGeometry(.042, 6, 4), c: '#b2aac2', m: M(-w / 2 + .1 + k * (w - .2) / n, .09, e * .21) });
+    parts.push({ g: bevelBox(.3, .2, .62, .05), c: '#4c465a', m: M(e * (w / 2 + .1), .10, 0) }, { g: new THREE.SphereGeometry(.085, 8, 6), c: '#e0b878', m: M(e * (w / 2 + .1), .22, 0) }); }
+  const key = w.toFixed(2), geo = _slotGeo[key] || (_slotGeo[key] = merge(parts)), o = mesh(geo, std('#ffffff', .5, { vertexColors: true, metalness: .25 }), 0, 0, 0, g, false); o.userData.keepGeo = true;
+  const q = []; for (const [x, z, sx, sz] of [[-2.4, .1, 1.5, .75], [.3, -.12, 1.9, .8], [2.5, .14, 1.3, .7]]) q.push({ g: new THREE.PlaneGeometry(2, 2).rotateX(-Math.PI / 2), c: '#ffffff', m: M(x, 0, z, sx, 1, sz) });
+  const uv = new Float32Array(q.length * 12); for (let k = 0; k < q.length; k++) uv.set([0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1], k * 12);
+  const sg = merge(q); sg.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); const st = mesh(sg, new THREE.MeshBasicMaterial({ map: stainTex, transparent: true, opacity: .6, depthWrite: false }), 0, .018, 0, g, false); st.renderOrder = 1; st.receiveShadow = false;
+  return g;
+}
+const stainTex = canvasTex(64, 64, (x, w, h) => { const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(96,10,20,.95)'); g.addColorStop(.5, 'rgba(90,10,20,.5)'); g.addColorStop(1, 'rgba(80,10,20,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); });
 function buildSaw() {
   const g = new THREE.Group(), blade = new THREE.Group(); g.add(blade);
-  if (BART.trees && BART.trees.geo.saw) { bdMesh(BART.trees.geo.saw, BART.trees.mat, 0, 0, 0, blade); bdMesh(BART.trees.geo.sawhub, BART.trees.mat, 0, 0, 0, g); g.scale.setScalar(.92); halo('#ff3a5a', 2.6, 0, 0, .2, g, .35); return { g, blade }; } // sculpted: the disc spins, the skull at its middle stays upright
+  if (BART.trees && BART.trees.geo.saw) { const [sg, sm] = sawArt(); bdMesh(sg, sm, 0, 0, 0, blade); bdMesh(BART.trees.geo.sawhub, BART.trees.mat, 0, 0, 0, g); g.scale.setScalar(.96); halo('#ff3a5a', 2.6, 0, 0, .2, g, .35); return { g, blade }; } // sculpted: the disc spins, the skull at its middle stays upright
   const steel = std('#c9c2d6', .35, { metalness: .6 }), bone = std('#efe4cc', .6), dark = new THREE.MeshBasicMaterial({ color: C('#1a0a22') });
   const disc = mesh(new THREE.CylinderGeometry(.9, .9, .12, 28), steel, 0, 0, 0, blade); disc.rotation.x = Math.PI / 2;
   for (let k = 0; k < 14; k++) { const a = k / 14 * Math.PI * 2, t = mesh(new THREE.ConeGeometry(.13, .34, 4), bone, Math.cos(a) * 1.02, Math.sin(a) * 1.02, 0, blade); t.rotation.z = a - Math.PI / 2; }
@@ -5559,8 +5586,8 @@ function buildSaw() {
 function resetSaws() {
   for (const s of saws) { sawGroup.remove(s.g, s.slot); for (const o of [s.g, s.slot]) o.traverse(c => { if (c.geometry && !c.isSprite && !c.userData.keepGeo) c.geometry.dispose(); if (c.material && !c.userData.keepMat && !c.isSprite) c.material.dispose(); }); } saws = []; // (and freed: each saw's ~17 geometries and its materials leaked every level)
   for (const c of (G.cfg.saws || [])) {
-    const { g, blade } = buildSaw(); g.position.set(0, 1.05, c.z); sawGroup.add(g);
-    const slot = mesh(new THREE.BoxGeometry(c.range * 2 + 2.4, .03, .32), new THREE.MeshBasicMaterial({ color: C('#2a1a2e') }), 0, .025, c.z, sawGroup, false);
+    const { g, blade } = buildSaw(); g.position.set(0, 1.12, c.z); sawGroup.add(g);
+    const slot = sawSlot(Math.min(2 * LANE - .5, c.range * 2 + 1.7)); slot.position.z = c.z; sawGroup.add(slot);
     saws.push({ ...c, g, blade, slot, x: 0, ph: rand() * 6, kills: 0, f: null });
   }
 }
@@ -5927,7 +5954,8 @@ const hopOf = (p, i) => Math.abs(Math.sin(G.t * (p.big[i] ? 5.5 : 9) + p.ph[i]))
 // player slimes fly out of the cannon in an arc before they start hopping
 const FLY_T = .3, MUZZLE_H = 1.64; // a soldier fired from the cannon is in the air this long, from the muzzle's height down to the road
 const liftOf = (p, i) => { if (!p.fly || !p.fly[i]) return 0; const u = p.age[i] / FLY_T; return u >= 1 ? 0 : (1 - u) * MUZZLE_H + Math.sin(u * Math.PI) * .75; };
-const popOf = (p, i) => { const t = Math.min(1, p.age[i] * 5); return t < 1 ? .35 + .65 * t + Math.sin(t * Math.PI) * .3 : 1; };
+const HORDE_REST = .66; // the waiting horde stands a little smaller (it reads as a sea), and grows to full size as it wakes. (Its age never ran while it waited, so it was drawn at a third of its size: crumbs along the castle foot)
+const popOf = (p, i) => { if (p === beetles && p.pass[i] === 1) { if (p.tier[i] === F_ARCH) return 1; const u = Math.min(1, p.age[i] * 2.2); return HORDE_REST + (1 - HORDE_REST) * u * (2 - u); } const t = Math.min(1, p.age[i] * 5); return t < 1 ? .35 + .65 * t + Math.sin(t * Math.PI) * .3 : 1; };
 // sprite crowds: units run (a cycle per second or so, each a little out of step), fly out of the cannon in the mid-air pose,
 // and jump for joy once the castle falls
 function drawSprites(p, sm) {
@@ -6048,11 +6076,12 @@ function render() {
     G.crowdShown = ants.n; setHud('crowdN', ants.n);
     const cx0 = _v.x, cy = (-_v.y * .5 + .5) * H; _v.set(0, 0, FORT_Z + 5.5).project(camera); const castleY = (-_v.y * .5 + .5) * H; // the counter never rides over the castle or the king
     let floorY = castleY + 34; if (WL.alive) { _v.set(WL.x, 0, WL.z + 1.6).project(camera); floorY = Math.max(floorY, (-_v.y * .5 + .5) * H + 22); } // nor over a warlord standing in front of it
-    cEl.style.transform = `translate(${(cx0 * .5 + .5) * W}px,${Math.max(cy, floorY)}px)`; cEl.style.opacity = 1;
-  } else cEl.style.opacity = 0;
+    G.pillX = (cx0 * .5 + .5) * W; G.pillY = Math.max(cy, floorY); cEl.style.transform = `translate(${G.pillX}px,${G.pillY}px)`; cEl.style.opacity = 1;
+  } else { cEl.style.opacity = 0; G.pillY = null; }
   for (const f of floats) {
     if (f.t <= 0) continue; _v.set(f.x, f.y, f.z).project(camera);
-    f.el.style.transform = `translate(${clamp((_v.x * .5 + .5) * W, 54, W - 54)}px,${(-_v.y * .5 + .5) * H}px) scale(${.7 + Math.min(1, (0.7 - f.t) * 6) * .3})`; f.el.style.opacity = Math.min(1, f.t * 3);
+    const fx = clamp((_v.x * .5 + .5) * W, 54, W - 54); let fy = (-_v.y * .5 + .5) * H; if (G.pillY != null && Math.abs(fx - G.pillX) < 78 && fy > G.pillY - 62 && fy < G.pillY + 26) fy = G.pillY - 62; // a number rides above the army's counter rather than on it
+    f.el.style.transform = `translate(${fx}px,${fy}px) scale(${.7 + Math.min(1, (0.7 - f.t) * 6) * .3})`; f.el.style.opacity = Math.min(1, f.t * 3);
   }
   const fp = clamp(G.fortHp / G.fortMax, 0, 1), np = clamp(G.nestHp / G.nestMax, 0, 1);
   const wlBar = WL.alive && WL.state !== 'enter'; // while a warlord fights, the top bar is his
@@ -6546,7 +6575,7 @@ window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') 
 async function perfTest() {
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 8px);z-index:99;padding:10px 12px;border-radius:12px;background:rgba(8,12,30,.9);color:#fff;font:600 13px/1.45 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), rows = [];
-  box.textContent = 'Speed test v134: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
+  box.textContent = 'Speed test v135: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); box.textContent = 'Loading...'; G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 19; const on0 = MUS.on;
   save.up = { ...save.up, rate: 10, twin: 4, arsenal: 5 }; await Promise.race([loadLm('ember'), wait(8000)]); await wait(800);
   const pr = k => { pixelRatio = k; renderer.setPixelRatio(k); resize(); };
@@ -6567,7 +6596,7 @@ async function perfTest() {
   G.nestHp = G.nestMax = 30;
   await run('castle blows up', 4500, () => { G.fortMax = 100; G.fortHp = 0; });
   await wait(1500); save.level = 6; await run('new world', 5000, () => { $('result').classList.remove('on'); startPlay(); });
-  box.textContent = 'Speed test v134: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
+  box.textContent = 'Speed test v135: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
 }
 let last = performance.now();
 // keeps the frame rate smooth: renders at fewer pixels when a phone struggles, and at more (up to the screen's own sharpness) when it has headroom
