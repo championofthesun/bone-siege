@@ -3818,8 +3818,8 @@ function updateHoard(dt) {
   if (t < .05) { burst(cx, cy, cz, ['#ffffff', '#ffe680'], 30, 6, { vy: 6, life: .6, g: 4, sz: 2.4, kind: PK.SPARK }); G.shake = Math.max(G.shake, .4); }
   const bk = t / 1.6; chestBeam.visible = bk < 1; if (bk < 1) { chestBeam.position.set(cx, cy + 2.5, cz); chestBeam.scale.set(3.5 + bk * 2, 9 + bk * 4, 1); chestBeam.material.opacity = Math.sin(Math.min(1, bk * 3) * Math.PI / 2) * (1 - bk) * .9; }
   if (t < 1.8) { // the gold fountain: coins, with a few gems for colour
-    burst(cx + (rand() - .5) * .8, cy, cz, ['#ffc62b', '#ffd84a', '#ffe680'], 5, 5.5, { vy: 13 + rand() * 6, life: 2, g: 17, sz: 2.1, kind: PK.COIN });
-    if (rand() < .35) burst(cx, cy, cz, [['#ff3a6a', '#3ad0ff', '#52e07a', '#c070ff'][rand() * 4 | 0]], 1, 4, { vy: 12 + rand() * 4, life: 1.6, g: 17, sz: 1.8, kind: PK.SPARK });
+    for (G.coinDebt = Math.min(6, (G.coinDebt || 0) + dt * 105); G.coinDebt >= 1; G.coinDebt--) burst(cx + (rand() - .5) * .8, cy, cz, ['#ffc62b', '#ffd84a', '#ffe680'][rand() * 3 | 0], 1, 5.5, { vy: 13 + rand() * 6, life: 1.7, g: 17, sz: 2.2, kind: PK.COIN });
+    if (rand() < dt * 18) burst(cx, cy, cz, [['#ff3a6a', '#3ad0ff', '#52e07a', '#c070ff'][rand() * 4 | 0]], 1, 4, { vy: 12 + rand() * 4, life: 1.6, g: 17, sz: 1.8, kind: PK.SPARK });
     if (rand() < .3) sfx('coinT', 70, () => tone(1800 + rand() * 900, .06, 'triangle', .025, 1.4));
   }
 }
@@ -3838,8 +3838,8 @@ const turret = new THREE.Group(), turretHead = new THREE.Group(); turret.positio
 const PK = { BALL: 0, COIN: 1, ROCK: 2, PAPER: 3, DROP: 4, SPARK: 5 };
 const partMeshes = [
   instanced(new THREE.SphereGeometry(0.1, 6, 4), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), 300),
-  instanced(new THREE.CylinderGeometry(.1, .1, .026, 12), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .3, metalness: .55, emissive: C('#6a4300'), emissiveIntensity: .6 }), 220),
-  instanced(new THREE.DodecahedronGeometry(.1, 0), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .9, flatShading: true }), 300),
+  instanced(new THREE.CylinderGeometry(.1, .1, .026, 12), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .3, metalness: .55, emissive: C('#6a4300'), emissiveIntensity: .6 }), 360),
+  instanced(new THREE.DodecahedronGeometry(.1, 0), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .9, flatShading: true }), 380),
   instanced(new THREE.PlaneGeometry(.13, .08), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, toneMapped: false }), 420),
   instanced(new THREE.SphereGeometry(.1, 8, 6), jelly(new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .2, metalness: 0 }), .5), PCAP),
   instanced(new THREE.SphereGeometry(.08, 6, 4), new THREE.MeshBasicMaterial({ color: 0xffffff, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, toneMapped: false }), 420),
@@ -4142,24 +4142,24 @@ function victoryFanfare() {
 function fanfareOn(ac, g, t0) {
   const song = SONGS[Math.max(0, worldIdx)];
   const F = (semi, oct = 0) => 440 * Math.pow(2, (song.root + semi + 12 * oct - 69) / 12);
-  for (let k = 0; k < 14; k++) mTimp(ac, g.master, t0 + k * .042, F(0, -2), .1 + k * .025); // the roll
+  const later = (t, fn) => { const w = t - ac.currentTime - .25; if (ac !== actx || w < .02) fn(); else setTimeout(() => { if (ac.currentTime < t) fn(); }, w * 1000); }; // queued a quarter of a second before it sounds (a slow phone used to choke on the whole piece at once); all at once when it is measured off-line
+  for (let k = 0; k < 14; k += 2) later(t0 + k * .042, () => { for (const q of [k, k + 1]) mTimp(ac, g.master, t0 + q * .042, F(0, -2), .1 + q * .025); }); // the roll
   const hit = t0 + BOOM_AT;
-  for (const s of [0, 4, 7, 12]) { mTone(ac, g.brass, hit, F(s), 'sawtooth', .16, .02, .55, .25); mTone(ac, g.low, hit, F(s, -1), 'sawtooth', .1, .02, .55, .25); }
-  mTimp(ac, g.master, hit, F(0, -2), .7); mNoise(ac, g.send, hit, 2.2, .14, 'highpass', 4500);
+  later(hit - .06, () => { for (const s of [0, 4, 7, 12]) { mTone(ac, g.brass, hit, F(s), 'sawtooth', .16, .02, .55, .25); mTone(ac, g.low, hit, F(s, -1), 'sawtooth', .1, .02, .55, .25); } });
+  later(hit, () => { mTimp(ac, g.master, hit, F(0, -2), .7); mNoise(ac, g.send, hit, 2.2, .14, 'highpass', 4500); });
   // trumpet calls: [start beat, semitone, length in beats], 1 beat = .2 s
   const B = .2, call = [[0, 0, .5], [.5, 4, .5], [1, 7, .5], [1.5, 12, 1.5], [3.2, 5, .5], [3.7, 9, .5], [4.2, 12, .5], [4.7, 17, 1.5], [6.4, 7, .5], [6.9, 11, .5], [7.4, 14, .5], [7.9, 19, 2.6]];
   const c0 = hit + .55;
   for (const [b, s, len] of call) {
-    const t = c0 + b * B, d = len * B * .92;
+    const t = c0 + b * B, d = len * B * .92; later(t, () => {
     mTone(ac, g.brass, t, F(s), 'sawtooth', .2, .02, d, .12); mTone(ac, g.brass, t, F(s) * 1.005, 'sawtooth', .1, .03, d, .12); mTone(ac, g.brass, t, F(s, -1), 'square', .05, .03, d, .12);
-    if (len > 1) { mTimp(ac, g.master, t, F(0, -2), .5); mSnare(ac, g.master, t, .2); }
+    if (len > 1) { mTimp(ac, g.master, t, F(0, -2), .5); mSnare(ac, g.master, t, .2); } });
   }
   // the big finish: full chord, strings sweeping up underneath, bells on top, a last crash
   const fin = c0 + 7.9 * B;
-  for (const s of [0, 4, 7, 12, 16]) mTone(ac, g.brass, fin, F(s), 'sawtooth', .1, .04, 1.4, .8);
-  for (let k = 0; k < 8; k++) mTone(ac, g.send, fin + k * .045, F([0, 4, 7, 12][k % 4], 1 + (k >> 2)), 'triangle', .06, .004, .3, 1.2);
-  for (const s of [12, 16, 19]) mTone(ac, g.send, fin + .1, F(s, 1), 'sine', .07, .003, .4, 1.8);
-  mNoise(ac, g.send, fin, 2.4, .12, 'highpass', 5000); mTimp(ac, g.master, fin, F(0, -2), .6);
+  later(fin - .08, () => { for (const s of [0, 4, 7, 12, 16]) mTone(ac, g.brass, fin, F(s), 'sawtooth', .1, .04, 1.4, .8); });
+  later(fin, () => { mNoise(ac, g.send, fin, 2.4, .12, 'highpass', 5000); mTimp(ac, g.master, fin, F(0, -2), .6); for (let k = 0; k < 8; k++) mTone(ac, g.send, fin + k * .045, F([0, 4, 7, 12][k % 4], 1 + (k >> 2)), 'triangle', .06, .004, .3, 1.2); });
+  later(fin + .1, () => { for (const s of [12, 16, 19]) mTone(ac, g.send, fin + .1, F(s, 1), 'sine', .07, .003, .4, 1.8); });
   return fin + 2.2;
 }
 /* the Bone King's voice. One growling throat (two detuned saws and a sub an octave down, shaken by a fast rattle) is pushed
@@ -5654,8 +5654,9 @@ function update(dt) {
       const k = clamp(G.winT / BOOM_AT, 0, 1); G.puff = k * k; G.shake = Math.max(G.shake, .12 + k * .4);
       if (G.winT >= BOOM_AT) boom();
     } else { // ...then pops, and the castle comes down
-      fort.position.y = Math.max(-3.7, fort.position.y - dt * 2.4); fort.rotation.x = Math.max(-.12, fort.rotation.x - dt * .12);
-      fort.rotation.z = Math.sin(G.winT * 34) * .014 * clamp(1.8 - G.winT, 0, 1);
+      const ft = G.winT - BOOM_AT, fk = clamp(ft / 1.35, 0, 1), fd = Math.pow(fk, 1.7), fb = ft > 1.35 ? Math.exp(-(ft - 1.35) * 7) * Math.abs(Math.sin((ft - 1.35) * 13)) * .16 : 0;
+      fort.position.y = -3.7 * fd + fb; fort.rotation.x = -.12 * fd;
+      fort.rotation.z = Math.sin(ft * 24) * .016 * clamp(1.35 - ft, 0, 1) * Math.min(1, ft * 6);
       // two smaller blasts follow the big one, in the towers either side, so the collapse rolls on instead of ending in one pop
       for (const [k, at, sx] of [[1, .28, -1], [2, .5, 1]]) if ((G.boom2 || 0) < k && G.winT >= BOOM_AT + at) {
         G.boom2 = k; const bx = sx * 3.9, bz = FORT_Z - .2; G.shake = Math.max(G.shake, .7); buzz(30);
@@ -5663,8 +5664,8 @@ function update(dt) {
         burst(bx, 2.6, bz, ['#e2d6c4', '#cfc5b6', '#b9ad9c'], 14, 8, { vy: 9, life: 1.6, g: 18, sz: 3, kind: PK.ROCK }); smoke(bx, 2.4, bz, '#b4a9c0', 2.6, 1.1);
         tone(95 - k * 12, .5, 'sine', .26, .4); noise(.4, .16, 'lowpass', 1800, 200);
       }
-      if (fort.position.y > -3.6 && rand() < .8) burst((rand() - .5) * 11, 1 + rand() * 2, FORT_Z - .5 + rand() * 2, rand() < .6 ? '#e2d6c4' : '#b9ad9c', 2, 5, { vy: 5, life: 1, g: 16, sz: 1.4, kind: PK.ROCK });
-      if (fort.position.y > -3.4 && rand() < .04) smoke((rand() - .5) * 10, .8, FORT_Z - 1 + rand() * 2, '#a89cb4', 2 + rand() * 1.2, 1.1);
+      if (fort.position.y > -3.6 && rand() < dt * 34) burst((rand() - .5) * 11, 1 + rand() * 2, FORT_Z - .5 + rand() * 2, rand() < .6 ? '#e2d6c4' : '#b9ad9c', 2, 5, { vy: 5, life: 1, g: 16, sz: 1.4, kind: PK.ROCK });
+      if (fort.position.y > -3.4 && rand() < dt * 2.4) smoke((rand() - .5) * 10, .8, FORT_Z - 1 + rand() * 2, '#a89cb4', 2 + rand() * 1.2, 1.1);
     }
     if (G.endT <= 0) showResult(true);
   } else if (G.mode === 'lost') { G.endT -= dt; if (G.endT <= 0) showResult(false); }
@@ -5801,7 +5802,9 @@ function render() {
   const ik = G.introT > 0 ? G.introT / INTRO_T : 0, ike = ik * ik * (3 - 2 * ik); // level intro: start on the castle and its horde, sweep back to the gatehouse
   const ck = Math.max(G.camK * G.camK * (3 - 2 * G.camK), ike); // glide in toward the castle for the win
   if (G.mode === 'menu') { camera.position.set(MCAM.x + drift * .9, MCAM.y, MCAM.z); camera.lookAt(MLOOK); } else { // the menu shows the real thing: looking up at the Bone King with his citadel behind
-  camera.position.set(CAM.x + (WCAM.x - CAM.x) * ck + drift + (rand() - .5) * sh, CAM.y + (WCAM.y - CAM.y) * ck + (rand() - .5) * sh, CAM.z + (WCAM.z - CAM.z) * ck + (rand() - .5) * sh);
+  let jx = rand() - .5, jy = rand() - .5, jz = rand() - .5;
+  if (G.mode === 'won' || G.mode === 'resultWin') { const n = performance.now() / 1000; jx = .3 * Math.sin(n * 31) + .12 * Math.sin(n * 47 + 1.3); jy = .26 * Math.sin(n * 37 + 2.1) + .1 * Math.sin(n * 53 + .4); jz = .16 * Math.sin(n * 27 + 4); } // the win is a slow glide: a random jump every frame read as a stutter there, so it sways instead
+  camera.position.set(CAM.x + (WCAM.x - CAM.x) * ck + drift + jx * sh, CAM.y + (WCAM.y - CAM.y) * ck + jy * sh, CAM.z + (WCAM.z - CAM.z) * ck + jz * sh);
   camera.lookAt(_look.lerpVectors(LOOK, WLOOK, ck));
   if (G.grandT > 0) { // a new world: first a slow swoop over his citadel and kingdom, down to the castle, then the usual sweep back
     const gk = Math.min(1, G.grandT / GRAND_T), ge = gk * gk * (3 - 2 * gk), a = (1 - gk) * .6 - .3;
@@ -5815,7 +5818,7 @@ function render() {
     // narrow, so the same 2048 map covers about half the area and its shadows come out about 1.6x sharper
     const fit = G.mode === 'play' && camera.aspect < .72, sW = fit ? 15 : 24, sH = fit ? 25 : 32, scm = sun.shadow.camera;
     if (scm.right !== sW) { scm.left = -sW; scm.right = sW; scm.top = sH; scm.bottom = -sH; scm.updateProjectionMatrix(); G.shadowDirty = true; } }
-  if ((G.frameN = (G.frameN || 0) + 1) % 3 === 0 || G.mode === 'won' || G.shadowDirty) { renderer.shadowMap.needsUpdate = true; G.shadowDirty = false; }
+  if ((G.frameN = (G.frameN || 0) + 1) % 3 === 0 || (G.mode === 'won' ? G.frameN % 2 === 0 : G.shadowDirty)) { renderer.shadowMap.needsUpdate = true; G.shadowDirty = false; }
   spriteMat.uniforms.uSoft.value = foeSpriteMat.uniforms.uSoft.value = POST.on && !G.lowQ && POST.msaa ? 1 : 0; // soft, anti-aliased crowd edges only where there is multisampling to resolve them
   trimUploads();
   if (POST.on && !G.lowQ) { renderer.setRenderTarget(POST.rt); renderer.render(scene, camera); POST.run(); }
@@ -6008,7 +6011,7 @@ function win() {
   tone(180, BOOM_AT + .15, 'sawtooth', .03, 5); // rising whine while the king swells
   const cry = isFinale() ? ['THIS CANNOT BE!', 'no'] : KING_CRIES[(G.level - 1) % KING_CRIES.length]; // a different last word on every level
   victoryFanfare(); kingVoice(cry[1], .82); if (kingActs.Hit_A) kingActs.Hit_A.reset().play(); // his cry, and the band strikes up
-  hideTelegraphs(); resetKingShots(); // no warning marks or landing rings left on the road while his castle falls
+  hideTelegraphs(); resetKingShots(); resetCharges(); // no warning marks or landing rings left on the road while his castle falls
   if (kingHead) { kingHead.getWorldPosition(_kv); popText(cry[0], _kv.x, _kv.y + 1.6, _kv.z + 1, '#ff5ad0'); }
   const n = G.level, keep = clamp(G.nestHp / G.nestMax, 0, 1);
   G.stars = 1 + (keep >= .5 ? 1 : 0) + ((G.clk || 0) <= G.cfg.par ? 1 : 0); // a star for winning, one for keeping half your gatehouse, one for beating the clock
@@ -6303,7 +6306,7 @@ const statsEl = document.createElement('div'); statsEl.style.cssText = 'position
 gameEl.appendChild(statsEl);
 { let taps = []; $('lvlPill').addEventListener('pointerdown', e => { e.stopPropagation(); const t = performance.now(); taps = taps.filter(x => t - x < 700); taps.push(t); if (taps.length >= 3) { taps = []; statsEl.style.display = statsEl.style.display === 'block' ? 'none' : 'block'; statsEl.textContent = '…'; } }); }
 function adaptResolution(raw) {
-  if (raw <= 0 || raw > .25) return; frSum += raw; frSq += raw * raw; frN++; frT += raw; if (frCool > 0) frCool -= raw;
+  if (raw <= 0 || raw > .25) return; if (G.mode === 'won') { frSum = frSq = frN = frT = 0; return; } /* never mid-explosion: rebuilding the buffers is a visible hitch */ frSum += raw; frSq += raw * raw; frN++; frT += raw; if (frCool > 0) frCool -= raw;
   if (frT < 1.2) return;
   const avg = frSum / frN, sd = Math.sqrt(Math.max(0, frSq / frN - avg * avg)); frSum = frSq = frN = frT = 0;
   if (statsEl.style.display === 'block') statsEl.textContent = Math.round(1 / avg) + ' fps · ' + pixelRatio.toFixed(2) + '× of ' + DPR.toFixed(1) + ' · sharpen ' + (POST.on && !G.lowQ ? POST.mat.uniforms.uSharp.value.toFixed(2) : 'off') + (G.lowQ ? ' · low' : '') + (G.capped ? ' · capped' : '');
@@ -6317,13 +6320,15 @@ function adaptResolution(raw) {
   else if (avg < 1 / 58 && pixelRatio < prCap) next = Math.min(prCap, pixelRatio + .25);
   if (next !== pixelRatio) { frCool = next > pixelRatio ? 2.5 : 4; pixelRatio = next; renderer.setPixelRatio(pixelRatio); resize(); }
 }
+const ease01 = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+const winSpeed = w => w < .22 ? .28 + .72 * ease01(w / .22) : w < BOOM_AT ? 1 - .6 * ease01((w - BOOM_AT + .07) / .07) : .4 + .6 * ease01((w - BOOM_AT) / .22);
 function frame(now) {
   requestAnimationFrame(frame);
   const raw = (now - last) / 1000, dt = Math.min(0.05, raw); last = now; adaptResolution(raw);
   if (keys.ArrowLeft) G.lx = clamp(G.lx - dt * 9, -LANE + .6, LANE - .6);
   if (keys.ArrowRight) G.lx = clamp(G.lx + dt * 9, -LANE + .6, LANE - .6);
   const wt = G.winT; // slow motion on the winning hit and again as the king pops
-  if (!G.paused) { update(dt * (G.mode === "won" ? (wt < .12 ? .22 : wt > BOOM_AT && wt < BOOM_AT + .1 ? .3 : 1) : 1)); render(); G.pauseDrawn = false; }
+  if (!G.paused) { update(dt * (G.mode === "won" ? winSpeed(wt) : 1)); render(); G.pauseDrawn = false; }
   else if (!G.pauseDrawn) { render(); G.pauseDrawn = true; } // paused: the scene holds still, so it is drawn once, not every frame
 }
 
