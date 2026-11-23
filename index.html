@@ -27,7 +27,7 @@ svg.ico.sm{width:18px;height:18px}
 /* HUD */
 #hud{position:absolute;inset:0;pointer-events:none}
 #game.overlay #hud{display:none}
-#game.cine #hud>*:not(#floats),#game.cine #audBtns{opacity:0;transition:opacity .5s;pointer-events:none} /* the battle HUD steps aside for the victory glide, so the fallen castle and the skyline behind get the screen */
+#game.cine #hud>*:not(#floats):not(#toast),#game.cine #audBtns{opacity:0;transition:opacity .5s;pointer-events:none} /* the battle HUD steps aside for the victory glide, so the fallen castle and the skyline behind get the screen */
 .pill{background:rgba(10,18,44,.55);color:#fff;border:2px solid rgba(255,255,255,.28);border-radius:999px;padding:4px 12px 4px 7px;font-family:var(--disp);font-size:18px;letter-spacing:.4px;display:inline-flex;align-items:center;gap:6px}
 #lvlPill{padding-left:12px;pointer-events:auto} /* three quick taps show the stats readout */
 #topbar{position:absolute;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 10px);display:flex;justify-content:space-between;align-items:center}
@@ -346,6 +346,8 @@ svg.ico.sm{width:18px;height:18px}
 #giant{border-color:#ffe7a8;box-shadow:0 3px 0 #141b3e,0 0 14px rgba(87,162,255,.28)}
 #giant .in{background:radial-gradient(circle at 35% 20%,#428afa,#152352)}
 #toast b{color:#fff1ce;-webkit-text-stroke-color:#33204e}
+#toast.tip small{font-size:31px;letter-spacing:1.5px;-webkit-text-stroke:7px #33204e;paint-order:stroke fill;text-shadow:0 4px 0 #33204e}
+#toast.tip b{font-size:21px;line-height:1.2;letter-spacing:.4px;-webkit-text-stroke-width:5px;text-shadow:0 3px 0 #33204e;max-width:310px;margin:4px auto 0;text-wrap:balance}
 #crowd{border-color:#ffe6ae;background:linear-gradient(145deg,#1d3972,#1c1e48)}
 #hint{text-shadow:0 3px 0 #10214b,0 0 18px rgba(48,102,255,.75)}
 @media(max-height:690px){.logo{max-width:240px}.tag{font-size:13px}.lvl{margin-top:8px}.worldname{margin-top:4px}}
@@ -473,7 +475,7 @@ svg.ico.sm{width:18px;height:18px}
     <div class="bar" id="nestBar"><i id="nestFill"></i><span id="nestTxt">Your Camp</span></div>
     <div class="badge" id="nestBadge"><svg viewBox="0 0 48 44"><use href="#i-slime"/></svg></div>
     <div id="giant" role="button" aria-label="Send the Paladin"><div class="in"><div class="hero"><svg class="h0"><use class="hu" href="#i-horse"/></svg><svg class="h1"><use class="hu" href="#i-horse"/></svg></div><span id="giantTxt">0%</span></div></div>
-    <div id="hint"><span class="hand"></span>Hold &amp; drag to fire</div>
+    <div id="hint"><span class="hand"></span>Hold to fire, drag to aim</div>
     <div id="crowd"><svg viewBox="0 0 48 44"><use href="#i-slime"/></svg><b id="crowdN">0</b></div>
     <div id="floats"></div>
     <div id="toast"><small id="toastN">WORLD 1</small><b id="toastName"></b></div>
@@ -610,10 +612,10 @@ const upCost = (u, l) => Math.round(u.base * Math.pow(u.grow || 1.55, l));
    weapon, so upgrading early and multiplying after pays off. Cannons need a crew: 3 soldiers go in, 1 cannon comes out. */
 const TIERS = [
   { id: 'recruit', name: 'Recruits', hp: 1 },
-  { id: 'knight', name: 'Knights', gate: 'KNIGHTS', ico: '⚔️', col: '#3d8bff', hp: 3.1, unlock: 2 },
-  { id: 'archer', name: 'Archers', gate: 'ARCHERS', ico: '🏹', col: '#2fc25b', hp: 1.1, unlock: 3, shot: { kind: 0, range: 7, gap: .95, dmg: 1.3, splash: 0, speed: 15, arc: .2 } },
-  { id: 'mage', name: 'Mages', gate: 'MAGES', ico: '🔥', col: '#a34dff', hp: 1.3, unlock: 6, shot: { kind: 1, range: 7.5, gap: 1.55, dmg: 1.4, splash: 1.15, speed: 10, arc: .12 } },
-  { id: 'cannon', name: 'Cannons', gate: 'CANNONS', ico: '💣', col: '#ff7a1a', hp: 5.5, unlock: 9, merge: 3, speed: .72, shot: { kind: 2, range: 8.5, gap: 2.5, dmg: 1.8, splash: 1.9, speed: 9, arc: .32 } },
+  { id: 'knight', name: 'Knights', gate: 'KNIGHTS', tip: 'Turns soldiers into tough knights', ico: '⚔️', col: '#3d8bff', hp: 3.1, unlock: 2 },
+  { id: 'archer', name: 'Archers', gate: 'ARCHERS', tip: 'Turns soldiers into archers who shoot ahead', ico: '🏹', col: '#2fc25b', hp: 1.1, unlock: 3, shot: { kind: 0, range: 7, gap: .95, dmg: 1.3, splash: 0, speed: 15, arc: .2 } },
+  { id: 'mage', name: 'Mages', gate: 'MAGES', tip: 'Turns soldiers into mages who throw fireballs', ico: '🔥', col: '#a34dff', hp: 1.3, unlock: 6, shot: { kind: 1, range: 7.5, gap: 1.55, dmg: 1.4, splash: 1.15, speed: 10, arc: .12 } },
+  { id: 'cannon', name: 'Cannons', gate: 'CANNONS', tip: 'Turns 3 soldiers into 1 cannon', ico: '💣', col: '#ff7a1a', hp: 5.5, unlock: 9, merge: 3, speed: .72, shot: { kind: 2, range: 8.5, gap: 2.5, dmg: 1.8, splash: 1.9, speed: 9, arc: .32 } },
 ];
 const arsenalMul = l => 1 + .2 * l, knightMul = l => 1 + .1 * l;
 // a weapon's health multiplier. Knights grow with the level and with Arsenal, as ranged damage does, so they stay a real pick late on
@@ -2900,7 +2902,7 @@ const BOOM_AT = 0.6, WCAM = new THREE.Vector3(0, 15.5, -7), WLOOK = new THREE.Ve
 const MCAM = new THREE.Vector3(3.8, 8.0, -12.5), MLOOK = new THREE.Vector3(1.1, 16.1, -60); /* v96: the Bone King centre stage between his two front towers, crown just under the Upgrades button (v115: tilted up for the taller crown), face in the open band above Map and Rewards (he sat half-hidden in the bottom corner) */ // a little off-centre, so the citadel's gate skull doesn't sit right on top of the king's head // the menu's hero shot
 function resetCastle() {
   fort.scale.set(1, 1, 1); fort.position.y = 0; fort.rotation.set(0, 0, 0); king.visible = true;
-  G.winT = 0; G.boomed = false; G.fwT = 0; G.camK = 0; G.crownV = null; G.puff = 0;
+  G.winT = 0; G.kingFell = G.smashed = false; G.boomed = false; G.fwT = 0; G.camK = 0; G.crownV = null; G.puff = 0;
   roofs.forEach((r, i) => { r.position.set((i ? 1 : -1) * 4.9, 6.4, 2.2); r.rotation.set(0, 0, 0); r.visible = true; r.userData.v = null; });
   shocks.forEach(s => { s.visible = false; }); boomFlash.visible = false; kingCrown.rotation.set(-.32, 0, 0); kingCrown.visible = true;
 }
@@ -4326,7 +4328,7 @@ const VOICE = {
 };
 // what he shouts as his castle falls (one per level, in turn), his jeers when a spell lands, and the warlords' jeers
 const KING_CRIES = [['ARGHHH!', 'roar'], ['NOOOO!', 'no'], ['MY CASTLE!', 'roar'], ['CURSES!', 'no'], ['NOT AGAIN!', 'no'], ['MY TREASURE!', 'roar'], ['IMPOSSIBLE!', 'no'], ["I'LL BE BACK!", 'laugh']]; // the bubble says the words; the voice stays wordless (roar, wail, laugh), which synthesis does well
-const KING_TAUNTS = [['HA HA!', 'laugh'], ['TOO EASY!', 'scoff'], ['IS THAT ALL?', 'chuckle'], ['HE HE HE!', 'cackle'], ['FEEBLE!', 'growl'], ['BOW TO ME!', 'scoff'], ['HO HO HO!', 'chuckle'], ['MINE!', 'growl']]; // never the same laugh twice in a row
+const KING_TAUNTS = [['HA HA!', 'laugh'], ['TOO EASY!', 'scoff'], ['IS THAT ALL?', 'chuckle'], ['HE HE HE!', 'cackle'], ['FEEBLE!', 'growl'], ['BOW TO ME!', 'scoff'], ['HO HO HO!', 'chuckle'], ['WEAKLINGS!', 'growl']]; // never the same laugh twice in a row
 const WL_TAUNTS = ['PATHETIC!', 'WEAK!', 'KNEEL!', 'IS THAT ALL?', 'CRUSH THEM!'];
 let _shape = null;
 function voiceOn(ac, dest, t0, script, vol = 1) {
@@ -4589,7 +4591,7 @@ function wallX(x, px, z, r) {
   return px < -w.x ? Math.min(x, -w.x - .15 - r) : px > w.x ? Math.max(x, w.x + .15 + r) : clamp(x, -w.x + .15 + r, w.x - .15 - r);
 }
 function setupLevel(n) {
-  G.tauntT = -99; MUS.lift = MUS.push = 0; // (the King's taunt timer runs on G.t, which restarts each level, and the music's key change must not carry over)
+  if (!G.sim) clearToasts(); G.tauntT = -99; MUS.lift = MUS.push = 0; // (the King's taunt timer runs on G.t, which restarts each level, and the music's key change must not carry over)
   gameEl.classList.remove('cine'); G.level = n; G.cfg = levelCfg(n, n === save.level ? save.fails || 0 : 0); if (G.sim && G.cfgPatch) Object.assign(G.cfg, G.cfgPatch); applyWorld(G.worldOverride != null ? G.worldOverride : worldOf(n));
   for (const g of G.gates) disposeGroup(g.mesh);
   G.gates = G.cfg.gates.map((g, i) => ({ ...g, z: g.z - 2.1, bit: 1 << i, cx: g.x, pulse: 0, ready: true, cool: 0, mesh: makeGateMesh({ ...g, z: g.z - 2.1 }) })); // rows sit a little further up, clear of the gatehouse
@@ -4837,7 +4839,7 @@ function kingAttack(dt) {
   if (G.level < 4 || !kingRig) return;
   if (G.mode === 'play' && !G.rage && G.fortHp > 0 && G.fortHp < G.fortMax * .5) {
     G.rage = true; G.kingT = Math.min(G.kingT, 1.2); rageGlow.visible = true; G.shake = Math.max(G.shake, .4); buzz([40, 30, 60]);
-    toastMsg('ENRAGED!', 'The Bone King is furious!');
+    if (!G.cfg.boss) toastMsg('ENRAGED!', 'The Bone King casts his spells faster', { live: true, ok: () => G.mode === 'play' }); // (on a boss level his warlord is about to walk out, and the King holds his fire)
     tone(90, .8, 'sawtooth', .09, .55); tone(60, .9, 'square', .05, .6); noise(.7, .1, 'lowpass', 900, 200);
     if (kingActs.Hit_A) kingActs.Hit_A.reset().play();
   }
@@ -4918,7 +4920,7 @@ function foeSpecials(dt, play) {
     if (t === F_ARCH && beetles.atk[j] > 0) beetles.atk[j] -= dt;
     else if (t === F_BOMB) { near = Math.min(near, fz - beetles.z[j]); if (!G.sim && rand() < dt * 7) burst(beetles.x[j] + .08, 1.28 * beetles.s[j], beetles.z[j], ['#ffe08a', '#ff8a2a'], 1, .9, { vy: 1.6, life: .3, g: 2, sz: 1.1, kind: PK.SPARK }); } // the fuse spits sparks
   }
-  if (play && !G.sim && near < 7 && !save.bombTip) { save.bombTip = 1; persist(); toastMsg('BOMB SKELETONS!', 'Steer around the red glow'); }
+  if (play && !G.sim && near < 7 && !save.bombTip) { toastMsg('BOMB SKELETONS!', 'They explode when touched. Steer around the red glow', { live: true, on: () => { save.bombTip = 1; persist(); } }); }
   if (play && G.cfg.archers && ants.n && (G.volT -= dt) <= 0) { // a volley: every archer in range looses at once (a little ragged)
     G.volT = ARCH_GAP * (G.cfg.boss ? .8 : 1) * (.9 + rand() * .2);
     let shots = 0;
@@ -4930,7 +4932,7 @@ function foeSpecials(dt, play) {
       EA.x0[k] = x0; EA.y0[k] = .6; EA.z0[k] = z0; EA.tx[k] = ants.x[pick] + (rand() - .5) * .6; EA.tz[k] = ants.z[pick] - ants.sp[pick] * T * .85;
       EA.t[k] = -rand() * .3; EA.T[k] = T; EA.h[k] = 1.2 + d * .12; beetles.atk[j] = .35 - EA.t[k]; shots++;
     }
-    if (shots && !G.sim) { sfx('volley', 300, () => boneVolley(shots)); if (!save.archTip) { save.archTip = 1; persist(); toastMsg('BONE ARCHERS!', 'Break through to stop the volleys'); } }
+    if (shots && !G.sim) { sfx('volley', 300, () => boneVolley(shots)); if (!save.archTip) toastMsg('BONE ARCHERS!', 'Break through to the back row to stop them', { live: true, on: () => { save.archTip = 1; persist(); } }); }
   }
   for (let k = 0; k < EA.n; k++) {
     EA.t[k] += dt;
@@ -5244,11 +5246,11 @@ function startWarlord(force) {
     const j = addUnit(beetles, clamp(ox, -LANE + .4, LANE - .4), WL.z + oz, big ? cfg.stagHp * 1.5 : cfg.beetleHp * 2.5, big ? 2.2 : 1, WL.sp, 0, big);
     if (j >= 0) beetles.kind[j] = 0;
   }
-  if (!G.sim && !G.cine) { toastMsg(WL.def.name, (WL.lap ? "Dread " : "") + WL.def.title); kingVoice("roar", .8); tone(70, 1, 'sawtooth', .08, .5); noise(.9, .14, 'lowpass', 700, 120); }
+  if (!G.sim && !G.cine) { toastMsg(WL.def.title.toUpperCase(), wlName(), { live: true, name: true }); if (!save.wardTip && WL.def.move !== 'barrage') toastMsg('CASTLE SHIELDED!', 'Defeat ' + wlName() + ' to break the shield', { ok: () => WL.alive, on: () => { save.wardTip = 1; persist(); } }); kingVoice("roar", .8); tone(70, 1, 'sawtooth', .08, .5); noise(.9, .14, 'lowpass', 700, 120); }
 }
 function hurtWarlord(d) {
   if (!WL.alive) return; WL.hp -= d; WL.flash = 1;
-  if (!WL.rage && WL.hp < WL.max * .5) { WL.rage = true; WL.sp *= 1.3; if (!G.sim) { toastMsg('ENRAGED!', WL.def.name + ' is furious'); tone(80, .7, 'sawtooth', .08, .6); } burst(WL.x, 3, WL.z, [WL.def.col, '#ffffff'], 24, 6, { vy: 6, life: .8, g: 6, sz: 2, kind: PK.SPARK }); }
+  if (!WL.rage && WL.hp < WL.max * .5) { WL.rage = true; WL.sp *= 1.3; if (!G.sim) { toastMsg('ENRAGED!', wlName() + ' strikes faster', { live: true, ok: () => WL.alive }); tone(80, .7, 'sawtooth', .08, .6); } burst(WL.x, 3, WL.z, [WL.def.col, '#ffffff'], 24, 6, { vy: 6, life: .8, g: 6, sz: 2, kind: PK.SPARK }); }
   if (WL.hp <= 0) slayWarlord();
 }
 function slayWarlord() {
@@ -5263,12 +5265,12 @@ function slayWarlord() {
   G.fortFlash = 1; G.shake = Math.max(G.shake, 1.2); buzz([60, 30, 140]);
   burst(WL.x, 2.5, WL.z, [WL.def.col, FOE_FX, '#ffffff', FOE], 70, 10, { vy: 9, life: 1.2, g: 13, sz: 2.4, kind: PK.ROCK });
   burst(WL.x, 3, WL.z, ['#ffc62b', '#ffd84a'], 40, 6, { vy: 10, life: 1.6, g: 16, sz: 2, kind: PK.COIN });
-  splat(WL.x, WL.z, FOE, 4.5); popText('SLAIN!', WL.x, 5.5, WL.z, '#ffd23f');
+  splat(WL.x, WL.z, FOE, 4.5); // (the banner says he is slain; a second label sat on top of the castle's damage number)
   burst(0, 3, FORT_Z + .5, ['#e2d6c4', '#b9ad9c', WL.def.col], 40, 9, { vy: 7, life: 1.2, g: 15, sz: 2.2, kind: PK.ROCK }); // and the castle walls crack
   if (!thenKing && !kingDies) popText('−' + Math.round(G.fortMax * WL_FALL), 0, 4.5, FORT_Z + 1.5, '#ffd23f');
-  if (!G.sim && thenKing) { toastMsg(WL.def.name + ' SLAIN!', '...but the Bone King rises!'); tone(55, 1.4, 'sawtooth', .09, .5); }
-  else if (!G.sim && kingDies) { toastMsg('THE BONE KING FALLS!', 'His castle crumbles with him'); [392, 523, 659, 784, 1046].forEach((f, k) => setTimeout(() => tone(f, .3, 'triangle', .07), k * 120)); }
-  else if (!G.sim) { toastMsg('WARLORD SLAIN!', 'Now finish the castle!'); [392, 523, 659, 784].forEach((f, k) => setTimeout(() => tone(f, .25, 'triangle', .06), k * 110)); tone(60, .9, 'sine', .3, .3); }
+  if (!G.sim && thenKing) { toastMsg(wlName() + ' SLAIN!', 'Now the Bone King himself comes for you', { now: true }); tone(55, 1.4, 'sawtooth', .09, .5); }
+  else if (!G.sim && kingDies) { G.kingFell = true; [392, 523, 659, 784, 1046].forEach((f, k) => setTimeout(() => tone(f, .3, 'triangle', .07), k * 120)); }
+  else if (!G.sim) { toastMsg(wlName() + ' SLAIN!', 'The shield is down. Finish the castle!', { now: true }); [392, 523, 659, 784].forEach((f, k) => setTimeout(() => tone(f, .25, 'triangle', .06), k * 110)); tone(60, .9, 'sine', .3, .3); }
 }
 function beginAttack() {
   const m = WL.def.move; WL.state = 'wind'; WL.st = 0; WL.tg = []; wlAct('strike', .15);
@@ -5428,7 +5430,7 @@ function resetHazards() {
     spots.sort(() => rand() - .5).slice(0, 2 + (G.level % 2)).forEach((f, k) => { const p = { ...f(), dir: rand() < .5 ? -1 : 1 }; HZ.patches.push(p); const m = icePatches[k]; m.position.set(p.x, .03, p.z); m.scale.set(p.rx, p.rz, 1); m.rotation.z = rand() * .4 - .2; m.visible = true; });
   }
 }
-function hzTell() { if (HZ.told || G.sim) return; HZ.told = true; save.hzTold = save.hzTold || {}; if (save.hzTold[HZ.w]) return; save.hzTold[HZ.w] = 1; persist(); toastMsg(HZ_INFO[HZ.w][0], HZ_INFO[HZ.w][1]); }
+function hzTell() { if (HZ.told || G.sim) return; HZ.told = true; save.hzTold = save.hzTold || {}; if (save.hzTold[HZ.w]) return; const w = HZ.w; toastMsg(HZ_INFO[w][0], HZ_INFO[w][1], { live: true, on: () => { save.hzTold[w] = 1; persist(); } }); }
 // a geyser's eruption: everyone inside the ring falls, fire and rock go up, the ground is scorched
 function geyserBlow(g) {
   let lost = 0; for (let i = 0; i < ants.n; i++) { if (ants.hp[i] <= 0) continue; const dx = ants.x[i] - g.x, dz = ants.z[i] - g.z; if (dx * dx + dz * dz < g.R * g.R) { ants.hp[i] = 0; lost++; } }
@@ -5540,7 +5542,7 @@ function warnCharge(side) {
   const L = chLanes[side < 0 ? 0 : 1]; if (L.warn > 0) return;
   L.warn = CH_WARN; L.fade = 0; L.plane.visible = L.mark.visible = true;
   sfx('horn', 300, () => { for (let k = 0; k < 3; k++) smp('bruteWarn', .55, .02, k * .24); }); // three beats on a war drum
-  if (!G.sim && !save.bruteTip) { save.bruteTip = 1; persist(); toastMsg('BRUTE CHARGE!', 'Steer your army onto it'); }
+  if (!G.sim && !save.bruteTip) toastMsg('BRUTE CHARGE!', 'Block it: steer your army into the red lane', { live: true, on: () => { save.bruteTip = 1; persist(); } });
 }
 function spawnCharger(side) {
   const cfg = G.cfg, x = side * CH_X, z = FORT_Z + 1.4;
@@ -5588,7 +5590,7 @@ function update(dt) {
   G.t += dt;
   if (G.cine) cineTick(dt);
   if (G.fin) finTick(dt);
-  if (!G.sim) meleeTick(dt);
+  if (!G.sim) { meleeTick(dt); toastTick(dt); }
   const play = G.mode === 'play';
   if (play && !(G.introT > 0) && !(G.grandT > 0)) G.clk = (G.clk || 0) + dt; // the third-star clock runs only once the flyover is over
 
@@ -5637,7 +5639,7 @@ function update(dt) {
   if (play) {
     G.waveT -= dt;
     if (G.waveT <= 0) {
-      G.waves++; const slow = G.t > G.cfg.surgeAt; if (slow && !G.surged) { G.surged = true; if (!G.sim) toastMsg('HORDE SURGE!', 'Reinforcements pour from the castle'); } // drag a battle out and the horde starts pouring in
+      G.waves++; const slow = G.t > G.cfg.surgeAt; if (slow && !G.surged) { G.surged = true; if (!G.sim) toastMsg('HORDE SURGE!', 'Reinforcements pour from the castle', { live: true }); } // drag a battle out and the horde starts pouring in
       const rage = (G.fortHp < G.fortMax * 0.5 ? 1.35 : 1) * (slow ? 1.4 + Math.min(1, (G.t - G.cfg.surgeAt) / 30) : 1);
       G.waveQ += Math.round(cfg.waveSize * rage); G.waveX = (rand() - .5) * 6; G.waveT = cfg.waveGap;
       if (cfg.stagEvery && G.waves % cfg.stagEvery === 0) spawnBeetle((rand() - .5) * 5, FORT_Z + 1.4, cfg.stagHp, 2.2, cfg.beetleSpeed * .7, 1);
@@ -5787,7 +5789,7 @@ function update(dt) {
   fortMat.emissive.setRGB(G.fortFlash * .14 + G.puff * .7, G.fortFlash * .18 + G.puff * .6, G.fortFlash * .06 + G.puff * .3); // a light green flush when hit, white-hot as he swells
   G.shake = Math.max(0, G.shake - dt * 1.8);
   { const df = G.fortPrev != null ? Math.max(0, G.fortPrev - G.fortHp) : 0; if (play && dt > 0) G.dps += (df / dt - G.dps) * Math.min(1, dt / 2.5); } // how hard you are hitting the castle, smoothed
-  if (WL.ward && G.fortHp < WL.wardHp) { if (play && G.t - WL.wardPop > 1.2) { WL.wardPop = G.t; popText("WARDED", (rand() - .5) * 4, 3.6, FORT_Z + 1.6, "#d070ff"); } G.fortHp = WL.wardHp; } // the warlord's ward: the castle can't be hurt while he lives
+  if (WL.ward && G.fortHp < WL.wardHp) { if (play && G.t - WL.wardPop > 4.5) { WL.wardPop = G.t; popText("SHIELDED", (rand() - .5) * 4, 3.6, FORT_Z + 1.6, "#d070ff"); } G.fortHp = WL.wardHp; } // the warlord's ward: the castle can't be hurt while he lives
   G.fortPrev = G.fortHp;
   if (play && G.fortHp <= 0) win();
   else if (play && G.nestHp <= 0) lose();
@@ -5847,7 +5849,7 @@ function update(dt) {
   king.position.y = 1.15 + G.puff * 1.8 - (G.kingSink || 0); // he rises up out of the castle as he swells, instead of bulging through the wall
   const ks = G.kingS || 8; king.scale.set(ks * (1 + wob + idle + pf), ks * (1 - wob - idle + pf), ks * (1 + wob + idle + pf));
 
-  if (G.hintT > 0) G.hintT -= dt;
+  if (G.hintT > 0 && !(G.introT > 0) && !(G.grandT > 0)) G.hintT -= dt;
 }
 
 /* ---------------- render ---------------- */
@@ -5974,7 +5976,7 @@ function render() {
   // HUD
 
   if (G.cfg && G.cfg.par) { const left = Math.max(0, G.cfg.par - (G.clk || 0)), pp = $('parPill'); setHud('parTxt', Math.floor(left / 60) + ':' + String(Math.floor(left % 60)).padStart(2, '0')); pp.classList.toggle('miss', left <= 0); pp.classList.toggle('hot', left > 0 && left < 8);
-    if (!save.parTip && !G.sim && G.mode === 'play' && save.level >= 2 && !(G.introT > 0) && !(G.grandT > 0) && G.t > 1.5 && left > 6) { save.parTip = 1; persist(); toastMsg('3RD STAR!', 'Win before the clock runs out'); pp.classList.add('tipping'); setTimeout(() => pp.classList.remove('tipping'), 3000); } /* once, on your second level: what the clock is for, with the clock itself pulsing */
+    if (!save.parTip && !G.sim && G.mode === 'play' && save.level >= 2 && !(G.introT > 0) && !(G.grandT > 0) && left > 10 && !TQ.length && !(G.toastT > 0)) { toastMsg('3RD STAR!', 'Win before the clock runs out', { ok: () => G.mode === 'play' && G.cfg.par - (G.clk || 0) > 6, on: () => { save.parTip = 1; persist(); pp.classList.add('tipping'); setTimeout(() => pp.classList.remove('tipping'), 3000); } }); } /* once, on your second level: what the clock is for, with the clock itself pulsing */
   } // the third-star clock
   setHud('coinN', save.coins); setHud('menuCoinN', G.walletShown != null ? G.walletShown : save.coins);
   // crowd counter rides above the front of your army, like a banner
@@ -5996,13 +5998,13 @@ function render() {
   const fp = clamp(G.fortHp / G.fortMax, 0, 1), np = clamp(G.nestHp / G.nestMax, 0, 1);
   const wlBar = WL.alive && WL.state !== 'enter'; // while a warlord fights, the top bar is his
   if (_hud.wlBar !== wlBar) { _hud.wlBar = wlBar; $('fortBar').classList.toggle('wl', wlBar); }
-  if (wlBar) { setCss('fortFill', 'transform', `scaleX(${clamp(WL.hp / WL.max, 0, 1).toFixed(3)})`); setHud('fortTxt', WL.def.name + ' · ' + Math.max(0, Math.ceil(WL.hp))); }
+  if (wlBar) { setCss('fortFill', 'transform', `scaleX(${clamp(WL.hp / WL.max, 0, 1).toFixed(3)})`); setHud('fortTxt', wlName() + ' · ' + Math.max(0, Math.ceil(WL.hp))); }
   else { setCss('fortFill', 'transform', `scaleX(${fp.toFixed(3)})`); setHud('fortTxt', 'Bone King · ' + Math.max(0, Math.ceil(G.fortHp))); }
   setCss('nestFill', 'transform', `scaleX(${np.toFixed(3)})`); setHud('nestTxt', 'Your Camp · ' + Math.max(0, Math.ceil(G.nestHp)));
   const gc = sendCharge(), pct = Math.round(100 * G.charge / gc);
   const gEl = $('giant'); if (_hud.gp !== pct) { _hud.gp = pct; gEl.style.setProperty('--p', pct); } gEl.classList.toggle('ready', pct >= 100 && G.mode === 'play'); { const ch = !palReady(); if (_hud.ch !== ch) { _hud.ch = ch; gEl.classList.toggle('champ', ch); for (const u of gEl.querySelectorAll('.hu')) u.setAttribute('href', ch ? '#i-champ' : '#i-horse'); gEl.setAttribute('aria-label', ch ? 'Send the Champion' : 'Send the Paladin'); } }
   setHud('giantTxt', pct >= 100 ? 'SEND!' : pct + '%');
-  $('hint').classList.toggle('on', G.mode === 'play' && G.hintT > 0);
+  $('hint').classList.toggle('on', G.mode === 'play' && G.hintT > 0 && !(G.introT > 0) && !(G.grandT > 0));
 }
 
 /* the finishing pass. The scene is drawn into an off-screen image (multisampled), then three things happen on the way to
@@ -6149,29 +6151,53 @@ function showMenu() {
   setupLevel(save.level); G.mode = 'menu'; renderUpgrades(); if (crowdReady && save.level >= 4) loadPaladinArt();
   $('menu').classList.add('on'); $('result').classList.remove('on'); gameEl.classList.add('overlay'); gameEl.classList.remove('lostwash');
 }
-function toastMsg(a, b) { $("toastN").textContent = a; $("toastName").textContent = b; $("toast").classList.add("on"); clearTimeout(G.toastTo); G.toastTo = setTimeout(() => $("toast").classList.remove("on"), 2400); }
+// the banner. One message at a time: the rest wait their turn (a level's opening tips used to overwrite each other), tips wait for
+// the camera flyover to end, and nothing runs its time out behind a story card. o: now = show at once (over whatever is up);
+// live = something happening this moment, so it jumps the queue; fly = may show during the flyover; name = small line over a
+// big name (a world, a warlord) instead of a heading over a sentence; on = run when it really shows; ok = still true?
+const TQ = [];
+function toastMsg(a, b, o = {}) {
+  const q = { a, b, ...o }; if (o.now) return showToast(q);
+  if (TQ.some(t => t.a === a && t.b === b)) return;
+  if (o.live) { TQ.unshift(q); if (G.toastT > .4 && G.toastT < 1.9) { G.toastT = .4; $('toast').classList.remove('on'); } } else TQ.push(q);
+}
+function showToast(q) {
+  $('toastN').textContent = q.a; $('toastName').textContent = q.b; $('toast').classList.toggle('tip', !q.name); $('toast').classList.add('on'); G.toastT = 3;
+  if (q.on) q.on(); if (q.snd) smp('tip', .4, 0);
+}
+function clearToasts() { TQ.length = 0; G.toastT = 0; $('toast').classList.remove('on'); }
+function toastTick(dt) {
+  if (G.toastT > 0) { const was = G.toastT; G.toastT -= dt; if (was > .4 && G.toastT <= .4) $('toast').classList.remove('on'); if (G.toastT > 0) return; }
+  while (TQ.length && !(G.toastT > 0)) {
+    if ((G.introT > 0 || G.grandT > 0) && !TQ[0].fly) return;
+    const q = TQ.shift(); if (!q.ok || q.ok()) showToast(q);
+  }
+}
+// a warlord's name: on later laps they return as "Dread"
+const wlName = (d = WL.def, lap = WL.lap) => (lap && d.move !== 'barrage' ? 'DREAD ' : '') + d.name;
 function startPlay() {
   audio(); $('menu').classList.remove('on'); gameEl.classList.remove('overlay');
   setupLevel(save.level); G.mode = 'play'; G.hintT = save.level <= 2 ? 6 : 0; G.introT = G.sim ? 0 : INTRO_T; G.grandT = !G.sim && (save.level - 1) % WORLD_LEN === 0 ? GRAND_T : 0; G.waveT += G.introT + G.grandT; G.kingT += G.introT + G.grandT; G.chT += G.introT + G.grandT; /* (the first brute charge came during the opening swoop) */
   maybeStory();
   $('lvlPill').textContent = (G.cfg.boss ? 'Boss · ' : 'Level ') + save.level; $('lvlPill').classList.toggle('boss', G.cfg.boss);
-  const toast = toastMsg;
-  if (G.worldOverride != null) toast('PREVIEW', WORLDS[worldIdx].name);
-  else if (G.cfg.saws.length && !save.sawTip) { save.sawTip = 1; persist(); toast('BONE SAW!', 'Steer your army around it'); smp('tip', .4, 0); } // new hazards get a heads-up the first time
-  else if (G.cfg.gates.some(g => g.k < 1) && !save.redTip) { save.redTip = 1; persist(); toast('RED GATES', 'They cost soldiers. Steer around them'); smp('tip', .4, 0); }
-  else if (G.cfg.boss) { const wd = WARLORDS[worldOf(save.level) % WARLORDS.length]; toast('BOSS LEVEL', wd.name + ' ' + wd.title + ' waits behind the gates'); smp('tip', .4, 0); }
-  else if (TIERS.some(t => t.unlock === save.level)) { const t = TIERS.find(q => q.unlock === save.level); toast('NEW WEAPON', t.ico + ' ' + t.name + '!'); smp('tip', .4, 0); }
-  else if ((save.level - 1) % WORLD_LEN === 0) toast('WORLD ' + (Math.floor((save.level - 1) / WORLD_LEN) + 1), WORLDS[worldIdx].name);
+  if (G.worldOverride != null) toastMsg('PREVIEW', WORLDS[worldIdx].name, { name: true, fly: true });
+  else if ((save.level - 1) % WORLD_LEN === 0) toastMsg('WORLD ' + (Math.floor((save.level - 1) / WORLD_LEN) + 1), WORLDS[worldIdx].name, { name: true, fly: true });
+  if (G.cfg.boss && !$('story').classList.contains('on')) { const wd = WARLORDS[worldOf(save.level) % WARLORDS.length]; toastMsg('BOSS LEVEL', wlName(wd, Math.floor((save.level - 1) / (WORLD_LEN * WORLDS.length))) + ' waits inside the castle', { snd: 1 }); } // (his story card says it the first time)
+  const t = TIERS.find(q => q.unlock === save.level); if (t) toastMsg('NEW GATE: ' + t.gate, t.tip, { snd: 1 });
+  if (G.cfg.gates.some(g => g.k < 1) && !save.redTip) toastMsg('RED GATES!', 'They cost soldiers. Steer around them', { snd: 1, on: () => { save.redTip = 1; persist(); } }); // new hazards get a heads-up the first time
+  if (G.cfg.saws.length && !save.sawTip) toastMsg('BONE SAW!', 'Steer your army around it', { snd: 1, on: () => { save.sawTip = 1; persist(); } });
 }
+// where the Bone King's speech goes: over his head on the walls, or over the King on the road once he has leapt down
+const kingSays = (txt, col) => { if (WL.b && WL.def && WL.def.move === 'barrage' && (WL.on || G.kingFell)) popText(txt, WL.x, 5.2, WL.z, col); else if (kingHead) { kingHead.getWorldPosition(_kv); popText(txt, _kv.x, _kv.y + 1.6, _kv.z + 1, col); } };
 function win() {
-  $("toast").classList.remove("on"); for (const f of floats) f.t = Math.min(f.t, .2); // clear banners and numbers: the explosion gets the stage
+  clearToasts(); if (G.kingFell) toastMsg('THE BONE KING FALLS!', 'His castle crumbles with him', { now: true }); for (const f of floats) f.t = Math.min(f.t, .2); // clear banners and numbers: the explosion gets the stage
   G.mode = 'won'; G.endT = 2.9; G.winT = 0; G.firing = false; G.shake = 0.5; buzz(40); gameEl.classList.add('cine');
   for (let j = 0; j < beetles.n; j++) { if (j < 60) { burst(beetles.x[j], .4, beetles.z[j], FOE_FX, 3); splat(beetles.x[j], beetles.z[j], FOE, .9); } beetles.hp[j] = 0; }
   tone(180, BOOM_AT + .15, 'sawtooth', .03, 5); // rising whine while the king swells
   const cry = isFinale() ? ['THIS CANNOT BE!', 'no'] : KING_CRIES[(G.level - 1) % KING_CRIES.length]; // a different last word on every level
   victoryFanfare(); kingVoice(cry[1], .82); if (kingActs.Hit_A) kingActs.Hit_A.reset().play(); // his cry, and the band strikes up
   hideTelegraphs(); resetKingShots(); resetCharges(); // no warning marks or landing rings left on the road while his castle falls
-  if (kingHead) { kingHead.getWorldPosition(_kv); popText(cry[0], _kv.x, _kv.y + 1.6, _kv.z + 1, '#ff5ad0'); }
+  kingSays(cry[0], '#ff5ad0');
   const n = G.level, keep = clamp(G.nestHp / G.nestMax, 0, 1);
   G.stars = 1 + (keep >= .5 ? 1 : 0) + ((G.clk || 0) <= G.cfg.par ? 1 : 0); // a star for winning, one for keeping half your gatehouse, one for beating the clock
   if (!G.sim) { save.stars = save.stars || {}; save.stars[n] = Math.max(save.stars[n] || 0, G.stars); }
@@ -6199,15 +6225,16 @@ function firework() {
   sfx('fw', 90, () => { noise(.16, .07, 'highpass', 2500); tone(700 + rand() * 700, .3, 'triangle', .03, .5); });
 }
 function lose() {
-  G.mode = 'lost'; G.endT = 1.3; G.firing = false; G.shake = 0.6; buzz(80);
+  clearToasts(); G.smashed = WL.state === 'smash' && WL.alive; G.mode = 'lost'; G.endT = 1.3; G.firing = false; G.shake = 0.6; buzz(80);
   defeatSting(); if (actx) MUS.holdUntil = actx.currentTime + 3.4; // the band stops dead for the sting, then the lament creeps in under the result screen
-  setTimeout(() => { if (G.mode === 'lost' || G.mode === 'resultLose') { const tn = ['laugh', 'cackle', 'scoff'][(G.level + (save.fails || 0)) % 3]; kingVoice(tn, .9); if (kingHead && G.mode === 'lost') { kingHead.getWorldPosition(_kv); popText(['HA HA HA!', 'HE HE HE!', 'TOO EASY!'][(G.level + (save.fails || 0)) % 3], _kv.x, _kv.y + 1.6, _kv.z + 1, '#e070ff'); } } }, 950); // and he gloats over your fallen camp
+  setTimeout(() => { if (G.mode === 'lost' || G.mode === 'resultLose') { const tn = ['laugh', 'cackle', 'scoff'][(G.level + (save.fails || 0)) % 3]; kingVoice(tn, .9); if (G.mode === 'lost') kingSays(['HA HA HA!', 'HE HE HE!', 'TOO EASY!'][(G.level + (save.fails || 0)) % 3], '#e070ff'); } }, 950); // and he gloats over your fallen camp
   G.reward = Math.round(5 + 3 * G.level + 25 * (1 - clamp(G.fortHp / G.fortMax, 0, 1)));
   if (!G.sim) { mission("fired", G.fired - (G.firedSent || 0)); mission("kills", (G.kills || 0) - (G.killsSent || 0)); }
   save.fails = (save.fails || 0) + 1; persist();
 }
 const WIN_LINES = ["the Bone King's castle has fallen", "his walls came tumbling down", "another castle lies in ruins", "the horde is routed"], LOSE_LINES = ["the horde broke through", "your camp was overrun", "the skeletons swarmed your walls"];
-const LOSE_TIPS = ["Steer through the biggest × gates", "Grab the weapon gates early", "Tap SEND as soon as the meter fills", "Swing your army clear of the red marks", "Hit the +N gates while they are lit"];
+// tips for a lost level: only about things that were in it
+const loseTips = () => { const c = G.cfg, n = G.level, g = c.gates; return ['Steer through the biggest × gates', 'Tap SEND as soon as the meter fills', g.some(q => q.arm != null) && 'Weapon gates make every soldier stronger', g.some(q => q.add) && 'Hit the +N gates while they are lit', g.some(q => q.k < 1) && 'Steer around the red gates', n >= 4 && 'Keep your army out of the red circles', c.charge && 'Block charging brutes: steer into the red lane', c.saws.length && 'Steer around the bone saw', c.bombs && 'Steer around the bomb skeletons'].filter(Boolean); };
 function showResult(won) {
   G.mode = won ? 'resultWin' : 'resultLose'; G.resBusy = false; // a fresh card: its buttons work again
   $('resTitle').textContent = won ? 'VICTORY!' : 'OVERRUN!';
@@ -6227,16 +6254,16 @@ function showResult(won) {
   const left = Math.round(100 * clamp(G.fortHp / G.fortMax, 0, 1)), close = !won && (left <= 25 || (WL.on && WL.alive && WL.hp / WL.max <= .25));
   if (close) { $('resTitle').textContent = 'SO CLOSE!'; $('resTitle').style.color = 'var(--gold)'; }
   $('result').classList.toggle('win', won);
-  $('resSub').textContent = won ? (isFinale() ? `Level ${G.level} · the Bone King has fallen!` : G.cfg.boss ? `Level ${G.level} · ${WL.done && WL.def ? WL.def.name + ' slain' : 'Boss defeated'} · double coins!` : `Level ${G.level} · ${WIN_LINES[G.level % WIN_LINES.length]}`)
-    : WL.on && WL.alive ? `Level ${G.level} · ${WL.def.name} smashed your camp` : close ? `Level ${G.level} · so close, the castle nearly fell!` : `Level ${G.level} · ${LOSE_LINES[(G.level + (save.fails || 0)) % LOSE_LINES.length]}`;
-  $('resHintIco').setAttribute('href', '#i-star'); { const p = G.cfg.par; let tip = won && isFinale() ? 'New Game+ · the horde returns stronger' : won && G.stars < 3 ? ((G.clk || 0) > p ? `Beat ${Math.floor(p / 60)}:${String(p % 60).padStart(2, '0')} for 3 stars` : 'Keep half your camp for 3 stars') : '';
+  $('resSub').textContent = won ? (isFinale() ? `Level ${G.level} · the Bone King has fallen!` : G.cfg.boss ? `Level ${G.level} · ${WL.done && WL.def ? wlName() + ' slain' : 'Boss defeated'} · double coins!` : `Level ${G.level} · ${WIN_LINES[G.level % WIN_LINES.length]}`)
+    : G.smashed ? `Level ${G.level} · ${wlName()} smashed your camp` : close ? `Level ${G.level} · so close, the castle nearly fell!` : `Level ${G.level} · ${LOSE_LINES[(G.level + (save.fails || 0)) % LOSE_LINES.length]}`;
+  $('resHintIco').setAttribute('href', '#i-star'); { const p = G.cfg.par, par = `${Math.floor(p / 60)}:${String(p % 60).padStart(2, '0')}`; let tip = won && isFinale() ? 'New Game+ · the horde returns stronger' : won && G.stars < 3 ? (late => late && G.stars < 2 ? `Missed: win in ${par}, keep half your camp` : late ? `Missed star: win within ${par}` : 'Missed star: keep half your camp')((G.clk || 0) > p) : '';
     if (!won) { // the cheapest upgrade they can buy with what they have plus this round's coins, or a tactic if nothing is affordable
       const have = save.coins + (G.reward || 0), lv = u => save.up[u.id] || 0;
       const can = UPG.filter(u => !(u.unlock && save.level < u.unlock) && !(u.max && lv(u) >= u.max) && have >= upCost(u, lv(u))).sort((a, b) => upCost(a, lv(a)) - upCost(b, lv(b)));
-      tip = can.length ? 'Upgrade ready: ' + can[0].name : LOSE_TIPS[G.level % LOSE_TIPS.length]; $('resHintIco').setAttribute('href', can.length ? '#' + can[0].ico : '#i-bolt'); /* the upgrade's own icon */
+      tip = can.length ? 'Upgrade ready: ' + can[0].name : (q => q[(G.level + (save.fails || 0)) % q.length])(loseTips()); $('resHintIco').setAttribute('href', can.length ? '#' + can[0].ico : '#i-bolt'); /* the upgrade's own icon */
       const wl = WL.on && WL.alive, done = wl ? 1 - WL.hp / WL.max : 1 - left / 100;
       $('resProgFill').style.width = Math.round(clamp(done, 0, 1) * 100) + '%';
-      $('resProgTxt').textContent = wl ? WL.def.name + ' had ' + Math.max(1, Math.round(100 * WL.hp / WL.max)) + '% left' : left >= 100 ? 'His castle stands untouched' : 'You knocked down ' + (100 - left) + '% of his castle'; }
+      $('resProgTxt').textContent = wl ? wlName() + ' had ' + Math.max(1, Math.round(100 * WL.hp / WL.max)) + '% left' : left >= 100 ? 'His castle stands untouched' : 'You knocked down ' + (100 - left) + '% of his castle'; }
     $('result').classList.toggle('lose', !won); $('resHintTxt').textContent = tip; $('resHint').classList.toggle('on', !!tip); } // the star they missed, or what to do next, on its own pill
   $('resN').textContent = '+0';
   $('x3Btn').style.display = won ? '' : 'none'; G.adMul = G.cfg.boss ? 3 : 2; $('x3Btn').textContent = '▶ ×' + G.adMul + ' coins · watch ad'; // double on normal levels, triple on a boss
@@ -6336,9 +6363,15 @@ window.addEventListener('keydown', e => { if (e.key === 'p' || e.key === 'P' || 
 const WORLD_COL = ['#5cc84a', '#e8b860', '#9fd8f5', '#ff7a2a'];
 const STORY = [
   'The Bone King\'s butcher guards the Meadow Road. He has never lost a fight, or skipped a meal.',
-  'Buried for a thousand years, the Sand Pharaoh woke when the Bone King called. His scarabs answer to no one else.',
+  'Buried for a thousand years, the Sand Pharaoh woke when the Bone King called. He raises skeletons from the sand to fight for him.',
   'The Frost Jarl froze his own kingdom to serve the Bone King. His spears never miss twice.',
   'Forged in the volcano\'s heart, Magmaw guards the last road to the throne. Behind him, the Bone King himself is waiting.',
+];
+const STORY_DREAD = [ // on later laps: you have beaten them before
+  'You beat the butcher once. The Bone King has stitched him back together, and he is hungry.',
+  'The sand gave the Pharaoh back, and more of his skeletons claw up with him this time.',
+  'The Frost Jarl has thawed out, and he remembers you.',
+  'Melted down and forged again, Magmaw still guards the last road to the throne. Behind him, the Bone King is waiting.',
 ];
 function renderMap() {
   const lap = Math.floor((save.level - 1) / (WORLD_LEN * WORLDS.length)), inLap = (save.level - 1) % (WORLD_LEN * WORLDS.length) + 1, tro = { ...(save.trophies || {}) };
@@ -6362,8 +6395,8 @@ function maybeStory() {
   if (G.sim || !G.cfg.boss) return;
   const w = worldOf(G.level) % WORLDS.length, wl = WARLORDS[w]; save.storySeen = save.storySeen || {};
   if (save.storySeen[G.level] && !G.practice) return;
-  $('storyEmb').setAttribute('href', '#t-' + w); $('storyName').textContent = wl.name; $('storyTitle').textContent = (Math.floor((G.level - 1) / 20) ? 'Dread ' : '') + wl.title;
-  $('storyTxt').textContent = STORY[w]; G.paused = true; $('story').classList.add('on'); gameEl.classList.add('overlay');
+  $('storyEmb').setAttribute('href', '#t-' + w); const lap = Math.floor((G.level - 1) / (WORLD_LEN * WORLDS.length)); $('storyName').textContent = wlName(wl, lap); $('storyTitle').textContent = wl.title;
+  $('storyTxt').textContent = (lap ? STORY_DREAD : STORY)[w]; G.paused = true; $('story').classList.add('on'); gameEl.classList.add('overlay');
 }
 // the Paladin's arrival, on the story card: his horse for an emblem, a fanfare, and the Stable opens
 function showPalUnlock() {
@@ -6454,7 +6487,7 @@ window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') 
 async function perfTest() {
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 8px);z-index:99;padding:10px 12px;border-radius:12px;background:rgba(8,12,30,.9);color:#fff;font:600 13px/1.45 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), rows = [];
-  box.textContent = 'Speed test v130: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
+  box.textContent = 'Speed test v131: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); box.textContent = 'Loading...'; G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 19; const on0 = MUS.on;
   save.up = { ...save.up, rate: 10, twin: 4, arsenal: 5 }; await Promise.race([loadLm('ember'), wait(8000)]); await wait(800);
   const pr = k => { pixelRatio = k; renderer.setPixelRatio(k); resize(); };
@@ -6475,7 +6508,7 @@ async function perfTest() {
   G.nestHp = G.nestMax = 30;
   await run('castle blows up', 4500, () => { G.fortMax = 100; G.fortHp = 0; });
   await wait(1500); save.level = 6; await run('new world', 5000, () => { $('result').classList.remove('on'); startPlay(); });
-  box.textContent = 'Speed test v130: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
+  box.textContent = 'Speed test v131: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
 }
 let last = performance.now();
 // keeps the frame rate smooth: renders at fewer pixels when a phone struggles, and at more (up to the screen's own sharpness) when it has headroom
@@ -6663,7 +6696,7 @@ function boot() {
 // saved: the real save comes back when you return to the menu
 async function practiceBoss(w) {
   if (w == null) { const q = new URLSearchParams(location.search); if (!q.has('boss')) return; w = parseInt(q.get('boss'), 10) || Math.ceil(save.level / WORLD_LEN); }
-  { const k = LM_SETS[worldOf(clamp(w, 1, 99) * WORLD_LEN)]; if (!LMART[k]) { if (G.lmWaiting) return; G.lmWaiting = true; toastMsg('LOADING', 'One moment'); await Promise.race([loadLm(k), new Promise(r => setTimeout(r, 6000))]); G.lmWaiting = false; $('toast').classList.remove('on'); if (G.mode !== 'menu') return; } } // that world's landmarks come first (it used to start without them and keep the old shapes all fight)
+  { const k = LM_SETS[worldOf(clamp(w, 1, 99) * WORLD_LEN)]; if (!LMART[k]) { if (G.lmWaiting) return; G.lmWaiting = true; toastMsg('LOADING', 'One moment', { now: true }); await Promise.race([loadLm(k), new Promise(r => setTimeout(r, 6000))]); G.lmWaiting = false; clearToasts(); if (G.mode !== 'menu') return; } } // that world's landmarks come first (it used to start without them and keep the old shapes all fight)
   if (!G.practice) G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = clamp(w, 1, 99) * WORLD_LEN; save.fails = 0; $('bossRow').hidden = true; startPlay();
 }
 const fontsReady = document.fonts && document.fonts.load
