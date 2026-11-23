@@ -901,6 +901,25 @@ function kingFlagTex() { // a swallow-tailed purple flag: gold hem, white skull
     x.fillStyle = '#f6eedd'; x.beginPath(); x.ellipse(58, 42, 22, 20, 0, 0, 7); x.fill(); x.fillRect(46, 52, 24, 18); x.fillStyle = '#3a1470'; for (const e of [-1, 1]) { x.beginPath(); x.ellipse(58 + e * 9, 44, 6, 7, 0, 0, 7); x.fill(); } x.fillRect(56, 55, 4, 6); for (const t of [52, 58, 64]) x.fillRect(t - 1, 62, 2, 8);
   }));
 }
+let _flg = null;
+function torchFlameGeo() { // one tall tongue and four low ones licking round it: white-hot at the foot, gold, then orange at the tips
+  if (_flg) return _flg;
+  const prof = []; for (let i = 0; i <= 10; i++) { const t = i / 10; prof.push(new THREE.Vector2(Math.pow(Math.sin(Math.PI * Math.pow(t, .62)), .9) * (1 - .25 * t) + .002, t)); }
+  const pos = [], col = [], idx = [], c = new THREE.Color(), A = new THREE.Color('#fff0a8').convertSRGBToLinear(), B = new THREE.Color('#ffb42e').convertSRGBToLinear(), D = new THREE.Color('#ff5a0c').convertSRGBToLinear();
+  for (const [a, off, r, h, lean] of [[0, 0, .2, .86, .05], [.5, .13, .13, .56, .10], [2.1, .13, .12, .44, .11], [3.6, .13, .13, .62, .09], [5.1, .13, .11, .40, .12]]) {
+    const g = new THREE.LatheGeometry(prof, 9), P = g.attributes.position, n0 = pos.length / 3, sx = Math.sin(a), sz = Math.cos(a);
+    for (let i = 0; i < P.count; i++) { const t = P.getY(i), w = off + lean * Math.sin(t * 2.6) + (t > .5 ? .04 * Math.sin((t - .5) * 6) : 0); pos.push(P.getX(i) * r + sx * w, t * h, P.getZ(i) * r + sz * w); const y = t * h / .8; if (y < .38) c.copy(A).lerp(B, y / .38); else c.copy(B).lerp(D, Math.min(1, (y - .38) / .5)); if (off) c.lerp(D, t * .5); col.push(c.r, c.g, c.b); }
+    for (let i = 0; i < g.index.count; i++) idx.push(n0 + g.index.getX(i));
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); return (_flg = g);
+}
+const FLAME_AT = []; // the torches of the world being built: [x, y, z, size]
+function layFlames() {
+  if (!FLAME_AT.length) return;
+  const at = FLAME_AT.splice(0), im = new THREE.InstancedMesh(torchFlameGeo(), new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false, side: THREE.DoubleSide }), at.length); im.userData.dyn = im.userData.keepGeo = true; im.frustumCulled = false; world.add(im);
+  const set = t => { at.forEach(([x, y, z, k], i) => { const f = 1 + .12 * Math.sin(t * 9 + i * 2.1) + .07 * Math.sin(t * 17 + i * 5); wq.setFromEuler(we.set(0, t * 1.6 + i * 1.7, 0)); wm.compose(wv.set(x, y, z), wq, ws.set(k * (2 - f), k * f, k * (2 - f))); im.setMatrixAt(i, wm); }); im.instanceMatrix.needsUpdate = true; };
+  set(0); worldAnim.push(set);
+}
 function put(geo, list, o = {}) {
   if (!list.length) { geo.dispose(); return null; }
   const im = new THREE.InstancedMesh(geo, o.mat || softMat(), list.length); im.castShadow = o.shadow !== false; im.receiveShadow = true;
@@ -946,10 +965,10 @@ async function loadModels() {
    k: what the world code multiplies that kind by (HEX_S, HOME_K for houses); sc: size against the sculpt; tint: its own colour. */
 function propModels() {
   const N = BART.nature, T = BART.town, TR = BART.trees; if (!N || !T) return;
-  const own = n => TR && TR.geo[n] ? TR : N; // the trees, bushes, palms and grass have a set of their own (v133); without it the first ones stand in
+  const own = n => TR && TR.geo[n] ? TR : N.geo[n] ? N : null; // the trees, bushes, palms and grass have a set of their own (v133); without it the code-built shapes stand in
   const mats = new Map(), matOf = (A, tint, em) => { const key = A.mat.uuid + (tint || '') + (em || ''); if (!mats.has(key)) { const m = tint ? A.mat.clone() : A.mat; if (tint) m.color.copy(C(tint)); if (em) { m.emissive = C(em); m.emissiveIntensity = .35; } mats.set(key, m); } return mats.get(key); };
   const part = (A, node, sc, o = {}) => { const g = A.geo[node].clone().scale(sc, sc, sc); g.computeBoundingBox(); return { geo: g, mat: matOf(A, o.tint, o.em), name: o.name || node, pivot: o.pivot || new THREE.Vector3() }; };
-  const reg = (key, A, node, sc = 1, o) => { const p = part(A, node, sc, o); MODELS[key] = { parts: [p], h: p.geo.boundingBox.max.y, art: true }; };
+  const reg = (key, A, node, sc = 1, o) => { if (!A || !A.geo[node]) return; const p = part(A, node, sc, o); MODELS[key] = { parts: [p], h: p.geo.boundingBox.max.y, art: true }; };
   const HX = 1 / 1.84, HM = 1 / 2.66, CP = 1 / 2.3;
   // houses and their like
   for (const [n, node, k, sc] of [['building_home_A_blue', 'cottage', HM, 1], ['building_home_B_blue', 'house', HM, 1], ['building_tavern_blue', 'tavern', HM, 1], ['building_church_blue', 'church', HM, 1], ['building_windmill_blue', 'mill', HM, 1], ['building_well_blue', 'well', HM, 1],
@@ -1159,10 +1178,12 @@ function hexWorld(t) {
   const by0 = tTop + .05, by1 = tTop + H(3), bz0 = CHASM_Z0 + .6, bz1 = CHASM_Z1 - 1.4, blen = Math.hypot(bz0 - bz1, by1 - by0);
   const br = new THREE.Group(); br.position.set(0, (by0 + by1) / 2, (bz0 + bz1) / 2); br.rotation.x = Math.atan2(by1 - by0, bz0 - bz1); world.add(br);
   const bStone = std('#6a6278', .85), bTrim = std('#8a8298', .8);
+  if (BART.court) { bdMesh(BART.court.geo.bridge, BART.court.mat, 0, 0, 0, br).scale.z = blen / 11.2; for (const e of [1, -1]) for (const d of [1, -1]) { halo('#ff9a3a', 1.5, e * 1.74, 1.75, d * 5.25 * blen / 11.2, br, .8); } }
+  else {
   mesh(new THREE.BoxGeometry(3.6, .5, blen), bStone, 0, 0, 0, br);
-  for (const s of [-1, 1]) { mesh(new THREE.BoxGeometry(.3, .55, blen), bTrim, s * 1.65, .5, 0, br); for (let k = 0; k <= 5; k++) mesh(new THREE.BoxGeometry(.42, .9, .42), bTrim, s * 1.65, .55, -blen / 2 + k * blen / 5, br); }
+  for (const s of [-1, 1]) { mesh(new THREE.BoxGeometry(.3, .55, blen), bTrim, s * 1.65, .5, 0, br); for (let k = 0; k <= 5; k++) mesh(new THREE.BoxGeometry(.42, .9, .42), bTrim, s * 1.65, .55, -blen / 2 + k * blen / 5, br); } }
   for (const f of [.3, .68]) { const pz = bz0 + (bz1 - bz0) * f, py = by0 + (by1 - by0) * f; mesh(new THREE.BoxGeometry(2.6, py + 3, 1.6), bStone, 0, (py - 3) / 2, pz, world); }
-  for (const [zz, yy] of [[bz0 + .3, by0], [bz1 - .3, by1]]) for (const s of [-1, 1]) {
+  if (!BART.court) for (const [zz, yy] of [[bz0 + .3, by0], [bz1 - .3, by1]]) for (const s of [-1, 1]) {
     mesh(new THREE.CylinderGeometry(.35, .22, .9, 8), std('#2a2230', .7), s * 2.2, yy + .7, zz, world, false); halo('#ff9a3a', 1.6, s * 2.2, yy + 1.45, zz, world, .85);
   }
   buildCitadel(R, tTop + H(3), CIT_Z);
@@ -1650,7 +1671,7 @@ function wGround(base, tones, strokes, extra) {
 function wRoad(grout, cols, o = {}) {
   // hand-laid cobbles: small rounded stones in staggered rows, each lit from the top-left with a soft shadow below, dark
   // grout between, a few cracked or mossy stones, a worn lighter path down the middle with faint cart ruts, darker by the kerbs
-  const mat = lam('#ffffff', { map: canvasTex(512, 1024, (x, w, h) => {
+  const rk = ROAD[LM_SETS[worldIdx]], mat = rk ? new THREE.MeshStandardMaterial({ map: rk.map, normalMap: rk.normalMap, normalScale: new THREE.Vector2(1.25, 1.25), roughness: .88, metalness: 0 }) : lam('#ffffff', { map: canvasTex(512, 1024, (x, w, h) => {
     x.fillStyle = grout; x.fillRect(0, 0, w, h);
     const g2 = x.createLinearGradient(0, 0, 0, h); g2.addColorStop(0, 'rgba(0,0,0,.18)'); g2.addColorStop(1, 'rgba(0,0,0,.18)'); x.fillStyle = g2; x.fillRect(0, 0, w, h);
     const tone = new THREE.Color(), hsl = {}, rowH = 34;
@@ -1679,7 +1700,7 @@ function wRoad(grout, cols, o = {}) {
     x.fillStyle = gr; x.fillRect(0, 0, w, h);
   }, [1, 5]) });
   if (o.glow) { mat.emissiveMap = canvasTex(256, 512, o.glow, [1, 5]) /* (three.js uses the map's repeat for every map, so 1:5 it is) */; mat.emissive = new THREE.Color(1, 1, 1).multiplyScalar(o.glowK ?? 1); }
-  mesh(new THREE.PlaneGeometry(LANE * 2 + 0.2, 48), mat, 0, 0.01, -17, world, false).rotation.x = -Math.PI / 2;
+  { const rm = mesh(new THREE.PlaneGeometry(LANE * 2 + 0.2, 48), mat, 0, 0.01, -17, world, false); rm.rotation.x = -Math.PI / 2; if (rk) rm.userData.sharedMaps = true; }
   for (const sx of [-1, 1]) { // kerb stones, laid as separate blocks
     const blocks = []; for (let z = 6.3; z > -40.5; z -= 1.34) blocks.push([sx * (LANE + 0.4), .235 + rand() * .03, z, 1, 1, 1, 0]);
     for (const b of blocks) b[7] = hslHex(0, 0, .86 + rand() * .14);
@@ -1713,14 +1734,14 @@ function wBorder(o) {
       for (const [y, c, r] of o.rails || []) mesh(new THREE.BoxGeometry(r || .07, r || .09, 36.6), std(c, .8), x, y, -17.1, world, false);
     }
     for (const z of LZ) { const n0 = world.children.length; lamps.push(item(x, z, 1, { ry: 0 })); halo(o.glow, 1.7, x, gy, z, world, .6); lightPool(o.glow, 3.4, 3.4, x, z, world, .22);
-      if (o.glowY) { mesh(new THREE.ConeGeometry(.2, .55, 7), lampLit(o.glow), x, 1.95, z, world, false); mesh(new THREE.ConeGeometry(.1, .32, 6), lampLit('#fff4c8'), x, 1.86, z, world, false); } /* braziers burn */
+      if (o.glowY) { FLAME_AT.push([x, 1.66, z, 1.12]); } /* braziers burn */
       else { mesh(new THREE.BoxGeometry(.31, .3, .31), lampLit('#ffe8a0'), x, gy, z, world, false); mesh(new THREE.SphereGeometry(.07, 8, 6), lampLit('#ffffff'), x, gy, z, world, false); } /* and lanterns are lit, day or night */ spotTag(n0, x, z, 0); }
   }
   if (stone) { putM('hex/wall_straight', walls, { bark: o.wall, shadow: true }); putM('hex/flag_blue', flags, {});
     if (o.cap) { const caps = walls.map(q => item(q[0], q[2], 1, { y: WS * 1.1 + .04, ry: 0 })); put(new THREE.BoxGeometry(.7, .16, WL * .98), caps, { mat: std(o.cap, .85), shadow: false }); /* snow lying along the wall tops */
       const lumps = []; for (const q of walls) for (let k = 0; k < 2; k++) lumps.push(item(q[0] + (rand() - .5) * .3, q[2] + (rand() - .5) * WL * .8, .16 + rand() * .1, { y: WS * 1.1 + .1, h: .5, ry: rand() * 6 })); put(new THREE.SphereGeometry(1, 8, 6), lumps, { mat: std(o.cap, .85), shadow: false }); } }
   else put(o.post(), posts, { sh: .34 });
-  putP(o.glowY ? 'fireb' : 'lamp', () => o.lamp(), lamps, { sh: .4 });
+  putP(o.glowY ? 'fireb' : 'lamp', () => o.lamp(), lamps, { sh: .4, bark: o.fire });
 }
 // walk down both sides of the road; fn decides what fits in the visible strip of width w
 function wStrip(fn, avoid = []) {
@@ -1969,7 +1990,7 @@ const WORLDS = [
       wGround('#dcae6c', ['#e8c084', '#cd9a58', '#efcd98', '#d4a462'], null, (x, w, h) => { for (let i = 0; i < 26; i++) { const py = (i + .5) * h / 26; x.strokeStyle = i % 2 ? 'rgba(255,238,200,.16)' : 'rgba(150,100,50,.12)'; x.lineWidth = 5; x.beginPath(); for (let px = 0; px <= w; px += 16) x.lineTo(px, py + Math.sin(px / w * Math.PI * 4 + i) * 6); x.stroke(); } x.strokeStyle = 'rgba(255,236,190,.28)'; x.lineWidth = 3; x.lineCap = 'round'; for (let i = 0; i < 40; i++) { const px = rand() * w, py = rand() * h; x.beginPath(); x.moveTo(px, py); x.quadraticCurveTo(px + 26, py - 10, px + 52, py); x.stroke(); } });
       wRoad('#8d7160', ['#dccab2', '#d0bca2', '#e4d5bf', '#c8b296'], { curb: ['#a5583a', '#d08a58'], edge: '110,64,34', verge: '#b98a54' });
       wHills([[-28, -58, 16, '#e9bd68'], [30, -62, 19, '#e0b05c'], [-4, -86, 30, '#f0c878'], [46, -48, 12, '#e6b660'], [-48, -46, 13, '#deac58']]);
-      wBorder({ wall: '#d8b488', post: () => GEO.bollard('#c08442', '#f6d99a', '#ffc62b'), rails: [[.58, '#e8cfa0', .05]], lamp: () => GEO.brazier('#c98f4a', '#8a5a34', '#ff8a1f'), glow: '#ffa53a', glowY: 1.75 }); wVerge('#e6c47a');
+      wBorder({ wall: '#d8b488', fire: '#e6c096', post: () => GEO.bollard('#c08442', '#f6d99a', '#ffc62b'), rails: [[.58, '#e8cfa0', .05]], lamp: () => GEO.brazier('#c98f4a', '#8a5a34', '#ff8a1f'), glow: '#ffa53a', glowY: 1.75 }); wVerge('#e6c47a');
       const cacti = [], barrels = [], mesas = [], vases = [], palms = [], tufts = [], pebbles = [], cols = [], broken = [], rocks = [], shells = [];
       wStrip((sx, z, x0, w) => {
         if (w > 2.6 && rand() < .4) palms.push(item(sx * (x0 + 1.2 + rand() * (w - 2)), z, .9 + rand() * .35));
@@ -2041,7 +2062,7 @@ const WORLDS = [
       wGround('#4c3f52', ['#5a4a62', '#3e3346', '#64506c', '#463a50', '#6e4650'], null, cracks('rgba(16,10,20,.6)', 2.5, 22));
       wRoad('#3e3646', ['#948a9a', '#887e90', '#a096a6', '#7e7486'], { curb: ['#4a3a48', '#7a6676'], edge: '30,15,25', hi: .12, verge: '#1f1826', glow: cracks('#000', 2.2, 6, true), glowK: .6 });
       wHills([[-28, -58, 16, '#33293a'], [30, -62, 19, '#2e2534'], [-4, -86, 30, '#3d3044'], [46, -48, 12, '#30273a'], [-48, -46, 13, '#2c2332']]);
-      wBorder({ wall: '#94829a', post: () => GEO.spike('#1d1824', '#6a4a7a'), rails: [[.42, '#4a4252', .06]], lamp: () => GEO.brazier('#2a2430', '#564d5e', '#ff7a1a'), glow: '#ff7a2a', glowY: 1.75 }); wVerge('#7a4038');
+      wBorder({ wall: '#94829a', fire: '#a898b0', post: () => GEO.spike('#1d1824', '#6a4a7a'), rails: [[.42, '#4a4252', .06]], lamp: () => GEO.brazier('#2a2430', '#564d5e', '#ff7a1a'), glow: '#ff7a2a', glowY: 1.75 }); wVerge('#7a4038');
       const dead = [], crystals = [], rocks = [], tufts = [], spires = [], ribs = [], pillars = [], cinders = [];
       let pools = 0, glows = 0;
       wStrip((sx, z, x0, w) => {
@@ -2055,7 +2076,7 @@ const WORLDS = [
       }, [[-11, -45, 6], [9.4, -31, 2.4]]);
       wFlank(22, [[-11, -45, 7], [9.4, -31, 3.2]], (x, z, i) => { (i % 3 === 0 ? spires : i % 3 === 1 ? dead : crystals).push(item(x, z, 1 + rand() * .7)); });
       wSprinkle(110, (x, z) => { const hot = rand() < .25, s = .05 + rand() * .08; cinders.push(item(x, z, s, { y: s * .3, h: .6, c: hot ? '#ff8a2a' : hslHex(.78, .12, .2 + rand() * .12) })); });
-      putMix(['Tree_Bare_1_A', 'Tree_Bare_2_A'], dead, { wind: .9, h: 4.0, sh: .8, bark: '#a8889a' }, () => put(GEO.deadTree(), dead, { sh: .9 })); putP('xtal', () => GEO.crystal('#3a1a5a', '#e06aff'), crystals, { bark: '#e06aff', mat: softMat({ roughness: .2, flatShading: true }), sh: .7 }); putP('spire', () => GEO.spire(), spires, { mat: softMat({ flatShading: true }), sh: 1.0 });
+      putMix(['Tree_Bare_1_A', 'Tree_Bare_2_A'], dead, { wind: .9, h: 4.0, sh: .8, bark: '#ffe2ee' }, () => put(GEO.deadTree(), dead, { sh: .9 })); putP('xtal', () => GEO.crystal('#3a1a5a', '#e06aff'), crystals, { bark: '#e06aff', mat: softMat({ roughness: .2, flatShading: true }), sh: .7 }); putP('spire', () => GEO.spire(), spires, { mat: softMat({ flatShading: true }), sh: 1.0 });
       putMix(ROCK_MODELS, rocks, { h: .8, sh: 1.1, bark: '#5a5066' }, () => put(GEO.rock('#1d1824', '#5a4f66'), rocks, { mat: softMat({ flatShading: true }), sh: 1.2 })); putP('ribs', () => GEO.ribs(), ribs, { sh: 1.0 }); putP('colb', () => GEO.column(.9, '#3a3342', '#7a7084'), pillars, { mat: softMat({ flatShading: true }), sh: .8 });
       putMix(['Grass_1_A', 'Grass_2_A'], tufts, { wind: 0, h: .5, leaf: '#7a4038' }, () => put(GEO.tuft(), tufts, { mat: new THREE.MeshLambertMaterial({ vertexColors: true }), shadow: false })); put(new THREE.SphereGeometry(1, 7, 5), cinders, { mat: basicMat('#ffffff'), shadow: false });
       wVolcano(-11, -45, 1.1);
@@ -2119,7 +2140,7 @@ function ancientColumn(x, z, h = 4, tint = '#dcb47d', broken = false) {
 function monumentSkull(x, z, s = 1, tint = '#d9be9b', cursed = false) {
   const g = landmark(x, z, 3.3, s); g.position.y -= .35 * s; g.rotation.y = x > 0 ? -.4 : .4;
   if (LMART.lm) {
-    lmMesh('lm', 'skull', g, 0, 0, 0, { tint }); lmMesh('lm', 'mound', g, 0, .1, 0, { tint: cursed ? '#6c5c84' : tint });
+    lmMesh('lm', 'skull', g, 0, 0, 0, { tint }); lmMesh('lm', 'mound', g, 0, .1, 0, { tint: cursed ? '#6c5c84' : ['#9a8a5c', tint, '#e4edfa', '#6a5460'][worldIdx] || tint });
     if (cursed) { lmMesh('lm', 'crown', g, 0, 3.42, -.12).rotation.x = -.10; const em = new THREE.MeshBasicMaterial({ color: C('#f090ff'), toneMapped: false }); for (const e of [-1, 1]) { mesh(new THREE.SphereGeometry(.22, 12, 10), em, e * .60, 2.30, 1.06, g, false); halo('#e070ff', 1.5, e * .60, 2.30, 1.45, g, .75); } }
     return g;
   }
@@ -2601,6 +2622,7 @@ function applyWorld(i) {
   for (const m of fortWalls) m.color.copy(C(w.wall)).multiplyScalar(m.userData.k || 1); fortStone.color.copy(C(w.stone));
   moteMat.color.copy(C(w.motes.c)); moteMat.size = w.motes.size; moteMat.opacity = w.motes.op; moteMat.blending = w.motes.add ? THREE.AdditiveBlending : THREE.NormalBlending; moteMat.needsUpdate = true; moteCfg = w.motes;
   { const lk = FOE_LOOKS[lookOf(i)]; if (lk && lk.tint) FOE_TINT.copy(C(lk.tint)); else FOE_TINT.copy(w.foeTint ? C(w.foeTint) : WHITE).multiply(FOE_WARM); } /* aged ivory bone, so the horde never reads as white ghosts (worlds with their own horde look bring their own tint) */ bakeFoes(lookOf(i)); /* and dressed for this world */ G.hex = !!MODELS["hex/hex_grass"]; CUR_DUSK = (HEX_DRESS[w.hex || 'meadow'].realm || {}).dusk || null; w.build(); if (G.hex) hexWorld(HEX_DRESS[w.hex || "meadow"]); redesignLandmarks(i); for (const [x, z, r] of LM_SPOTS) clearAround(x, z, r); addAmbient(i); if (G.hex) addSkyline(i); noFarShadows(world); G.baked = bakeStatic(world); bakeScenery(world); GLOW.gather(); applyVignette(i); applyGrade(i);
+  { const keep = FLAME_AT.filter(f => !LM_SPOTS.some(q => (q[0] - f[0]) ** 2 + (q[1] - f[2]) ** 2 < q[2] * q[2])); FLAME_AT.length = 0; FLAME_AT.push(...keep); } layFlames(); // (none over a torch that made way for a landmark)
   if (propShadows.length) { // one soft dark patch under every prop
     if (!propShMat) propShMat = new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false });
     propShMat.opacity = w.shade;
@@ -3018,7 +3040,7 @@ const UNIT_K = .3;                                      // character model units
 let crowdReady = false, crowdAtlas = null;
 const KK = {}, KKP = {}; // KKP: untouched copies of the skeleton rigs, dressed afresh for each world's look
 // a small status line on the loading screen and menu while the character art loads (and the reason if it ever fails)
-let artDone = 0; function artStep() { if (crowdReady) return; artNote(Math.min(99, Math.round(++artDone / 13 * 100)) + '%'); } // twelve things to fetch before the first screen: eight sets, the soldiers, the King, the rig, the models
+let artDone = 0; function artStep() { if (crowdReady) return; artNote(Math.min(99, Math.round(++artDone / 14 * 100)) + '%'); } // twelve things to fetch before the first screen: eight sets, the soldiers, the King, the rig, the models
 function artNote(s) { for (const id of ['loading', 'artMsg']) { const el = document.getElementById(id === 'loading' ? 'loadMsg' : id); if (el) el.textContent = s; } }
 async function loadCrowd(loader) {
   const names = new Set(['anim_move', 'anim_general', 'Knight']), firstLook = lookOf(Math.max(0, worldIdx)), slow = (p, ms) => Promise.race([p, new Promise((ok, no) => setTimeout(() => no(new Error('timed out')), ms))]);
@@ -3536,7 +3558,7 @@ async function loadArt(dir) { // geo.json, its four textures, and the material t
    Colour and normal maps only (shading is painted in). Walls are sculpted as one half and mirrored. They are fetched before the
    first screen; whichever is missing keeps its old shapes. */
 const BART = {};
-async function loadBuildings() { await Promise.all([...['fort', 'citadel', 'camp', 'nature', 'town', 'trees', 'birds'].map(k => loadSet(BART, k, 'models/bd/' + k + '/')), loadLm('lm'), loadLm(LM_SETS[worldOf(save.level)])]); }
+async function loadBuildings() { await Promise.all([...['fort', 'citadel', 'camp', 'nature', 'town', 'trees', 'court', 'birds'].map(k => loadSet(BART, k, 'models/bd/' + k + '/')), loadLm('lm'), loadLm(LM_SETS[worldOf(save.level)])]); }
 async function loadSet(into, k, dir) {
   const size = artSize(), TL = new THREE.TextureLoader();
     try {
@@ -3552,9 +3574,17 @@ async function loadSet(into, k, dir) {
    own. The first world's is fetched with the buildings, the rest quietly after that; a world whose set isn't in yet is built
    with the old shapes, and rebuilt if it arrives while you are on the menu. Only the current world's textures stay on the GPU. */
 const LMART = {}, LM_SETS = ['meadow', 'dunes', 'frost', 'ember'], lmWait = {};
-function loadLm(k) { return lmWait[k] || (lmWait[k] = loadSet(LMART, k, 'models/lm/' + k + '/').then(A => { if (!A) lmWait[k] = null; return A; })); }
+const ROAD = {};
+async function loadRoad(k) { // k's own stones, and the relief they share; without them the painted canvas road stands in
+  try {
+    const TL = new THREE.TextureLoader(), get = async (n, srgb) => { const t = await TL.loadAsync('models/rd/' + n + '.webp'); if (srgb) t.encoding = THREE.sRGBEncoding; t.anisotropy = MAX_ANISO; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 5); return t; };
+    if (!ROAD.nm) ROAD.nm = get('normal'); const [c, n] = await Promise.all([get(k, 1), ROAD.nm]); ROAD[k] = { map: c, normalMap: n };
+  } catch (e) { console.warn('road ' + k, e); }
+}
+function loadLm(k) { return lmWait[k] || (lmWait[k] = (async () => { const [A] = await Promise.all([loadLm0(k), LM_SETS.includes(k) ? Promise.race([loadRoad(k), new Promise(r => setTimeout(r, 9000))]) : 0]); return A; })()); }
+function loadLm0(k) { return (loadSet(LMART, k, 'models/lm/' + k + '/').then(A => { if (!A) lmWait[k] = null; return A; })); }
 function lmWorld(i) { // called as a world is about to be built
-  LM_SETS.forEach((k, j) => { const A = LMART[k]; if (A && j !== i) { A.mat.map.dispose(); A.mat.normalMap.dispose(); } });
+  LM_SETS.forEach((k, j) => { const A = LMART[k]; if (A && j !== i) { A.mat.map.dispose(); A.mat.normalMap.dispose(); } if (ROAD[k] && j !== i) ROAD[k].map.dispose(); });
   if (LMART[LM_SETS[i]] && !G.sim) setTimeout(lmRest, 6000);
   if (!LMART[LM_SETS[i]] && !G.sim) loadLm(LM_SETS[i]).then(A => { if (A && worldIdx === i && G.mode === 'menu') { worldIdx = -1; applyWorld(i); } });
 }
@@ -3899,6 +3929,7 @@ function dressHoard() {
   if (!MODELS['dg/chest_gold']) return;
   const K = HOARD_K, T = hoardTop;
   // the dais: a plinth of the castle's stone with a gold-trimmed lip, tiled on top
+  const CA = BART.court; if (CA) bdMesh(CA.geo.dais, CA.mat, 0, 0, 0, hoard); else {
   mesh(new THREE.BoxGeometry(12.4, T, 6.6), std('#9a8f80', .85), 0, T / 2, 0, hoard);
   mesh(new THREE.BoxGeometry(12.8, .22, 7), std('#c9bba5', .7), 0, T, 0, hoard);
   mesh(new THREE.BoxGeometry(12.9, .08, 7.1), std('#ffc62b', .35), 0, T - .14, 0, hoard, false);
@@ -3911,8 +3942,8 @@ function dressHoard() {
     for (let k = 0; k < 6; k++) mesh(new THREE.BoxGeometry(.56, .38, .62), wallM, s * 6.15, T + .99, -2.75 + k * 1.1, hoard);
     mesh(new THREE.BoxGeometry(3.7, .8, .5), wallM, s * 4.3, T + .4, -3.05, hoard);
     for (let k = 0; k < 3; k++) mesh(new THREE.BoxGeometry(.62, .38, .56), wallM, s * (2.9 + k * 1.3), T + .99, -3.05, hoard);
-  }
-  const top = T + .12;
+  } }
+  const top = T + (CA ? .145 : .12);
   // the chest, its lid hinged so it can burst open
   const ch = propAt('chest_gold', 0, top, .2, 1.9);
   if (ch) {
@@ -4517,7 +4548,7 @@ function gateIcon(x, tier, cx, cy, s) {
 function redGateLabel(x, w, h, n) {
   const fam = '"Lilita One", Fredoka, "Arial Black", sans-serif', NAVY = 'rgba(11,42,92,.75)', word = String(n);
   const fs = Math.round(h * .66); x.font = `${fs}px ${fam}`; const m = x.measureText(word), tw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
-  const dw = fs * .56, gap = h * .07, total = dw + gap + tw, x0 = (w - total) / 2, cy = h / 2 + 3; // just the bold ÷ and the number (Sterling dropped the skull)
+  const dw = fs * .56, gap = h * .07, total = dw + gap + tw, x0 = (w - total) / 2, cy = h / 2 + 3; // just the bold ÷ and the number (without the skull)
   const dx = x0 + dw / 2, bh = fs * .14, r = fs * .105, dy = fs * .27;
   const sign = () => { x.beginPath(); if (x.roundRect) x.roundRect(dx - dw / 2, cy - bh / 2, dw, bh, bh / 2); else x.rect(dx - dw / 2, cy - bh / 2, dw, bh); x.moveTo(dx + r, cy - dy); x.arc(dx, cy - dy, r, 0, 7); x.moveTo(dx + r, cy + dy); x.arc(dx, cy + dy, r, 0, 7); };
   x.lineJoin = 'round'; x.lineWidth = 14; x.strokeStyle = NAVY; sign(); x.stroke(); x.fillStyle = '#ffffff'; sign(); x.fill();
@@ -4576,9 +4607,9 @@ function makeGateMesh(g) {
   const PH = 2.1, bandM = std(col, .4, { emissive: C(col), emissiveIntensity: .25 });
   for (const sx of [-1, 1]) {
     if (!BART.camp) mesh(new THREE.BoxGeometry(0.28, PH, 0.28), gateWood, sx * g.w / 2, PH / 2, 0, grp);
-    for (const y of [.55, 1.55]) mesh(new THREE.BoxGeometry(0.31, 0.1, 0.31), bandM, sx * g.w / 2, y, 0, grp, false);
+    for (const y of [.55, 1.55]) mesh(bevelBox(.33, .12, .33, .03), bandM, sx * g.w / 2, y, 0, grp, false);
     if (!BART.camp) { mesh(new THREE.ConeGeometry(0.24, 0.34, 4), gateGold, sx * g.w / 2, PH + .17, 0, grp, false).rotation.y = Math.PI / 4; mesh(new THREE.SphereGeometry(0.08, 8, 6), gateGold, sx * g.w / 2, PH + .38, 0, grp, false); }
-    const pn = mesh(new THREE.ConeGeometry(.14, .42, 3), std(col, .5, { side: THREE.DoubleSide }), sx * g.w / 2 + sx * .23, PH - .05, 0, grp, false); pn.rotation.z = sx * Math.PI / 2; pn.scale.z = .15;
+    { const P = new THREE.Shape(); P.moveTo(0, .15); P.quadraticCurveTo(.2, .17, .46, .03); P.lineTo(.34, 0); P.lineTo(.46, -.05); P.quadraticCurveTo(.2, -.13, 0, -.13); P.closePath(); const pg = new THREE.ShapeGeometry(P, 5), q = pg.attributes.position; for (let i = 0; i < q.count; i++) q.setZ(i, Math.sin(q.getX(i) * 9) * .05); pg.computeVertexNormals(); const pn = mesh(pg, std(col, .6, { side: THREE.DoubleSide, emissive: C(col), emissiveIntensity: .12 }), sx * (g.w / 2 + .14), PH - .05, .02, grp, false); pn.scale.x = sx; }
     halo(col, 1.0, sx * g.w / 2, PH + .2, .02, grp, .4);
     if (!BART.camp) mesh(new THREE.BoxGeometry(0.5, 0.2, 0.5), std('#cfc5b6', .8), sx * g.w / 2, 0.1, 0, grp);
   }
@@ -6515,7 +6546,7 @@ window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') 
 async function perfTest() {
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 8px);z-index:99;padding:10px 12px;border-radius:12px;background:rgba(8,12,30,.9);color:#fff;font:600 13px/1.45 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), rows = [];
-  box.textContent = 'Speed test v133: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
+  box.textContent = 'Speed test v134: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); box.textContent = 'Loading...'; G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 19; const on0 = MUS.on;
   save.up = { ...save.up, rate: 10, twin: 4, arsenal: 5 }; await Promise.race([loadLm('ember'), wait(8000)]); await wait(800);
   const pr = k => { pixelRatio = k; renderer.setPixelRatio(k); resize(); };
@@ -6536,7 +6567,7 @@ async function perfTest() {
   G.nestHp = G.nestMax = 30;
   await run('castle blows up', 4500, () => { G.fortMax = 100; G.fortHp = 0; });
   await wait(1500); save.level = 6; await run('new world', 5000, () => { $('result').classList.remove('on'); startPlay(); });
-  box.textContent = 'Speed test v133: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
+  box.textContent = 'Speed test v134: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
 }
 let last = performance.now();
 // keeps the frame rate smooth: renders at fewer pixels when a phone struggles, and at more (up to the screen's own sharpness) when it has headroom
