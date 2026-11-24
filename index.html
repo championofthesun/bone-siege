@@ -7164,31 +7164,39 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') G.firing = false; });
 
 /* loop */
-async function perfTest() {
-  const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 8px);z-index:99;padding:10px 12px;border-radius:12px;background:rgba(8,12,30,.9);color:#fff;font:600 13px/1.45 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
-  const wait = ms => new Promise(r => setTimeout(r, ms)), rows = [];
-  box.textContent = 'Speed test v142: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
-  audio(); box.textContent = 'Loading...'; G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 19; const on0 = MUS.on;
-  save.up = { ...save.up, rate: 10, twin: 4, arsenal: 5 }; await Promise.race([loadLm('ember'), wait(8000)]); await wait(800);
+async function perfTest() { // ?perf: speed test 3. First the frame rate (an empty page, then a battle as you play it), then what each part of a frame costs, in ms with the GPU waited for
+  const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:6px;right:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;padding:9px 11px;border-radius:12px;background:rgba(8,12,30,.92);color:#fff;font:600 12px/1.42 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
+  const wait = ms => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(r)), rows = [], gl = renderer.getContext(), px = new Uint8Array(4), med = a => a.sort((x, y) => x - y)[a.length >> 1];
+  const V = 'Speed test 3 (v143)', show = s => { box.textContent = V + ': ' + s + '\n' + rows.join('\n'); };
+  box.textContent = V + ': tap here to start\n(about 40 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
+  audio(); show('loading...'); G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 11; save.v = 3;
+  await Promise.race([loadLm('dunes'), wait(8000)]); await wait(800);
   const pr = k => { pixelRatio = k; renderer.setPixelRatio(k); resize(); };
-  const run = async (name, ms, on) => {
-    const t = []; let l = performance.now(); if (on) on();
-    await new Promise(done => { const t0 = performance.now(); requestAnimationFrame(function k() { const n = performance.now(); t.push(n - l); l = n; if (n - t0 < ms) requestAnimationFrame(k); else done(); }); });
-    t.sort((a, b) => a - b); const avg = t.reduce((a, b) => a + b, 0) / t.length;
-    rows.push(name.padEnd(16) + (1000 / avg).toFixed(0).padStart(3) + ' fps' + t[Math.floor(t.length * .95)].toFixed(0).padStart(4) + t[t.length - 1].toFixed(0).padStart(5) + t.filter(x => x > 30).length.toString().padStart(4)); box.textContent = 'Speed test 2     fps   95% max >30\n' + rows.join('\n');
+  const cadence = async (name, ms) => { // how often a frame really comes: frames per second, then the share of frames at 60, at 30 and slower
+    const t = []; let l = await raf(); const t0 = l; while (l - t0 < ms) { const n = await raf(); t.push(n - l); l = n; }
+    const avg = t.reduce((a, b) => a + b, 0) / t.length, pc = f => Math.round(100 * t.filter(f).length / t.length) + '%';
+    rows.push(name.padEnd(13) + (1000 / avg).toFixed(0).padStart(4) + ' fps  60:' + pc(x => x < 21).padStart(4) + ' 30:' + pc(x => x >= 21 && x < 38).padStart(4) + ' slower:' + pc(x => x >= 38).padStart(4)); show('running...');
   };
-  pr(Math.min(DPR, 2));
-  await run('level starts', 4500, () => { startPlay(); G.fortHp = G.fortMax = 1e9; G.nestHp = G.nestMax = 1e9; });
-  spawnHorde(Math.max(0, 700 - beetles.n)); await wait(2500);
-  await run('big fight 2x', 5000); const units = ants.n + '/' + beetles.n;
-  muted = true; MUS.on = false; await wait(700);
-  await run('sound off', 4000);
-  muted = false; MUS.on = on0;
-  if (DPR > 2.2) { pr(2.5); await wait(500); await run('big fight 2.5x', 4000); pr(3); await wait(500); await run('big fight 3x', 4000); pr(2); await wait(500); }
-  G.nestHp = G.nestMax = 30;
-  await run('castle blows up', 4500, () => { G.fortMax = 100; G.fortHp = 0; });
-  await wait(1500); save.level = 6; await run('new world', 5000, () => { $('result').classList.remove('on'); startPlay(); });
-  box.textContent = 'Speed test v142: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
+  pr(Math.min(DPR, 2)); G.paused = true; await wait(600); await cadence('empty page', 2500);
+  G.paused = false; startPlay(); G.nestHp = G.nestMax = G.fortHp = G.fortMax = 1e9; await wait(7000); await cadence('battle 2x', 5000);
+  G.paused = true; const units = ants.n + '/' + beetles.n;
+  const one = () => { const t0 = performance.now(); update(1 / 60); G.nestHp = 1e9; const t1 = performance.now(); render(); const t2 = performance.now(); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); return [t1 - t0, t2 - t1, performance.now() - t1]; };
+  const cost = async (name, on, off) => { const a = [], b = [], c = []; try { if (on) on(); for (let k = 0; k < 6; k++) { await raf(); one(); } for (let k = 0; k < 24; k++) { await raf(); const [u, r, g] = one(); a.push(u); b.push(r); c.push(g); } if (off) off(); } catch (e) { if (off) off(); rows.push(name.padEnd(16) + '  failed'); return; } const u = med(a), r = med(b), g = med(c); if (cost.base == null) { cost.base = g; rows.push('', 'per frame, ms (2x)'); rows.push('game rules'.padEnd(16) + u.toFixed(1).padStart(5)); rows.push('sending to GPU'.padEnd(16) + r.toFixed(1).padStart(5)); } rows.push(name.padEnd(16) + g.toFixed(1).padStart(5) + (name === 'whole picture' ? '' : (g - cost.base >= 0 ? '  +' : '  ') + (g - cost.base).toFixed(1))); show('running...'); };
+  const mats = () => scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => { m.needsUpdate = true; }); }), hid = []; let sr = renderer.shadowMap.render;
+  const hide = q => () => { hid.length = 0; scene.traverse(o => { if (o !== scene && o.visible && q(o)) { hid.push(o); o.visible = false; } }); }, back = () => { for (const o of hid) o.visible = true; };
+  await cost('whole picture'); cost.base = null; rows.length = rows.lastIndexOf(''); await cost('whole picture');
+  await cost('at 1x', () => pr(1), () => pr(2)); if (DPR > 2.2) await cost('at 3x', () => pr(3), () => pr(2));
+  await cost('no glow pass', () => { POST.on = false; }, () => { POST.on = true; });
+  if (POST.rt.samples) await cost('no edge smooth', () => { POST.rt.samples = 1; POST.rt.dispose(); }, () => { POST.rt.dispose(); sizePost(); });
+  await cost('no shadow draw', () => { renderer.shadowMap.render = () => {}; }, () => { renderer.shadowMap.render = sr; });
+  await cost('no shadows', () => { renderer.shadowMap.enabled = false; mats(); }, () => { renderer.shadowMap.enabled = true; mats(); });
+  { const fb = new THREE.MeshBasicMaterial({ color: 0x888888 }), fs = new THREE.MeshBasicMaterial({ color: 0x888888, skinning: true }), was = []; await cost('flat colours', () => scene.traverse(o => { if (o.isMesh && !Array.isArray(o.material) && /Standard|Lambert/.test(o.material.type)) { was.push([o, o.material]); o.material = o.isSkinnedMesh ? fs : fb; } }), () => { for (const [o, m] of was) o.material = m; }); }
+  await cost('no scenery', hide(o => o === world), back); await cost('no castle', hide(o => o === fort), back);
+  await cost('no armies', hide(o => o === allySprites || o === foeSprites), back);
+  await cost('no see-through', hide(o => o.material && [].concat(o.material)[0].transparent), back);
+  await cost('nothing at all', hide(o => o.parent === scene && !o.isLight && !o.isCamera), back);
+  G.paused = false; await wait(1500); await cadence('battle, after', 4000);
+  rows.push('', gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  ' + (gl.getParameter(gl.VERSION).includes('2') ? 'gl2' : 'gl1') + '  ' + renderer.info.programs.length + ' shaders'); show('done. Screenshot this.');
 }
 let last = performance.now();
 // keeps the frame rate smooth: renders at fewer pixels when a phone struggles, and at more (up to the screen's own sharpness) when it has headroom
