@@ -992,6 +992,14 @@ function propModels() {
   for (const n of ['1', '2']) MODELS['dg/sy_Prop_TreasureChest_Open_0' + n] = { parts: [part(T, 'chest', 1), lidP(1, -1.9)], h: 1.1, art: true };
   reg('dg/coin_stack_large', T, 'stack', 1); reg('dg/coin_stack_medium', T, 'stack', .8); reg('dg/coin_stack_small', T, 'stack', .55); reg('dg/pillar_decorated', T, 'pillar', 1); reg('dg/sy_Prop_Generic_Skull_02', T, 'skullp', .9);
 }
+/* The Meadow's trees through its stages (blender/bd_autumn): [turning, after the storm] for each green one, under names of their own. */
+const AUTUMN = { Tree_1_A: ['oakF', 'oakW'], Tree_1_B: ['oakR', 'oakW'], 'hex/trees_B_large': ['groveF', 'groveW'], 'hex/trees_B_medium': ['groveR', 'groveW'], 'hex/tree_single_B': ['smallF', 'smallW'],
+  Bush_1_A: ['bushR', 'thorn'], Bush_1_C: ['bushF', 'thorn'], Bush_3_A: ['bushF', 'thorn'], Bush_3_B: ['bushR', 'thorn'] };
+function autumnModels() {
+  const A = BART.autumn; if (!A) return;
+  for (const n in A.geo) { const sc = /^(grove|small)/.test(n) ? .95 / 1.84 : 1, g = A.geo[n].clone().scale(sc, sc, sc); g.computeBoundingBox(); MODELS['au/' + n] = { parts: [{ geo: g, mat: A.mat, name: n, pivot: new THREE.Vector3() }], h: g.boundingBox.max.y, art: true }; }
+}
+const doomed = q => Math.abs(Math.sin(q[0] * 12.9898 + q[2] * 78.233) * 43758.5453) % 1 < STG.land.dead; // which trees stand bare
 // a piece that has both a sculpted and a code-built shape
 function putP(name, geo, list, o = {}) { if (MODELS['pr/' + name]) putM('pr/' + name, list, { sh: o.sh, bark: o.bark }); else put(geo(), list, o); }
 // o.leaf recolours only the green parts of the shared texture (the leaves), keeping their light and shade;
@@ -1045,8 +1053,15 @@ function prepMat(mat, o) {
 // place a model at every item in the list, scaled so it stands o.h tall; o.leaf recolours the foliage, o.bark tints the whole model
 function putM(name, list, o = {}) {
   const md = MODELS[name]; if (!md || !list.length) return;
+  const au = STG && STG.land && STG.land.dead && !CLS && worldIdx === 0 && MODELS['au/oakF'] && AUTUMN[name];
+  if (au) { // leaves turn, then fall; in the storm the green ones wait under the ground to come back
+    const storm = worldSt === 2, bush = /^Bush/.test(name), die = bush ? [] : list.filter(doomed), live = bush ? list : list.filter(q => !doomed(q)), o2 = { ...o, leaf: undefined };
+    CLS = storm ? 'dead' : ''; putM('au/' + au[storm ? 1 : 0], live, o2);
+    if (/^hex/.test(name)) { const c = CLS; CLS = 'dead'; putM('hex/sy_Env_Generic_Dead_Tree_01', die, { ...o2, bark: '#d8c4cc' }); CLS = c; } else putM('au/oakD', die, { ...o2, h: Math.min(o.h || 3.4, 3.9) });
+    if (storm) { CLS = 'life'; putM(name, list, { ...o, sh: 0 }); } CLS = ''; return;
+  }
   if (STG && STG.land && STG.land.dead && !CLS && md.art && /^(hex\/tree|Tree_[14])/.test(name)) { // the land is dying: some of these stand bare (and, in the storm, wait under the ground to come back)
-    const die = [], live = []; list.forEach(q => (Math.abs(Math.sin(q[0] * 12.9898 + q[2] * 78.233) * 43758.5453) % 1 < STG.land.dead ? die : live).push(q));
+    const die = [], live = []; list.forEach(q => (doomed(q) ? die : live).push(q));
     if (die.length) {
       const hexT = /^hex/.test(name), dn = hexT ? 'hex/sy_Env_Generic_Dead_Tree_01' : 'Tree_Bare_1_A'; CLS = 'dead'; putM(dn, hexT ? die : die.map(q => { const c = q.slice(); c[3] *= .92; c[4] *= .92; c[5] *= .92; return c; }), { ...(hexT ? {} : { h: Math.min(o.h || 3.4, 3.9) }), sh: o.sh, bark: '#d8c4cc' });
       if (worldSt === 2) { CLS = 'life'; putM(name, die, { ...o, sh: 0 }); } CLS = '';
@@ -1065,7 +1080,7 @@ function putM(name, list, o = {}) {
     list.forEach((q, i) => {
       wq.setFromEuler(we.set(0, q[6], 0)); wm.compose(wv.set(q[0], q[1], q[2]), wq, ws.set(q[3] * k, q[4] * k, q[5] * k)); im.setMatrixAt(i, wm);
       const v = .9 + ((i * 7919) % 100) / 500; wc.setRGB(v, v, v); // a little light and dark variation between copies
-      if (q[7] && !(md.art && /^(Grass|Bush)/.test(name))) wc.multiply(wc2.set(q[7]).convertSRGBToLinear()); // and the dusk tint over the Bone King's land
+      if (q[7] && !(md.art && /^(Grass|Bush|au.(bush|thorn))/.test(name))) wc.multiply(wc2.set(q[7]).convertSRGBToLinear().lerp(WHITE, /^au/.test(name) ? .4 : 0)); // and the dusk tint over the Bone King's land
       im.setColorAt(i, wc);
     });
     world.add(im);
@@ -1985,7 +2000,7 @@ const WORLDS = [
       for (const [dx, dz] of [[2.6, 1.6], [3.5, .9], [2.9, 2.6]]) hay.push(item(-9.4 + dx, -39 + dz, .9 + rand() * .2));
       barrels.push(item(7.4, -3.2, .8), item(8.0, -3.6, .7)); crates.push(item(7.6, -4.3, .8, { ry: .4 }), item(-7.6, -14, .8, { ry: .2 }), item(-7.5, -14.1, .6, { y: .62, ry: .9 })); barrels.push(item(-8.3, -14.5, .8));
       wSprinkle(110, (x, z) => { const s = .05 + rand() * .07; pebbles.push(item(x, z, s, { y: s * .3, h: .6, c: hslHex(.1, .1, .62 + rand() * .2) })); });
-      wSprinkle(90, (x, z) => leaves.push(item(x, z, .06 + rand() * .06, { y: .022, h: .08, c: hslHex(.12 + rand() * .2, .7, .5 + rand() * .15) })));
+      wSprinkle(90, (x, z) => leaves.push(item(x, z, .06 + rand() * .06, { y: .022, h: .08, c: hslHex((STG ? worldSt === 2 ? .92 : .01 : .12) + rand() * (STG ? .1 : .2), worldSt === 2 ? .4 : .7, (STG ? .42 : .5) + rand() * .15) })));
       putMix(['Tree_1_A', 'Tree_1_B'], oakA, { wind: .9, h: 3.4, sh: 1.3, leaf: MEADOW_LEAF[0], leafK: 22, flat: true }, () => put(GEO.oak('#1b6f31', '#6fcb47', '#145a2b', '#43a03a'), oakA, { sh: 1.55 })); putMix(['Tree_1_B', 'Tree_1_A'], oakB, { wind: .9, h: 3.2, sh: 1.3, leaf: MEADOW_LEAF[1], leafK: 22, flat: true }, () => put(GEO.oak('#22782c', '#86d44a', '#18622d', '#52ae40'), oakB, { sh: 1.55 })); putMix(['Tree_4_A', 'Tree_4_B', 'Tree_4_C'], pines, { wind: .9, h: 5.2, sh: 1.2 }, () => put(GEO.pine('#125f3a', '#52c476'), pines, { sh: 1.4 }));
       putMix(['Bush_1_A', 'Bush_1_C', 'Bush_3_A', 'Bush_3_B'], bushes, { wind: .12, h: .9, sh: 1.0, leaf: MEADOW_LEAF[2], leafK: 14, flat: true }, () => put(GEO.bush(), bushes, { sh: 1.15 })); putMix(ROCK_MODELS, rocks, { h: .8, sh: 1.1, bark: '#d8d0bc', flat: true }, () => put(GEO.rock('#77786e', '#b9c48a'), rocks, { mat: softMat({ flatShading: true }), sh: 1.2 }));
       put(GEO.mushroom('#e23a30'), red, { sh: .8 }); put(GEO.mushroom('#f7a531'), gold, { sh: .8 }); putP('stump', () => GEO.stump(), stumps, { sh: .75 }); putP('log', () => GEO.log(), logs, { sh: .9 });
@@ -3638,11 +3653,11 @@ async function loadSet(into, k, dir) {
   const size = artSize(), TL = new THREE.TextureLoader();
     try {
       const tex = async (n, srgb) => { const t = await TL.loadAsync(dir + n + '_' + size + '.webp'); if (srgb) t.encoding = THREE.sRGBEncoding; t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy()); return t; };
-      const got = Promise.all([fetch(dir + 'geo.json').then(r => { if (!r.ok) throw new Error(dir + ' ' + r.status); return r.json(); }), tex('color', 1), tex('normal')]);
+      const got = Promise.all([fetch(dir + 'geo.json').then(r => { if (!r.ok) throw new Error(dir + ' ' + r.status); return r.json(); }), tex('color', 1), k === 'autumn' ? null : tex('normal')]);
       const [J, map, nm] = await Promise.race([got, new Promise((ok, no) => setTimeout(() => no(new Error('timed out')), 45000))]);
       const A = { geo: {}, mat: new THREE.MeshStandardMaterial({ map, normalMap: nm, roughness: .8, metalness: 0 }) };
       for (const n of J.nodes) { A.geo[n.name] = artGeo(n); A.geo[n.name].computeBoundingSphere(); }
-      into[k] = A; artStep(); return A;
+      into[k] = A; if (k !== 'autumn') artStep(); return A;
     } catch (e) { console.warn('sculpted ' + k + ' missing, using the old one', e); return null; }
 }
 /* the sculpted landmarks (blender/bd_lm, bd_meadow, bd_dunes, bd_frost, bd_ember): one set every world shares and one of its
@@ -3656,9 +3671,11 @@ async function loadRoad(k) { // k's own stones, and the relief they share; witho
     if (!ROAD.nm) ROAD.nm = get('normal'); const [c, n] = await Promise.all([get(k, 1), ROAD.nm]); ROAD[k] = { map: c, normalMap: n };
   } catch (e) { console.warn('road ' + k, e); }
 }
-function loadLm(k) { return lmWait[k] || (lmWait[k] = (async () => { const [A] = await Promise.all([loadLm0(k), LM_SETS.includes(k) ? Promise.race([loadRoad(k), new Promise(r => setTimeout(r, 9000))]) : 0]); return A; })()); }
+function loadLm(k) { return lmWait[k] || (lmWait[k] = (async () => { const [A] = await Promise.all([loadLm0(k), k === 'meadow' ? loadAutumn() : 0, LM_SETS.includes(k) ? Promise.race([loadRoad(k), new Promise(r => setTimeout(r, 9000))]) : 0]); return A; })()); }
+function loadAutumn() { return Promise.race([BART.autumn || loadSet(BART, 'autumn', 'models/bd/autumn/').then(autumnModels), new Promise(r => setTimeout(r, 12000))]); } // the Meadow's turning trees; without them the green ones are tinted
 function loadLm0(k) { return (loadSet(LMART, k, 'models/lm/' + k + '/').then(A => { if (!A) lmWait[k] = null; return A; })); }
 function lmWorld(i) { // called as a world is about to be built
+  if (i !== 0 && BART.autumn) BART.autumn.mat.map.dispose();
   LM_SETS.forEach((k, j) => { const A = LMART[k]; if (A && j !== i) { A.mat.map.dispose(); A.mat.normalMap.dispose(); } if (ROAD[k] && j !== i) ROAD[k].map.dispose(); });
   if (LMART[LM_SETS[i]] && !G.sim) setTimeout(lmRest, 6000);
   if (!LMART[LM_SETS[i]] && !G.sim) loadLm(LM_SETS[i]).then(A => { if (A && worldIdx === i && G.mode === 'menu') { worldIdx = -1; applyWorld(i); } });
@@ -6647,7 +6664,7 @@ window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') 
 async function perfTest() {
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 8px);z-index:99;padding:10px 12px;border-radius:12px;background:rgba(8,12,30,.9);color:#fff;font:600 13px/1.45 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), rows = [];
-  box.textContent = 'Speed test v136: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
+  box.textContent = 'Speed test v137: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); box.textContent = 'Loading...'; G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 19; const on0 = MUS.on;
   save.up = { ...save.up, rate: 10, twin: 4, arsenal: 5 }; await Promise.race([loadLm('ember'), wait(8000)]); await wait(800);
   const pr = k => { pixelRatio = k; renderer.setPixelRatio(k); resize(); };
@@ -6668,7 +6685,7 @@ async function perfTest() {
   G.nestHp = G.nestMax = 30;
   await run('castle blows up', 4500, () => { G.fortMax = 100; G.fortHp = 0; });
   await wait(1500); save.level = 6; await run('new world', 5000, () => { $('result').classList.remove('on'); startPlay(); });
-  box.textContent = 'Speed test v136: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
+  box.textContent = 'Speed test v137: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
 }
 let last = performance.now();
 // keeps the frame rate smooth: renders at fewer pixels when a phone struggles, and at more (up to the screen's own sharpness) when it has headroom
