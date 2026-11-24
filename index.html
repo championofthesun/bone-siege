@@ -922,7 +922,7 @@ function layFlames() {
 }
 function put(geo, list, o = {}) {
   if (!list.length) { geo.dispose(); return null; }
-  const im = new THREE.InstancedMesh(geo, o.mat || softMat(), list.length); im.castShadow = o.shadow !== false; im.receiveShadow = true;
+  const im = new THREE.InstancedMesh(geo, o.mat || softMat(), list.length); im.castShadow = o.shadow !== false; im.receiveShadow = true; if (CLS) im.userData.cls = CLS;
   list.forEach((p, i) => {
     wq.setFromEuler(we.set(0, p[6], 0)); wm.compose(wv.set(p[0], p[1], p[2]), wq, ws.set(p[3], p[4], p[5])); im.setMatrixAt(i, wm);
     if (p[7]) im.setColorAt(i, wc.set(p[7]).convertSRGBToLinear());
@@ -1045,14 +1045,22 @@ function prepMat(mat, o) {
 // place a model at every item in the list, scaled so it stands o.h tall; o.leaf recolours the foliage, o.bark tints the whole model
 function putM(name, list, o = {}) {
   const md = MODELS[name]; if (!md || !list.length) return;
-  const grass = md.art && /^Grass/.test(name), k = (o.h || md.h) / md.h * (grass ? .66 : 1); if (grass && o.leaf) o = { ...o, leaf: '#' + new THREE.Color(o.leaf).lerp(new THREE.Color('#ffffff'), .35).getHexString() }; /* the sculpted tufts are fuller than the old blades, and darker at the root */ if (md.art) { o = { ...o, flat: false }; if (worldIdx === 0) o.leaf = undefined; else if (o.leaf) o.leafK = 7; } // (the sculpted greens are the meadow's own)
+  if (STG && STG.land && STG.land.dead && !CLS && md.art && /^(hex\/tree|Tree_[14])/.test(name)) { // the land is dying: some of these stand bare (and, in the storm, wait under the ground to come back)
+    const die = [], live = []; list.forEach(q => (Math.abs(Math.sin(q[0] * 12.9898 + q[2] * 78.233) * 43758.5453) % 1 < STG.land.dead ? die : live).push(q));
+    if (die.length) {
+      const hexT = /^hex/.test(name), dn = hexT ? 'hex/sy_Env_Generic_Dead_Tree_01' : 'Tree_Bare_1_A'; CLS = 'dead'; putM(dn, hexT ? die : die.map(q => { const c = q.slice(); c[3] *= .92; c[4] *= .92; c[5] *= .92; return c; }), { ...(hexT ? {} : { h: Math.min(o.h || 3.4, 3.9) }), sh: o.sh, bark: '#d8c4cc' });
+      if (worldSt === 2) { CLS = 'life'; putM(name, die, { ...o, sh: 0 }); } CLS = '';
+      if (!live.length) return; list = live;
+    }
+  }
+  const grass = md.art && /^Grass/.test(name), k = (o.h || md.h) / md.h * (grass ? .66 : 1); if (grass && o.leaf) o = { ...o, leaf: '#' + new THREE.Color(o.leaf).lerp(new THREE.Color('#ffffff'), .35).getHexString() }; /* the sculpted tufts are fuller than the old blades, and darker at the root */ if (md.art) { o = { ...o, flat: false }; if (worldIdx === 0) { o.leaf = CLS === 'life' ? undefined : landLeaf(name); if (o.leaf) o.leafK = 7; } else if (o.leaf) o.leafK = 7; } // (the sculpted greens are the meadow's own)
   for (const p of md.parts) {
     let mat = p.mat;
     mat = prepMat(mat, o);
     if (o.bark) { if (mat === p.mat) mat = mat.clone(); mat.color.copy(C(o.bark)); }
     if (o.flat) { if (mat === p.mat) mat = mat.clone(); mat.flatShading = true; } /* faceted like the hex pack, so the two packs read as one style */
     const im = new THREE.InstancedMesh(p.geo, mat, list.length); im.name = name;
-    im.castShadow = o.shadow !== false; im.receiveShadow = true;
+    im.castShadow = o.shadow !== false; im.receiveShadow = true; if (CLS) im.userData.cls = CLS;
     im.userData.keepGeo = true; im.userData.sharedMaps = true; if (mat === p.mat) im.userData.keepMat = true; if (o.tile) im.userData.tile = true; // ground tiles: landmarks never clear these
     list.forEach((q, i) => {
       wq.setFromEuler(we.set(0, q[6], 0)); wm.compose(wv.set(q[0], q[1], q[2]), wq, ws.set(q[3] * k, q[4] * k, q[5] * k)); im.setMatrixAt(i, wm);
@@ -1073,6 +1081,7 @@ const HEX_S = 1.8, HEX_DX = 2 * HEX_S, HEX_DZ = 1.5 * 1.155 * HEX_S;
 // stone bridge over it, and on the far cliff his citadel, one hand-built fortress, with dark peaks behind and a storm overhead.
 // Everything there fades toward the world's dusk colour; his roofs are the same purple as his castle on every map.
 const KING_ROOF = '#6a34b0', CHASM_Z0 = -60.5, CHASM_Z1 = -69.5, CIT_Z = -80;
+const CIT_AT = [[-104, 3.4], [-97, 2.4], [-91.5, 1.4], [-80, 0]], citAt = () => CIT_AT[Math.max(0, worldIdx)] || CIT_AT[3]; // how far off it stands in each world, and how high on its hill: you can see yourself getting closer
 const HOME_K = 1.45; // the hex-pack houses and windmill come out smaller than the trees beside them; this brings them up to size
 // a horizon cut-out 300 wide and 16 high in a world's own shape: rolling mountains, flat-topped mesas, ice peaks, volcanoes
 const bgGeos = {};
@@ -1186,7 +1195,9 @@ function hexWorld(t) {
   if (!BART.court) for (const [zz, yy] of [[bz0 + .3, by0], [bz1 - .3, by1]]) for (const s of [-1, 1]) {
     mesh(new THREE.CylinderGeometry(.35, .22, .9, 8), std('#2a2230', .7), s * 2.2, yy + .7, zz, world, false); halo('#ff9a3a', 1.6, s * 2.2, yy + 1.45, zz, world, .85);
   }
-  buildCitadel(R, tTop + H(3), CIT_Z);
+  { const [cz, up] = citAt(), A = BART.citadel, yb = tTop + H(3) + up; // far off, it stands on a broken crag with a road winding up to the gate
+    if (up && A && A.geo.crag) { const mk = A.crag || (A.crag = {}), m = mk[worldIdx] || (mk[worldIdx] = worldIdx === 2 ? prepMat(A.mat, { snow: .7 }) : A.mat.clone()); m.color.copy(C(['#ffffff', '#f0cdb4', '#ffffff', '#ffffff'][worldIdx] || '#ffffff')); for (const [x, y, dz, k, ry] of [[0, 0, 0, 1, 0], [-27, -2.6, -7, .72, 1.9], [27, -2.2, -9, .78, -2.2], [-46, -3.4, -2, .7, .8], [47, -3.2, -4, .74, 2.6]]) { const o = bdMesh(A.geo.crag, m, x, yb + y, cz + dz, world, false); o.scale.setScalar(k); o.rotation.y = ry; } }
+    buildCitadel(R, yb, cz); }
   // the citadel's forecourt: dark flagstones from the bridge to the gate, braziers lining the way, skull-topped obelisks with
   // glowing runes, and skull pikes and bone piles out to the sides
   const cy = tTop + H(3), cz0 = CHASM_Z1 - .6, cz1 = CIT_Z + 4.6, cd = cz0 - cz1;
@@ -1437,7 +1448,9 @@ function groundCover(cover, t) {
     else g.push(item(x, z, .6 + rand() * .7, { y }));
   }
   putMix(['Grass_1_A', 'Grass_2_A'], g, { wind: 0, h: .55, leaf: cv.leaf, leafK: 14 }, () => put(GEO.tuft(), g, { mat: new THREE.MeshLambertMaterial({ vertexColors: true }), shadow: false }));
+  const bl = STG && STG.land ? STG.land.bloom : 1; if (bl > 0 && bl < 1) f.length = st.length = Math.round(f.length * bl); CLS = bl ? '' : 'life';
   if (f.length) { put(GEO.petals(), f, { mat: new THREE.MeshLambertMaterial({ vertexColors: true }), shadow: false }); put(GEO.stem(), st, { mat: new THREE.MeshLambertMaterial({ vertexColors: true }), shadow: false }); } /* (separate materials: only the petals carry per-flower colours) */
+  CLS = '';
 }
 // every house beside the road gets its own patch: the trees and clutter that grew through it are cleared, a couple of yard
 // props (barrels, sacks, a barrow, a bit of fence) go round it, and the homes and tavern send up chimney smoke
@@ -1666,7 +1679,7 @@ function wGround(base, tones, strokes, extra) {
     for (let i = 0; i < (strokes ? 900 : 0); i++) { const px = rand() * w, py = rand() * h; x.strokeStyle = strokes[i % strokes.length]; x.globalAlpha = .25 + rand() * .35; x.beginPath(); x.moveTo(px, py); x.lineTo(px + (rand() - .5) * 7, py - 4 - rand() * 8); x.stroke(); }
     x.globalAlpha = 1; if (extra) extra(x, w, h);
   }, [6, 8.4]);
-  mesh(new THREE.PlaneGeometry(100, 140), lam('#ffffff', { map: t }), 0, 0, -28, world, false).rotation.x = -Math.PI / 2;
+  mesh(new THREE.PlaneGeometry(100, 140), lam('#ffffff', { map: t }), 0, 0, -28, world, false).rotation.x = -Math.PI / 2; world.children[world.children.length - 1].userData.ground = true;
 }
 function wRoad(grout, cols, o = {}) {
   // hand-laid cobbles: small rounded stones in staggered rows, each lit from the top-left with a soft shadow below, dark
@@ -1717,7 +1730,7 @@ function wRoad(grout, cols, o = {}) {
 }
 let CUR_DUSK = null; // the dusk colour of the current world's Bone Kingdom (hills behind the castle fade into it)
 function wHills(list) {
-  for (const [hx, hz, r, c] of list) { if (G.hex && hz <= -56) continue; /* behind the castle the Bone King's city stands instead */ const f = CUR_DUSK ? clamp((-hz - 48) / 30, 0, .8) : 0, col = f ? '#' + new THREE.Color(c).lerp(new THREE.Color(CUR_DUSK), f).getHexString() : c; mesh(blob(r, .05, 2.1, 30, 16), painted(std(col, .95), .9, .22), hx, -r * .5, hz, world, false).receiveShadow = false; }
+  for (const [hx, hz, r, c] of list) { if (G.hex && hz <= -56) continue; /* behind the castle the Bone King's city stands instead */ const f = CUR_DUSK ? clamp((-hz - 48) / 30, 0, .8) : 0, col = f ? '#' + new THREE.Color(c).lerp(new THREE.Color(CUR_DUSK), f).getHexString() : STG && STG.land ? '#' + new THREE.Color(c).multiply(new THREE.Color(STG.land.hill)).getHexString() : c; mesh(blob(r, .05, 2.1, 30, 16), painted(std(col, .95), .9, .22), hx, -r * .5, hz, world, false).receiveShadow = false; }
 }
 // posts, rails and lights that frame the road on both sides
 const lampLit = c => new THREE.MeshBasicMaterial({ color: C(c), toneMapped: false });
@@ -1942,6 +1955,13 @@ function updateMotes(dt, t) {
 const WORLDS = [
   { name: 'Meadow Road', sky: ['#3c3560', '#8e86b4', '#b8b2d4'], fog: ['#aaa4c8', 64, 118], hemi: ['#dcecff', '#5f8046', .58], sun: ['#fff2da', 1.5], exposure: 1.08, shade: .55,
     wall: '#ffffff', stone: '#cfc5b6', motes: { c: '#fff6b8', size: .26, op: .75, vx: .15, vy: .28, sway: .5, add: true },
+    stages: [null,
+      { sky: ['#3d2c62', '#b2627c', '#f2ac7c'], fog: ['#c48e90', 60, 116], hemi: ['#ffd8c8', '#6c6a48', .54], sun: ['#ffba7e', 1.4], exposure: 1.05, // sunset: the leaves turn, the first trees die
+        motes: { c: '#ffb45a', size: .3, op: .85, vx: .3, vy: -.2, sway: .8 }, realm: { cloud: '#8a6484', dusk: '#80607e', cards: ['#5c3c58', '#7e5068', '#a66e78'] },
+        land: { leaf: ['#d9962e', '#c96f2a', '#c9a83a'], pine: '#5c7a38', bush: '#a8913a', tuft: '#b9a44c', ground: [2.5, .84, .95], hill: '#d8c08c', dead: .16, bloom: .5, crystals: [[8.9, -25.6, 0]] } },
+      { sky: ['#2a1240', '#6e3478', '#b86aa8'], fog: ['#7c4c80', 58, 112], hemi: ['#e8b2d4', '#5e4660', .64], sun: ['#ffcfe2', 1.06], exposure: 1.03, // the storm: bare trees, dead grass, crystals all the way to your village
+        motes: { c: '#e08aff', size: .28, op: .8, vx: .5, vy: .5, sway: .9, add: true }, realm: { cloud: '#4c3458', dusk: '#624668', cards: ['#2e1a40', '#462a5e', '#62407c'] },
+        land: { leaf: ['#8a6a4a', '#7a5e58', '#86684a'], pine: '#56604a', bush: '#6c5a5c', tuft: '#8c7c70', ground: [1.75, .50, 1.95], hill: '#9c8694', dead: .62, bloom: 0, crystals: [[8.9, -25.6, 0], [-7.7, -30.4, 1], [8.2, -19.6, 0], [-7.6, -20.6, 0], [7.7, -14.4, 1], [-7.5, -14.2, 0]] } }],
     build() {
       wGround('#58ad40', ['#66bd4c', '#4b9f38', '#76c658', '#52a83e', '#80ca60'], ['#3f942c', '#84cc60', '#4aa233']);
       wRoad('#7d6e5c', ['#d9cdb6', '#cfc2a8', '#e3d8c2', '#c6b89c', '#d4c7ad', '#bfb19a'], { curb: ['#bfb3a0', '#f3ecdf'], verge: '#9a7a4c', moss: '#6f9e3a' });
@@ -1970,7 +1990,7 @@ const WORLDS = [
       putMix(['Bush_1_A', 'Bush_1_C', 'Bush_3_A', 'Bush_3_B'], bushes, { wind: .12, h: .9, sh: 1.0, leaf: MEADOW_LEAF[2], leafK: 14, flat: true }, () => put(GEO.bush(), bushes, { sh: 1.15 })); putMix(ROCK_MODELS, rocks, { h: .8, sh: 1.1, bark: '#d8d0bc', flat: true }, () => put(GEO.rock('#77786e', '#b9c48a'), rocks, { mat: softMat({ flatShading: true }), sh: 1.2 }));
       put(GEO.mushroom('#e23a30'), red, { sh: .8 }); put(GEO.mushroom('#f7a531'), gold, { sh: .8 }); putP('stump', () => GEO.stump(), stumps, { sh: .75 }); putP('log', () => GEO.log(), logs, { sh: .9 });
       putP('hay', () => GEO.hay(), hay, { sh: .85 }); putP('barrel', () => GEO.barrel(), barrels, { sh: .5 }); putP('crate', () => GEO.crate(), crates, { sh: .62 });
-      put(GEO.petals(), petals, { mat: new THREE.MeshLambertMaterial({ vertexColors: true }), shadow: false }); put(GEO.stem(), stems, { mat: new THREE.MeshLambertMaterial({ vertexColors: true }), shadow: false });
+      const bl = STG && STG.land ? STG.land.bloom : 1; if (bl > 0 && bl < 1) { petals.length = Math.round(petals.length * bl); stems.length = petals.length; } CLS = bl ? '' : 'life'; put(GEO.petals(), petals, { mat: new THREE.MeshLambertMaterial({ vertexColors: true }), shadow: false }); put(GEO.stem(), stems, { mat: new THREE.MeshLambertMaterial({ vertexColors: true }), shadow: false }); CLS = '';
       putMix(['Grass_1_A', 'Grass_2_A'], tufts, { wind: 0, h: .55 }, () => put(GEO.tuft(), tufts, { mat: new THREE.MeshLambertMaterial({ vertexColors: true }), shadow: false }));
       put(new THREE.SphereGeometry(1, 7, 5), pebbles, { mat: lam('#ffffff'), shadow: false }); put(new THREE.CircleGeometry(1, 6).rotateX(-Math.PI / 2), leaves, { mat: lam('#ffffff'), shadow: false });
       putP('sign', () => GEO.sign(), [item(7.3, -6.5, .9, { ry: -.5 })], { sh: .3 });
@@ -2108,14 +2128,21 @@ const royalBanTex = canvasTex(64, 160, (x, w, h) => {
   x.fillStyle = '#ffc62b'; x.beginPath(); x.moveTo(14, 72); x.lineTo(16, 44); x.lineTo(25, 56); x.lineTo(32, 38); x.lineTo(39, 56); x.lineTo(48, 44); x.lineTo(50, 72); x.closePath(); x.fill();
   x.fillStyle = '#ff4a6a'; x.beginPath(); x.arc(32, 64, 4, 0, 7); x.fill();
 });
+const tornBanTex = canvasTex(64, 160, (x, w, h) => { // the same standard after the war: ragged foot, rips, scorch marks, its colours faded
+  x.beginPath(); x.moveTo(0, 0); x.lineTo(w, 0); x.lineTo(w, h * .70); x.lineTo(w - 9, h * .62); x.lineTo(w - 15, h * .84); x.lineTo(w - 25, h * .72); x.lineTo(w - 33, h * .95); x.lineTo(w - 41, h * .70); x.lineTo(w - 50, h * .80); x.lineTo(w - 57, h * .58); x.lineTo(0, h * .72); x.closePath();
+  const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#4a82cc'); g.addColorStop(.7, '#26488c'); g.addColorStop(1, '#1c2c58'); x.fillStyle = g; x.fill(); x.lineWidth = 5; x.strokeStyle = '#cfa23c'; x.stroke();
+  x.fillStyle = '#d8aa3c'; x.beginPath(); x.moveTo(14, 72); x.lineTo(16, 44); x.lineTo(25, 56); x.lineTo(32, 38); x.lineTo(39, 56); x.lineTo(48, 44); x.lineTo(50, 72); x.closePath(); x.fill();
+  x.globalCompositeOperation = 'source-atop'; for (const [a, b, r] of [[52, 96, 15], [12, 88, 12], [34, 112, 12]]) { const k = x.createRadialGradient(a, b, 1, a, b, r); k.addColorStop(0, 'rgba(24,14,20,.85)'); k.addColorStop(1, 'rgba(24,14,20,0)'); x.fillStyle = k; x.fillRect(a - r, b - r, r * 2, r * 2); }
+  x.globalCompositeOperation = 'destination-out'; for (const [a, b, c, d] of [[8, 20, 5, 13], [50, 26, 4, 11], [44, 92, 6, 12]]) { x.beginPath(); x.ellipse(a, b, c * .5, d * .6, .3, 0, 7); x.fill(); }
+});
 function royalBanner3D(x, z, s = 1, cursed = false) {
   const g = landmark(x, z, 2.2, s);
   const pole = std(cursed ? '#3a2e44' : '#7a5a3e', .7), fin = std(cursed ? '#cd77ff' : '#ffc62b', .35);
   mesh(new THREE.CylinderGeometry(.06, .075, 4.3, 8), pole, 0, 2.15, 0, g);
   mesh(new THREE.SphereGeometry(.16, 10, 8), fin, 0, 4.4, 0, g);
   mesh(new THREE.BoxGeometry(1.5, .09, .09), pole, .62, 3.95, 0, g);
-  const flag = mesh(new THREE.PlaneGeometry(1.3, 2.7, 1, 6), new THREE.MeshLambertMaterial({ map: cursed ? citBanTex : royalBanTex, transparent: true, alphaTest: .5, side: THREE.DoubleSide }), .65, 2.6, .02, g, false);
-  flag.userData.sharedMaps = true; flag.geometry.translate(0, -1.35, 0); flag.position.y = 3.95;
+  const flag = mesh(new THREE.PlaneGeometry(1.3, 2.7, 1, 6), new THREE.MeshLambertMaterial({ map: cursed ? citBanTex : STG && worldIdx === 0 ? tornBanTex : royalBanTex, transparent: true, alphaTest: .5, side: THREE.DoubleSide }), .65, 2.6, .02, g, false);
+  if (!cursed && STG) HEAL.cloth.push(flag.material); flag.userData.sharedMaps = true; flag.geometry.translate(0, -1.35, 0); flag.position.y = 3.95;
   const base = flag.geometry.attributes.position.array.slice();
   worldAnim.push(t => { // the cloth ripples, more toward the bottom
     const p = flag.geometry.attributes.position.array;
@@ -2214,15 +2241,25 @@ function cursedCrystals(spots) { // purple crystals breaking through the ground 
     if (i % 2 === 0) halo('#b04bff', 1.65, 0, 1, 0, g, .3);
   });
 }
+// what each warlord has hung on the gate (sculpted as one half, in his world's own set)
+const fortDress = new THREE.Group();
+function dressGate(i) {
+  if (fortDress.parent !== fort) fort.add(fortDress); for (const o of [...fortDress.children]) fortDress.remove(o);
+  const A = LMART[LM_SETS[i]]; if (A && A.geo.gtrim) bdHalf(A, 'gtrim').forEach(g => bdMesh(g, A.mat, 0, 0, 0, fortDress));
+}
 // every world gets its own arrangement, so the same pieces never sit in the same spots twice
 function redesignLandmarks(i) {
   if (!G.hex) return;
   switch (i) {
     case 0: // Meadow Road: a pair of royal standards at your village, a fallen column, a crowned skull and crystals guarding his gate
       royalBanner3D(-7.9, -8, 1.1); royalBanner3D(7.9, -12, 1);
-      ancientColumn(-10.8, -22, 3.25, '#d3d4c5', true);
+      if (LMART.meadow && LMART.meadow.geo.champion) { // the champion Grimbald was: his statue, and its head in the grass
+        const g = landmark(-8.35, -27.2, 2.9, 1); lmMesh('meadow', 'champion', g, 0, 0, 0, { s: .95, ry: .34 }); propShadows.push([-8.35, -27.2, 1.5]);
+        const h = landmark(-7.6, -24.2, 1.3, 1); lmMesh('meadow', 'champhead', h, 0, 0, 0, { s: .85, ry: .55 }); propShadows.push([-7.6, -24.2, .7]);
+      } else ancientColumn(-10.8, -22, 3.25, '#d3d4c5', true);
+      if (STG && STG.land && STG.land.crystals) { const n0 = world.children.length; cursedCrystals(STG.land.crystals); for (const o of world.children.slice(n0)) o.userData.cls = 'dead'; }
       monumentSkull(11.4, -33, .94, '#c7b9c0', true); cursedCrystals([[9.3, -29.8, 1], [10.3, -28.6, 0]]);
-      royalBanner3D(-9.6, -31.5, .92, true);
+      royalBanner3D(-12.6, -35.4, .92, true);
       break;
     case 1: // Sunscorch Dunes: a colossal skull half buried in the sand, lost columns on the far side, one standard by your gate
       monumentSkull(-12.6, -28, 1.68, '#d7aa72', false);
@@ -2243,6 +2280,32 @@ function redesignLandmarks(i) {
   }
 }
 
+/* ---- a world's three stages: first light, dusk, storm (how far through its levels you are). Each can change the sky, the
+   light, the drifting motes and the land (STG.land): what colour the leaves and ground have gone, how many trees have died.
+   Beating the boss heals it: the storm lifts, the dead trees and crystals sink away and the living ones come back up. ---- */
+const stageOf = n => { const f = ((n - 1) % WORLD_LEN + 1) / WORLD_LEN; return f <= .4 ? 0 : f <= .8 ? 1 : 2; };
+let worldSt = 0, STG = null, CLS = ''; // CLS: what the pieces being placed do when the land heals ('life' comes up, 'dead' goes down)
+const HEAL = { on: false, t: 0, list: [], mats: [], cloth: [] }, HEALED = { value: 0 };
+const landLeaf = n => { const L = STG && STG.land; if (!L) return undefined; return /Grass/.test(n) ? L.tuft : /Bush/.test(n) ? L.bush : /Tree_4|trees_A|tree_single_A/.test(n) ? L.pine : /[Tt]ree/.test(n) ? L.leaf[n.length % L.leaf.length] : undefined; };
+function healStart() { if (!STG || worldSt !== 2 || HEAL.on) return; HEAL.on = true; HEAL.t = -.55; }
+function healTick(dt) {
+  if (!HEAL.on || HEAL.t >= 3.4) return; HEAL.t += dt; if (HEAL.t < 0) return;
+  const w0 = { ...WORLDS[worldIdx], ...STG }, w1 = WORLDS[worldIdx], e = clamp(HEAL.t / 2.2, 0, 1), k = e * e * (3 - 2 * e), mix = (a, b) => wc.copy(C(a)).lerp(wc2.copy(C(b)), k);
+  if (HEAL.t - dt < 0) for (const h of HEAL.list) if (h.cls === 'life') { h.o.visible = true; }
+  paintSky(w0.sky.map((c, j) => '#' + new THREE.Color(c).lerp(new THREE.Color(w1.sky[j]), k).getHexString())); scene.fog.color.copy(mix(w0.fog[0], w1.fog[0])); scene.fog.near = w0.fog[1] + (w1.fog[1] - w0.fog[1]) * k; scene.fog.far = w0.fog[2] + (w1.fog[2] - w0.fog[2]) * k;
+  hemi.color.copy(mix(w0.hemi[0], w1.hemi[0])); hemi.groundColor.copy(mix(w0.hemi[1], w1.hemi[1])); hemi.intensity = w0.hemi[2] + (w1.hemi[2] - w0.hemi[2]) * k;
+  sun.color.copy(mix(w0.sun[0], w1.sun[0])); sun.intensity = w0.sun[1] + (w1.sun[1] - w0.sun[1]) * k; renderer.toneMappingExposure = w0.exposure + (w1.exposure - w0.exposure) * k;
+  HEALED.value = k; for (const m of HEAL.mats) m.mat.color.copy(m.from).lerp(WHITE, k);
+  if (k > .5 && HEAL.cloth.length) { for (const m of HEAL.cloth) m.map = royalBanTex; HEAL.cloth.length = 0; }
+  for (const h of HEAL.list) { // the wave runs from his castle to you, band by band
+    const u = clamp((HEAL.t - h.d) / 1.1, 0, 1), y = h.cls === 'life' ? -7 * Math.pow(1 - u, 3) + (u < 1 ? Math.sin(u * Math.PI) * .5 : 0) : -5 * u * u * u;
+    if (h.y === undefined) h.y = h.o.matrixAutoUpdate ? h.o.position.y : h.o.matrix.elements[13];
+    if (h.o.matrixAutoUpdate) h.o.position.y = h.y + y; else { h.o.matrix.elements[13] = h.y + y; h.o.matrixWorldNeedsUpdate = true; }
+    if (h.cls === 'dead' && u >= 1) h.o.visible = false;
+    if (h.cls === 'life' && !h.lit && u > .3) { h.lit = true; for (let q = 0; q < 7; q++) burst((rand() < .5 ? -1 : 1) * (6.5 + rand() * 6), .6 + rand() * 1.6, h.z + (rand() - .5) * 12, ['#b8ff7a', '#fff6b0', '#ffffff'], 5, 4, { vy: 5, life: 1.1, g: 3, sz: 1.3, kind: PK.SPARK }); }
+  }
+  G.shadowDirty = true;
+}
 const worldOf = level => Math.floor((level - 1) / WORLD_LEN) % WORLDS.length;
 // static batching: the scenery is hundreds of small untextured meshes (lamps, rails, rocks, bridge, citadel, landmarks...),
 // one draw call each. Once a world is built, every static opaque one is baked into a few big meshes, grouped by material
@@ -2275,16 +2338,16 @@ const SCN_MATS = { vs: `attribute vec4 aLeaf; attribute vec3 aRoof; attribute ve
   fs: 'varying vec3 vTint; varying vec4 vLeaf; varying vec3 vRoof; varying vec2 vSnow;\n' };
 function sceneryShader(m) { // prepMat's leaf, roof, snow and wind, with the settings carried by each vertex instead of each material
   m.onBeforeCompile = sh => {
-    sh.uniforms.uWind = WIND;
+    sh.uniforms.uWind = WIND; sh.uniforms.uHeal = HEALED;
     sh.vertexShader = SCN_MATS.vs + sh.vertexShader.replace('#include <beginnormal_vertex>', `#include <beginnormal_vertex>
       vTint = aTint; vLeaf = aLeaf; vRoof = aRoof; vSnow = vec2(aFx.z, normalize(objectNormal).y);`).replace('#include <begin_vertex>', `#include <begin_vertex>
       transformed.x += sin(uWind * 1.6 + aFx.y) * .045 * aFx.x; transformed.z += cos(uWind * 1.25 + aFx.y) * .03 * aFx.x;`);
-    sh.fragmentShader = SCN_MATS.fs + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+    sh.fragmentShader = 'uniform float uHeal;\n' + SCN_MATS.fs + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
       diffuseColor.rgb *= vTint;
       if (vRoof.x > -.5) { float bl = clamp((diffuseColor.b - max(diffuseColor.r, diffuseColor.g)) * 5.0, 0.0, 1.0);
         diffuseColor.rgb = mix(diffuseColor.rgb, vRoof * dot(diffuseColor.rgb, vec3(.3, .59, .11)) * 2.4, bl); }
       if (vLeaf.w > .5) { float gn = clamp((diffuseColor.g - max(diffuseColor.r, diffuseColor.b)) * vLeaf.w, 0.0, 1.0);
-        diffuseColor.rgb = mix(diffuseColor.rgb, vLeaf.rgb * dot(diffuseColor.rgb, vec3(.3, .59, .11)) * 2.6, gn); }
+        diffuseColor.rgb = mix(diffuseColor.rgb, vLeaf.rgb * dot(diffuseColor.rgb, vec3(.3, .59, .11)) * 2.6, gn * (1.0 - uHeal)); }
       if (vSnow.x > .01) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.9, .94, 1.0), smoothstep(.5 - .3 * vSnow.x, .95 - .3 * vSnow.x, vSnow.y) * .92);`);
   };
   m.customProgramCacheKey = () => 'scenery';
@@ -2301,7 +2364,7 @@ function bakeScenery(root) {
     if (m.onBeforeCompile !== DEF && !kk && !pt) continue;
     if (!A.position || !A.normal || (m.map && !A.uv) || (kk && pt)) continue;
     const mapped = !!m.map, cast = im.castShadow && !/^Grass/.test(im.name);
-    const key = [m.type, mapped ? m.map.uuid : '', m.normalMap ? m.normalMap.uuid : '', m.roughness, m.metalness, m.flatShading ? 1 : 0, m.side, m.emissive ? m.emissive.getHexString() + (m.emissiveIntensity || 0) : '', pt ? pt.join('_') : '', m.fog ? 1 : 0, cast ? 1 : 0, im.receiveShadow ? 1 : 0, mapped && (kk || m.isMeshStandardMaterial) ? 'k' : ''].join('|');
+    const key = [m.type, mapped ? m.map.uuid : '', m.normalMap ? m.normalMap.uuid : '', m.roughness, m.metalness, m.flatShading ? 1 : 0, m.side, m.emissive ? m.emissive.getHexString() + (m.emissiveIntensity || 0) : '', pt ? pt.join('_') : '', m.fog ? 1 : 0, cast ? 1 : 0, im.receiveShadow ? 1 : 0, mapped && (kk || m.isMeshStandardMaterial) ? 'k' : '', im.userData.cls || ''].join('|');
     gone.push(im);
     for (let i = 0; i < im.count; i++) {
       im.getMatrixAt(i, mi); const e = mi.elements; if (!(Math.abs(mi.determinant()) > 1e-9)) continue; // (cleared to make room for a landmark)
@@ -2338,7 +2401,7 @@ function bakeScenery(root) {
     if (b.kk) { geo.setAttribute('aLeaf', new THREE.BufferAttribute(leaf, 4)); geo.setAttribute('aRoof', new THREE.BufferAttribute(roof, 3)); geo.setAttribute('aFx', new THREE.BufferAttribute(fx, 3)); geo.setAttribute('aTint', new THREE.BufferAttribute(tnt, 3)); }
     geo.setIndex(new THREE.BufferAttribute(idx, 1)); geo.computeBoundingSphere();
     let mat = mats.get(b.key); if (!mat) { mat = b.m.clone(); mat.userData = {}; mat.vertexColors = true; mat.color.set(0xffffff); if (b.kk) sceneryShader(mat); else if (b.pt) painted(mat, ...b.pt); mats.set(b.key, mat); }
-    const o = new THREE.Mesh(geo, mat); o.castShadow = b.cast; o.receiveShadow = b.im.receiveShadow; o.matrixAutoUpdate = false; o.userData.dyn = true; if (b.im.userData.sharedMaps) o.userData.sharedMaps = true; root.add(o); if (b.far) FAR_CAST.push(o);
+    const o = new THREE.Mesh(geo, mat); o.castShadow = b.cast; o.receiveShadow = b.im.receiveShadow; o.matrixAutoUpdate = false; o.userData.dyn = true; if (b.im.userData.cls) o.userData.cls = b.im.userData.cls; if (b.im.userData.sharedMaps) o.userData.sharedMaps = true; root.add(o); if (b.far) FAR_CAST.push(o);
   }
   for (const im of gone) { root.remove(im); im.dispose(); if (!im.userData.keepGeo) im.geometry.dispose(); if (!im.userData.keepMat) im.material.dispose(); }
 }
@@ -2411,6 +2474,7 @@ function bakeStatic(root) {
   for (const o of pick) {
     const m = o.material, key = [m.type, (m.roughness || 0).toFixed(1), (m.metalness || 0).toFixed(1), m.flatShading ? 1 : 0, m.side, m.emissive ? m.emissive.getHexString() : '', o.castShadow ? 1 : 0, m.map ? m.map.uuid : '', m.toneMapped ? 1 : 0, m.fog ? 1 : 0].join('|');
     let b = buckets.get(key); if (!b) { b = { m, pos: [], nor: [], col: [], uv: m.map ? [] : null, cast: o.castShadow, shared: false }; buckets.set(key, b); }
+    if (o.userData.ground) b.ground = true;
     if (o.userData.sharedMaps) b.shared = true; // only a texture that really is shared survives the world being torn down
     let g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry;
     const mw = new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld); tmpN.getNormalMatrix(mw);
@@ -2429,7 +2493,7 @@ function bakeStatic(root) {
     g.setAttribute('position', new THREE.Float32BufferAttribute(b.pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(b.nor, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(b.col, 3)); if (b.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(b.uv, 2));
     const mat = b.m.clone(); mat.vertexColors = true; mat.color.set(0xffffff);
     const mesh = new THREE.Mesh(g, mat); mesh.castShadow = b.cast; mesh.receiveShadow = true; mesh.frustumCulled = false; mesh.matrixAutoUpdate = false; if (b.uv && b.shared) mesh.userData.sharedMaps = true; /* (every textured batch used to claim this, so each world's ground and road textures were never freed) */
-    mesh.applyMatrix4(new THREE.Matrix4()); root.add(mesh);
+    if (b.ground) mesh.userData.ground = true; mesh.applyMatrix4(new THREE.Matrix4()); root.add(mesh);
   }
   return { meshes: pick.length, batches: buckets.size };
 }
@@ -2518,7 +2582,7 @@ function addSkyline(i) {
     glow(cols[0], r * 5.5, mx, my, mz - 1, sky, i === 3 ? .5 : .32).renderOrder = -3; }
   // spirit wisps circling the keep in the realm's glow colour
   { const wc = R.glow || '#c070ff', ws = Array.from({ length: 7 }, (_, k) => ({ s: glow(wc, 1.6, 0, 0, 0, dyn, .85), a: k / 7 * Math.PI * 2, y: 13 + (k % 3) * 2.4, r: 5.5 + (k % 2) * 1.6, sp: .5 + (k % 3) * .12 }));
-    worldAnim.push(t => { for (const w of ws) { const a = w.a + t * w.sp; w.s.position.set(Math.sin(a) * w.r, w.y + Math.sin(t * 1.7 + w.a * 3) * .6, CIT_Z - .8 + Math.cos(a) * w.r * .7); w.s.scale.setScalar(1.3 + .5 * Math.sin(t * 3 + w.a * 5)); } }); }
+    worldAnim.push(t => { for (const w of ws) { const a = w.a + t * w.sp; w.s.position.set(Math.sin(a) * w.r, w.y + citAt()[1] + Math.sin(t * 1.7 + w.a * 3) * .6, citAt()[0] - .8 + Math.cos(a) * w.r * .7); w.s.scale.setScalar(1.3 + .5 * Math.sin(t * 3 + w.a * 5)); } }); }
   if (i === 0) { // floating ruins over the plain, each pouring a purple magic waterfall into mist
     const fallTex = canvasTex(64, 256, (x, w, h) => { for (let k = 0; k < 26; k++) { const px = rand() * w, gw = 3 + rand() * 8, g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(230,200,255,.9)'); g.addColorStop(.5, 'rgba(170,100,255,.6)'); g.addColorStop(1, 'rgba(120,60,220,0)'); x.fillStyle = g; x.fillRect(px, rand() * 30, gw, h); } }, [1, 1]);
     fallTex.wrapT = THREE.RepeatWrapping; worldAnim.push(t => { fallTex.offset.y = (t * .45) % 1; });
@@ -2527,7 +2591,7 @@ function addSkyline(i) {
     const rock = M('#7a6c9c'), rock2 = M('#62567f'), grass = M('#6fa05a'), grass2 = M('#88bc66'), pine = M('#3f7a52'), stone = M('#a39bbd'), roof = M(R.roof || '#8a40e0', { roughness: .5 });
     for (const [ix, iy, iz, s, ph] of [[-17, 23, -100, 1, 0], [17, 27, -107, 1.15, 2], [2, 34, -122, .65, 4]]) {
       const isl = new THREE.Group(); isl.position.set(ix, iy, iz); isl.scale.setScalar(s); dyn.add(isl);
-      const art = LMART.meadow; if (art) { lmMesh('meadow', 'island', isl, 0, 0, 0, { far: true }); glow('#d070ff', 3, 1.4, 3.2, .7, isl, .5); } else {
+      const art = LMART.meadow; if (art) { const im = lmMesh('meadow', 'island', isl, 0, 0, 0, { far: true, tint: STG && STG.land ? STG.land.hill : undefined }); if (STG && STG.land && !HEAL.mats.some(m => m.mat === im.material)) HEAL.mats.push({ mat: im.material, from: C(STG.land.hill) }); glow('#d070ff', 3, 1.4, 3.2, .7, isl, .5); } else {
       for (let k = 0; k < 8; k++) { const d = k / 7, r = 4.5 * (1 - d * .82) + rand() * .5, a = ph + k * 2.4, o = d < .15 ? 0 : (1 - d) * 1.4 + .2;
         const b = mesh(new THREE.DodecahedronGeometry(r, 0), k % 2 ? rock : rock2, Math.cos(a) * o, -.9 - d * 7, Math.sin(a) * o, isl, false); b.scale.set(1, .6, 1); b.rotation.set(rand(), rand() * 6, rand() * .5); }
       mesh(new THREE.CylinderGeometry(5.3, 5, .9, 10), grass, 0, 0, 0, isl, false);
@@ -2604,8 +2668,9 @@ function addSkyline(i) {
 // a soft vignette over the battle, tinted per world, to frame the road and push the eye to the middle
 const vigEl = (() => { const d = document.createElement('div'); d.id = 'vignette'; d.style.cssText = 'position:absolute;inset:0;pointer-events:none;transition:background .6s'; canvas.after(d); return d; })(); // right over the 3D view, under the HUD and menus (z-index 1 at the end of the game element shaded those too)
 function applyVignette(i) { const c = ['20,40,10', '70,40,10', '20,40,80', '40,0,20'][i] || '0,0,0'; vigEl.style.background = `radial-gradient(ellipse 85% 70% at 50% 46%, rgba(${c},0) 58%, rgba(${c},.34) 100%)`; }
-function applyWorld(i) {
-  if (i === worldIdx) return; worldIdx = i; lmWorld(i); const w = WORLDS[i]; if (crowdReady && !G.sim) loadWarlordArt(i); // (its warlord's art, ready before he is needed)
+function applyWorld(i, st) {
+  st = !WORLDS[i].stages ? 0 : G.sim ? worldSt : st === undefined ? stageOf(G.level || save.level) : st;
+  if (i === worldIdx && st === worldSt) return; worldIdx = i; worldSt = st; STG = WORLDS[i].stages ? WORLDS[i].stages[st] : null; CLS = ''; for (const m of HEAL.mats) m.mat.color.copy(m.from); HEAL.on = false; HEAL.t = 0; HEAL.list.length = HEAL.mats.length = HEAL.cloth.length = 0; HEALED.value = 0; lmWorld(i); const w = STG ? { ...WORLDS[i], ...STG } : WORLDS[i], HD0 = HEX_DRESS[w.hex || 'meadow'], HD = STG && STG.realm ? { ...HD0, realm: { ...HD0.realm, ...STG.realm } } : HD0; if (crowdReady && !G.sim) loadWarlordArt(i); // (its warlord's art, ready before he is needed)
   for (const o of [...world.children]) {
     world.remove(o);
     o.traverse(c => {
@@ -2621,7 +2686,12 @@ function applyWorld(i) {
   sun.color.copy(C(w.sun[0])); sun.intensity = w.sun[1]; renderer.toneMappingExposure = w.exposure;
   for (const m of fortWalls) m.color.copy(C(w.wall)).multiplyScalar(m.userData.k || 1); fortStone.color.copy(C(w.stone));
   moteMat.color.copy(C(w.motes.c)); moteMat.size = w.motes.size; moteMat.opacity = w.motes.op; moteMat.blending = w.motes.add ? THREE.AdditiveBlending : THREE.NormalBlending; moteMat.needsUpdate = true; moteCfg = w.motes;
-  { const lk = FOE_LOOKS[lookOf(i)]; if (lk && lk.tint) FOE_TINT.copy(C(lk.tint)); else FOE_TINT.copy(w.foeTint ? C(w.foeTint) : WHITE).multiply(FOE_WARM); } /* aged ivory bone, so the horde never reads as white ghosts (worlds with their own horde look bring their own tint) */ bakeFoes(lookOf(i)); /* and dressed for this world */ G.hex = !!MODELS["hex/hex_grass"]; CUR_DUSK = (HEX_DRESS[w.hex || 'meadow'].realm || {}).dusk || null; w.build(); if (G.hex) hexWorld(HEX_DRESS[w.hex || "meadow"]); redesignLandmarks(i); for (const [x, z, r] of LM_SPOTS) clearAround(x, z, r); addAmbient(i); if (G.hex) addSkyline(i); noFarShadows(world); G.baked = bakeStatic(world); bakeScenery(world); GLOW.gather(); applyVignette(i); applyGrade(i);
+  { const lk = FOE_LOOKS[lookOf(i)]; if (lk && lk.tint) FOE_TINT.copy(C(lk.tint)); else FOE_TINT.copy(w.foeTint ? C(w.foeTint) : WHITE).multiply(FOE_WARM); } /* aged ivory bone, so the horde never reads as white ghosts (worlds with their own horde look bring their own tint) */ bakeFoes(lookOf(i)); /* and dressed for this world */ G.hex = !!MODELS["hex/hex_grass"]; CUR_DUSK = (HD.realm || {}).dusk || null; w.build(); if (G.hex) hexWorld(HD); redesignLandmarks(i); dressGate(i); for (const [x, z, r] of LM_SPOTS) clearAround(x, z, r); addAmbient(i); if (G.hex) addSkyline(i); noFarShadows(world); G.baked = bakeStatic(world); bakeScenery(world);
+  if (STG) for (const o of world.children) { // what the healing moves and recolours
+    if (o.userData.cls) { if (o.geometry && !o.geometry.boundingSphere) o.geometry.computeBoundingSphere(); const z = o.isGroup || o.isInstancedMesh ? o.position.z : o.geometry.boundingSphere.center.z; HEAL.list.push({ o, cls: o.userData.cls, z, d: clamp((z + 62) / 50, 0, 1) * 1.1 }); if (o.userData.cls === 'life') o.visible = false; }
+    if (o.userData.ground && o.material && STG.land) { const f = new THREE.Color().setRGB(...STG.land.ground); o.material.color.copy(f); HEAL.mats.push({ mat: o.material, from: f }); }
+  }
+  GLOW.gather(); applyVignette(i); applyGrade(i);
   { const keep = FLAME_AT.filter(f => !LM_SPOTS.some(q => (q[0] - f[0]) ** 2 + (q[1] - f[2]) ** 2 < q[2] * q[2])); FLAME_AT.length = 0; FLAME_AT.push(...keep); } layFlames(); // (none over a torch that made way for a landmark)
   if (propShadows.length) { // one soft dark patch under every prop
     if (!propShMat) propShMat = new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false });
@@ -3603,7 +3673,8 @@ function lmMesh(k, node, parent, x, y, z, o = {}) {
   const q = bdMesh(A.geo[node], m, x, y, z, parent, !o.far && !o.basic); if (Array.isArray(o.s)) q.scale.set(...o.s); else if (o.s) q.scale.setScalar(o.s); if (o.ry) q.rotation.y = o.ry; return q;
 }
 function bdMesh(geo, mat, x, y, z, parent, shadow = true) { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.castShadow = shadow; o.receiveShadow = true; o.userData.dyn = o.userData.keepGeo = o.userData.keepMat = true; parent.add(o); return o; }
-const bdHalf = (A, n) => [A.geo[n], A.geo[n + '@'] || (A.geo[n + '@'] = artFlip(A.geo[n]))];
+const seamed = g => { if (g.userData.seam) return g; g.userData.seam = true; const p = g.attributes.position.array, n = g.attributes.normal.array; for (let k = 0; k < p.length; k += 3) if (p[k] < .02) { p[k] = 0; n[k] = 0; const l = Math.hypot(n[k + 1], n[k + 2]) || 1; n[k + 1] /= l; n[k + 2] /= l; } return g; }; // the two halves meet exactly on the middle line, facing the same way (they overlapped, and a pale line showed)
+const bdHalf = (A, n) => [seamed(A.geo[n]), A.geo[n + '@'] || (A.geo[n + '@'] = artFlip(A.geo[n]))];
 // a pointed window pane that burns in the dark
 const paneGeo = (w, h) => { const p = new THREE.Shape(); p.moveTo(-w, 0); p.lineTo(w, 0); p.lineTo(w, h); p.quadraticCurveTo(w * .9, h + w * .9, 0, h + w * 1.35); p.quadraticCurveTo(-w * .9, h + w * .9, -w, h); return new THREE.ShapeGeometry(p, 5); };
 function dressFort() { // his castle: the old walls, towers and trimmings go, the sculpted ones take their places
@@ -4658,7 +4729,7 @@ function wallX(x, px, z, r) {
 }
 function setupLevel(n) {
   if (!G.sim) clearToasts(); G.tauntT = -99; MUS.lift = MUS.push = 0; // (the King's taunt timer runs on G.t, which restarts each level, and the music's key change must not carry over)
-  gameEl.classList.remove('cine'); G.level = n; G.cfg = levelCfg(n, n === save.level ? save.fails || 0 : 0); if (G.sim && G.cfgPatch) Object.assign(G.cfg, G.cfgPatch); applyWorld(G.worldOverride != null ? G.worldOverride : worldOf(n));
+  gameEl.classList.remove('cine'); G.level = n; if (HEAL.on) worldIdx = -1; /* (a healed land is built again as it was) */ G.cfg = levelCfg(n, n === save.level ? save.fails || 0 : 0); if (G.sim && G.cfgPatch) Object.assign(G.cfg, G.cfgPatch); applyWorld(G.worldOverride != null ? G.worldOverride : worldOf(n));
   for (const g of G.gates) disposeGroup(g.mesh);
   G.gates = G.cfg.gates.map((g, i) => ({ ...g, z: g.z - 2.1, bit: 1 << i, cx: g.x, pulse: 0, ready: true, cool: 0, mesh: makeGateMesh({ ...g, z: g.z - 2.1 }) })); // rows sit a little further up, clear of the gatehouse
   buildLaneWalls(n);
@@ -5698,7 +5769,7 @@ function update(dt) {
     for (let i = 0; i < a.count; i++) { const x = a.getX(i); a.setZ(i, Math.sin(x * 5 - G.t * 7) * .12 * x); }
     a.needsUpdate = true;
   }
-  G.wt += dt; WIND.value = G.wt; for (const f of worldAnim) f(G.wt); updateMotes(dt, G.wt);
+  G.wt += dt; WIND.value = G.wt; for (const f of worldAnim) f(G.wt); updateMotes(dt, G.wt); if (HEAL.on) healTick(dt);
   for (const b of bubbles) { const k = (G.t * b.sp + b.ph) % 2; b.m.scale.setScalar(k < 1.6 ? .3 + k * .45 : Math.max(.01, 1 - (k - 1.6) * 2.4)); }
 
   // launcher
@@ -6043,7 +6114,7 @@ function render() {
   if (G.grandT > 0) { // a new world: first a slow swoop over his citadel and kingdom, down to the castle, then the usual sweep back
     const gk = Math.min(1, G.grandT / GRAND_T), ge = gk * gk * (3 - 2 * gk), a = (1 - gk) * .6 - .3;
     camera.position.set(WCAM.x + (Math.sin(a) * 30 - WCAM.x) * ge, WCAM.y + (32 - WCAM.y) * ge + Math.sin(Math.PI * ge) * 9, WCAM.z + (-62 + Math.cos(a) * 28 - WCAM.z) * ge);
-    camera.lookAt(_look.set(0, 3 + 3 * ge, WLOOK.z + (CIT_Z + 6 - WLOOK.z) * ge)); } }
+    camera.lookAt(_look.set(0, 3 + 3 * ge, WLOOK.z + (citAt()[0] + 6 - WLOOK.z) * ge)); } }
   if (G.cine) cineCamera(); // the opening cinematic's scripted shots
   { const nr = G.cine || G.fin ? .4 : 1.5; if (camera.near !== nr) { camera.near = nr; camera.updateProjectionMatrix(); } } // only the scripted close-ups need a near plane this near; the further out it sits, the finer the depth buffer
   // the sun's shadow area follows what the camera is looking at: the road in battle, the castle and citadel in the menu and on a win
@@ -6293,6 +6364,7 @@ function win() {
   if (!G.sim) { mission("win", 1); if (G.stars === 3) mission("stars3", 1); mission("fired", G.fired - (G.firedSent || 0)); mission("kills", (G.kills || 0) - (G.killsSent || 0)); persist(); }
 }
 function boom() {
+  if (isBoss(G.level)) healStart();
   burstHoard(); G.boomed = true; G.boom2 = 0; G.puff = 0; king.visible = false; P.n = 0; G.shake = 1.5; buzz([70, 30, 140]);
   burst(0, 4.2, -40.8, ['#ffd84a', '#ffffff', '#ff7af8', '#ffb040'], 70, 15, { sph: true, life: .95, g: 4, sz: 2.4, kind: PK.SPARK }); // a burst of white-hot sparks (they catch the glow)
   burst(0, 4.5, -41.2, [FOE, FOE_FX, '#ffffff', FOE], 120, 12, { vy: 10, life: 1.5, g: 15, sz: 2, kind: PK.ROCK });   // bone chips and purple shards
@@ -6575,7 +6647,7 @@ window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') 
 async function perfTest() {
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 8px);z-index:99;padding:10px 12px;border-radius:12px;background:rgba(8,12,30,.9);color:#fff;font:600 13px/1.45 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), rows = [];
-  box.textContent = 'Speed test v135: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
+  box.textContent = 'Speed test v136: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); box.textContent = 'Loading...'; G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 19; const on0 = MUS.on;
   save.up = { ...save.up, rate: 10, twin: 4, arsenal: 5 }; await Promise.race([loadLm('ember'), wait(8000)]); await wait(800);
   const pr = k => { pixelRatio = k; renderer.setPixelRatio(k); resize(); };
@@ -6596,7 +6668,7 @@ async function perfTest() {
   G.nestHp = G.nestMax = 30;
   await run('castle blows up', 4500, () => { G.fortMax = 100; G.fortHp = 0; });
   await wait(1500); save.level = 6; await run('new world', 5000, () => { $('result').classList.remove('on'); startPlay(); });
-  box.textContent = 'Speed test v135: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
+  box.textContent = 'Speed test v136: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
 }
 let last = performance.now();
 // keeps the frame rate smooth: renders at fewer pixels when a phone struggles, and at more (up to the screen's own sharpness) when it has headroom
@@ -6771,7 +6843,7 @@ function prewarm() {
   } catch (e) { console.warn('prewarm', e); }
 }
 function boot() {
-  setTimeout(lmRest, 4000); if (BART.camp) buildCampArt(); dressFort(); dressTower(); dressHoard(); for (const g of [fort, hoard, nest, launcher, campWall]) bakeStatic(g); if (!/[?&]nobake/.test(location.search)) { fuse(fort, o => o === king || roofs.includes(o)); fuse(campWall); } resize(); syncAudioUi(); applyStyle(save.style);
+  setTimeout(lmRest, 4000); if (BART.camp) buildCampArt(); dressFort(); dressTower(); dressHoard(); for (const g of [fort, hoard, nest, launcher, campWall]) bakeStatic(g); if (!/[?&]nobake/.test(location.search)) { fuse(fort, o => o === king || roofs.includes(o) || o === fortDress); fuse(campWall); } dressGate(Math.max(0, worldIdx)); resize(); syncAudioUi(); applyStyle(save.style);
   if (cineDue()) { // the day's first launch: a "tap to begin" card (the tap also lets the sound play), then the opening cinematic
     setupLevel(save.level); prewarm(); render(); requestAnimationFrame(frame); setTimeout(smpPrep, 400); const l = $('loading');
     if (!l) { startCine(); return; }
