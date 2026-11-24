@@ -818,7 +818,9 @@ function fairGates(n, r) {
 /* ---------------- three setup ---------------- */
 const gameEl = $('game'), canvas = $('c');
 // phones with sharp screens (pixel ratio 2+) skip multisampling and instead render at more pixels, which looks crisper for less work
-const DPR = window.devicePixelRatio || 1, MAX_PR = Math.min(DPR, 3); // starts at 2x with 4x multisampling; a phone that holds 60 fps climbs towards its screen's own 3x on the menu (see adaptResolution)
+const GEOJ = /[?&]lean(=|&|$)/.test(location.search) ? 'geo_lite.json' : 'geo.json'; // (blender/lite.py: about half the triangles)
+const LEAN = /[?&]lean(=|&|$)/.test(location.search); // the phone-smooth trial: the same game with far less to draw each frame (see SHC, leanStep)
+const DPR = window.devicePixelRatio || 1, MAX_PR = Math.min(DPR, LEAN ? 2 : 3); // starts at 2x with 4x multisampling; a phone that holds 60 fps climbs towards its screen's own 3x on the menu (see adaptResolution)
 let pixelRatio = Math.min(DPR, 2); try { const q = +localStorage.getItem('bs.pr'); if (q > 2) pixelRatio = Math.min(MAX_PR, q); } catch (e) {} // (kept from a battle that ran well at that sharpness: see adaptResolution)
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: DPR < 2, powerPreference: 'high-performance' });
 renderer.setPixelRatio(pixelRatio);
@@ -3856,7 +3858,7 @@ const artFlip = g0 => { const g = g0.clone(), p = g.attributes.position.array, n
 async function loadKingArt() {
   const size = artSize(), TL = new THREE.TextureLoader();
   const tex = async (k, srgb) => { const t = await TL.loadAsync('models/king/king_' + k + '_' + size + '.webp'); if (srgb) t.encoding = THREE.sRGBEncoding; t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy()); return t; };
-  const [J, map, orm, nm] = await Promise.all([fetch('models/king/king_geo.json').then(r => { if (!r.ok) throw new Error('king_geo ' + r.status); return r.json(); }), tex('color', 1), tex('orm'), tex('normal')]);
+  const [J, map, orm, nm] = await Promise.all([fetch('models/king/king_' + GEOJ).then(r => { if (!r.ok) throw new Error('king_geo ' + r.status); return r.json(); }), tex('color', 1), tex('orm'), tex('normal')]);
   const env = studioEnv();
   KINGM.mat = new THREE.MeshStandardMaterial({ map, normalMap: nm, aoMap: orm, roughnessMap: orm, metalnessMap: orm, roughness: 1, metalness: 1, envMap: env, envMapIntensity: 1.05 });
   const et = canvasTex(128, 128, x => { const g = x.createRadialGradient(64, 60, 4, 64, 64, 64); // burning eyes: a magenta ember with a slit of white flame
@@ -3918,7 +3920,7 @@ function loadWarlordArt(i, ahead) { // ahead: only fetched, so it is there when 
 async function loadArt(dir) { // geo.json, its four textures, and the material that wears them
   const size = artSize(), TL = new THREE.TextureLoader();
   const tex = async (k, srgb) => { const t = await TL.loadAsync(dir + k + '_' + size + '.webp'); if (srgb) t.encoding = THREE.sRGBEncoding; t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy()); return t; };
-  const [J, map, orm, nm, em] = await Promise.all([fetch(dir + 'geo.json').then(r => { if (!r.ok) throw new Error(dir + ' ' + r.status); return r.json(); }), tex('color', 1), tex('orm'), tex('normal'), tex('emit', 1)]);
+  const [J, map, orm, nm, em] = await Promise.all([fetch(dir + GEOJ).then(r => { if (!r.ok) throw new Error(dir + ' ' + r.status); return r.json(); }), tex('color', 1), tex('orm'), tex('normal'), tex('emit', 1)]);
   const A = { J, geo: {}, tex: [map, orm, nm, em] }; for (const n of J.nodes) { A.geo[n.name] = artGeo(n); n.pos = n.nor = n.uv = n.idx = null; }
   A.mat = new THREE.MeshStandardMaterial({ map, normalMap: nm, aoMap: orm, roughnessMap: orm, metalnessMap: orm, roughness: 1, metalness: 1, envMap: studioEnv(), envMapIntensity: .85, emissive: C('#ffffff'), emissiveMap: em, emissiveIntensity: 1.1 });
   return A;
@@ -3932,7 +3934,7 @@ async function loadSet(into, k, dir) {
   const size = artSize(), TL = new THREE.TextureLoader();
     try {
       const tex = async (n, srgb) => { const t = await TL.loadAsync(dir + n + '_' + size + '.webp'); if (srgb) t.encoding = THREE.sRGBEncoding; t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy()); return t; };
-      const got = Promise.all([fetch(dir + 'geo.json').then(r => { if (!r.ok) throw new Error(dir + ' ' + r.status); return r.json(); }), tex('color', 1), k === 'autumn' ? null : tex('normal')]);
+      const got = Promise.all([fetch(dir + GEOJ).then(r => { if (!r.ok) throw new Error(dir + ' ' + r.status); return r.json(); }), tex('color', 1), k === 'autumn' ? null : tex('normal')]);
       const [J, map, nm] = await Promise.race([got, new Promise((ok, no) => setTimeout(() => no(new Error('timed out')), 45000))]);
       const A = { geo: {}, mat: new THREE.MeshStandardMaterial({ map, normalMap: nm, roughness: .8, metalness: 0 }) };
       for (const n of J.nodes) { A.geo[n.name] = artGeo(n); A.geo[n.name].computeBoundingSphere(); }
@@ -5142,7 +5144,7 @@ function setupLevel(n) {
   G.lx = 0; G.charge = 0; G.waveT = n === 1 ? 3.2 : 2.2; G.waveQ = 0; G.waves = 0; G.fired = 0; G.firedSent = 0; G.killsSent = 0; G.firing = false; G.fireT = 0;
   G.shake = 0; G.fortFlash = 0; G.endT = 0; G.t = 0; G.clk = 0; G.squash = 0; G.continued = false; G.kingS = G.cfg.boss ? 9.2 : 8; G.crowdShown = 0;
   for (const f of floats) { f.t = 0; f.el.style.opacity = 0; }
-  G.shadowDirty = true; resetCastle(); turret.visible = save.up.turret > 0; G.turT = 1; blasts.forEach(b => { b.visible = false; });
+  G.shadowDirty = true; if (SHC) SHC.reset(); resetCastle(); turret.visible = save.up.turret > 0; G.turT = 1; blasts.forEach(b => { b.visible = false; });
   clearBones(); spawnHorde(G.cfg.horde); G.kingT = 4; G.casts = 0; resetKingShots(); resetCharges(); resetHoard(); resetSaws(); resetPaladin(); resetWarlord(); resetCaptain(); setHolder(holderOf(n)); resetHazards(); G.kills = 0; G.dps = 0; G.fortPrev = null; G.surged = false; G.rage = false; rageGlow.visible = false;
   $('lvlPill').textContent = lvName(n);
 }
@@ -6627,13 +6629,13 @@ function render() {
   { const nr = G.cine || G.fin || G.end || G.look ? .4 : 1.5; if (camera.near !== nr) { camera.near = nr; camera.updateProjectionMatrix(); } } // only the scripted close-ups need a near plane this near; the further out it sits, the finer the depth buffer
   // the sun's shadow area follows what the camera is looking at: the road in battle, the castle and citadel in the menu and on a win
   { const fz = G.end ? (G.end.t < 22.35 ? -36 : -14) : G.cine ? -30 : G.mode === 'menu' ? -56 : (G.boomed && (G.mode === 'won' || G.mode === 'resultWin')) ? -16 + (-58 + 16) * ck : -16; const tz = sun.target.position.z + (fz - sun.target.position.z) * .12;
-    if (Math.abs(tz - sun.target.position.z) > .01) { sun.target.position.z = tz; sun.position.set(9, 26, tz + 22); sun.target.updateMatrixWorld(); G.shadowDirty = true; }
+    if (Math.abs(tz - sun.target.position.z) > .01) { sun.target.position.z = tz; sun.position.set(9, 26, tz + 22); sun.target.updateMatrixWorld(); G.shadowDirty = G.shadowAll = true; }
     // fit the shadow map to what's on screen (what cascaded shadows do in big engines): in a battle on a phone the view is
     // narrow, so the same 2048 map covers about half the area and its shadows come out about 1.6x sharper
     const fit = G.mode === 'play' && camera.aspect < .72, sW = fit ? 15 : 24, sH = fit ? 25 : 32, scm = sun.shadow.camera;
-    const cf = G.mode !== 'play' || G.introT > 0 || G.grandT > 0 || !!G.cine; if (G.castFar !== cf || G.castN !== FAR_CAST.length) { G.castFar = cf; G.castN = FAR_CAST.length; for (const o of FAR_CAST) o.castShadow = cf; G.shadowDirty = true; }
-    if (scm.right !== sW) { scm.left = -sW; scm.right = sW; scm.top = sH; scm.bottom = -sH; scm.updateProjectionMatrix(); G.shadowDirty = true; } }
-  if ((G.frameN = (G.frameN || 0) + 1) % 3 === 0 || (G.mode === 'won' ? G.frameN % 2 === 0 : G.shadowDirty)) { renderer.shadowMap.needsUpdate = true; G.shadowDirty = false; }
+    const cf = G.mode !== 'play' || G.introT > 0 || G.grandT > 0 || !!G.cine; if (G.castFar !== cf || G.castN !== FAR_CAST.length) { G.castFar = cf; G.castN = FAR_CAST.length; for (const o of FAR_CAST) o.castShadow = cf; G.shadowDirty = G.shadowAll = true; }
+    if (scm.right !== sW) { scm.left = -sW; scm.right = sW; scm.top = sH; scm.bottom = -sH; scm.updateProjectionMatrix(); G.shadowDirty = G.shadowAll = true; } }
+  if ((G.frameN = (G.frameN || 0) + 1) % (G.shEvery || 3) === 0 || (G.mode === 'won' ? G.frameN % 2 === 0 : G.shadowDirty)) { renderer.shadowMap.needsUpdate = true; G.shadowDirty = false; }
   spriteMat.uniforms.uSoft.value = foeSpriteMat.uniforms.uSoft.value = POST.on && !G.lowQ && POST.msaa ? 1 : 0; // soft, anti-aliased crowd edges only where there is multisampling to resolve them
   trimUploads(); GLOW.draw();
   if (POST.on && !G.lowQ) { renderer.setRenderTarget(POST.rt); renderer.render(scene, camera); POST.run(); }
@@ -6694,6 +6696,45 @@ function render() {
     gl.blitFramebuffer = (a, b, c, d, e, f, g, h, mask, filter) => { bf(a, b, c, d, e, f, g, h, mask & gl.COLOR_BUFFER_BIT, filter); gl.invalidateFramebuffer(gl.READ_FRAMEBUFFER, [gl.COLOR_ATTACHMENT0, gl.DEPTH_ATTACHMENT]); };
   }
 }
+/* ---- kept shadows (the phone-smooth trial, ?lean) ----
+   Nearly everything that casts a shadow never moves, yet all of it was redrawn into the shadow map every third frame (315k
+   triangles in the Dunes), which also made every third frame a slow one. Here the still casters are drawn once and kept; when
+   something does move, the kept map is copied back and only the moving casters are drawn on top. What moves is found by
+   watching: any caster whose place changes joins the movers until the next level. Whoever is on the wall keeps the shadow he
+   had when the rest was drawn: his breathing is too small to see in it. */
+const SHC = (() => {
+  const gl = renderer.getContext(); if (!LEAN || !renderer.capabilities.isWebGL2) return null;
+  const orig = renderer.shadowMap.render, rawBlit = WebGL2RenderingContext.prototype.blitFramebuffer, P = renderer.properties, S = renderer.state;
+  let snap = new WeakMap(), movers = new WeakSet(), kept = null, dirty = true, sig = 0; const stat = [], mov = [];
+  const X = { on: true, full: 0, part: 0, skip: 0, stat, mov, reset() { snap = new WeakMap(); movers = new WeakSet(); dirty = true; } };
+  const copy = (from, to) => { S.bindFramebuffer(gl.READ_FRAMEBUFFER, P.get(from).__webglFramebuffer); S.bindFramebuffer(gl.DRAW_FRAMEBUFFER, P.get(to).__webglFramebuffer); rawBlit.call(gl, 0, 0, from.width, from.height, 0, 0, from.width, from.height, gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, gl.NEAREST); };
+  const look = () => { // sorts the casters; true when a mover has moved since the last drawing
+    stat.length = mov.length = 0; let moved = false, h = 0; const wall = HOLD.b && HOLD.b.g;
+    (function walk(o, quiet) {
+      if (!o.visible) return; if (o === wall || o === king) quiet = true;
+      if (o.isMesh && o.castShadow) {
+        const m = o.matrixWorld.elements, v = o.isInstancedMesh ? o.instanceMatrix.version * 31 + o.count : 0; let e = snap.get(o), ch = false;
+        if (!e) { e = new Float32Array(17); snap.set(o, e); ch = 2; } else { if (e[16] !== v) ch = true; else for (let k = 0; k < 15; k++) if (Math.abs(e[k] - m[k]) > 2e-4) { ch = true; break; } }
+        if (ch) { for (let k = 0; k < 16; k++) e[k] = m[k]; e[16] = v; }
+        if (ch === true && !quiet && !movers.has(o)) { movers.add(o); dirty = true; }
+        if (!quiet && (o.isSkinnedMesh || movers.has(o))) { mov.push(o); if (ch || o.isSkinnedMesh) moved = true; h += o.id * 7; } else { stat.push(o); h += o.id * 13 + 5; if (ch && !quiet) dirty = true; }
+      }
+      for (const c of o.children) walk(c, quiet);
+    })(scene, false);
+    if (h !== sig) { sig = h; dirty = moved = true; } return moved;
+  };
+  const draw = (hide, a) => { for (const o of hide) o.castShadow = false; renderer.shadowMap.needsUpdate = true; orig.apply(renderer.shadowMap, a); for (const o of hide) o.castShadow = true; };
+  renderer.shadowMap.render = function (...a) {
+    const M = renderer.shadowMap; if (!X.on || !M.enabled || !M.needsUpdate || !a[0].length || G.lowQ) return orig.apply(M, a);
+    if (G.shadowAll) { dirty = true; G.shadowAll = false; } // the sun's own view has changed
+    const moved = look();
+    if (dirty) { draw(mov, a); const map = sun.shadow.map; if (!map) return; if (!kept || kept.width !== map.width) { if (kept) kept.dispose(); kept = new THREE.WebGLRenderTarget(map.width, map.height, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, format: THREE.RGBAFormat }); const was = renderer.getRenderTarget(); renderer.setRenderTarget(kept); renderer.setRenderTarget(was); } const was = renderer.getRenderTarget(); copy(map, kept); renderer.setRenderTarget(null); renderer.setRenderTarget(was); dirty = false; X.full++; }
+    else if (!moved) { M.needsUpdate = false; X.skip++; return; }
+    if (mov.length) { const clear = renderer.clear; renderer.clear = () => copy(kept, sun.shadow.map); try { draw(stat, a); } finally { renderer.clear = clear; } X.part++; }
+    M.needsUpdate = false;
+  };
+  return X;
+})();
 const POST = (() => {
   const gl2 = renderer.capabilities.isWebGL2, msaa = gl2 && !!THREE.WebGLMultisampleRenderTarget; // 4x multisampling on every WebGL2 device: on phones (tile-based GPUs, Apple especially) MSAA is nearly free and is how mobile games keep edges clean
   const rt = new (msaa ? THREE.WebGLMultisampleRenderTarget : THREE.WebGLRenderTarget)(4, 4, { format: THREE.RGBAFormat, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: false, depthBuffer: true, stencilBuffer: false });
@@ -6758,10 +6799,10 @@ const GRADES = [
   [[1.04, .97, 1.04], [1.05, .99, .94], 1.06, 1.03, .7, .76],  // Ember Hollow: red-violet shadows, hot highlights, strong glow
   [[.99, .95, 1.07], [1.03, 1.0, .98], 1.04, 1.04, .6, .8],  // the Citadel: violet shadows, candle-gold highlights
 ];
-function applyGrade(i) { const g = GRADES[i] || GRADES[0], u = POST.mat.uniforms; u.uShadow.value.set(...g[0]); u.uHigh.value.set(...g[1]); u.uSat.value = g[2]; u.uCon.value = g[3]; u.uGlow.value = /[?&]noglow/.test(location.search) ? 0 : g[4]; POST.extract.uniforms.uThr.value = g[5]; }
+function applyGrade(i) { const g = GRADES[i] || GRADES[0], u = POST.mat.uniforms; u.uShadow.value.set(...g[0]); u.uHigh.value.set(...g[1]); u.uSat.value = g[2]; u.uCon.value = g[3]; u.uGlow.value = G.noGlowPass || /[?&]noglow/.test(location.search) ? 0 : g[4]; POST.extract.uniforms.uThr.value = g[5]; }
 const _db = new THREE.Vector2();
 function sizePost() {
-  if (POST.rt.samples) POST.rt.samples = pixelRatio > 2.25 ? 2 : 4; // so many pixels need less multisampling
+  if (POST.rt.samples) { const n = pixelRatio > 2.25 || G.leanLv >= 1 ? 2 : 4; if (POST.rt.samples !== n) { POST.rt.samples = n; POST.rt.dispose(); } } // so many pixels need less multisampling
   renderer.getDrawingBufferSize(_db); if (POST.rt.width !== _db.x || POST.rt.height !== _db.y) POST.rt.setSize(_db.x, _db.y);
   const qw = Math.max(1, Math.round(_db.x / 4)), qh = Math.max(1, Math.round(_db.y / 4)); for (const t of [POST.qA, POST.qB]) t.setSize(qw, qh); for (const t of [POST.eA, POST.eB]) t.setSize(Math.max(1, qw >> 1), Math.max(1, qh >> 1));
   POST.extract.uniforms.uTexel.value.set(1 / _db.x, 1 / _db.y);
@@ -7028,6 +7069,7 @@ $('restartBtn').onclick = () => { resumeGame(); startPlay(); };
 $('quitBtn').onclick = () => { resumeGame(); showMenu(); };
 // leaving the app silences it everywhere (it only did so mid-battle, so menu music played on in the background), and coming
 // back brings the sound back unless the pause card is up
+if (LEAN) window.addEventListener('blur', () => { if (matchMedia('(pointer: coarse)').matches) pauseGame(); }); // leaving for the browser's own buttons: stop drawing at once, so they aren't slow
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { pauseGame(); if (actx && actx.state === 'running') actx.suspend(); }
   else if (actx && !G.paused && actx.state !== 'running' && actx.state !== 'closed') actx.resume();
@@ -7164,10 +7206,10 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') G.firing = false; });
 
 /* loop */
-async function perfTest() { // ?perf: speed test 3. First the frame rate (an empty page, then a battle as you play it), then what each part of a frame costs, in ms with the GPU waited for
+async function perfTest() { // ?perf: speed test 4. First the frame rate (an empty page, then a battle as you play it), then what each part of a frame costs the GPU when it is kept busy
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:6px;right:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;padding:9px 11px;border-radius:12px;background:rgba(8,12,30,.92);color:#fff;font:600 12px/1.42 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(r)), rows = [], gl = renderer.getContext(), px = new Uint8Array(4), med = a => a.sort((x, y) => x - y)[a.length >> 1];
-  const V = 'Speed test 3 (v143)', show = s => { box.textContent = V + ': ' + s + '\n' + rows.join('\n'); };
+  const V = 'Speed test 4 (v144' + (LEAN ? ', lean)' : ')'), show = s => { box.textContent = V + ': ' + s + '\n' + rows.join('\n'); };
   box.textContent = V + ': tap here to start\n(about 40 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); show('loading...'); G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 11; save.v = 3;
   await Promise.race([loadLm('dunes'), wait(8000)]); await wait(800);
@@ -7180,16 +7222,18 @@ async function perfTest() { // ?perf: speed test 3. First the frame rate (an emp
   pr(Math.min(DPR, 2)); G.paused = true; await wait(600); await cadence('empty page', 2500);
   G.paused = false; startPlay(); G.nestHp = G.nestMax = G.fortHp = G.fortMax = 1e9; await wait(7000); await cadence('battle 2x', 5000);
   G.paused = true; const units = ants.n + '/' + beetles.n;
-  const one = () => { const t0 = performance.now(); update(1 / 60); G.nestHp = 1e9; const t1 = performance.now(); render(); const t2 = performance.now(); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); return [t1 - t0, t2 - t1, performance.now() - t1]; };
-  const cost = async (name, on, off) => { const a = [], b = [], c = []; try { if (on) on(); for (let k = 0; k < 6; k++) { await raf(); one(); } for (let k = 0; k < 24; k++) { await raf(); const [u, r, g] = one(); a.push(u); b.push(r); c.push(g); } if (off) off(); } catch (e) { if (off) off(); rows.push(name.padEnd(16) + '  failed'); return; } const u = med(a), r = med(b), g = med(c); if (cost.base == null) { cost.base = g; rows.push('', 'per frame, ms (2x)'); rows.push('game rules'.padEnd(16) + u.toFixed(1).padStart(5)); rows.push('sending to GPU'.padEnd(16) + r.toFixed(1).padStart(5)); } rows.push(name.padEnd(16) + g.toFixed(1).padStart(5) + (name === 'whole picture' ? '' : (g - cost.base >= 0 ? '  +' : '  ') + (g - cost.base).toFixed(1))); show('running...'); };
+  // Each row draws four frames on end and waits for them, so the GPU is kept busy and can't hide the cost by slowing its clock
+  const busy = () => { const t = performance.now(); for (let k = 0; k < 4; k++) { G.frameN = (G.frameN || 0); render(); } gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); return (performance.now() - t) / 4; };
+  const cost = async (name, on, off) => { const a = []; try { if (on) on(); for (let k = 0; k < 4; k++) { await raf(); busy(); } for (let k = 0; k < 14; k++) { await raf(); a.push(busy()); } } catch (e) { if (off) off(); rows.push(name.padEnd(16) + '  failed'); return; } if (off) off(); const g = med(a); if (cost.base == null) cost.base = g; rows.push(name.padEnd(16) + g.toFixed(2).padStart(6) + (name === 'whole picture' ? '' : (g - cost.base >= 0 ? '  +' : '  ') + (g - cost.base).toFixed(2))); show('running...'); };
   const mats = () => scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => { m.needsUpdate = true; }); }), hid = []; let sr = renderer.shadowMap.render;
   const hide = q => () => { hid.length = 0; scene.traverse(o => { if (o !== scene && o.visible && q(o)) { hid.push(o); o.visible = false; } }); }, back = () => { for (const o of hid) o.visible = true; };
-  await cost('whole picture'); cost.base = null; rows.length = rows.lastIndexOf(''); await cost('whole picture');
-  await cost('at 1x', () => pr(1), () => pr(2)); if (DPR > 2.2) await cost('at 3x', () => pr(3), () => pr(2));
-  await cost('no glow pass', () => { POST.on = false; }, () => { POST.on = true; });
-  if (POST.rt.samples) await cost('no edge smooth', () => { POST.rt.samples = 1; POST.rt.dispose(); }, () => { POST.rt.dispose(); sizePost(); });
+  rows.push('', 'GPU busy, ms a frame (2x)'); await cost('whole picture'); cost.base = null; rows.pop(); await cost('whole picture');
+  if (SHC) await cost('shadows redrawn', () => { SHC.on = false; }, () => { SHC.on = true; SHC.reset(); });
   await cost('no shadow draw', () => { renderer.shadowMap.render = () => {}; }, () => { renderer.shadowMap.render = sr; });
   await cost('no shadows', () => { renderer.shadowMap.enabled = false; mats(); }, () => { renderer.shadowMap.enabled = true; mats(); });
+  await cost('no glow pass', () => { POST.on = false; }, () => { POST.on = true; });
+  if (POST.rt.samples) { await cost('2x edges', () => { POST.rt.samples = 2; POST.rt.dispose(); }, () => { POST.rt.dispose(); sizePost(); }); await cost('no edge smooth', () => { POST.rt.samples = 1; POST.rt.dispose(); }, () => { POST.rt.dispose(); sizePost(); }); }
+  await cost('at 1x', () => pr(1), () => pr(2)); if (DPR > 2.2) await cost('at 3x', () => pr(3), () => pr(2));
   { const fb = new THREE.MeshBasicMaterial({ color: 0x888888 }), fs = new THREE.MeshBasicMaterial({ color: 0x888888, skinning: true }), was = []; await cost('flat colours', () => scene.traverse(o => { if (o.isMesh && !Array.isArray(o.material) && /Standard|Lambert/.test(o.material.type)) { was.push([o, o.material]); o.material = o.isSkinnedMesh ? fs : fb; } }), () => { for (const [o, m] of was) o.material = m; }); }
   await cost('no scenery', hide(o => o === world), back); await cost('no castle', hide(o => o === fort), back);
   await cost('no armies', hide(o => o === allySprites || o === foeSprites), back);
@@ -7211,18 +7255,26 @@ function setLowQuality(on) {
 const statsEl = document.createElement('div'); statsEl.style.cssText = 'position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 92px);transform:translateX(-50%);z-index:9;display:none;padding:4px 10px;border-radius:10px;background:rgba(8,14,40,.75);color:#fff;font:600 12px/1.3 system-ui,sans-serif;white-space:nowrap;pointer-events:none';
 gameEl.appendChild(statsEl);
 { let taps = []; $('lvlPill').addEventListener('pointerdown', e => { e.stopPropagation(); const t = performance.now(); taps = taps.filter(x => t - x < 700); taps.push(t); if (taps.length >= 3) { taps = []; statsEl.style.display = statsEl.style.display === 'block' ? 'none' : 'block'; statsEl.textContent = '…'; } }); }
+function leanStep() { // one step lighter; false when there is nothing left to drop
+  if ((G.leanLv = G.leanLv || 0) >= 3) return false; G.leanLv++;
+  if (G.leanLv === 1) sizePost(); // softer edge smoothing
+  else if (G.leanLv === 2) G.shEvery = 6; // what moves redraws its shadow half as often
+  else { POST.mat.uniforms.uGlow.value = 0; G.noGlowPass = true; } // the glow's blur passes
+  return true;
+}
 function adaptResolution(raw) {
   if (raw <= 0 || raw > .25) return; if (G.mode === 'won' || (G.mode === 'play' && G.t < 3) || G.perf) { frSum = frSq = frN = frT = 0; frBuf.length = 0; return; } /* nor while a level is still settling in; never mid-explosion: rebuilding the buffers is a visible hitch */ frBuf.push(raw); frSum += raw; frSq += raw * raw; frN++; frT += raw; if (frCool > 0) frCool -= raw;
   if (frT < 1.2) return;
   frBuf.sort((a, b) => a - b); const keep = Math.max(1, Math.ceil(frBuf.length * .88)); let ts = 0; for (let i = 0; i < keep; i++) ts += frBuf[i]; frBuf.length = 0; // the slowest eighth (a hitch, a shader, a loaded picture) doesn't count
   const avg = ts / keep, sd = Math.sqrt(Math.max(0, frSq / frN - (frSum / frN) ** 2)); frSum = frSq = frN = frT = 0;
-  if (statsEl.style.display === 'block') statsEl.textContent = Math.round(1 / avg) + ' fps · ' + pixelRatio.toFixed(2) + '× of ' + DPR.toFixed(1) + ' · sharpen ' + (POST.on && !G.lowQ ? POST.mat.uniforms.uSharp.value.toFixed(2) : 'off') + (G.lowQ ? ' · low' : '') + (G.capped ? ' · capped' : '');
+  if (statsEl.style.display === 'block') statsEl.textContent = Math.round(1 / avg) + ' fps · ' + pixelRatio.toFixed(2) + '× of ' + DPR.toFixed(1) + ' · sharpen ' + (POST.on && !G.lowQ ? POST.mat.uniforms.uSharp.value.toFixed(2) : 'off') + (G.lowQ ? ' · low' : '') + (LEAN ? ' · lean ' + (G.leanLv || 0) : '') + (G.capped ? ' · capped' : '');
   if (frCool > 0) return;
   // a steady 30 fps (iPhone Low Power Mode, some in-app browsers) is the browser's cap, not the game struggling: dropping
   // resolution wouldn't make it any faster, only blurry, so hold the sharpness
   G.capped = pixelRatio <= 2 && avg > 1 / 33 && avg < 1 / 27.5 && sd < .0035; if (G.capped) return;
   let next = pixelRatio;
-  const slow = avg > (pixelRatio > 2 ? 1 / 54 : 1 / 27); frSlow = slow ? frSlow + 1 : 0; if (slow && frSlow < 2) return; // one slow stretch isn't enough: two in a row
+  if (LEAN && G.mode === 'play' && avg > 1 / 52 && !(avg > 1 / 33 && avg < 1 / 27.5 && sd < .0025 && G.leanLv >= 3)) { if ((G.leanSlow = (G.leanSlow || 0) + 1) >= 2 && leanStep()) { G.leanSlow = 0; frCool = 3; return; } } else if (LEAN) G.leanSlow = 0;
+  const slow = avg > (pixelRatio > 2 ? 1 / 54 : LEAN ? 1 / 45 : 1 / 27); frSlow = slow ? frSlow + 1 : 0; if (slow && frSlow < 2) return; // one slow stretch isn't enough: two in a row
   if (!slow && avg < 1 / 50 && prCap < MAX_PR && prTries < 2 && (frGood += 1) >= 10) { prTries++; frGood = 0; prCap = Math.min(MAX_PR, prCap + .25); } else if (avg >= 1 / 50) frGood = 0; // running well for a good while: it may climb back a step (twice at most, so it never flickers)
   if (G.mode === 'play') { G.fought = avg < 1 / 57; if (G.fought && pixelRatio > 2 && G.prKept !== pixelRatio) { G.prKept = pixelRatio; try { localStorage.setItem('bs.pr', pixelRatio); } catch (e) {} } }
   if (avg > 1 / 22 && pixelRatio <= PR_MIN && !G.lowQ && (G.slowWin = (G.slowWin || 0) + 1) >= 2) setLowQuality(true); // still slow at the lowest resolution: drop the expensive extras
@@ -7235,7 +7287,8 @@ const ease01 = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
 const winSpeed = w => w < .22 ? .28 + .72 * ease01(w / .22) : w < BOOM_AT ? 1 - .6 * ease01((w - BOOM_AT + .07) / .07) : .4 + .6 * ease01((w - BOOM_AT) / .22);
 function frame(now) {
   requestAnimationFrame(frame);
-  const raw = (now - last) / 1000, dt = Math.min(0.05, raw); last = now; adaptResolution(raw);
+  const raw = (now - last) / 1000; let dt = Math.min(0.05, raw); last = now; adaptResolution(raw);
+  if (LEAN) { const q = raw * 60, n = Math.round(q); if (n >= 1 && n <= 3 && Math.abs(q - n) < .3) dt = n / 60; } // the phone's clock is only good to a millisecond: move by whole sixtieths, so nothing shivers
   if (keys.ArrowLeft) G.lx = clamp(G.lx - dt * 9, -LANE + .6, LANE - .6);
   if (keys.ArrowRight) G.lx = clamp(G.lx + dt * 9, -LANE + .6, LANE - .6);
   const wt = G.winT; // slow motion on the winning hit and again as the king pops
