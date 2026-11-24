@@ -3836,7 +3836,7 @@ function hangArt(root, A, mat) { // strip a KayKit rig and hang a sculpted chara
 /* ---- who holds the wall ----
    The King himself for the first two levels of all; after that each world's warlord, from his first level to his fight, when he
    leaps down (the same figure: HOLD.b is the WL build, stood behind the wall until WL takes him). Beaten on an ordinary level he
-   is blown off the wall, away towards his next gate. */
+   is blown off the wall, away towards his next castle. */
 const HOLD = { i: -1, b: null, fly: null, t: 0, act: null }, WALL_S = [3.2, 3.2, 3.2, 3.2], WALL_Y = [.5, .55, 1.0, .75], CITF = { t: 9, k: 1 };
 const holderOf = n => G.worldOverride != null ? G.worldOverride : n <= 2 ? -1 : worldOf(n);
 function setHolder(i) {
@@ -4557,9 +4557,9 @@ const KING_TAUNTS = [['HA HA!', 'laugh'], ['TOO EASY!', 'scoff'], ['IS THAT ALL?
 const WL_TAUNTS = ['PATHETIC!', 'WEAK!', 'KNEEL!', 'IS THAT ALL?', 'CRUSH THEM!'];
 // the warlords' own, on their walls: cries as a gate falls, jeers when a throw lands, a last line as each of them dies. k: how deep the voice
 const WALL_SAY = [
-  { k: .82, col: '#ff9a8a', last: 'AT LAST...', cry: [['MY GATE!', 'roar'], ['GRAAAH!', 'no'], ['FALL BACK!', 'roar'], ['YOU AGAIN?', 'growl'], ['MY SUPPER!', 'no'], ['NEXT GATE!', 'roar']], taunt: [['CHOP CHOP!', 'laugh'], ['FRESH MEAT!', 'chuckle'], ['TENDER!', 'cackle'], ['MORE!', 'growl'], ['STAND STILL!', 'scoff'], ['MINCED!', 'laugh']] },
+  { k: .82, col: '#ff9a8a', last: 'AT LAST...', cry: [['MY CASTLE!', 'roar'], ['GRAAAH!', 'no'], ['FALL BACK!', 'roar'], ['YOU AGAIN?', 'growl'], ['MY SUPPER!', 'no'], ['NEXT TIME!', 'roar']], taunt: [['CHOP CHOP!', 'laugh'], ['FRESH MEAT!', 'chuckle'], ['TENDER!', 'cackle'], ['MORE!', 'growl'], ['STAND STILL!', 'scoff'], ['MINCED!', 'laugh']] },
   { k: 1.12, col: '#ffe08a', last: 'LET IT SLEEP.', cry: [['INSOLENCE!', 'roar'], ['MY TOMB!', 'no'], ['IMPOSSIBLE!', 'no'], ['SAND TAKE YOU!', 'roar'], ['NOT MY GOLD!', 'no'], ['I WILL RISE!', 'growl']], taunt: [['KNEEL!', 'scoff'], ['DUST!', 'laugh'], ['MORTALS!', 'chuckle'], ['BOW!', 'growl'], ['SO FRAGILE!', 'cackle'], ['BURIED!', 'laugh']] },
-  { k: .9, col: '#bff2ff', last: 'LEAVE IT.', cry: [['MY HALL!', 'roar'], ['NO!', 'no'], ['TO THE NEXT GATE!', 'roar'], ['IT CRACKS!', 'no'], ['COLD BLOOD!', 'growl'], ['HOLD THE ICE!', 'roar']], taunt: [['FREEZE!', 'laugh'], ['TOO SLOW!', 'scoff'], ['SHATTER!', 'cackle'], ['BRITTLE!', 'chuckle'], ['HA!', 'laugh'], ['ICE AND BONE!', 'growl']] },
+  { k: .9, col: '#bff2ff', last: 'LEAVE IT.', cry: [['MY HALL!', 'roar'], ['NO!', 'no'], ['FALL BACK!', 'roar'], ['IT CRACKS!', 'no'], ['COLD BLOOD!', 'growl'], ['HOLD THE ICE!', 'roar']], taunt: [['FREEZE!', 'laugh'], ['TOO SLOW!', 'scoff'], ['SHATTER!', 'cackle'], ['BRITTLE!', 'chuckle'], ['HA!', 'laugh'], ['ICE AND BONE!', 'growl']] },
   { k: .7, col: '#ffc08a', last: 'NOT AGAIN...', cry: [['MY FORGE!', 'roar'], ['RAAAGH!', 'no'], ['IT BREAKS!', 'no'], ['MORE FIRE!', 'roar'], ['TO THE NEXT!', 'growl'], ['UNMADE!', 'no']], taunt: [['BURN!', 'laugh'], ['ASHES!', 'growl'], ['MELT!', 'chuckle'], ['HOTTER!', 'cackle'], ['SOFT METAL!', 'scoff'], ['HA HA!', 'laugh']] },
 ];
 const KING_SAY = { k: 1, col: '#e070ff', cry: KING_CRIES, taunt: KING_TAUNTS }, wallSay = () => WALL_SAY[HOLD.i] || KING_SAY;
@@ -4753,9 +4753,10 @@ function makeGateMesh(g) {
     const fam = '"Lilita One", Fredoka, "Arial Black", sans-serif', arm = g.arm != null, word = arm ? TIERS[g.arm].gate : label;
     let fs = Math.round(LH * (arm ? .4 : .7)), m, tw, S = arm ? LH * .58 : 0, gap = arm ? LH * .07 : 0;
     for (let k = 0; k < 6; k++) { x.font = `${fs}px ${fam}`; m = x.measureText(word); tw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight; if (S + gap + tw <= w - (w < 200 ? 24 : 46)) break; fs = Math.round(fs * .9); }
-    const x0 = (w - (S + gap + tw)) / 2, tx = x0 + S + gap + m.actualBoundingBoxLeft, ty = LH / 2 + 3 + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+    const crew = arm && TIERS[g.arm].merge, x0 = (w - (S + gap + tw)) / 2, tx = x0 + S + gap + m.actualBoundingBoxLeft, ty = LH / 2 + 3 - (crew ? LH * .12 : 0) + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
     x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.lineJoin = 'round'; x.lineWidth = arm ? 12 : 18; x.strokeStyle = 'rgba(11,42,92,.75)'; x.strokeText(word, tx, ty + 2);
     x.fillStyle = '#ffffff'; x.fillText(word, tx, ty);
+    if (crew) { const t = crew + ' → 1'; x.font = `${Math.round(LH * .27)}px ${fam}`; x.textAlign = 'center'; x.lineWidth = 9; x.strokeText(t, x0 + S + gap + tw / 2, LH * .8 + 2); x.fillStyle = '#fff3b8'; x.fillText(t, x0 + S + gap + tw / 2, LH * .8); }
     if (arm) gateIcon(x, g.arm, x0 + S / 2, LH / 2 + 3, S);
   });
   if (g.jack) { // a gold JACKPOT sign rides above it
@@ -6548,7 +6549,7 @@ function lose() {
   if (!G.sim) { mission("fired", G.fired - (G.firedSent || 0)); mission("kills", (G.kills || 0) - (G.killsSent || 0)); }
   save.fails = (save.fails || 0) + 1; persist();
 }
-const WIN_LINES = ["his gate has fallen", "his walls came tumbling down", "another castle lies in ruins", "the horde is routed"], LOSE_LINES = ["the horde broke through", "your camp was overrun", "the skeletons swarmed your walls"];
+const WIN_LINES = ["his castle has fallen", "his walls came tumbling down", "another castle lies in ruins", "the horde is routed"], LOSE_LINES = ["the horde broke through", "your camp was overrun", "the skeletons swarmed your walls"];
 // tips for a lost level: only about things that were in it
 const loseTips = () => { const c = G.cfg, n = G.level, g = c.gates; return ['Steer through the biggest × gates', 'Tap SEND as soon as the meter fills', g.some(q => q.arm != null) && 'Weapon gates make every soldier stronger', g.some(q => q.add) && 'Hit the +N gates while they are lit', g.some(q => q.k < 1) && 'Steer around the red gates', n >= 4 && 'Keep your army out of the red circles', c.charge && 'Block charging brutes: steer into the red lane', c.saws.length && 'Steer around the bone saw', c.bombs && 'Steer around the bomb skeletons'].filter(Boolean); };
 function showResult(won) {
@@ -6721,7 +6722,7 @@ function showPalUnlock() {
   loadPaladinArt();
   $('storyEmb').setAttribute('href', '#i-horse'); $('storyEmb').parentNode.setAttribute('viewBox', '0 0 48 44');
   $('storyName').textContent = 'ROWAN'; $('storyTitle').textContent = 'the Paladin joins your army';
-  $('storyTxt').textContent = 'Grimbald\'s captain is beaten, and Sir Rowan rides out on his white warhorse. Fill the meter and tap SEND: he tramples the horde and smashes the castle gate. New coats for his horse wait in the Stable.';
+  $('storyTxt').textContent = 'Grimbald\'s captain is beaten, and Sir Rowan rides out on his white warhorse. Fill the meter and tap SEND: he tramples the horde and smashes the castle. New coats for his horse wait in the Stable.';
   $('storyGo').textContent = 'Ride!'; G.unlockCard = true; $('story').classList.add('on'); gameEl.classList.add('overlay');
   audio(); [392, 523, 659, 784, 1046].forEach((f, k) => setTimeout(() => tone(f, .28, 'triangle', .06), k * 110)); buzz([30, 40, 60]);
 }
@@ -6806,7 +6807,7 @@ window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') 
 async function perfTest() {
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 8px);z-index:99;padding:10px 12px;border-radius:12px;background:rgba(8,12,30,.9);color:#fff;font:600 13px/1.45 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), rows = [];
-  box.textContent = 'Speed test v138: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
+  box.textContent = 'Speed test v139: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); box.textContent = 'Loading...'; G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 19; const on0 = MUS.on;
   save.up = { ...save.up, rate: 10, twin: 4, arsenal: 5 }; await Promise.race([loadLm('ember'), wait(8000)]); await wait(800);
   const pr = k => { pixelRatio = k; renderer.setPixelRatio(k); resize(); };
@@ -6827,7 +6828,7 @@ async function perfTest() {
   G.nestHp = G.nestMax = 30;
   await run('castle blows up', 4500, () => { G.fortMax = 100; G.fortHp = 0; });
   await wait(1500); save.level = 6; await run('new world', 5000, () => { $('result').classList.remove('on'); startPlay(); });
-  box.textContent = 'Speed test v138: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
+  box.textContent = 'Speed test v139: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
 }
 let last = performance.now();
 // keeps the frame rate smooth: renders at fewer pixels when a phone struggles, and at more (up to the screen's own sharpness) when it has headroom
