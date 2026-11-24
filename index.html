@@ -297,6 +297,16 @@ svg.ico.sm{width:18px;height:18px}
 #cine::before{top:0}#cine::after{bottom:0}
 #cine .cine-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:2}
 #cine .cine-skip{position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom) + 2.4%);z-index:3;font-family:var(--disp);font-size:14px;letter-spacing:.5px;color:rgba(255,255,255,.6)}
+#endHeal{position:absolute;inset:8% 0;overflow:hidden;opacity:0;transition:opacity .35s;background:#0a0818}
+#endHeal.on{opacity:1}
+#endHeal img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0}
+#endFade{position:absolute;inset:0;background:#05040c;opacity:0;transition:opacity .4s}
+#endFade.on{opacity:1}
+#endCap{position:absolute;left:8%;right:8%;bottom:15%;z-index:2;text-align:center;font-family:var(--disp);font-weight:400;font-size:25px;line-height:1.2;color:#f6ecff;text-shadow:0 2px 0 #1a0a30,0 0 14px rgba(30,0,60,.9);opacity:0;transition:opacity .45s}
+#endCap.on{opacity:1}
+#endCap.big{bottom:20%;font-size:clamp(34px,9.6vw,58px);color:var(--gold);text-shadow:0 3px 0 #5a2a08,0 0 26px rgba(255,190,60,.55)}
+#giant.last{animation:lastGlow .9s ease-in-out infinite;filter:drop-shadow(0 0 16px #ffd84a)}
+@keyframes lastGlow{50%{transform:scale(1.14);filter:drop-shadow(0 0 30px #ffe27a) brightness(1.15)}}
 #game.cinema #hud,#game.cinema #audBtns,#game.cinema #giant,#game.cinema #floats,#game.cinema #toast,#game.cinema #hint{visibility:hidden}
 #menu.slam .logo{animation:logoSlam .6s cubic-bezier(.3,1.7,.5,1) both}
 @keyframes logoSlam{0%{transform:scale(2.3);opacity:0}55%{opacity:1}}
@@ -426,6 +436,13 @@ svg.ico.sm{width:18px;height:18px}
     </g>
   </symbol>
   <symbol id="t-4" viewBox="0 0 48 52"><use href="#i-king"/></symbol>
+  <symbol id="t-5" viewBox="0 0 48 52">
+    <path d="M24 15C14 15 8 22 8 31v9c0 4 3 7 7 8l9 2 9-2c4-1 7-4 7-8v-9c0-9-6-16-16-16z" fill="#cfd4e4" stroke="#2a2450" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M24 22v24M11 28q6-4 11-1M37 28q-6-4-11-1" fill="none" stroke="#e0a528" stroke-width="2.600" stroke-linecap="round"/>
+    <path d="M12 31l9 2.500-1.500 3.500c-3 .4-6.500-1-7.500-3.500zM36 31l-9 2.500 1.500 3.500c3 .4 6.500-1 7.500-3.500z" fill="#c020ff"/>
+    <path d="M15 41h5M28 41h5M16 44.500h4M28 44.500h4" stroke="#3a3660" stroke-width="1.800" stroke-linecap="round"/>
+    <path d="M9 19 6 5l8.500 6L24 2l9.500 9L42 5l-3 14c-9 3.500-21 3.500-30 0z" fill="#ffc62b" stroke="#3a2450" stroke-width="2.800" stroke-linejoin="round"/><circle cx="24" cy="15.500" r="2.600" fill="#e8304a"/><circle cx="14.500" cy="15" r="1.800" fill="#4aa8ff"/><circle cx="33.500" cy="15" r="1.800" fill="#4aa8ff"/>
+  </symbol>
   <symbol id="i-crown" viewBox="0 0 40 24"><path d="M3 21 5 5.5l8 7.5 7-11 7 11 8-7.5 2 15.5z" fill="url(#gGold)" stroke="#7a4300" stroke-width="2.4" stroke-linejoin="round"/></symbol>
   <defs>
     <linearGradient id="gRed" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8aa2"/><stop offset=".55" stop-color="#f0304f"/><stop offset="1" stop-color="#a30b28"/></linearGradient>
@@ -463,7 +480,7 @@ svg.ico.sm{width:18px;height:18px}
   <div id="flash"></div>
   <div id="audBtns"><button id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.2" fill="#fff"/><rect x="14" y="5" width="4" height="14" rx="1.2" fill="#fff"/></svg></button><button id="mute" aria-label="Sound effects on/off"><svg viewBox="0 0 24 24"><use id="muteUse" href="#i-sound"/></svg></button><button id="musBtn" aria-label="Music on/off"><svg viewBox="0 0 24 24"><use id="musUse" href="#i-music"/></svg></button></div>
 
-  <div id="cine"><div class="cine-flash"></div><span class="cine-skip">Tap to skip</span></div>
+  <div id="cine"><div id="endHeal"></div><div id="endFade"></div><b id="endCap"></b><div class="cine-flash"></div><span class="cine-skip">Tap to skip</span></div>
   <div id="hud">
     <div id="topbar">
       <span class="pill" id="lvlPill">Level 1</span>
@@ -529,7 +546,7 @@ svg.ico.sm{width:18px;height:18px}
     <div class="dock"><div class="menu-pills"><button class="pill-btn" id="mapBtn">🗺️ Map</button><button class="pill-btn" id="rewardsBtn">🎁 Rewards<i id="rewDot"></i></button></div><button class="btn green big" id="playBtn">PLAY</button>
     <div id="artMsg" style="font-size:11px;opacity:.75;color:#fff;text-align:center;min-height:13px"></div></div>
     <button id="gearBtn" aria-label="More options" aria-expanded="false"><svg viewBox="0 0 24 24"><use href="#i-gear"/></svg></button>
-    <div id="moreMenu" hidden><button class="link" id="introBtn">Watch intro</button><button class="link" id="finaleBtn">Watch finale</button><button class="link" id="hatBtn" hidden>Hat</button><button class="link" id="bossBtn">Boss fights</button><div class="links" id="bossRow" hidden><button class="link" data-w="1">Grimbald</button><button class="link" data-w="2">Sek-Ra</button><button class="link" data-w="3">Hrimgar</button><button class="link" data-w="4">Magmaw</button></div><button class="link" id="worldBtn">Preview next world</button><button class="link" id="resetBtn">Reset progress</button></div>
+    <div id="moreMenu" hidden><button class="link" id="introBtn">Watch intro</button><button class="link" id="finaleBtn">Watch finale</button><button class="link" id="hatBtn" hidden>Hat</button><button class="link" id="bossBtn">Boss fights</button><div class="links" id="bossRow" hidden><button class="link" data-w="1">Grimbald</button><button class="link" data-w="2">Sek-Ra</button><button class="link" data-w="3">Hrimgar</button><button class="link" data-w="4">Magmaw</button><button class="link" data-w="5">The Bone King</button></div><button class="link" id="worldBtn">Preview next world</button><button class="link" id="resetBtn">Reset progress</button></div>
   </div>
 
   <div class="screen" id="result"><div class="res-rays"></div><!-- the turning rays (styled, but this element had never been added) -->
@@ -574,17 +591,23 @@ const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 /* ---------------- save + economy ---------------- */
 const SAVE_KEY = 'slimesiege.v1';
 const UP_IDS = ['rate', 'tough', 'giant', 'nest', 'twin', 'bomb', 'lucky', 'turret', 'arsenal'];
-const freshSave = (old = {}) => ({ v: 2, level: 1, coins: 0, wins: 0, up: Object.fromEntries(UP_IDS.map(k => [k, 0])), sfx: old.sfx, mus: old.mus, style: old.style, hat: old.hat });
+const freshSave = (old = {}) => ({ v: 3, level: 1, coins: 0, wins: 0, up: Object.fromEntries(UP_IDS.map(k => [k, 0])), sfx: old.sfx, mus: old.mus, style: old.style, hat: old.hat });
 // v2: worlds went from 5 levels to 10. A save keeps its world, its lap and how far through the world it was; stars cover both
 // of the levels an old one became; the Paladin stays with whoever had him
 function moveSave(s) {
-  if (s.v >= 2) return s;
+  if (!(s.v >= 2)) moveSave2(s);
+  if (!(s.v >= 3)) { // v3: the Citadel (41-50) came after Magmaw. Whoever was past level 40 stands at its first gate, everything before it beaten
+    if (s.level > 40) { s.level = 41; for (const L in s.stars || {}) if (+L > 40) delete s.stars[L]; for (const L in s.storySeen || {}) if (+L > 40) delete s.storySeen[L]; s.palOK = true; }
+    if (s.trophies) delete s.trophies[4]; delete s.ng; s.v = 3; // (the King has not fallen yet: not like this)
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) {}
+  }
+  return s;
+}
+function moveSave2(s) {
   const to = L => { const lap = Math.floor((L - 1) / 20), k = (L - 1) % 20; return lap * 40 + Math.floor(k / 5) * 10 + (k % 5) * 2 + 1; };
   const old = Math.max(1, s.level | 0); if (old > 5) s.palOK = true;
   const st = {}; for (const L in s.stars || {}) { const n = to(+L); st[n] = st[n + 1] = s.stars[L]; }
   s.stars = st; s.level = to(old); s.storySeen = {}; s.v = 2;
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) {}
-  return s;
 }
 function loadSave() {
   try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.up) { for (const k of UP_IDS) if (!(s.up[k] >= 0)) s.up[k] = 0; return moveSave(s); } } catch (e) {}
@@ -699,8 +722,8 @@ let EFF_K = .6;
 // through the campaign, plus six average runs of each level with that stage's usual upgrades; the median winning time x1.45
 // for human hands, at least 25 s, bosses at least 45 s (the warlord takes a fight). The gates are fixed per level, which is
 // why levels differ (level 3's layout is a slow one). Past level 40 the second lap's times repeat.
-const PAR_T = [25, 45, 65, 50, 50, 25, 30, 60, 45, 35, 30, 35, 35, 30, 30, 60, 35, 40, 30, 30, 70, 60, 45, 25, 45, 35, 40, 35, 40, 40, 30, 25, 25, 35, 35, 25, 30, 25, 35, 30];
-const parOf = n => Math.max(PAR_T[(n - 1) % 40], isBoss(n) ? 45 : isCaptain(n) ? 40 : 25);
+const PAR_T = [25, 45, 65, 50, 50, 25, 30, 60, 45, 35, 30, 35, 35, 30, 30, 60, 35, 40, 30, 30, 70, 60, 45, 25, 45, 35, 40, 35, 40, 40, 30, 25, 25, 35, 35, 25, 30, 25, 35, 30, 35, 35, 35, 40, 45, 30, 40, 40, 45, 110];
+const parOf = n => Math.max(PAR_T[(n - 1) % 50], isBoss(n) ? 45 : isCaptain(n) ? 40 : 25);
 const WORLD_CURVE = [.86, .9, .94, .98, 1.02, .72, .96, 1, 1.05, 1.1]; // arrive, settle, something new, mix, captain, gold rush, build up, long siege, boss
 let FORT_K = 1.7, HORDE_K = 1.25; // castle toughness and skeleton numbers overall (phase 5: battles were over in ~10 s)
 let BOMB_K = 1, ARCH_K = 1;       // how many bomb skeletons and bone archers overall
@@ -869,7 +892,7 @@ function lightPool(col, w, d, x, z, parent, op = .4) { // colored light spilled 
 }
 
 /* ---------------- worlds: the scenery changes every WORLD_LEN levels (and within them, see stageOf) ---------------- */
-const WORLD_LEN = 10, LAP_LEN = 40, CAP_AT = 5; // ten levels a world; its captain comes out on the fifth
+const WORLD_LEN = 10, LAP_LEN = 50, CAP_AT = 5; // ten levels a world; its captain comes out on the fifth
 const world = new THREE.Group(); scene.add(world);
 let worldIdx = -1, worldAnim = [], propShadows = [], propShMat = null;
 const wm = new THREE.Matrix4(), wq = new THREE.Quaternion(), we = new THREE.Euler(), wv = new THREE.Vector3(), ws = new THREE.Vector3(), wc = new THREE.Color(), wc2 = new THREE.Color();
@@ -1111,7 +1134,7 @@ const HEX_S = 1.8, HEX_DX = 2 * HEX_S, HEX_DZ = 1.5 * 1.155 * HEX_S;
 // stone bridge over it, and on the far cliff his citadel, one hand-built fortress, with dark peaks behind and a storm overhead.
 // Everything there fades toward the world's dusk colour; his roofs are the same purple as his castle on every map.
 const KING_ROOF = '#6a34b0', CHASM_Z0 = -60.5, CHASM_Z1 = -69.5, CIT_Z = -80;
-const CIT_AT = [[-104, 3.4], [-97, 2.4], [-91.5, 1.4], [-80, 0]], citAt = () => CIT_AT[Math.max(0, worldIdx)] || CIT_AT[3]; // how far off it stands in each world, and how high on its hill: you can see yourself getting closer
+const CIT_AT = [[-104, 3.4], [-97, 2.4], [-91.5, 1.4], [-80, 0], [-84, 0]], citAt = () => CIT_AT[Math.max(0, worldIdx)] || CIT_AT[3]; // how far off it stands in each world, and how high on its hill: you can see yourself getting closer
 const HOME_K = 1.45; // the hex-pack houses and windmill come out smaller than the trees beside them; this brings them up to size
 // a horizon cut-out 300 wide and 16 high in a world's own shape: rolling mountains, flat-topped mesas, ice peaks, volcanoes
 const bgGeos = {};
@@ -1122,6 +1145,42 @@ function bgRidge(kind, L) {
   else if (kind === 'lava') { let x = -150; for (let i = 0; x < 150; i++) { const w = 18 + h(i) * 20, y = 6 + h(i + 40) * 9, c = w * (.5 + (h(i + 3) - .5) * .2), r = 1.2 + h(i + 70) * 1.6; put(x, 2.2); for (let k = 1; k < 5; k++) put(x + (c - r) * k / 5, 2.2 + (y - 2.2) * Math.pow(k / 5, 1.7) + (h(i * 9 + k) - .5) * .5); put(x + c - r, y); put(x + c, y - .7); put(x + c + r, y - .15); for (let k = 4; k > 0; k--) put(x + w - (w - c - r) * k / 5, 2 + (y - 2) * Math.pow(k / 5, 1.7) + (h(i * 7 + k) - .5) * .5); x += w * .86; } }
   else { const n = kind === 'ice' ? 5 : 9; for (let i = 0, x = -150; x < 150; i++) { const w = n + h(i) * n, y = (kind === 'ice' ? 5 : 6) + h(i + 40) * (kind === 'ice' ? 11 : 9) * (.6 + .4 * Math.sin(x * .05 + L)); put(x, 2.4 + h(i + 60) * 2); put(x + w * .22, y * .45 + h(i + 21)); if (kind !== 'ice') put(x + w * .34, y * .72); put(x + w * (.44 + h(i + 7) * .12), y); if (kind !== 'ice') put(x + w * .66, y * .66 + h(i + 33) * .6); put(x + w * .78, y * .42); x += w * .92; } }
   put(150, -4); const sh = new THREE.Shape(); pts.forEach(([x, y], i) => i ? sh.lineTo(x, y) : sh.moveTo(x, y)); return (bgGeos[key] = new THREE.ShapeGeometry(sh));
+}
+function skyClouds(R, lift = 0) {
+  const CLC = { magic: ['#e2d6ff', '#6a5a96'], tar: ['#ffe2c4', '#a8708a'], ice: ['#f2f6ff', '#7f8ab8'], lava: ['#3a2832', '#8e4630'], night: ['#b8a4f0', '#43307e'], storm: ['#a070c8', '#43165a'] }[R.river || 'magic'], clouds = [];
+  const cloudMat = new THREE.MeshLambertMaterial({ vertexColors: true, fog: false, emissive: C(CLC[1]), emissiveIntensity: .18 });
+  for (let k = 0; k < 9; k++) {
+    // the classic cloud, kept simple: three soft bumps on a flat bottom (a small one, a big dome in the middle, a medium one)
+    // and a hidden filler behind for depth. (Nine puffs read as a pile of bubbles; one tapering row as a crescent roll.)
+    // Each cloud varies the sizes a little and is sometimes mirrored.
+    const parts = [], balls = [], fl = rand() < .5 ? -1 : 1, j = () => (rand() - .5) * .3;
+    for (const [x, y, r, z] of [[-2.35, 0, 1.5, .1], [0, .65, 2.3, 0], [2.35, 0, 1.75, -.1], [-.6, .1, 1.7, -.7]]) {
+      const rr = r * (1 + j() * .3), c = new THREE.Vector3(fl * (x + j()), y + r * .55, z); balls.push([c, rr]);
+      parts.push({ g: new THREE.SphereGeometry(rr, 16, 11), m: M(c.x, c.y, c.z) }); } // (16×11: as smooth at this distance, under half the vertices; the shading comes from the blended normals)
+    for (const p of parts) { p.c = CLC[1]; p.c2 = CLC[0]; p.y0 = .2; p.y1 = 4.4; }
+    const cg = merge(parts), cp = cg.attributes.position.array, cn = cg.attributes.normal.array;
+    // one soft mass, not separate balls: each surface point takes its normal from a smooth blend of the puffs around it (the
+    // gradient of a soft union), so the shading flows over the joins instead of creasing at every seam (the "crescent roll" lines)
+    { const p = new THREE.Vector3(), n = new THREE.Vector3(), d = new THREE.Vector3();
+      for (let v = 0; v < cp.length; v += 3) { p.set(cp[v], cp[v + 1], cp[v + 2]); n.set(0, 0, 0); let ws = 0;
+        for (const [c, r] of balls) { d.subVectors(p, c); const len = d.length() || 1, w = Math.exp(-2.2 * (len - r)); n.addScaledVector(d, w / len); ws += w; }
+        n.divideScalar(ws || 1).normalize(); cn[v] = n.x; cn[v + 1] = n.y; cn[v + 2] = n.z; } }
+    for (let v = 1; v < cp.length; v += 3) if (cp[v] < .25) { cp[v] = .25; cn[v - 1] = 0; cn[v] = -1; cn[v + 1] = 0; } // sliced flat underneath
+    const g = new THREE.Mesh(cg, cloudMat); g.castShadow = g.receiveShadow = false; g.userData.dyn = true;
+    const sc = 1.15 + rand() * .6, cx = -40 + (k + rand() * .6) * 80 / 9, cy = 27 + lift + rand() * 8, cz2 = -130 - rand() * 22, sp = .2 + rand() * .25; g.scale.setScalar(sc);
+    world.add(g); clouds.push(g); worldAnim.push(tm => { g.position.set(((cx + tm * sp + 48) % 96 + 96) % 96 - 48, cy + Math.sin(tm * .3 + k) * .3, cz2); });
+  }
+  if (clouds.length) {
+    const flash = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: C(R.bolt || '#e6d8ff'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0, toneMapped: false }));
+    flash.userData.keepMat = false; flash.visible = false; world.add(flash);
+    let next = -1, t0 = -9, cl = clouds[0]; // (the first flash is set on the first frame, from that moment: the clock never restarts, so a world built later used to flash at once)
+    worldAnim.push(tm => {
+      if (next < 0) next = tm + 3 + rand() * 4;
+      if (tm > next) { t0 = tm; next = tm + 5 + rand() * 7; cl = clouds[rand() * clouds.length | 0]; if (G.mode === 'play' && !G.sim) sfx('thunder', 3000, () => smp('thunder', .45, .05, .26)); }
+      const e = tm - t0, on = e < .32 && (e < .07 || (e > .14 && e < .24));
+      flash.visible = e < .32; if (flash.visible) { flash.position.set(cl.position.x, cl.position.y - .5, cl.position.z + 1); flash.scale.setScalar(on ? 22 : 12); flash.material.opacity = on ? .85 : .25; }
+    });
+  }
 }
 function hexWorld(t) {
   if (!MODELS['hex/hex_grass']) return false;
@@ -1274,40 +1333,7 @@ function hexWorld(t) {
   // dusk underneath; in Ember lit orange from the lava below). They ride high above the peaks so they frame the citadel
   // rather than sitting on its towers, and lightning flickers in them now and then. (The faceted KayKit clouds, tinted
   // dark, read as floating rocks.)
-  const CLC = { magic: ['#e2d6ff', '#6a5a96'], tar: ['#ffe2c4', '#a8708a'], ice: ['#f2f6ff', '#7f8ab8'], lava: ['#3a2832', '#8e4630'] }[R.river || 'magic'], clouds = [];
-  const cloudMat = new THREE.MeshLambertMaterial({ vertexColors: true, fog: false, emissive: C(CLC[1]), emissiveIntensity: .18 });
-  for (let k = 0; k < 9; k++) {
-    // the classic cloud, kept simple: three soft bumps on a flat bottom (a small one, a big dome in the middle, a medium one)
-    // and a hidden filler behind for depth. (Nine puffs read as a pile of bubbles; one tapering row as a crescent roll.)
-    // Each cloud varies the sizes a little and is sometimes mirrored.
-    const parts = [], balls = [], fl = rand() < .5 ? -1 : 1, j = () => (rand() - .5) * .3;
-    for (const [x, y, r, z] of [[-2.35, 0, 1.5, .1], [0, .65, 2.3, 0], [2.35, 0, 1.75, -.1], [-.6, .1, 1.7, -.7]]) {
-      const rr = r * (1 + j() * .3), c = new THREE.Vector3(fl * (x + j()), y + r * .55, z); balls.push([c, rr]);
-      parts.push({ g: new THREE.SphereGeometry(rr, 16, 11), m: M(c.x, c.y, c.z) }); } // (16×11: as smooth at this distance, under half the vertices; the shading comes from the blended normals)
-    for (const p of parts) { p.c = CLC[1]; p.c2 = CLC[0]; p.y0 = .2; p.y1 = 4.4; }
-    const cg = merge(parts), cp = cg.attributes.position.array, cn = cg.attributes.normal.array;
-    // one soft mass, not separate balls: each surface point takes its normal from a smooth blend of the puffs around it (the
-    // gradient of a soft union), so the shading flows over the joins instead of creasing at every seam (the "crescent roll" lines)
-    { const p = new THREE.Vector3(), n = new THREE.Vector3(), d = new THREE.Vector3();
-      for (let v = 0; v < cp.length; v += 3) { p.set(cp[v], cp[v + 1], cp[v + 2]); n.set(0, 0, 0); let ws = 0;
-        for (const [c, r] of balls) { d.subVectors(p, c); const len = d.length() || 1, w = Math.exp(-2.2 * (len - r)); n.addScaledVector(d, w / len); ws += w; }
-        n.divideScalar(ws || 1).normalize(); cn[v] = n.x; cn[v + 1] = n.y; cn[v + 2] = n.z; } }
-    for (let v = 1; v < cp.length; v += 3) if (cp[v] < .25) { cp[v] = .25; cn[v - 1] = 0; cn[v] = -1; cn[v + 1] = 0; } // sliced flat underneath
-    const g = new THREE.Mesh(cg, cloudMat); g.castShadow = g.receiveShadow = false; g.userData.dyn = true;
-    const sc = 1.15 + rand() * .6, cx = -40 + (k + rand() * .6) * 80 / 9, cy = 27 + rand() * 8, cz2 = -130 - rand() * 22, sp = .2 + rand() * .25; g.scale.setScalar(sc);
-    world.add(g); clouds.push(g); worldAnim.push(tm => { g.position.set(((cx + tm * sp + 48) % 96 + 96) % 96 - 48, cy + Math.sin(tm * .3 + k) * .3, cz2); });
-  }
-  if (clouds.length) {
-    const flash = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: C(R.bolt || '#e6d8ff'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0, toneMapped: false }));
-    flash.userData.keepMat = false; flash.visible = false; world.add(flash);
-    let next = -1, t0 = -9, cl = clouds[0]; // (the first flash is set on the first frame, from that moment: the clock never restarts, so a world built later used to flash at once)
-    worldAnim.push(tm => {
-      if (next < 0) next = tm + 3 + rand() * 4;
-      if (tm > next) { t0 = tm; next = tm + 5 + rand() * 7; cl = clouds[rand() * clouds.length | 0]; if (G.mode === 'play' && !G.sim) sfx('thunder', 3000, () => smp('thunder', .45, .05, .26)); }
-      const e = tm - t0, on = e < .32 && (e < .07 || (e > .14 && e < .24));
-      flash.visible = e < .32; if (flash.visible) { flash.position.set(cl.position.x, cl.position.y - .5, cl.position.z + 1); flash.scale.setScalar(on ? 22 : 12); flash.material.opacity = on ? .85 : .25; }
-    });
-  }
+  skyClouds(R);
   return true;
 }
 // each world's river: Meadow's glowing purple magic, Ember's lava with dark crust, Frost's frozen river with white cracks,
@@ -2186,6 +2212,126 @@ const WORLDS = [
     } },
 ];
 
+/* ===== The Citadel (levels 41-50): the Bone King's own land, built from its own sculpted set (models/lm/citadel).
+   41-45 the Bridge: a night road over the mist, his skull gate at the end, his citadel nearer every level. 46-50 the Throne
+   Room: no castle; a wall of bone across the road, his throne nearer every level; gold light, then (49-50) a purple storm.
+   Both are one fixed arrangement merged into a few meshes; what moves with the level (the citadel, the throne) is its own group. ===== */
+WORLDS.push({ name: 'The Citadel', hex: 'citadel', sky: ['#120a34', '#4a2a88', '#b070d0'], fog: ['#54388c', 62, 140], hemi: ['#d0c0ff', '#54428a', .78], sun: ['#e4dcff', 1.2], exposure: 1.05, shade: .5,
+  wall: '#9488b4', stone: '#b0a4cc', motes: { c: '#d8a0ff', size: .22, op: .8, vx: .2, vy: .35, sway: .7, add: true },
+  stages: [null,
+    { sky: ['#0c0a2a', '#28206a', '#5a50b0'], fog: ['#3a3060', 70, 160], hemi: ['#f0e4ff', '#7a6888', .80], sun: ['#ffe2a8', 1.12], exposure: .92, motes: { c: '#ffe0a0', size: .2, op: .6, vx: .1, vy: .15, sway: .5, add: true } },
+    { sky: ['#12041e', '#4a1460', '#9a3ab0'], fog: ['#4a2050', 70, 160], hemi: ['#e8c8ff', '#7a6888', .70], sun: ['#e8b4ff', 1.0], exposure: .96 }],
+  build() { if (worldSt) citHall(); else citBridge(); } });
+const HALLW = 4, inHall = () => worldIdx === HALLW && worldSt > 0;
+const CIT = { far: null, lights: [] }, KPOS = { y: 1.15, z: -1.9 }; // where he stands, in the castle's own space (the throne room moves him onto his dais)
+const citK = n => (n - 1) % WORLD_LEN + 1; // 1..10 through the world
+const citZ = n => -88 + 6 * Math.min(5, citK(n)), throneZ = n => -61 + 2.6 * clamp(citK(n) - 5, 1, 5);
+function citPlace(n) { // the citadel on its crag, or the throne and its wall, at this level's distance
+  if (worldIdx !== HALLW) { KPOS.y = 1.15; KPOS.z = KING_Z; king.position.z = KING_Z; return; }
+  const hall = inHall(), z = hall ? throneZ(n) : citZ(n); if (CIT.far) CIT.far.position.z = z; CIT_AT[HALLW][0] = hall ? -84 : z; CIT_AT[HALLW][1] = hall ? 0 : -1.2;
+  KPOS.y = hall ? 2.1 : 1.15; KPOS.z = hall ? z + 39.75 + .55 : KING_Z; king.position.z = KPOS.z; hoard.visible = !hall;
+}
+// many pieces of the set in one mesh. list: [node, x, y, z, turn, scale, parent-space matrix?]
+function citMerge(list, parent, cast) {
+  const A = LMART.citadel; if (!A) return null; let nv = 0, ni = 0; list = list.filter(q => A.geo[q[0]]); for (const q of list) { nv += A.geo[q[0]].attributes.position.count; ni += A.geo[q[0]].index.count; } if (!nv) return null;
+  const P = new Float32Array(nv * 3), N = new Float32Array(nv * 3), U = new Float32Array(nv * 2), I = new Uint32Array(ni), m = new THREE.Matrix4(), v = new THREE.Vector3(), nm = new THREE.Matrix3(); let vo = 0, io = 0;
+  for (const [node, x, y, z, ry = 0, s = 1] of list) { const g = A.geo[node], p = g.attributes.position, n = g.attributes.normal, u = g.attributes.uv, c = p.count; m.compose(wv.set(x, y, z), wq.setFromEuler(we.set(0, ry, 0)), ws.set(s, s, s)); nm.getNormalMatrix(m);
+    for (let i = 0; i < c; i++) { v.fromBufferAttribute(p, i).applyMatrix4(m); P[(vo + i) * 3] = v.x; P[(vo + i) * 3 + 1] = v.y; P[(vo + i) * 3 + 2] = v.z; v.fromBufferAttribute(n, i).applyMatrix3(nm).normalize(); N[(vo + i) * 3] = v.x; N[(vo + i) * 3 + 1] = v.y; N[(vo + i) * 3 + 2] = v.z; }
+    U.set(u.array, vo * 2); const x0 = g.index.array; for (let k = 0; k < x0.length; k++) I[io + k] = x0[k] + vo; vo += c; io += x0.length; }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.BufferAttribute(N, 3)); g.setAttribute('uv', new THREE.BufferAttribute(U, 2)); g.setAttribute('uv2', g.attributes.uv); g.setIndex(new THREE.BufferAttribute(I, 1));
+  const o = new THREE.Mesh(g, A.mat); o.castShadow = cast; o.receiveShadow = true; o.userData.dyn = o.userData.keepMat = true; parent.add(o); return o;
+}
+const citGroup = () => { const g = new THREE.Group(); g.userData.dyn = true; world.add(g); return g; };
+const citPlane = (w, d, mat, z, y, parent) => { const q = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); q.rotation.x = -Math.PI / 2; q.position.set(0, y, z); q.receiveShadow = true; q.userData.dyn = true; parent.add(q); return q; };
+// a row of statues: everyone who wore the crown, and (k 5) the pedestal nobody stands on yet
+const citStatue = (list, k, x, y, z, ry) => { if (k > 4) { list.push(['empty', x, y, z, ry]); return; } list.push(['wbody', x, y, z, ry], ['wh' + k, x + Math.sin(ry) * .03, y + 3.98, z + Math.cos(ry) * .03, ry]); };
+function citMoon(x, y, z, r, parent) {
+  const t = canvasTex(256, 256, (c, w, h) => { const g = c.createRadialGradient(w * .42, h * .4, w * .05, w / 2, h / 2, w / 2); g.addColorStop(0, '#efe4ff'); g.addColorStop(1, '#b8a6dc'); c.fillStyle = g; c.beginPath(); c.arc(w / 2, h / 2, w / 2 - 1, 0, 7); c.fill(); c.save(); c.clip(); const R = mulberry(5); for (let k = 0; k < 9; k++) { c.fillStyle = `rgba(0,0,0,${.05 + R() * .07})`; c.beginPath(); c.arc(30 + R() * (w - 60), 30 + R() * (h - 60), 8 + R() * 26, 0, 7); c.fill(); } c.restore(); });
+  const m = new THREE.Mesh(new THREE.CircleGeometry(r, 48), new THREE.MeshBasicMaterial({ map: t, transparent: true, fog: false, toneMapped: false, depthWrite: false })); m.position.set(x, y, z); m.renderOrder = -2; m.userData.dyn = true; parent.add(m);
+  const h = halo('#efe4ff', r * 5.2, x, y, z - 1, parent, .32); h.material.fog = false; h.renderOrder = -3;
+}
+function citBridge() {
+  const g = citGroup(), near = [], rk = ROAD.citadel;
+  // the deck: the Meadow's own cobbles under moonlight, the masonry either side of them, and its thickness
+  citPlane(LANE * 2 + .6, 48, rk ? new THREE.MeshStandardMaterial({ map: rk.map, normalMap: rk.normalMap, normalScale: new THREE.Vector2(1.25, 1.25), roughness: .88, color: C('#cfc2ee') }) : lam('#8d82a4'), -17, .012, g).userData.sharedMaps = true;
+  citPlane(12.6, 120, new THREE.MeshStandardMaterial({ color: C('#7d7196'), roughness: .9 }), -40, 0, g);
+  { const b = new THREE.Mesh(new THREE.BoxGeometry(12.4, 2.2, 120), new THREE.MeshStandardMaterial({ color: C('#4a4060'), roughness: .9 })); b.position.set(0, -1.16, -40); b.userData.dyn = true; g.add(b); }
+  for (const s of [-1, 1]) {
+    for (let z = 4; z > -70; z -= 7) if (z > -36 || z < -44) near.push(['bside', s * 5.95, 0, z, s < 0 ? Math.PI : 0]);
+    let k = s < 0 ? 0 : 3; for (let z = -8.5; z > -36; z -= 10.5) { near.push(['pillar', s * 8.7, 1, z]); citStatue(near, k++, s * 8.7, 1, z, -s * .55); if (s > 0 && k === 5) k = 6; }
+  }
+  citMerge(near, g, true);
+  for (const s of [-1, 1]) for (let z = 1.25; z > -36; z -= 7) halo('#e060ff', .9, s * 5.75, 2.72, z + .0, g, .45);
+  // the drop: a slow violet mist far below
+  const mt = canvasTex(512, 512, (x, w, h) => { x.fillStyle = '#5a349a'; x.fillRect(0, 0, w, h); const R = mulberry(3); for (let i = 0; i < 90; i++) { const cx = R() * w, cy = R() * h, r = 30 + R() * 70; for (const ox of [-w, 0, w]) for (const oy of [-h, 0, h]) { const gr = x.createRadialGradient(cx + ox, cy + oy, 0, cx + ox, cy + oy, r); gr.addColorStop(0, i % 3 ? 'rgba(160,110,230,.28)' : 'rgba(60,24,120,.35)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = gr; x.fillRect(cx + ox - r, cy + oy - r, r * 2, r * 2); } } }, [7, 7]);
+  mt.wrapS = mt.wrapT = THREE.RepeatWrapping; citPlane(260, 260, new THREE.MeshBasicMaterial({ map: mt }), -60, -9, g); worldAnim.push(t => { mt.offset.set(t * .006, t * .011); });
+  const pm = new THREE.SpriteMaterial({ map: glowTex, color: C('#9a66e0'), transparent: true, opacity: .2, depthWrite: false }); for (let i = 0; i < 14; i++) { const m = new THREE.Sprite(pm), a = i % 2 ? 1 : -1, x = a * (9 + (i * 7.3) % 18), z = 2 - (i * 8.7) % 80; m.scale.set(15, 5, 1); g.add(m); m.renderOrder = 1; worldAnim.push(t => { m.position.set(x + Math.sin(t * .15 + i) * 2, -6 + Math.sin(t * .4 + i * 2) * .5, z); }); }
+  // his citadel on its crag, and the road running on to its gate
+  const f = CIT.far = new THREE.Group(); f.userData.dyn = true; g.add(f);
+  if (BART.citadel) { const c = new THREE.Group(); c.position.y = -1.2; c.scale.setScalar(1.12); f.add(c); bdHalf(BART.citadel, 'half').forEach(q => bdMesh(q, BART.citadel.mat, 0, 0, 0, c, false));
+    const eyes = [-1, 1].map(q => halo('#ff4ad8', 2.6, q * 1.28, 8.3, 8.3, c, .8)), au = halo('#c050ff', 10, 0, 8, 8, c, .18); worldAnim.push(t => { const k = .85 + .15 * Math.sin(t * 2.3); for (const e of eyes) e.scale.setScalar(2.6 * k); au.scale.setScalar(10 * k); });
+    const cr = BART.citadel.geo.crag; if (cr) for (const [x, y, dz, k, ry] of [[0, -.6, 0, 1.35, 0], [-30, -5, -7, .9, 1.9], [30, -5, -9, .9, -2.2], [-24, -8, 34, .55, .6], [25, -8, 30, .6, 2.1]]) { const o = bdMesh(cr, BART.citadel.mat, x, y, dz, f, false); o.scale.setScalar(k); o.rotation.y = ry; } }
+  citMoon(27, 34, -195, 13, g); skyClouds({ river: 'night', bolt: '#e0c8ff' }, 8);
+}
+// his windows: one wearer to a window, all in blues, the crown the only gold. One sheet, five panels
+const citGlass = () => canvasTex(1280, 640, (x0, W, H) => { for (let k = 0; k < 5; k++) { x0.save(); x0.translate(k * 256, 0); x0.beginPath(); x0.rect(0, 0, 256, 640); x0.clip(); glassPanel(x0, 256, 640, k); x0.restore(); } });
+function glassPanel(x, w, h, k) {
+  const R = mulberry(77 + k), blues = ['#1a3ea8', '#2456d0', '#2f74ec', '#1b2f8c', '#3f8ef6', '#4a5ae0'], lead = '#0a0e24';
+  x.fillStyle = '#0c1230'; x.fillRect(0, 0, w, h);
+  for (let r = 0; r < 13; r++) for (let c = 0; c < 5; c++) { x.fillStyle = blues[R() * 6 | 0]; x.beginPath(); const X = c * w / 5, Y = r * h / 13, a = w / 5, b = h / 13, j = () => (R() - .5) * 12; x.moveTo(X + j(), Y + j()); x.lineTo(X + a + j(), Y + j()); x.lineTo(X + a + j(), Y + b + j()); x.lineTo(X + j(), Y + b + j()); x.closePath(); x.fill(); x.strokeStyle = lead; x.lineWidth = 4; x.stroke(); }
+  const hl = x.createRadialGradient(128, 200, 10, 128, 200, 150); hl.addColorStop(0, 'rgba(220,240,255,.95)'); hl.addColorStop(.5, 'rgba(130,190,255,.5)'); hl.addColorStop(1, 'rgba(90,150,255,0)'); x.fillStyle = hl; x.fillRect(0, 0, w, 420);
+  const pane = (f, pts) => { x.beginPath(); pts.forEach((p, i) => i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1])); x.closePath(); x.fillStyle = f; x.fill(); x.lineWidth = 6; x.strokeStyle = lead; x.lineJoin = 'round'; x.stroke(); };
+  pane(['#5a86e8', '#3aa8d8', '#9cc4f4', '#5a68d8', '#8068e0'][k], [[60, 600], [76, 360], [96, 290], [160, 290], [180, 360], [196, 600]]);
+  pane(['#9cc0ff', '#7ae0ff', '#d8ecff', '#8a9cff', '#b4a0ff'][k], [[96, 600], [104, 320], [152, 320], [160, 600]]);
+  pane('#e8f4ff', [[70, 330], [88, 284], [128, 300], [168, 284], [186, 330], [128, 352]]);
+  x.beginPath(); x.arc(128, 222, 42, 0, 7); x.fillStyle = k === 4 ? '#f4ead8' : '#dce8f8'; x.fill(); x.lineWidth = 6; x.strokeStyle = lead; x.stroke();
+  if (k === 1) pane('#8ab8f8', [[84, 200], [172, 200], [186, 300], [160, 300], [156, 226], [100, 226], [96, 300], [70, 300]]);
+  if (k === 0 || k === 2 || k === 3) pane('#b4ccec', [[96, 236], [160, 236], [150, k === 2 ? 330 : 284], [128, k === 2 ? 352 : 298], [106, k === 2 ? 330 : 284]]);
+  if (k === 3) for (const s of [-1, 1]) pane('#a8b8d8', [[128 + s * 36, 196], [128 + s * 74, 186], [128 + s * 80, 226], [128 + s * 62, 240], [128 + s * 62, 214], [128 + s * 40, 212]]);
+  x.fillStyle = '#0a1430'; for (const s of [-1, 1]) { x.beginPath(); x.ellipse(128 + s * 16, 218, 6, 8, 0, 0, 7); x.fill(); }
+  pane('#ffc62b', [[86, 192], [82, 140], [104, 166], [128, 128], [152, 166], [174, 140], [170, 192]]);
+  x.fillStyle = '#ffe9a0'; for (const [a, b] of [[82, 138], [128, 126], [174, 138]]) { x.beginPath(); x.arc(a, b, 7, 0, 7); x.fill(); }
+  pane('#c8dcf8', [[122, 340], [134, 340], [134, 560], [128, 576], [122, 560]]); pane('#e0a828', [[100, 352], [156, 352], [156, 364], [100, 364]]);
+}
+let glassShape = null;
+function citPanes(list, mat, parent) { // the glass of every window as one mesh. list: [panel, x, y, z, turn, scale]
+  if (!glassShape) { const sh = new THREE.Shape(); sh.moveTo(-1.75, .3); sh.lineTo(1.75, .3); sh.lineTo(1.75, 6.6); sh.quadraticCurveTo(1.6, 8.6, 0, 9.65); sh.quadraticCurveTo(-1.6, 8.6, -1.75, 6.6); sh.closePath(); glassShape = new THREE.ShapeGeometry(sh, 8); }
+  const p = glassShape.attributes.position, x = glassShape.index.array, c = p.count, P = new Float32Array(list.length * c * 3), U = new Float32Array(list.length * c * 2), I = [], m = new THREE.Matrix4(), v = new THREE.Vector3();
+  list.forEach(([k, px, py, pz, ry, s], j) => { m.compose(wv.set(px, py, pz), wq.setFromEuler(we.set(0, ry, 0)), ws.set(s, s, s)); for (let i = 0; i < c; i++) { v.fromBufferAttribute(p, i); U[(j * c + i) * 2] = (k + .005 + .99 * (v.x + 1.75) / 3.5) / 5; U[(j * c + i) * 2 + 1] = (v.y - .3) / 9.35; v.z = .02; v.applyMatrix4(m); P[(j * c + i) * 3] = v.x; P[(j * c + i) * 3 + 1] = v.y; P[(j * c + i) * 3 + 2] = v.z; } for (const q of x) I.push(q + j * c); });
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.BufferAttribute(U, 2)); g.setIndex(I); const o = new THREE.Mesh(g, mat); o.userData.dyn = true; parent.add(o); return o;
+}
+function citHall() {
+  const g = citGroup(), storm = worldSt === 2, list = [], far = [], glass = [], gm = new THREE.MeshBasicMaterial({ map: citGlass(), toneMapped: false, color: C(storm ? '#b090e0' : '#e8f0ff') }); CIT.glass = gm;
+  const tile = (cols, line, n, rep) => canvasTex(512, 512, (x, w, h) => { const R = mulberry(9), s = w / n; for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { x.fillStyle = cols[(i + j) % 2]; x.fillRect(i * s, j * s, s, s); const gr = x.createLinearGradient(i * s, j * s, (i + 1) * s, (j + 1) * s); gr.addColorStop(0, 'rgba(255,255,255,.14)'); gr.addColorStop(.5, 'rgba(255,255,255,0)'); gr.addColorStop(1, 'rgba(0,0,0,.14)'); x.fillStyle = gr; x.fillRect(i * s, j * s, s, s);
+    x.strokeStyle = 'rgba(255,255,255,.16)'; x.lineWidth = 1.5; x.beginPath(); let X = i * s + R() * s, Y = j * s; x.moveTo(X, Y); for (let k = 0; k < 4; k++) { X += (R() - .5) * 40; Y += s / 4; x.lineTo(X, Y); } x.stroke(); x.strokeStyle = line; x.lineWidth = 5; x.strokeRect(i * s, j * s, s, s); x.strokeStyle = 'rgba(0,0,0,.35)'; x.lineWidth = 1.5; x.strokeRect(i * s + 3, j * s + 3, s - 6, s - 6); } }, rep);
+  citPlane(34, 110, new THREE.MeshStandardMaterial({ map: tile(['#383048', '#443c58'], '#a8843a', 4, [5, 16]), roughness: .55 }), -34, 0, g);
+  citPlane(10.6, 48, new THREE.MeshStandardMaterial({ map: tile(['#a4979a', '#b6a8a6'], '#a88440', 4, [1.5, 7]), roughness: .6 }), -17, .012, g);
+  const run = canvasTex(256, 512, (x, w, h) => { x.fillStyle = '#cfc2ae'; x.fillRect(0, 0, w, h); x.fillStyle = '#b8862a'; x.fillRect(0, 0, 14, h); x.fillRect(w - 14, 0, 14, h); x.fillStyle = '#8a6a24'; x.fillRect(18, 0, 4, h); x.fillRect(w - 22, 0, 4, h); x.fillStyle = 'rgba(176,124,28,.95)'; for (let k = 0; k < 2; k++) { const y = k * 256 + 128; x.beginPath(); x.moveTo(80, y + 34); x.lineTo(74, y - 22); x.lineTo(100, y + 4); x.lineTo(128, y - 40); x.lineTo(156, y + 4); x.lineTo(182, y - 22); x.lineTo(176, y + 34); x.closePath(); x.fill(); } }, [1, 7]);
+  citPlane(3, 48, new THREE.MeshStandardMaterial({ map: run, roughness: .9 }), -17, .02, g);
+  const wt = canvasTex(512, 512, (x, w, h) => { x.fillStyle = '#4e4464'; x.fillRect(0, 0, w, h); const R = mulberry(4); for (let r = 0; r < 8; r++) for (let c = -1; c < 4; c++) { const v = R() * 16 - 8; x.fillStyle = `rgb(${86 + v | 0},${76 + v | 0},${110 + v | 0})`; rrect(x, c * 128 + (r % 2) * 64 + 3, r * 64 + 3, 122, 58, 6); x.fill(); x.fillStyle = 'rgba(255,255,255,.07)'; x.fillRect(c * 128 + (r % 2) * 64 + 8, r * 64 + 5, 112, 5); x.fillStyle = 'rgba(0,0,0,.18)'; x.fillRect(c * 128 + (r % 2) * 64 + 6, r * 64 + 54, 116, 6); } }, [1, 1]);
+  wt.wrapS = wt.wrapT = THREE.RepeatWrapping; const wm2 = new THREE.MeshStandardMaterial({ map: wt, roughness: .9 });
+  const f = CIT.far = new THREE.Group(); f.userData.dyn = true; g.add(f);
+  for (const s of [-1, 1]) {
+    { const q = new THREE.Mesh(new THREE.PlaneGeometry(96, 15), wm2), u = q.geometry.attributes.uv; for (let i = 0; i < u.count; i++) u.setXY(i, u.getX(i) * 12, u.getY(i) * 2.1); q.position.set(s * 12.7, 7.5, -32); q.rotation.y = -s * Math.PI / 2; q.receiveShadow = true; q.userData.dyn = true; g.add(q); }
+    { const top = new THREE.Mesh(new THREE.BoxGeometry(1.2, .6, 96), new THREE.MeshStandardMaterial({ color: C('#6a5e84'), roughness: .9 })); top.position.set(s * 13.2, 15.1, -32); top.userData.dyn = true; g.add(top); }
+    for (let k = 0, z = -6; z > -62; z -= 9.5, k++) { far.push(['wframe', s * 12.6, 2.4, z, -s * Math.PI / 2, 1.08]); glass.push([(k + (s > 0 ? 2 : 0)) % 5, s * 12.6, 2.4, z, -s * Math.PI / 2, 1.08]); }
+    for (let k = 0, z = 1; z > -46; z -= 7.4, k++) { const bk = k % 3 === (s > 0 ? 1 : 2); list.push([bk ? 'columnb' : 'column', s * 7.3, 0, z, k * .7]); if (!bk) { const a = halo('#e88cff', 2.4, s * 7.3, 5.9, z, g, .8), b = halo('#fff0ff', 1, s * 7.3, 5.7, z, g, .85), ph = k * 2.1 + s; worldAnim.push(t => { const q = 1 + .10 * Math.sin(t * 9 + ph) + .06 * Math.sin(t * 17 + ph * 2); a.scale.setScalar(2.4 * q); b.scale.set(.9 * q, 1.2 * q, 1); }); lightPool('#c060ff', 4.5, 4.5, s * 7.3, z, g, .3); } }
+    let k = s < 0 ? 0 : 3; for (let z = -9.8; z > -34; z -= 9.6) { citStatue(list, k++, s * 9.3, 0, z, -s * .7); if (s > 0 && k === 5) k = 6; }
+    for (const [x, z, sc, ry] of [[7.4, -13.6, .8, .4], [8.9, -24.4, 1.1, 2], [7, -28.2, .7, 1.2], [9.2, -40.5, 1.3, .2], [10.6, -16, 1, .7], [10.4, -5, 1.1, 2.6], [11.2, -5, .9, -3], [11.2, -19.6, .9, 4], [11.2, -34.4, .9, 1]]) list.push(['heap', s * x, 0, z, ry * s, sc]);
+    list.push(['crypt', s * 7.6, 0, -38.6, -s * .14]); halo('#b040ff', 3.2, s * 7.4, 1.6, -37.4, g, .5); lightPool('#b040ff', 3.4, 3.4, s * 7.2, -36.2, g, .4);
+  }
+  citMerge(list, g, true); citMerge(far, g, false); citPanes(glass, gm, g);
+  // what comes nearer level by level: the steps, the throne, the broken wall behind it and its three windows
+  citMerge([['dais', 0, 0, 0], ['kthrone', 0, 2.42, -1.1, 0, 1.55]], f, true);
+  { const R = mulberry(21), sh = new THREE.Shape(); sh.moveTo(-15, 0); sh.lineTo(15, 0); let x = 15; sh.lineTo(15, 22); while (x > -15) { const y = 17.5 + 3.2 * Math.abs(x) / 15 + (Math.abs(x) < 4 ? 3.4 : 0) + R() * 1.6, s = 1.1 + R() * 1.2; sh.lineTo(x, y); x -= s; sh.lineTo(Math.max(x, -15), y); } sh.lineTo(-15, 0);
+    const ge = new THREE.ExtrudeGeometry(sh, { depth: 1, bevelEnabled: false }), p = ge.attributes.position, u = ge.attributes.uv; for (let i = 0; i < p.count; i++) u.setXY(i, p.getX(i) / 8, p.getY(i) / 7); const q = new THREE.Mesh(ge, wm2); q.position.z = -8.6; q.receiveShadow = true; q.userData.dyn = true; f.add(q); }
+  const bw = [], bg = []; for (const x of [-7.6, 0, 7.6]) { const w = [x, x ? 3 : 3.6, -7, 0, x ? 1.15 : 1.5]; bw.push(['wframe', ...w]); bg.push([x ? (x < 0 ? 3 : 2) : 4, ...w]); const h = halo(storm ? '#a060ff' : '#5a96ff', 12, x, 8, -5.8, f, storm ? .2 : .26); CIT.lights.push(h); }
+  citMerge(bw, f, false); citPanes(bg, gm, f); halo('#c050ff', 12, 0, 8, -3, f, .3); lightPool('#c050ff', 10, 4, 0, -35.4, g, .45);
+  citMoon(17, 44, -190, 11, g); skyClouds({ river: storm ? 'storm' : 'night', bolt: '#f0a0ff' }, 15);
+}
+// the throne room has no castle: its parts are put away, and a wall of bone stands across the road instead
+function fortHall(on) { for (const o of fort.children) if (o !== king && o !== fortDress && !o.userData.holder && !WL.built.some(b => b && b.g === o)) { if (on) { if (o.visible) { o.visible = false; o.userData.hallOff = 1; } } else if (o.userData.hallOff) { o.visible = true; o.userData.hallOff = 0; } } hoard.visible = !on; }
+
 /* ===== roadside landmarks (from the v39 design pass, reworked): royal standards on your side, ruined columns, half-buried
    skull monuments and cursed obelisks nearer his castle. Each one clears the scenery props where it stands and sits on the
    ground tiles instead of sinking into them. ===== */
@@ -2327,7 +2473,16 @@ function cursedCrystals(spots) { // purple crystals breaking through the ground 
 const fortDress = new THREE.Group();
 function dressGate(i) {
   if (fortDress.parent !== fort) fort.add(fortDress); for (const o of [...fortDress.children]) fortDress.remove(o);
-  const A = LMART[LM_SETS[i]]; if (A && A.geo.gtrim) bdHalf(A, 'gtrim').forEach(g => bdMesh(g, A.mat, 0, 0, 0, fortDress));
+  const A = LMART[LM_SETS[i]];
+  if (i === HALLW && A) {
+    if (worldSt > 0) { // a wall of bone and magic across the foot of his steps
+      bdHalf(A, 'barrier').forEach(g => bdMesh(g, A.mat, 0, 0, 2.35, fortDress));
+      const b = new THREE.Mesh(new THREE.PlaneGeometry(9.6, 4.8), new THREE.MeshBasicMaterial({ map: wardTex, color: C('#c060ff'), transparent: true, opacity: .3, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false })); b.position.set(0, 2.5, 2.15); b.userData.dyn = b.userData.sharedMaps = true; b.userData.veil = 1; fortDress.add(b);
+      for (const q of [-1, 1]) halo('#e060ff', 1, q * .30, 3.12, 3.25, fortDress, .9); halo('#b040ff', 9, 0, 2, 2.75, fortDress, .3); return;
+    }
+    bdHalf(A, 'gtrim').forEach(g => bdMesh(g, A.mat, 0, 0, 0, fortDress)); for (const q of [-1, 1]) { halo('#e060ff', 1.2, q * .47, 3.26, 4.62, fortDress, .95); halo('#c050ff', 2.6, q * .47, 3.26, 4.5, fortDress, .4); } return;
+  }
+  if (A && A.geo.gtrim) bdHalf(A, 'gtrim').forEach(g => bdMesh(g, A.mat, 0, 0, 0, fortDress));
   if (A && i === 3) { halo('#ff8a2a', 2.6, 0, 3.75, 3.3, fortDress, .75); halo('#ffd060', 1.1, 0, 3.7, 3.4, fortDress, .8); for (const q of [-1, 1]) { halo('#ff7a1a', 1.7, q * 2.86, .35, 3.95, fortDress, .7); for (const [a, z, w] of [[-.4, 1.6, 1.3], [.45, 1.9, 1.4], [.1, 3.1, .9]]) halo('#ff6a1a', w, q * (4.9 + Math.sin(a) * 1.5), z, 2.2 + Math.cos(a) * 1.5, fortDress, .42); } } // Magmaw's fires
 }
 // every world gets its own arrangement, so the same pieces never sit in the same spots twice
@@ -2374,11 +2529,11 @@ function redesignLandmarks(i) {
 /* ---- a world's three stages: first light, dusk, storm (how far through its levels you are). Each can change the sky, the
    light, the drifting motes and the land (STG.land): what colour the leaves and ground have gone, how many trees have died.
    Beating the boss heals it: the storm lifts, the dead trees and crystals sink away and the living ones come back up. ---- */
-const stageOf = n => { const f = ((n - 1) % WORLD_LEN + 1) / WORLD_LEN; return f <= .4 ? 0 : f <= .8 ? 1 : 2; };
+const stageOf = n => { if (worldOf(n) === HALLW) { const k = citK(n); return k <= 5 ? 0 : k <= 8 ? 1 : 2; } const f = ((n - 1) % WORLD_LEN + 1) / WORLD_LEN; return f <= .4 ? 0 : f <= .8 ? 1 : 2; };
 let worldSt = 0, STG = null, CLS = ''; // CLS: what the pieces being placed do when the land heals ('life' comes up, 'dead' goes down)
 const HEAL = { on: false, t: 0, list: [], mats: [], cloth: [], fx: [] }, HEALED = { value: 0 };
 const landLeaf = n => { const L = STG && STG.land; if (!L) return undefined; return /Grass/.test(n) ? L.tuft : /Bush/.test(n) ? L.bush : /Tree_4|trees_A|tree_single_A/.test(n) ? L.pine : /[Tt]ree/.test(n) ? L.leaf[n.length % L.leaf.length] : undefined; };
-function healStart() { if (!STG || worldSt !== 2 || HEAL.on) return; HEAL.on = true; HEAL.t = -.55; }
+function healStart() { if (!STG || worldSt !== 2 || HEAL.on || worldIdx === HALLW) return; HEAL.on = true; HEAL.t = -.55; }
 function healTick(dt) {
   if (!HEAL.on || HEAL.t >= 3.4) return; HEAL.t += dt; if (HEAL.t < 0) return;
   const w0 = { ...WORLDS[worldIdx], ...STG }, w1 = { ...WORLDS[worldIdx], ...(WORLDS[worldIdx].stages[0] || {}) }, e = clamp(HEAL.t / 2.2, 0, 1), k = e * e * (3 - 2 * e), mix = (a, b) => wc.copy(C(a)).lerp(wc2.copy(C(b)), k);
@@ -2622,10 +2777,10 @@ function addAmbient(i) {
       const soar = b.art === 'vulture' || b.art === 'owl', w = t * 9 * k + ph, beat = soar ? Math.max(0, Math.sin(t * 1.4 + ph * 2)) ** 3 : 1, ua = soar ? .16 + Math.sin(w * 1.6) * .5 * beat : Math.sin(w) * .72 + .12, lo = soar ? -.10 + Math.sin(w * 1.6 - 1.1) * .45 * beat : Math.sin(w - 1.15) * .62 - .12;
       for (const q of b.wings) { q.a.rotation.z = q.sd * ua; q.b.rotation.z = q.sd * lo; } return; }
     const a = Math.sin(t * 9 * k + ph) * .6; b.wings[0].rotation.y = a; b.wings[1].rotation.y = -a; };
-  if (i === 0 || i === 3) { // a flock crossing the sky every so often (bats over Ember flap faster and flit)
-    const n = i === 0 ? 7 : 9, flock = Array.from({ length: n }, (_, k) => ({ b: bird(i === 0 ? '#3a3a46' : '#1a1020', BART.birds ? .95 : i === 0 ? 1.4 : 1.1, i === 3), ox: -Math.abs(k - (n - 1) / 2) * (BART.birds ? 1.9 : 1.2), oz: (k - (n - 1) / 2) * (BART.birds ? 2.1 : 1.1), dy: BART.birds ? (k % 3 - 1) * .5 : 0, ph: rand() * 6 }));
+  if (i === 0 || i === 3 || i === HALLW && !worldSt) { // a flock crossing the sky every so often (bats over Ember flap faster and flit)
+    const n = i === 0 ? 7 : 9, flock = Array.from({ length: n }, (_, k) => ({ b: bird(i === 0 ? '#3a3a46' : '#1a1020', BART.birds ? .95 : i === 0 ? 1.4 : 1.1, i >= 3), ox: -Math.abs(k - (n - 1) / 2) * (BART.birds ? 1.9 : 1.2), oz: (k - (n - 1) / 2) * (BART.birds ? 2.1 : 1.1), dy: BART.birds ? (k % 3 - 1) * .5 : 0, ph: rand() * 6 }));
     const dir = rand() < .5 ? 1 : -1, period = 26, z0 = -34 - rand() * 14, y0 = 11 + rand() * 3;
-    worldAnim.push(t => { const u = ((t / period) % 1) * 2 - .5; for (const f of flock) { const x = dir * (-50 + u * 100) + f.ox * dir, bob = Math.sin(t * 1.3 + f.ph) * .4 + (i === 3 ? Math.sin(t * 5 + f.ph) * .5 : 0); f.b.g.position.set(x, y0 + bob + f.dy, z0 + f.oz); f.b.g.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2; f.b.g.visible = u > -.45 && u < 1.45; flap(f.b, t, f.ph, i === 3 ? 1.6 : 1); } });
+    worldAnim.push(t => { const u = ((t / period) % 1) * 2 - .5; for (const f of flock) { const x = dir * (-50 + u * 100) + f.ox * dir, bob = Math.sin(t * 1.3 + f.ph) * .4 + (i >= 3 ? Math.sin(t * 5 + f.ph) * .5 : 0); f.b.g.position.set(x, y0 + bob + f.dy, z0 + f.oz); f.b.g.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2; f.b.g.visible = u > -.45 && u < 1.45; flap(f.b, t, f.ph, i === 3 ? 1.6 : 1); } });
   }
   if (i === 1) { // vultures circling over the dunes, and two dust devils wandering out on the sand
     for (let k = 0; k < 3; k++) { const b = bird('#2a2026', 1.8), cx = (k - 1) * 14, cz = -30 - k * 6, r = 5 + k, ph = rand() * 6, y = 13 + k;
@@ -2766,10 +2921,10 @@ function addSkyline(i) {
 }
 // a soft vignette over the battle, tinted per world, to frame the road and push the eye to the middle
 const vigEl = (() => { const d = document.createElement('div'); d.id = 'vignette'; d.style.cssText = 'position:absolute;inset:0;pointer-events:none;transition:background .6s'; canvas.after(d); return d; })(); // right over the 3D view, under the HUD and menus (z-index 1 at the end of the game element shaded those too)
-function applyVignette(i) { const c = ['20,40,10', '70,40,10', '20,40,80', '40,0,20'][i] || '0,0,0'; vigEl.style.background = `radial-gradient(ellipse 85% 70% at 50% 46%, rgba(${c},0) 58%, rgba(${c},.34) 100%)`; }
+function applyVignette(i) { const c = ['20,40,10', '70,40,10', '20,40,80', '40,0,20', '16,6,44'][i] || '0,0,0'; vigEl.style.background = `radial-gradient(ellipse 85% 70% at 50% 46%, rgba(${c},0) 58%, rgba(${c},.34) 100%)`; }
 function applyWorld(i, st) {
   st = !WORLDS[i].stages ? 0 : G.sim ? worldSt : st === undefined ? stageOf(G.level || save.level) : st;
-  if (i === worldIdx && st === worldSt) return; worldIdx = i; worldSt = st; STG = WORLDS[i].stages ? WORLDS[i].stages[st] : null; CLS = ''; for (const m of HEAL.mats) m.mat.color.copy(m.from); HEAL.on = false; HEAL.t = 0; HEAL.list.length = HEAL.mats.length = HEAL.cloth.length = HEAL.fx.length = 0; HEALED.value = 0; lmWorld(i); const w = STG ? { ...WORLDS[i], ...STG } : WORLDS[i], HD0 = HEX_DRESS[w.hex || 'meadow'], HD = STG && STG.realm ? { ...HD0, realm: { ...HD0.realm, ...STG.realm } } : HD0; if (crowdReady && !G.sim) loadWarlordArt(i); // (its warlord's art, ready before he is needed)
+  if (i === worldIdx && st === worldSt) return; worldIdx = i; worldSt = st; STG = WORLDS[i].stages ? WORLDS[i].stages[st] : null; CLS = ''; for (const m of HEAL.mats) m.mat.color.copy(m.from); HEAL.on = false; HEAL.t = 0; HEAL.list.length = HEAL.mats.length = HEAL.cloth.length = HEAL.fx.length = 0; HEALED.value = 0; lmWorld(i); const w = STG ? { ...WORLDS[i], ...STG } : WORLDS[i], HD0 = HEX_DRESS[w.hex || 'meadow'] || HEX_DRESS.meadow, HD = STG && STG.realm ? { ...HD0, realm: { ...HD0.realm, ...STG.realm } } : HD0; if (crowdReady && !G.sim) loadWarlordArt(i); // (its warlord's art, ready before he is needed)
   for (const o of [...world.children]) {
     world.remove(o);
     o.traverse(c => {
@@ -2781,11 +2936,11 @@ function applyWorld(i, st) {
   worldAnim = []; propShadows = []; LM_SPOTS = [];
   paintSky(w.sky); scene.fog.color.copy(C(w.fog[0])); scene.fog.near = w.fog[1]; scene.fog.far = w.fog[2];
   hemi.color.copy(C(w.hemi[0])); hemi.groundColor.copy(C(w.hemi[1])); hemi.intensity = w.hemi[2];
-  if (BART.camp) BART.camp.mat.color.setScalar([.80, .76, .70, .88][i] || .84);
+  if (BART.camp) BART.camp.mat.color.setScalar([.80, .76, .70, .88, .82][i] || .84);
   sun.color.copy(C(w.sun[0])); sun.intensity = w.sun[1]; renderer.toneMappingExposure = w.exposure;
   for (const m of fortWalls) m.color.copy(C(w.wall)).multiplyScalar(m.userData.k || 1); fortStone.color.copy(C(w.stone));
   moteMat.color.copy(C(w.motes.c)); moteMat.size = w.motes.size; moteMat.opacity = w.motes.op; moteMat.blending = w.motes.add ? THREE.AdditiveBlending : THREE.NormalBlending; moteMat.needsUpdate = true; moteCfg = w.motes;
-  { const lk = FOE_LOOKS[lookOf(i)]; if (lk && lk.tint) FOE_TINT.copy(C(lk.tint)); else FOE_TINT.copy(w.foeTint ? C(w.foeTint) : WHITE).multiply(FOE_WARM); } /* aged ivory bone, so the horde never reads as white ghosts (worlds with their own horde look bring their own tint) */ bakeFoes(lookOf(i)); /* and dressed for this world */ G.hex = !!MODELS["hex/hex_grass"]; CUR_DUSK = (HD.realm || {}).dusk || null; w.build(); if (G.hex) hexWorld(HD); redesignLandmarks(i); dressGate(i); for (const [x, z, r] of LM_SPOTS) clearAround(x, z, r); addAmbient(i); if (G.hex) addSkyline(i); noFarShadows(world); G.baked = bakeStatic(world); bakeScenery(world);
+  { const lk = FOE_LOOKS[lookOf(i)]; if (lk && lk.tint) FOE_TINT.copy(C(lk.tint)); else FOE_TINT.copy(w.foeTint ? C(w.foeTint) : WHITE).multiply(FOE_WARM); } /* aged ivory bone, so the horde never reads as white ghosts (worlds with their own horde look bring their own tint) */ bakeFoes(lookOf(i)); /* and dressed for this world */ G.hex = !!MODELS["hex/hex_grass"]; CUR_DUSK = (HD.realm || {}).dusk || null; CIT.far = null; CIT.lights.length = 0; w.build(); if (i < HALLW) { if (G.hex) hexWorld(HD); redesignLandmarks(i); } dressGate(i); fortHall(inHall()); citPlace(G.level || save.level); for (const [x, z, r] of LM_SPOTS) clearAround(x, z, r); addAmbient(i); if (G.hex && i < HALLW) addSkyline(i); noFarShadows(world); G.baked = bakeStatic(world); bakeScenery(world);
   if (STG) for (const o of world.children) { // what the healing moves and recolours
     if (o.userData.cls) { if (o.geometry && !o.geometry.boundingSphere) o.geometry.computeBoundingSphere(); const z = o.isGroup || o.isInstancedMesh ? o.position.z : o.geometry.boundingSphere.center.z; HEAL.list.push({ o, cls: o.userData.cls, z, d: clamp((z + 62) / 50, 0, 1) * 1.1 }); if (o.userData.cls === 'life') o.visible = false; }
     if (o.userData.ground && o.material && STG.land) { const f = new THREE.Color().setRGB(...STG.land.ground); o.material.color.copy(f); { const g0 = ((WORLDS[i].stages[0] || {}).land || {}).ground; HEAL.mats.push({ mat: o.material, from: f, to: g0 && new THREE.Color().setRGB(...g0) }); } }
@@ -3125,7 +3280,7 @@ const MCAM = new THREE.Vector3(3.8, 8.0, -12.5), MLOOK = new THREE.Vector3(1.1, 
 function resetCastle() {
   fort.scale.set(1, 1, 1); fort.position.y = 0; fort.rotation.set(0, 0, 0); king.visible = true;
   G.winT = 0; G.kingFell = G.smashed = false; G.boomed = false; G.fwT = 0; G.camK = 0; G.crownV = null; G.puff = 0;
-  roofs.forEach((r, i) => { r.position.set((i ? 1 : -1) * 4.9, 6.4, 2.2); r.rotation.set(0, 0, 0); r.visible = true; r.userData.v = null; });
+  roofs.forEach((r, i) => { r.position.set((i ? 1 : -1) * 4.9, 6.4, 2.2); r.rotation.set(0, 0, 0); r.visible = !inHall(); r.userData.v = null; });
   shocks.forEach(s => { s.visible = false; }); boomFlash.visible = false; kingCrown.rotation.set(-.32, 0, 0); kingCrown.visible = true;
 }
 
@@ -3532,7 +3687,7 @@ async function sprFoes(look, was) { // the horde changes into a world's look
 }
 // the horde's four regular rigs are also dressed in place: the Bone King and the warlords are made from them
 const RIG_FOES = new Set(['minion', 'srogue', 'warrior', 'smage']);
-const lookOf = i => (WORLDS[i] && WORLDS[i].hex) || 'meadow';
+const lookOf = i => { const h = WORLDS[i] && WORLDS[i].hex; return h && h !== 'citadel' ? h : 'meadow'; }; // (his own guard are the Meadow's bones)
 function bakeCrowd() {
   const cc = renderer.getClearColor(new THREE.Color()), ca = renderer.getClearAlpha();
   crowdAtlas = new THREE.WebGLRenderTarget(ATLAS_W, ATLAS_H, { format: THREE.RGBAFormat, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: true, depthBuffer: false });
@@ -3749,11 +3904,11 @@ async function loadSet(into, k, dir) {
 /* the sculpted landmarks (blender/bd_lm, bd_meadow, bd_dunes, bd_frost, bd_ember): one set every world shares and one of its
    own. The first world's is fetched with the buildings, the rest quietly after that; a world whose set isn't in yet is built
    with the old shapes, and rebuilt if it arrives while you are on the menu. Only the current world's textures stay on the GPU. */
-const LMART = {}, LM_SETS = ['meadow', 'dunes', 'frost', 'ember'], lmWait = {};
+const LMART = {}, LM_SETS = ['meadow', 'dunes', 'frost', 'ember', 'citadel'], lmWait = {};
 const ROAD = {};
 async function loadRoad(k) { // k's own stones, and the relief they share; without them the painted canvas road stands in
   try {
-    const TL = new THREE.TextureLoader(), get = async (n, srgb) => { const t = await TL.loadAsync('models/rd/' + n + '.webp'); if (srgb) t.encoding = THREE.sRGBEncoding; t.anisotropy = MAX_ANISO; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 5); return t; };
+    const TL = new THREE.TextureLoader(), get = async (n, srgb) => { const t = await TL.loadAsync('models/rd/' + (n === 'citadel' ? 'meadow' : n) + '.webp'); if (srgb) t.encoding = THREE.sRGBEncoding; t.anisotropy = MAX_ANISO; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 5); return t; };
     if (!ROAD.nm) ROAD.nm = get('normal'); const [c, n] = await Promise.all([get(k, 1), ROAD.nm]); ROAD[k] = { map: c, normalMap: n };
   } catch (e) { console.warn('road ' + k, e); }
 }
@@ -3766,7 +3921,7 @@ function lmWorld(i) { // called as a world is about to be built
   if (LMART[LM_SETS[i]] && !G.sim) setTimeout(lmRest, 6000);
   if (!LMART[LM_SETS[i]] && !G.sim) loadLm(LM_SETS[i]).then(A => { if (A && worldIdx === i && G.mode === 'menu') { worldIdx = -1; applyWorld(i); } });
 }
-async function lmRest() { if (worldIdx >= 0) { await loadLm(LM_SETS[(worldIdx + 1) % 4]); if (G.level % WORLD_LEN > 6 || G.level % WORLD_LEN === 0 || G.level < 3) loadWarlordArt(G.level < 3 ? 0 : (worldIdx + 1) % 4, true); } } // the next world's, so it is there when you reach it
+async function lmRest() { if (worldIdx >= 0) { await loadLm(LM_SETS[(worldIdx + 1) % 5]); if (G.level % WORLD_LEN > 6 || G.level % WORLD_LEN === 0 || G.level < 3) { const nx = G.level < 3 ? 0 : (worldIdx + 1) % 5; if (nx < 4) loadWarlordArt(nx, true); } } } // the next world's, so it is there when you reach it
 // one piece of a set. o: s scale (number or [x, y, z]), ry turn, tint colour, far (no fog, no shadow), basic (unlit)
 function lmMesh(k, node, parent, x, y, z, o = {}) {
   const snow = k === 'lm' && worldIdx === 2 && !o.far && !o.basic && /^(skull|mound|skullrock|column|columnb|obelisk)$/.test(node); // in Frostbite the old stones carry snow too
@@ -3877,9 +4032,9 @@ function buildWarhorseArt(A) { // same moving parts as buildWarhorse (body, legs
 }
 const artGlows = {};
 function hangArt(root, A, mat) { // strip a KayKit rig and hang a sculpted character on its bones
-  let sk = null; root.traverse(o => { if (o.isSkinnedMesh && !sk) sk = o; });
+  let sk = root.userData.sk || null, again = !!sk; if (!sk) root.traverse(o => { if (o.isSkinnedMesh && !sk) sk = o; }); Object.defineProperty(root.userData, 'sk', { value: sk, enumerable: false, configurable: true });
   const bones = sk.skeleton.bones, bi = n => bones.findIndex(b => b.name === n.replace('.', '')), toBone = i => new THREE.Matrix4().multiplyMatrices(sk.skeleton.boneInverses[i], sk.bindMatrix);
-  const gone = []; root.traverse(o => { if (o.isMesh) gone.push(o); }); for (const o of gone) o.parent.remove(o);
+  if (!again) { const gone = []; root.traverse(o => { if (o.isMesh) gone.push(o); }); for (const o of gone) o.parent.remove(o); } // (asked again, it adds pieces from another set)
   const parts = {}, hang = (key, make, i) => { const g = A.geo[key] || (A.geo[key] = make()), o = new THREE.Mesh(g, mat); o.castShadow = o.receiveShadow = true; o.frustumCulled = false; bones[i].add(o); return o; };
   for (const n of A.J.nodes) {
     const g = A.geo[n.name], c = n.bone[0];
@@ -3899,18 +4054,39 @@ function hangArt(root, A, mat) { // strip a KayKit rig and hang a sculpted chara
    The King himself for the first two levels of all; after that each world's warlord, from his first level to his fight, when he
    leaps down (the same figure: HOLD.b is the WL build, stood behind the wall until WL takes him). Beaten on an ordinary level he
    is blown off the wall, away towards his next castle. */
-const HOLD = { i: -1, b: null, fly: null, t: 0, act: null }, WALL_S = [3.2, 3.2, 3.2, 3.2], WALL_Y = [.5, .55, 1.0, .75], CITF = { t: 9, k: 1 };
-const holderOf = n => G.worldOverride != null ? G.worldOverride : n <= 2 ? -1 : worldOf(n);
+const HOLD = { i: -1, b: null, fly: null, t: 0, act: null }, WALL_S = [3.2, 3.2, 3.2, 3.2, 1, 3.5], WALL_Y = [.5, .55, 1.0, .75, 0, .9], CITF = { t: 9, k: 1 };
+const ROWAN = 5, holderOf = n => { if (n > LAP_LEN && G.worldOverride == null) return ROWAN; const w = G.worldOverride != null ? G.worldOverride : n <= 2 ? -1 : worldOf(n); return w === HALLW ? -1 : w; }; // (the Citadel is the King's own; after the ending, whoever wears the crown now)
+function knightFig(...arts) { // a sculpted knight on foot, standing in the rig's rest pose
+  const root = THREE.SkeletonUtils.clone(KK.Knight.scene); root.traverse(o => { if (o.isSkinnedMesh) o.skeleton.pose(); }); root.position.set(0, 0, 0); root.rotation.set(0, 0, 0); root.scale.setScalar(1); root.updateMatrixWorld(true);
+  const hy = new THREE.Vector3().setFromMatrixPosition(root.getObjectByName('head').matrixWorld).y, P = {}; for (const A of arts) Object.assign(P, hangArt(root, A, A.mat)); for (const n of ['lance', 'shield']) if (P[n]) P[n].visible = false;
+  const g = new THREE.Group(); g.add(root); g.visible = false; g.userData.dyn = g.userData.holder = true; const rest = []; root.traverse(o => { if (o.isBone) rest.push([o, o.position.clone(), o.quaternion.clone()]); });
+  return { g, root, hy, P, rest, mixer: new THREE.AnimationMixer(root), acts: {}, mats: [], fx: { head: root.getObjectByName('head'), arms: [] } };
+}
+function crownOn(F) { // the crown on a knight's helm
+  const c = new THREE.Mesh(kingCrown.geometry, kingCrown.material); c.position.set(0, .9, .02); c.scale.setScalar(2.33); c.castShadow = true; c.frustumCulled = false; F.fx.head.add(c); return (F.crown = c);
+}
+function purpleEyes(F) { // what it does to whoever wears it
+  F.eyeM = new THREE.MeshBasicMaterial({ color: C('#7ad8ff'), toneMapped: false }); F.eyes = [-1, 1].map(q => { const e = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), F.eyeM); e.position.set(q * .18, 1.675 - F.hy, .445); e.rotation.set(0, q * .55, q * .34, 'YXZ'); e.scale.set(.12, .046, .06); e.frustumCulled = false; F.fx.head.add(e); const h = halo('#b400ff', .4, q * .18, 1.675 - F.hy, .56, F.fx.head, .55); return [e, h]; }); return F;
+}
+function setEyes(F, k) { F.eyeM.color.copy(C('#7ad8ff')).lerp(wc2.copy(C('#b400ff')), k); for (const [e, h] of F.eyes) { e.visible = k > .02; e.scale.set(.12 * (.4 + .6 * k), .046 * (.4 + .6 * k), .06); h.material.opacity = .55 * k; } }
+let rowanK = null;
+function rowanKing() {
+  if (rowanK || !palArt || !KK.Knight || !THREE.SkeletonUtils || !KINGM.rig) return rowanK;
+  const F = purpleEyes(knightFig(palArt)); crownOn(F); setEyes(F, 1); F.d = WARLORDS[ROWAN];
+  for (const [k, n, alt] of [['idle', 'Idle_A', 'Idle_B'], ['flinch', 'Hit_A', 'Hit_B'], ['strike', 'Throw', 'Interact']]) { const c = clipOf(n) || clipOf(alt); if (!c) continue; const q = F.acts[k] = F.mixer.clipAction(c); if (k !== 'idle') { q.setLoop(THREE.LoopOnce, 1); q.clampWhenFinished = true; } }
+  return (rowanK = F);
+}
 function setHolder(i) {
   if (HOLD.b && HOLD.b !== WL.b) HOLD.b.g.visible = false;
   HOLD.i = i; HOLD.b = HOLD.fly = null; if (!G.cine) G.kingSink = 0;
   king.visible = kingCrown.visible = i < 0; if (G.sim) return;
-  $('fortBadge').firstElementChild.setAttribute('viewBox', i < 0 ? '0 0 48 52' : '0 0 48 48'); $('fortBadge').querySelector('use').setAttribute('href', '#t-' + (i < 0 ? 4 : i));
+  $('fortBadge').firstElementChild.setAttribute('viewBox', i < 0 || i === ROWAN ? '0 0 48 52' : '0 0 48 48'); $('fortBadge').querySelector('use').setAttribute('href', '#t-' + (i < 0 ? 4 : i));
   if (i < 0) return;
-  const b = WLART[i] && WLART[i].J && KK.Skeleton_Warrior ? buildWarlord(i) : null;
+  if (i === ROWAN && !palArt) { loadPaladinArt().then(() => { if (palArt && HOLD.i === i && !HOLD.b && G.mode !== 'won') setHolder(i); }); return; }
+  const b = i === ROWAN ? rowanKing() : WLART[i] && WLART[i].J && KK.Skeleton_Warrior ? buildWarlord(i) : null; if (i === ROWAN && !b) return;
   if (!b) { if (WLNAMES[i]) loadWarlordArt(i).then(A => { if (A && HOLD.i === i && !HOLD.b && !WL.on && !HOLD.fly && G.mode !== 'won' && KK.Skeleton_Warrior) setHolder(i); }); return; } // his art is still on its way: the wall stands empty until it is in
   loadWarlordArt(i); HOLD.b = b; b.g.userData.dyn = true; if (b.pool) b.pool.visible = false; for (const o of b.fx.arms || []) o.visible = false; /* (held low, they came through the wall) */ fort.add(b.g); b.g.visible = true; b.g.rotation.set(0, 0, 0); b.mixer.stopAllAction(); if (b.acts.idle) b.acts.idle.reset().setEffectiveWeight(1).play();
-  b.g.position.set(0, WALL_Y[i], KING_Z); b.g.scale.setScalar(WALL_S[i]);
+  b.g.position.set(0, inHall() ? 2.42 : WALL_Y[i], inHall() ? KPOS.z : KING_Z); b.g.scale.setScalar(WALL_S[i]);
 }
 function holdAct(k) { // a move over his idle: the throw, the flinch
   if (HOLD.i < 0) { const a = kingActs[k === 'strike' ? 'Throw' : 'Hit_A']; if (a) a.reset().play(); return; }
@@ -3925,9 +4101,9 @@ function holdHead(v) { // where the head of whoever is on the wall is
 function holdTick(dt) {
   const F = HOLD.fly, b = F ? F.b : HOLD.b;
   if (CITF.t < 1.6) { CITF.t += dt; const u = CITF.t / 1.6; citFlash.visible = u < 1; citFlash.material.opacity = Math.sin(Math.min(1, u) * Math.PI) * .9; citFlash.scale.setScalar((16 + 26 * u) * CITF.k); }
-  if (WL.kingDue > 0 && !G.sim) { king.visible = kingCrown.visible = true; const u = clamp(WL.kingDue / 2.4, 0, 1); G.kingSink = KING_SINK * u * u; } // his last warlord is down: the King climbs onto the wall
+  if (WL.kingDue > 0 && !G.sim && !inHall()) { king.visible = kingCrown.visible = true; const u = clamp(WL.kingDue / 2.4, 0, 1); G.kingSink = KING_SINK * u * u; } // his last warlord is down: the King climbs onto the wall
   if (!b || b === WL.b && WL.on && !F) return;
-  b.mixer.update(dt); wlFx(b, dt, F ? b.g.position : _v.set(0, b.g.position.y, FORT_Z + KING_Z), b.g.scale.x);
+  b.mixer.update(dt); wlFx(b, dt, F ? b.g.position : _v.set(0, b.g.position.y, FORT_Z + (inHall() ? KPOS.z : KING_Z)), b.g.scale.x);
   if (HOLD.act && (HOLD.t -= dt) <= 0) { HOLD.act.fadeOut(.2); HOLD.act = null; if (b.acts.idle) b.acts.idle.setEffectiveWeight(1); }
   for (const m of b.mats) if (m.emissiveMap) m.color.setScalar(1 + G.fortFlash * .25 + G.puff * .9);
   if (F) { // off he goes, end over end, over the bridge and away
@@ -3937,8 +4113,8 @@ function holdTick(dt) {
     return;
   }
   if (G.fortFlash > .9 && !HOLD.act && rand() < .06) holdAct('flinch');
-  const i = HOLD.i, wob = Math.sin(G.t * 30) * G.fortFlash * .04, pf = G.puff * (.2 + Math.sin(G.t * 60) * .04), ws = WALL_S[i] * (G.cfg && G.cfg.boss ? 1.12 : 1);
-  b.g.position.y = WALL_Y[i] + G.puff * 1.6; b.g.scale.set(ws * (1 + wob + pf), ws * (1 - wob + pf), ws * (1 + wob + pf));
+  const i = HOLD.i, wob = Math.sin(G.t * 30) * G.fortFlash * .04, pf = G.puff * (.2 + Math.sin(G.t * 60) * .04), ws = WALL_S[i] * (inHall() ? .7 : 1) * (G.cfg && G.cfg.boss ? 1.12 : 1);
+  b.g.position.y = (inHall() ? 2.42 : WALL_Y[i]) + G.puff * 1.6; b.g.scale.set(ws * (1 + wob + pf), ws * (1 - wob + pf), ws * (1 + wob + pf));
 }
 function holdBlown() { // his castle goes up and takes him with it
   const b = HOLD.b; if (!b || G.sim) return; b.g.getWorldPosition(_v); wlGroup.add(b.g); b.g.position.copy(_v); b.g.position.y += 1.5; b.mixer.stopAllAction(); const a = b.acts.flinch || b.acts.hit; if (a) a.reset().play();
@@ -4064,12 +4240,14 @@ function buildPaladin() {
   const std2 = mesh(new THREE.PlaneGeometry(.9, 1.5), new THREE.MeshLambertMaterial({ map: royalBanTex, transparent: true, alphaTest: .5, side: THREE.DoubleSide }), .46, 3.65, -.42, horse.body, false); std2.userData.sharedMaps = true; horse.flag = std2;
   }
   paladin.rotation.y = Math.PI; // built facing the camera; he rides away up the road
-  applySkin();
+  applySkin(); dressRider();
 }
 function resetPaladin() { G.pal = null; G.rally = 0; paladin.visible = false; }
 function updatePaladin(dt, play) {
   if (G.rally > 0) G.rally -= dt;
+  if (G.end || G.look) return; // (the ending and the look back place him themselves)
   const P = G.pal; if (!P || !horse) { paladin.visible = false; return; }
+  if (WL.state === 'kneel' && P.rear < 0) { P.x += clamp(WL.x - P.x, -1, 1) * dt * 5; if (P.z <= WL.z + 3.4) { lastBlow(); return; } }
   if (palMixer) { palMixer.update(dt); const ul = palRig.userData.ul || (palRig.userData.ul = palRig.getObjectByName('upperlegl')), ur = palRig.userData.ur || (palRig.userData.ur = palRig.getObjectByName('upperlegr')); /* (found once, not searched for every frame) */ const sit = palRig.userData.sit || .55; if (ul) ul.rotation.z += sit; if (ur) ur.rotation.z -= sit; if (palRig.userData.cape) palRig.userData.cape.rotation.x = .95 + Math.sin(P.ph * 1.4) * .14; } // astride the saddle
   P.t += dt;
   if (P.rear < 0) { // the charge
@@ -4499,6 +4677,7 @@ const SONGS = [
   { bpm: 120, root: 62, scale: 'hijaz', bells: .3, drums: 1.1 },  // Sunscorch Dunes: the desert caravan
   { bpm: 112, root: 64, scale: 'minor', bells: 1, drums: .8 },    // Frostbite Peaks: snow and bells
   { bpm: 142, root: 57, scale: 'harm', bells: .4, drums: 1.35 },  // Ember Hollow: the charge on the dark citadel
+  { bpm: 124, root: 59, scale: 'harm', bells: .9, drums: 1.25 },  // the Citadel: bells in a great stone hall
 ];
 const LOOP_STEPS = 8 * 12 * 2; // two passes of the 8-bar tune
 function musGraph(ac) {
@@ -4624,7 +4803,9 @@ const WALL_SAY = [
   { k: .9, col: '#bff2ff', last: 'LEAVE IT.', cry: [['MY HALL!', 'roar'], ['NO!', 'no'], ['FALL BACK!', 'roar'], ['IT CRACKS!', 'no'], ['COLD BLOOD!', 'growl'], ['HOLD THE ICE!', 'roar']], taunt: [['FREEZE!', 'laugh'], ['TOO SLOW!', 'scoff'], ['SHATTER!', 'cackle'], ['BRITTLE!', 'chuckle'], ['HA!', 'laugh'], ['ICE AND BONE!', 'growl']] },
   { k: .7, col: '#ffc08a', last: 'NOT AGAIN...', cry: [['MY FORGE!', 'roar'], ['RAAAGH!', 'no'], ['IT BREAKS!', 'no'], ['MORE FIRE!', 'roar'], ['TO THE NEXT!', 'growl'], ['UNMADE!', 'no']], taunt: [['BURN!', 'laugh'], ['ASHES!', 'growl'], ['MELT!', 'chuckle'], ['HOTTER!', 'cackle'], ['SOFT METAL!', 'scoff'], ['HA HA!', 'laugh']] },
 ];
-const KING_SAY = { k: 1, col: '#e070ff', cry: KING_CRIES, taunt: KING_TAUNTS }, wallSay = () => WALL_SAY[HOLD.i] || KING_SAY;
+WALL_SAY[5] = { k: 1.05, col: '#e0a0ff', last: '', cry: [['STAY BACK!', 'roar'], ['IT IS MINE!', 'no'], ['I SAVED YOU!', 'no'], ['HOLD THEM!', 'roar'], ['NOT YET!', 'no'], ['FALL BACK!', 'growl']], taunt: [['STAND DOWN!', 'scoff'], ['GO HOME!', 'growl'], ['KNEEL!', 'scoff'], ['REST NOW.', 'chuckle'], ['OBEY!', 'growl'], ['SLEEP.', 'chuckle']] };
+const HALL_CRIES = [['MY THRONE!', 'roar'], ['GUARDS!', 'roar'], ['STAY BACK!', 'no'], ['NOT THE CROWN!', 'no'], ['IMPOSSIBLE!', 'no']];
+const KING_SAY = { k: 1, col: '#e070ff', cry: KING_CRIES, taunt: KING_TAUNTS }, HALL_SAY = { ...KING_SAY, cry: HALL_CRIES }, wallSay = () => WALL_SAY[HOLD.i] || (inHall() ? HALL_SAY : KING_SAY);
 const speaker = () => WL.on && WL.alive && WL.def ? (WALL_SAY[WARLORDS.indexOf(WL.def)] || KING_SAY) : wallSay();
 let _shape = null;
 function voiceOn(ac, dest, t0, script, vol = 1) {
@@ -4891,13 +5072,14 @@ function wallX(x, px, z, r) {
 }
 function setupLevel(n) {
   if (!G.sim) clearToasts(); G.tauntT = -99; MUS.lift = MUS.push = 0; // (the King's taunt timer runs on G.t, which restarts each level, and the music's key change must not carry over)
-  gameEl.classList.remove('cine'); G.level = n; if (HEAL.on) worldIdx = -1; /* (a healed land is built again as it was) */ G.cfg = levelCfg(n, n === save.level ? save.fails || 0 : 0); if (G.sim && G.cfgPatch) Object.assign(G.cfg, G.cfgPatch); applyWorld(G.worldOverride != null ? G.worldOverride : worldOf(n));
+  gameEl.classList.remove('cine'); G.level = n; if (HEAL.on) worldIdx = -1; /* (a healed land is built again as it was) */ G.cfg = levelCfg(n, n === save.level ? save.fails || 0 : 0); if (G.sim && G.cfgPatch) Object.assign(G.cfg, G.cfgPatch); applyWorld(G.worldOverride != null ? G.worldOverride : worldOf(n)); citPlace(n);
   for (const g of G.gates) disposeGroup(g.mesh);
   G.gates = G.cfg.gates.map((g, i) => ({ ...g, z: g.z - 2.1, bit: 1 << i, cx: g.x, pulse: 0, ready: true, cool: 0, mesh: makeGateMesh({ ...g, z: g.z - 2.1 }) })); // rows sit a little further up, clear of the gatehouse
   buildLaneWalls(n);
   { const lanes = {}; for (const g of G.gates) if (g.add) { const k = (g.x > 0 ? 'r' : 'l') + (g.big ? 'b' : ''); const L = lanes[k] || (lanes[k] = { grp: 1, x: g.x, z: 0, n: 0 }); L.z += g.z; L.n++; g.grp = L; } for (const L of Object.values(lanes)) L.z /= L.n; } // each +N lane shares one running label, shown halfway up it
   ants.n = 0; beetles.n = 0; P.n = 0; SH.n = 0; D.life.fill(0);
   G.fortMax = G.fortHp = G.cfg.fortHp; G.nestMax = G.nestHp = nestHp(save.up.nest);
+  for (const o of fortDress.children) if (o.userData.veil) o.visible = true; clearEnding(); if (G.look) { for (const g of G.look.gl) scene.remove(g); G.look = null; lookOff(); } G.lookDone = false;
   G.lx = 0; G.charge = 0; G.waveT = n === 1 ? 3.2 : 2.2; G.waveQ = 0; G.waves = 0; G.fired = 0; G.firedSent = 0; G.killsSent = 0; G.firing = false; G.fireT = 0;
   G.shake = 0; G.fortFlash = 0; G.endT = 0; G.t = 0; G.clk = 0; G.squash = 0; G.continued = false; G.kingS = G.cfg.boss ? 9.2 : 8; G.crowdShown = 0;
   for (const f of floats) { f.t = 0; f.el.style.opacity = 0; }
@@ -5166,8 +5348,8 @@ function kingAttack(dt) {
     tone(90, .8, 'sawtooth', .09, .55); tone(60, .9, 'square', .05, .6); noise(.7, .1, 'lowpass', 900, 200);
     holdAct('flinch');
   }
-  if (rageGlow.visible) { rageGlow.material.opacity = (.35 + .25 * Math.sin(G.t * 6)) * (G.boomed ? 0 : 1); rageGlow.position.y = 6.2 + fort.position.y; }
-  if (G.mode === "play" && (G.kingT -= dt) <= 0 && ants.n > 12 && !WL.alive && !CAP.alive) { // he holds his fire while a warlord or a captain fights
+  if (rageGlow.visible) { rageGlow.material.opacity = (.35 + .25 * Math.sin(G.t * 6)) * (G.boomed ? 0 : 1); rageGlow.position.set(0, (inHall() ? 7.4 : 6.2) + fort.position.y, inHall() ? -39.75 + KPOS.z - .4 : -42); }
+  if (G.mode === "play" && !G.kneel && (G.kingT -= dt) <= 0 && ants.n > 12 && !WL.alive && !CAP.alive) { // he holds his fire while a warlord or a captain fights
     G.kingT = kingGap() * (.85 + rand() * .3); holdHead(_kv); _kv.x += 1.2; _kv.y -= .4; _kv.z += 1;
     if (hurlShot(HOLD.i, _kv, G.cfg.boss ? 1.05 : 1.3, G.cfg.boss ? 2.1 : 1.6)) holdAct('strike');
   }
@@ -5309,7 +5491,8 @@ const WARLORDS = [
   { name: 'SEK-RA', title: 'the Sand Pharaoh', model: 'Skeleton_Mage', hue: 44, eye: '#ffd23a', move: 'swarm', col: '#ffc62b' },
   { name: 'HRIMGAR', title: 'the Frost Jarl', model: 'Skeleton_Warrior', hue: 198, eye: '#aef4ff', move: 'spears', col: '#8fe6ff' },
   { name: 'MAGMAW', title: 'the Molten', model: 'Skeleton_Rogue', hue: 16, eye: '#ffb02a', move: 'quake', col: '#ff7a1a' },
-  { name: 'THE BONE KING', title: 'Lord of the Horde', model: 'Skeleton_Warrior', hue: 282, eye: '#ff5af0', move: 'barrage', col: '#c040ff', s: 1.18 }, // the finale: after the last warlord on every 40th level
+  { name: 'THE BONE KING', title: 'Lord of the Horde', model: 'Skeleton_Warrior', hue: 282, eye: '#ff5af0', move: 'barrage', col: '#c040ff', s: 1.18 }, // the last fight, level 50
+  { name: 'ROWAN', title: 'the Crowned', model: 'Knight', hue: 282, eye: '#b400ff', move: 'none', col: '#c060ff' }, // who holds the walls once the story is told
 ];
 const WL_S = 2.6, WL_R = 1.4;                  // his size, and how close a soldier has to get to strike him
 let WL_HPK = 12, WL_WARD = .4, WL_FALL = .25;  // his health (seconds of your damage rate when he appears; at least a quarter of the castle), the ward line, and the blow his fall deals the castle
@@ -5488,7 +5671,8 @@ function finishWarlord(i, d, root, mats, fx, art) { // his animations, and the p
     if (k !== 'walk' && k !== 'idle') { a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; }
   }
   if (acts.walk) acts.walk.timeScale = .75;
-  return (WL.built[i] = { g, root, mixer, acts, mats, fx, d, art, pool });
+  const rest = []; root.traverse(o => { if (o.isBone) rest.push([o, o.position.clone(), o.quaternion.clone()]); });
+  return (WL.built[i] = { g, root, mixer, acts, mats, fx, d, art, pool, rest });
 }
 // telegraphs: red strips (a cleave, ice spears) and a red ring (a quake) on the road, with a "!" over them
 const tgFill = () => new THREE.MeshBasicMaterial({ color: C('#ff2a2a'), transparent: true, opacity: .25, depthWrite: false, depthTest: false, toneMapped: false, side: THREE.DoubleSide });
@@ -5522,32 +5706,34 @@ const ward = mesh(new THREE.PlaneGeometry(12, 6.5), new THREE.MeshBasicMaterial(
 ward.visible = false;
 function resetWarlord() {
   WL.on = WL.alive = WL.ward = WL.done = false; WL.kingDue = 0; hideTelegraphs(); ward.visible = false; // (kingDue too: quitting just after Magmaw fell brought the Bone King into the next level)
-  if (WL.b) { WL.b.g.visible = false; WL.b.mixer.stopAllAction(); } if (HOLD.b) HOLD.b.g.visible = false; if (HOLD.fly) { HOLD.fly.b.g.visible = false; HOLD.fly = null; } WL.b = null; WL.cur = null;
+  if (WL.b) { WL.b.g.visible = false; WL.b.mixer.stopAllAction(); ghost(WL.b, false); } WL.queue = null; WL.shade = false; G.kneel = false; $('giant').classList.remove('last'); if (HOLD.b) HOLD.b.g.visible = false; if (HOLD.fly) { HOLD.fly.b.g.visible = false; HOLD.fly = null; } WL.b = null; WL.cur = null;
   for (const s of spikes) { s.m.visible = false; s.t = 0; } fireRing.visible = false;
 }
 function wlAct(k, fade = .2) {
   const b = WL.b; if (!b || !b.acts[k]) return; const a = b.acts[k];
   if (WL.cur && WL.cur !== a) WL.cur.fadeOut(fade); a.reset().setEffectiveWeight(1).fadeIn(fade).play(); WL.cur = a;
 }
-const isFinale = () => G.level % (WORLD_LEN * WORLDS.length) === 0; // every 40th level: after his last warlord, the Bone King himself
+const isFinale = () => G.level === LAP_LEN; // level 50: shades of the four, then the Bone King himself, and the ending
 function startWarlord(force) {
+  if (force == null && isFinale()) { WL.queue = [1, 2, 3, 4]; WL.dps0 = G.dps || 0; force = 0; } // the four he ruled, as shades, then the King
+  if (force == null) WL.queue = null; const shade = isFinale() && force != null && force < 4;
   const i = force != null ? force : worldOf(G.level) % WORLDS.length, b = buildWarlord(i);
   if (!b) { WL.done = true; return; }
-  if (WL.b && WL.b !== b) WL.b.g.visible = false;
+  if (WL.b && WL.b !== b) { WL.b.g.visible = false; ghost(WL.b, false); } ghost(b, shade); WL.shade = shade;
   WL.b = b; WL.def = WARLORDS[i]; WL.lap = Math.floor((G.level - 1) / (WORLD_LEN * WORLDS.length));
-  const down = HOLD.b === b; if (HOLD.b && !down) HOLD.b.g.visible = false; HOLD.b = HOLD.act = null; b.mixer.stopAllAction(); WL.cur = null; // he comes down from his wall
+  const down = HOLD.b === b; if (HOLD.i !== ROWAN) { if (HOLD.b && !down) HOLD.b.g.visible = false; HOLD.b = HOLD.act = null; } b.mixer.stopAllAction(); WL.cur = null; // he comes down from his wall
   if (b.g.parent !== wlGroup) wlGroup.add(b.g); b.g.visible = true; b.g.rotation.set(0, 0, 0); if (b.pool) b.pool.visible = true; for (const o of b.fx.arms || []) o.visible = true;
   WL.on = WL.alive = WL.ward = true; WL.wardHp = G.fortMax * WL_WARD; G.fortHp = Math.max(G.fortHp, WL.wardHp);
   // his health is matched to the army you have on the road when he comes out (castle-relative health melted late in the game)
   let army = 0; for (let i = 0; i < ants.n; i++) if (ants.hp[i] > 0) army += ants.hp[i]; WL.army = army;
   const soft = (G.level <= WORLD_LEN ? .75 : 1) * Math.max(.55, 1 - .15 * (G.level === save.level ? save.fails || 0 : 0)); // the first one goes easier, and every loss softens him
-  WL.max = WL.hp = Math.round(Math.max(G.fortMax * .25, (G.dps || 0) * WL_HPK * soft) * (1 + .12 * Math.min(3, WL.lap))); // about WL_HPK seconds of the damage you were doing to the castle
+  WL.max = WL.hp = Math.round(Math.max(G.fortMax * .25, (isFinale() && WL.queue ? WL.dps0 || 0 : G.dps || 0) * WL_HPK * soft) * (shade ? .26 : 1) * (1 + .12 * Math.min(3, WL.lap))); // about WL_HPK seconds of the damage you were doing to the castle
   WL.born = G.t; WL.died = 0;   WL.x = 0; WL.z = FORT_Z + .2; WL.y = 0; WL.state = 'enter'; WL.st = 0; WL.atkT = 3; WL.flash = 0; WL.rage = false; WL.sp = 1.15 + .12 * Math.min(2, WL.lap); WL.wardPop = 0; WL.kingDue = 0;
   if (WL.def.move === 'barrage') { // the Bone King leaps down from his own walls, tougher than any of his warlords
-    WL.max = WL.hp = Math.round(WL.max * 1.3); WL.state = 'leap'; WL.z = FORT_Z - 1; WL.y = 7; king.visible = false; kingCrown.visible = false; G.kingSink = 0; WL.sp *= .9;
+    WL.max = WL.hp = Math.round(WL.max * 1.3); WL.state = 'leap'; WL.z = inHall() ? -44 : FORT_Z - 1; WL.lv = inHall() ? 9 : 3; WL.y = 7; king.visible = false; kingCrown.visible = false; G.kingSink = 0; WL.sp *= .9;
     burst(0, 7, FORT_Z - 1, [WL.def.col, '#ffffff', '#ffc62b'], 40, 7, { vy: 6, life: 1, g: 6, sz: 2.2, kind: PK.SPARK });
   }
-  else if (down) { WL.state = 'leap'; WL.z = FORT_Z - 1; WL.y = 7; burst(0, 7, FORT_Z - 1, [WL.def.col, '#ffffff'], 30, 7, { vy: 6, life: 1, g: 6, sz: 2.2, kind: PK.SPARK }); }
+  else if (down) { WL.state = 'leap'; WL.z = FORT_Z - 1; WL.lv = 3; WL.y = 7; burst(0, 7, FORT_Z - 1, [WL.def.col, '#ffffff'], 30, 7, { vy: 6, life: 1, g: 6, sz: 2.2, kind: PK.SPARK }); }
   ward.visible = true; wlAct('walk', 0);
   // the gates blow open behind him
   G.shake = Math.max(G.shake, 1.1); buzz([80, 40, 120]); G.fortFlash = 1;
@@ -5555,11 +5741,12 @@ function startWarlord(force) {
   burst(0, 2, FORT_Z + .8, [WL.def.col, '#ffffff', FOE], 30, 7, { vy: 6, life: .9, g: 6, sz: 2.2, kind: PK.SPARK }); smoke(0, 1.5, FORT_Z + 1, '#8a7f90', 3.4, 1.4);
   // his guard: a wedge of skeletons with a brute on each flank, marching at his pace
   const cfg = G.cfg;
+  if (shade) { WL.atkT = 1.6; WL.sp *= 1.25; const n = 4 - WL.queue.length; burst(0, 2, FORT_Z + 1, ['#b060ff', '#e0b0ff', '#ffffff'], 40, 7, { sph: true, life: 1, g: 1, sz: 2.6, kind: PK.SPARK }); if (!G.sim) { toastMsg('A SHADE RISES', wlName(), { live: true, name: true }); if (!n) { holdHead(_kv); popText('SERVE ME AGAIN!', _kv.x, _kv.y + 1.5, _kv.z + 1, '#e070ff'); } kingVoice('roar', .7); } return; } // (a shade comes alone)
   for (const [ox, oz, big] of [[-1.5, 1.4, 0], [1.5, 1.4, 0], [-2.6, .5, 0], [2.6, .5, 0], [-.8, 2.3, 0], [.8, 2.3, 0], [0, 3, 0], [-3.4, -.3, 1], [3.4, -.3, 1]]) {
     const j = addUnit(beetles, clamp(ox, -LANE + .4, LANE - .4), WL.z + oz, big ? cfg.stagHp * 1.5 : cfg.beetleHp * 2.5, big ? 2.2 : 1, WL.sp, 0, big);
     if (j >= 0) beetles.kind[j] = 0;
   }
-  if (!G.sim && !G.cine) { toastMsg(WL.def.title.toUpperCase(), wlName(), { live: true, name: true }); if (!save.wardTip && WL.def.move !== 'barrage') toastMsg('CASTLE SHIELDED!', 'Defeat ' + wlName() + ' to break the shield', { ok: () => WL.alive, on: () => { save.wardTip = 1; persist(); } }); kingVoice("roar", .8); tone(70, 1, 'sawtooth', .08, .5); noise(.9, .14, 'lowpass', 700, 120); }
+  if (!G.sim && !G.cine) { toastMsg(WL.def.title.toUpperCase(), wlName(), { live: true, name: true }); if (!save.wardTip && WL.def.move !== 'barrage') toastMsg((inHall() ? 'WALL' : 'CASTLE') + ' SHIELDED!', 'Defeat ' + wlName() + ' to break the shield', { ok: () => WL.alive, on: () => { save.wardTip = 1; persist(); } }); kingVoice("roar", .8); tone(70, 1, 'sawtooth', .08, .5); noise(.9, .14, 'lowpass', 700, 120); }
 }
 function hurtWarlord(d) {
   if (!WL.alive) return; WL.hp -= d; WL.flash = 1;
@@ -5567,13 +5754,14 @@ function hurtWarlord(d) {
   if (WL.hp <= 0) slayWarlord();
 }
 function slayWarlord() {
-  const kingDies = WL.def.move === 'barrage', thenKing = isFinale() && !kingDies;
-  if (!G.sim && !G.practice) { save.trophies = save.trophies || {}; save.trophies[WARLORDS.indexOf(WL.def)] = 1; persist(); }
-  if (!kingDies) mission('warlord', 1); // his emblem turns gold on the realm map
+  const kingDies = WL.def.move === 'barrage', thenKing = isFinale() && !kingDies && !!WL.queue;
+  if (kingDies && isFinale()) { kneelKing(); return; }
+  if (!G.sim && !G.practice && !WL.shade) { save.trophies = save.trophies || {}; save.trophies[WARLORDS.indexOf(WL.def)] = 1; persist(); }
+  if (!kingDies && !WL.shade) mission('warlord', 1); // his emblem turns gold on the realm map
   WL.hp = 0; WL.alive = false; WL.done = true; WL.died = G.t; WL.state = 'dead'; WL.st = 0; hideTelegraphs(); wlAct('die', .15);
-  if (thenKing) { WL.kingDue = 2.6; } // his last warlord falls... and the Bone King climbs onto his walls
+  if (thenKing) { WL.kingDue = WL.queue[0] === 4 ? 2.4 : 1.2; } // his last warlord falls... and the Bone King climbs onto his walls
   else { WL.ward = false; ward.visible = false; }
-  if (kingDies) { G.fortHp = 0; if (!G.sim && !G.practice) { save.ng = (save.ng || 0) + 1; persist(); } } // the King is dead: the castle falls with him
+  if (kingDies) G.fortHp = 0; // (on the Endless Road his walls fall with him)
   else if (!thenKing) G.fortHp = Math.max(1, WL.wardHp - G.fortMax * WL_FALL);
   G.fortFlash = 1; G.shake = Math.max(G.shake, 1.2); buzz([60, 30, 140]);
   burst(WL.x, 2.5, WL.z, [WL.def.col, FOE_FX, '#ffffff', FOE], 70, 10, { vy: 9, life: 1.2, g: 13, sz: 2.4, kind: PK.ROCK });
@@ -5581,9 +5769,9 @@ function slayWarlord() {
   splat(WL.x, WL.z, FOE, 4.5); // (the banner says he is slain; a second label sat on top of the castle's damage number)
   burst(0, 3, FORT_Z + .5, ['#e2d6c4', '#b9ad9c', WL.def.col], 40, 9, { vy: 7, life: 1.2, g: 15, sz: 2.2, kind: PK.ROCK }); // and the castle walls crack
   if (!thenKing && !kingDies) popText('−' + Math.round(G.fortMax * WL_FALL), 0, 4.5, FORT_Z + 1.5, '#ffd23f');
-  if (!G.sim && thenKing) { toastMsg(wlName() + ' SLAIN!', 'Now the Bone King himself comes for you', { now: true }); tone(55, 1.4, 'sawtooth', .09, .5); }
+  if (!G.sim && thenKing) { if (WL.queue[0] === 4) { toastMsg('THE SHADES ARE GONE', 'Now the Bone King himself comes for you', { now: true }); tone(55, 1.4, 'sawtooth', .09, .5); } else tone(220, .5, 'sine', .08, .5); }
   else if (!G.sim && kingDies) { G.kingFell = true; [392, 523, 659, 784, 1046].forEach((f, k) => setTimeout(() => tone(f, .3, 'triangle', .07), k * 120)); }
-  else if (!G.sim) { const L = WALL_SAY[WARLORDS.indexOf(WL.def)]; if (L && !WL.lap) { const f = popText(L.last, WL.x, 5.6, WL.z, '#ffffff'); if (f) f.hold = 1.6; } toastMsg(wlName() + ' SLAIN!', 'The shield is down. Finish the castle!', { now: true }); [392, 523, 659, 784].forEach((f, k) => setTimeout(() => tone(f, .25, 'triangle', .06), k * 110)); tone(60, .9, 'sine', .3, .3); }
+  else if (!G.sim) { const L = WALL_SAY[WARLORDS.indexOf(WL.def)]; if (L && !WL.lap) { const f = popText(L.last, WL.x, 5.6, WL.z, '#ffffff'); if (f) f.hold = 1.6; } toastMsg(wlName() + ' SLAIN!', 'The shield is down. Finish the ' + TGT() + '!', { now: true }); [392, 523, 659, 784].forEach((f, k) => setTimeout(() => tone(f, .25, 'triangle', .06), k * 110)); tone(60, .9, 'sine', .3, .3); }
 }
 function beginAttack() {
   const m = WL.def.move; WL.state = 'wind'; WL.st = 0; WL.tg = []; wlAct('strike', .15);
@@ -5646,18 +5834,19 @@ function updateWarlord(dt, play) {
       const s = tgStrips[k], fan = WL.tg.length > 1; s.fill.material.opacity = .08 + .14 * (WL.st / WL.windT); s.frame.material.opacity = .55 + .4 * p;
       mk.visible = !fan || k === 1; const f = fan ? .16 : .3; mk.position.set(t.x + Math.sin(t.a) * t.len * f, 2.4 + p * .3, t.z + Math.cos(t.a) * t.len * f); }
     else { RR.fill.scale.setScalar(t.R * Math.min(1, WL.st / WL.windT)); RR.fill.material.opacity = .22; RR.ring.material.opacity = .5 + .4 * p; mk.position.set(t.x, 2 + p * .3, t.z + t.R * .6); } }
-  if (WL.kingDue > 0 && play && (WL.kingDue -= dt) <= 0) { WL.kingDue = 0; startWarlord(4); }
+  if (WL.kingDue > 0 && play && (WL.kingDue -= dt) <= 0) { WL.kingDue = 0; startWarlord(WL.queue && WL.queue.length ? WL.queue.shift() : 4); }
   if (!WL.on) {
     if (play && G.cfg.boss && !WL.done && G.fortHp <= G.fortMax * WL_WARD) startWarlord();
     if (!WL.on) return;
   }
   const b = WL.b; b.mixer.update(dt); kingTick(b.fx.king); WL.st += dt; WL.flash = Math.max(0, WL.flash - dt * 5);
-  if (WL.state === 'dead') { if (WL.st > 2.2) WL.y -= dt * 1.6; if (WL.y < -7) { WL.on = false; b.g.visible = false; } }
+  if (WL.state === 'dead') { if (WL.st > (WL.shade ? .7 : 2.2)) WL.y -= dt * (WL.shade ? 7 : 1.6); if (WL.y < -7) { WL.on = false; b.g.visible = false; } }
   else if (play) {
     const st = WL.state;
-    if (st === 'leap') { const u = Math.min(1, WL.st / 1.1); WL.z += dt * 3; WL.y = 7 * (1 - u) * (1 - u) + 2.4 * Math.sin(Math.PI * u); if (u >= 1) { WL.y = 0; WL.state = 'roar'; WL.st = 0; wlAct('roar'); G.shake = Math.max(G.shake, 1.4); buzz([90, 40, 160]); burst(WL.x, .5, WL.z, ['#e2d6c4', '#b9ad9c', WL.def.col], 50, 9, { vy: 8, life: 1.1, g: 16, sz: 2.4, kind: PK.ROCK }); splat(WL.x, WL.z, '#2a1a30', 4); tone(45, 1, 'sine', .3, .4); } }
-    else if (st === 'enter') { WL.z += dt * 2.4; if (WL.st > 1.5) { WL.state = 'roar'; WL.st = 0; wlAct('roar'); burst(WL.x, 4, WL.z, [WL.def.col, '#ffffff'], 18, 5, { vy: 5, life: .7, g: 4, sz: 2, kind: PK.SPARK }); } }
-    else if (st === 'roar') { if (WL.st > 1.3) { WL.state = 'walk'; WL.st = 0; wlAct('walk'); } }
+    if (st === 'leap') { const u = Math.min(1, WL.st / 1.1); WL.z += dt * (WL.lv || 3); WL.y = 7 * (1 - u) * (1 - u) + 2.4 * Math.sin(Math.PI * u); if (u >= 1) { WL.y = 0; WL.state = 'roar'; WL.st = 0; wlAct('roar'); G.shake = Math.max(G.shake, 1.4); buzz([90, 40, 160]); burst(WL.x, .5, WL.z, ['#e2d6c4', '#b9ad9c', WL.def.col], 50, 9, { vy: 8, life: 1.1, g: 16, sz: 2.4, kind: PK.ROCK }); splat(WL.x, WL.z, '#2a1a30', 4); tone(45, 1, 'sine', .3, .4); } }
+    else if (st === 'kneel') { poseFig(b, POSE.kneel); G.firing = false; if (rand() < .3) burst(WL.x + (rand() - .5) * 2, 1 + rand() * 3, WL.z + .5, ['#c050ff', '#ffffff'], 1, 1, { vy: 1.4, life: .7, g: 0, sz: 1.5, kind: PK.SPARK }); if (WL.st > 16 && !G.pal) { G.charge = sendCharge(); sendGiant(); } } // he waits for SEND (and after a while it is sent for you)
+    else if (st === 'enter') { WL.z += dt * 2.4; if (WL.st > (WL.shade ? .7 : 1.5)) { WL.state = 'roar'; WL.st = 0; wlAct('roar'); burst(WL.x, 4, WL.z, [WL.def.col, '#ffffff'], 18, 5, { vy: 5, life: .7, g: 4, sz: 2, kind: PK.SPARK }); } }
+    else if (st === 'roar') { if (WL.st > (WL.shade ? .5 : 1.3)) { WL.state = 'walk'; WL.st = 0; wlAct('walk'); } }
     else if (st === 'walk') {
       let fz = 1e9, fx = 0, fc = 0; for (let i = 0; i < ants.n; i++) if (ants.hp[i] > 0 && ants.z[i] < fz) fz = ants.z[i];
       for (let i = 0; i < ants.n; i++) if (ants.hp[i] > 0 && ants.z[i] < fz + 4) { fx += ants.x[i]; fc++; }
@@ -5690,12 +5879,12 @@ function updateWarlord(dt, play) {
   // place him; he swells up as he comes through the gate, and flashes when he's hit
   const grow = WL.state === 'enter' ? .75 + .25 * Math.min(1, WL.st / 1.2) : 1;
   b.g.position.set(WL.x, WL.y, WL.z); b.g.scale.setScalar(WL_S * grow * (WL.def.s || 1));
-  for (const m of b.mats) if (m.emissiveMap) m.color.setScalar(1 + WL.flash * .9); else m.emissive.copy(m.userData.e0).lerp(WHITE, WL.flash * .22); // (a sculpted warlord has a glow map: his whole skin brightens instead)
+  for (const m of b.mats) if (m.emissiveMap) { m.color.setScalar(1 + WL.flash * .9); if (b.ghost) { m.color.r *= 1.25; m.color.g *= .8; m.color.b *= 1.9; } } else m.emissive.copy(m.userData.e0).lerp(WHITE, WL.flash * .22); // (a sculpted warlord has a glow map: his whole skin brightens instead)
 }
 /* ---------------- the captains ----------------
    Halfway through a world the warlord sends out his captain: a giant brute with a guard. While he stands the castle is shielded.
    He marches down the road hurling his master's fire, and your soldiers cut him down like any brute, only he takes a lot more. */
-const CAPTAINS = [{ name: 'THE CARVER' }, { name: 'THE EMBALMER' }, { name: 'THE HUSCARL' }, { name: 'THE BELLOWS' }];
+const CAPTAINS = [{ name: 'THE CARVER' }, { name: 'THE EMBALMER' }, { name: 'THE HUSCARL' }, { name: 'THE BELLOWS' }, { name: 'THE ROYAL GUARD' }];
 const CAP = { on: false, alive: false, done: false, hp: 0, max: 1, x: 0, z: 0, t: 0, def: CAPTAINS[0] };
 const capPool = lightPool('#ffffff', 7, 7, 0, 0, scene, .001); capPool.material = capPool.material.clone(); capPool.visible = false;
 let capArt = null, capWait = null;
@@ -5725,7 +5914,7 @@ function startCaptain() {
   G.shake = Math.max(G.shake, 1); buzz([80, 40, 120]); G.fortFlash = 1; const col = WARLORDS[w].col;
   burst(0, 1.5, FORT_Z + .6, ['#e2d6c4', '#b9ad9c', '#cfc5b6'], 34, 8, { vy: 8, life: 1.3, g: 17, sz: 2.2, kind: PK.ROCK }); burst(0, 2, FORT_Z + .8, [col, '#ffffff'], 24, 7, { vy: 6, life: .9, g: 6, sz: 2, kind: PK.SPARK });
   capPool.material.color.copy(C(col)); capPool.material.opacity = .6; capPool.visible = !G.sim;
-  if (!G.sim) { toastMsg(wlName(WARLORDS[w], 0) + "'S CAPTAIN", CAP.def.name, { live: true, name: true }); if (!save.wardTip) toastMsg('CASTLE SHIELDED!', 'Beat ' + CAP.def.name + ' to break the shield', { ok: () => CAP.alive, on: () => { save.wardTip = 1; persist(); } }); holdHead(_kv); popText('CRUSH THEM!', _kv.x, _kv.y + 1.5, _kv.z + 1, wallSay().col); kingVoice('roar', .8); }
+  if (!G.sim) { toastMsg(wlName(WARLORDS[w], 0) + "'S CAPTAIN", CAP.def.name, { live: true, name: true }); if (!save.wardTip) toastMsg((inHall() ? 'WALL' : 'CASTLE') + ' SHIELDED!', 'Beat ' + CAP.def.name + ' to break the shield', { ok: () => CAP.alive, on: () => { save.wardTip = 1; persist(); } }); holdHead(_kv); popText('CRUSH THEM!', _kv.x, _kv.y + 1.5, _kv.z + 1, wallSay().col); kingVoice('roar', .8); }
 }
 let CAP_HPK = 9, CAP_WARD = .45;
 function captainDown(x, z, through) { // he falls, or breaks into your camp: either way his shield goes with him
@@ -5734,7 +5923,7 @@ function captainDown(x, z, through) { // he falls, or breaks into your camp: eit
   if (through) return;
   G.shake = Math.max(G.shake, 1); buzz([60, 30, 120]); const col = WARLORDS[CAP.w].col;
   burst(x, 1.8, z, [col, FOE_FX, '#ffffff', FOE], 50, 9, { vy: 8, life: 1.1, g: 13, sz: 2.2, kind: PK.ROCK }); burst(x, 2, z, ['#ffc62b', '#ffd84a'], 26, 6, { vy: 9, life: 1.4, g: 16, sz: 2, kind: PK.COIN }); splat(x, z, FOE, 4);
-  if (!G.sim) { toastMsg(CAP.def.name + ' BEATEN!', 'The shield is down. Finish the castle!', { now: true }); [392, 523, 659].forEach((f, k) => setTimeout(() => tone(f, .25, 'triangle', .06), k * 110)); }
+  if (!G.sim) { toastMsg(CAP.def.name + ' BEATEN!', 'The shield is down. Finish the ' + TGT() + '!', { now: true }); [392, 523, 659].forEach((f, k) => setTimeout(() => tone(f, .25, 'triangle', .06), k * 110)); }
 }
 function captainTick(dt, play) {
   if (play && !CAP.on && !CAP.done && isCaptain(G.level) && G.fortHp <= G.fortMax * CAP_WARD) startCaptain();
@@ -5789,7 +5978,7 @@ function gateCharge(g, k) { if (g.ready && g.shownK === k) return; g.shownK = g.
   if (ud.bar) { ud.bar.visible = !g.ready && k < .5; ud.barFill.scale.x = Math.max(.001, u * ud.barW); } }
 function sandFade(k) { for (const g of G.gates) { if (g.add) gateCharge(g, k); else g.mesh.userData.panel.material.opacity = 1 - .9 * k; } }
 function resetHazards() {
-  HZ.w = worldOf(G.level); HZ.on = (G.level - 1) % WORLD_LEN >= 2 && !G.noHaz; HZ.st = 'idle'; HZ.t = 5 + rand() * 2; HZ.k = 0; HZ.told = false;
+  HZ.w = worldOf(G.level); HZ.on = (G.level - 1) % WORLD_LEN >= 2 && HZ.w < HALLW && !G.noHaz; HZ.st = 'idle'; HZ.t = 5 + rand() * 2; HZ.k = 0; HZ.told = false;
   for (const s of streaks) s.m.visible = false; windArrow.visible = false; sandEl.style.opacity = 0;
   for (const g of geysers) { g.t = -1; g.ring.visible = g.pool.visible = g.jet.visible = false; }
   HZ.patches = []; icePatches.forEach(m => { m.visible = false; });
@@ -5980,6 +6169,7 @@ function update(dt) {
   G.t += dt;
   if (G.cine) cineTick(dt);
   if (G.fin) finTick(dt);
+  if (G.end) endTick(dt);
   if (!G.sim) { meleeTick(dt); toastTick(dt); }
   const play = G.mode === 'play';
   if (play && !(G.introT > 0) && !(G.grandT > 0)) G.clk = (G.clk || 0) + dt; // the third-star clock runs only once the flyover is over
@@ -6027,9 +6217,9 @@ function update(dt) {
   // enemy waves
   const cfg = G.cfg;
   if (play) {
-    G.waveT -= dt;
+    if (!G.kneel) G.waveT -= dt;
     if (G.waveT <= 0) {
-      G.waves++; const slow = G.t > G.cfg.surgeAt; if (slow && !G.surged) { G.surged = true; if (!G.sim) toastMsg('HORDE SURGE!', 'Reinforcements pour from the castle', { live: true }); } // drag a battle out and the horde starts pouring in
+      G.waves++; const slow = G.t > G.cfg.surgeAt; if (slow && !G.surged) { G.surged = true; if (!G.sim) toastMsg('HORDE SURGE!', inHall() ? 'Reinforcements pour from the crypts' : 'Reinforcements pour from the castle', { live: true }); } // drag a battle out and the horde starts pouring in
       const rage = (G.fortHp < G.fortMax * 0.5 ? 1.35 : 1) * (slow ? 1.4 + Math.min(1, (G.t - G.cfg.surgeAt) / 30) : 1);
       G.waveQ += Math.round(cfg.waveSize * rage); G.waveX = (rand() - .5) * 6; G.waveT = cfg.waveGap;
       if (cfg.stagEvery && G.waves % cfg.stagEvery === 0) spawnBeetle((rand() - .5) * 5, FORT_Z + 1.4, cfg.stagHp, 2.2, cfg.beetleSpeed * .7, 1);
@@ -6205,9 +6395,9 @@ function update(dt) {
       if (fort.position.y > -3.6 && rand() < dt * 34) burst((rand() - .5) * 11, 1 + rand() * 2, FORT_Z - .5 + rand() * 2, rand() < .6 ? '#e2d6c4' : '#b9ad9c', 2, 5, { vy: 5, life: 1, g: 16, sz: 1.4, kind: PK.ROCK });
       if (fort.position.y > -3.4 && rand() < dt * 2.4) smoke((rand() - .5) * 10, .8, FORT_Z - 1 + rand() * 2, '#a89cb4', 2 + rand() * 1.2, 1.1);
     }
-    if (G.endT <= 0) showResult(true);
+    if (G.look) lookTick(dt); else if (G.endT <= 0 && !startLook()) showResult(true);
   } else if (G.mode === 'lost') { G.endT -= dt; if (G.endT <= 0) showResult(false); }
-  if (celebrating && G.boomed) { G.fwT -= dt; if (G.fwT <= 0) { firework(); G.fwT = G.mode === 'won' ? .18 + rand() * .2 : .5 + rand() * .5; } }
+  if (celebrating && G.boomed && !G.look) { G.fwT -= dt; if (G.fwT <= 0) { firework(); G.fwT = G.mode === 'won' ? .18 + rand() * .2 : .5 + rand() * .5; } }
   if (G.boomed) { // shock rings, flash and flying pieces
     if (G.mode !== 'won') G.winT += dt;
     const bt = G.winT - BOOM_AT;
@@ -6237,7 +6427,7 @@ function update(dt) {
     kingMixer.update(dt); kingTick(KINGM.rig);
   }
   const wob = Math.sin(G.t * 30) * G.fortFlash * .05, idle = Math.sin(G.t * 2.2) * .025, pf = G.puff * (.26 + Math.sin(G.t * 60) * .04);
-  king.position.y = 1.15 + G.puff * 1.8 - (G.kingSink || 0); // he rises up out of the castle as he swells, instead of bulging through the wall
+  king.position.y = KPOS.y + G.puff * 1.8 - (inHall() ? 0 : G.kingSink || 0); // he rises up out of the castle as he swells, instead of bulging through the wall
   const ks = G.kingS || 8; king.scale.set(ks * (1 + wob + idle + pf), ks * (1 - wob - idle + pf), ks * (1 + wob + idle + pf));
 
   if (G.hintT > 0 && !(G.introT > 0) && !(G.grandT > 0)) G.hintT -= dt;
@@ -6349,10 +6539,10 @@ function render() {
     const gk = Math.min(1, G.grandT / GRAND_T), ge = gk * gk * (3 - 2 * gk), a = (1 - gk) * .6 - .3;
     camera.position.set(WCAM.x + (Math.sin(a) * 30 - WCAM.x) * ge, WCAM.y + (32 - WCAM.y) * ge + Math.sin(Math.PI * ge) * 9, WCAM.z + (-62 + Math.cos(a) * 28 - WCAM.z) * ge);
     camera.lookAt(_look.set(0, 3 + 3 * ge, WLOOK.z + (citAt()[0] + 6 - WLOOK.z) * ge)); } }
-  if (G.cine) cineCamera(); // the opening cinematic's scripted shots
-  { const nr = G.cine || G.fin ? .4 : 1.5; if (camera.near !== nr) { camera.near = nr; camera.updateProjectionMatrix(); } } // only the scripted close-ups need a near plane this near; the further out it sits, the finer the depth buffer
+  if (G.cine) cineCamera(); else if (G.end) endCamera(); else if (G.look) lookCamera(); // the opening cinematic's scripted shots, the ending's, and Rowan's look
+  { const nr = G.cine || G.fin || G.end || G.look ? .4 : 1.5; if (camera.near !== nr) { camera.near = nr; camera.updateProjectionMatrix(); } } // only the scripted close-ups need a near plane this near; the further out it sits, the finer the depth buffer
   // the sun's shadow area follows what the camera is looking at: the road in battle, the castle and citadel in the menu and on a win
-  { const fz = G.cine ? -30 : G.mode === 'menu' ? -56 : (G.boomed && (G.mode === 'won' || G.mode === 'resultWin')) ? -16 + (-58 + 16) * ck : -16; const tz = sun.target.position.z + (fz - sun.target.position.z) * .12;
+  { const fz = G.end ? (G.end.t < 22.35 ? -36 : -14) : G.cine ? -30 : G.mode === 'menu' ? -56 : (G.boomed && (G.mode === 'won' || G.mode === 'resultWin')) ? -16 + (-58 + 16) * ck : -16; const tz = sun.target.position.z + (fz - sun.target.position.z) * .12;
     if (Math.abs(tz - sun.target.position.z) > .01) { sun.target.position.z = tz; sun.position.set(9, 26, tz + 22); sun.target.updateMatrixWorld(); G.shadowDirty = true; }
     // fit the shadow map to what's on screen (what cascaded shadows do in big engines): in a battle on a phone the view is
     // narrow, so the same 2048 map covers about half the area and its shadows come out about 1.6x sharper
@@ -6393,7 +6583,7 @@ function render() {
   if (_hud.wlBar !== wlBar) { _hud.wlBar = wlBar; $('fortBar').classList.toggle('wl', wlBar); }
   if (capBar) { setCss('fortFill', 'transform', `scaleX(${clamp(CAP.hp / CAP.max, 0, 1).toFixed(3)})`); setHud('fortTxt', CAP.def.name + ' · ' + Math.max(0, Math.ceil(CAP.hp))); }
   else if (wlBar) { setCss('fortFill', 'transform', `scaleX(${clamp(WL.hp / WL.max, 0, 1).toFixed(3)})`); setHud('fortTxt', wlName() + ' · ' + Math.max(0, Math.ceil(WL.hp))); }
-  else { setCss('fortFill', 'transform', `scaleX(${fp.toFixed(3)})`); setHud('fortTxt', 'Bone Castle · ' + Math.max(0, Math.ceil(G.fortHp))); }
+  else { setCss('fortFill', 'transform', `scaleX(${fp.toFixed(3)})`); setHud('fortTxt', (inHall() ? 'Wall of Bone · ' : 'Bone Castle · ') + Math.max(0, Math.ceil(G.fortHp))); }
   setCss('nestFill', 'transform', `scaleX(${np.toFixed(3)})`); setHud('nestTxt', 'Your Camp · ' + Math.max(0, Math.ceil(G.nestHp)));
   const gc = sendCharge(), pct = Math.round(100 * G.charge / gc);
   const gEl = $('giant'); if (_hud.gp !== pct) { _hud.gp = pct; gEl.style.setProperty('--p', pct); } gEl.classList.toggle('ready', pct >= 100 && G.mode === 'play'); { const ch = !palReady(); if (_hud.ch !== ch) { _hud.ch = ch; gEl.classList.toggle('champ', ch); for (const u of gEl.querySelectorAll('.hu')) u.setAttribute('href', ch ? '#i-champ' : '#i-horse'); gEl.setAttribute('aria-label', ch ? 'Send the Champion' : 'Send the Paladin'); } }
@@ -6482,6 +6672,7 @@ const GRADES = [
   [[.96, .93, 1.05], [1.02, 1.0, .97], 1.02, 1.07, .45, .84],    // the Dunes: plum shadows, gold light (high threshold: the sand itself is bright and warm)
   [[.94, .98, 1.07], [.99, 1.01, 1.04], 1.03, 1.05, .6, .8],  // Frostbite Peaks: blue shadows, crisp highlights
   [[1.04, .97, 1.04], [1.05, .99, .94], 1.06, 1.03, .7, .76],  // Ember Hollow: red-violet shadows, hot highlights, strong glow
+  [[.99, .95, 1.07], [1.03, 1.0, .98], 1.04, 1.04, .6, .8],  // the Citadel: violet shadows, candle-gold highlights
 ];
 function applyGrade(i) { const g = GRADES[i] || GRADES[0], u = POST.mat.uniforms; u.uShadow.value.set(...g[0]); u.uHigh.value.set(...g[1]); u.uSat.value = g[2]; u.uCon.value = g[3]; u.uGlow.value = /[?&]noglow/.test(location.search) ? 0 : g[4]; POST.extract.uniforms.uThr.value = g[5]; }
 const _db = new THREE.Vector2();
@@ -6525,7 +6716,7 @@ function renderUpgrades() {
   $('upReady').textContent = ready ? ready : '';
   $('menuLvl').textContent = 'Level ' + save.level;
   const wn = Math.floor((save.level - 1) / WORLD_LEN) + 1;
-  $('menuWorld').textContent = G.worldOverride != null ? 'Previewing · ' + WORLDS[G.worldOverride].name : 'World ' + wn + ' · ' + WORLDS[worldOf(save.level)].name;
+  $('menuWorld').textContent = G.worldOverride != null ? 'Previewing · ' + WORLDS[G.worldOverride].name : (save.level > LAP_LEN ? 'Endless Road · ' : 'World ' + wn + ' · ') + WORLDS[worldOf(save.level)].name;
   $('menuLvl').classList.toggle('boss', isBoss(save.level)); if (isBoss(save.level)) $('menuLvl').textContent = 'Boss · Level ' + save.level;
   // the road through this world: cleared levels, the current one, and the boss at the end
   const start = (wn - 1) * WORLD_LEN + 1; let trail = '';
@@ -6575,9 +6766,10 @@ function startPlay() {
   maybeStory();
   $('lvlPill').textContent = (G.cfg.boss ? 'Boss · ' : 'Level ') + save.level; $('lvlPill').classList.toggle('boss', G.cfg.boss);
   if (G.worldOverride != null) toastMsg('PREVIEW', WORLDS[worldIdx].name, { name: true, fly: true });
-  else if ((save.level - 1) % WORLD_LEN === 0) toastMsg('WORLD ' + (Math.floor((save.level - 1) / WORLD_LEN) + 1), WORLDS[worldIdx].name, { name: true, fly: true });
-  if (G.cfg.boss && !$('story').classList.contains('on')) { const wd = WARLORDS[worldOf(save.level) % WARLORDS.length]; toastMsg('BOSS LEVEL', wlName(wd, Math.floor((save.level - 1) / (WORLD_LEN * WORLDS.length))) + ' has nowhere left to run', { snd: 1 }); } // (his story card says it the first time)
-  if (!G.practice && G.worldOverride == null && save.level <= LAP_LEN) { const w = worldOf(save.level), k = (save.level - 1) % WORLD_LEN; if (save.level === 3) toastMsg('NOW ON THE WALL', 'GRIMBALD', { name: true }); else if (k === 0 && w) toastMsg('THE BONE KING', ['', 'WAKE UP, SEK-RA!', 'STOP THEM, HRIMGAR!', 'MAGMAW, THEY\'RE AT MY DOOR!'][w], { fly: true }); }
+  else if ((save.level - 1) % WORLD_LEN === 0) toastMsg(save.level > LAP_LEN ? 'THE ENDLESS ROAD' : 'WORLD ' + (Math.floor((save.level - 1) / WORLD_LEN) + 1), WORLDS[worldIdx].name, { name: true, fly: true });
+  if (G.cfg.boss && !$('story').classList.contains('on')) { const wd = WARLORDS[worldOf(save.level) % WARLORDS.length]; toastMsg('BOSS LEVEL', wlName(wd, Math.floor((save.level - 1) / LAP_LEN)) + (worldOf(save.level) === HALLW ? ' is waiting' : ' has nowhere left to run'), { snd: 1 }); } // (his story card says it the first time)
+  if (!G.practice && G.worldOverride == null && save.level <= LAP_LEN) { const w = worldOf(save.level), k = (save.level - 1) % WORLD_LEN; if (save.level === 3) toastMsg('NOW ON THE WALL', 'GRIMBALD', { name: true }); else if (k === 0 && w) toastMsg('THE BONE KING', ['', 'WAKE UP, SEK-RA!', 'STOP THEM, HRIMGAR!', 'MAGMAW, THEY\'RE AT MY DOOR!', 'GUARDS! HOLD THE BRIDGE!'][w], { fly: true }); else if (save.level === 46) toastMsg('YOU ARE INSIDE', 'THE THRONE ROOM', { name: true }); }
+  if (!G.practice && G.worldOverride == null && save.level === LAP_LEN + 1) toastMsg('NOW ON THE WALL', 'ROWAN', { name: true });
   if (isGold(save.level)) toastMsg('GOLD RUSH', 'Double coins on this level', { snd: 1 });
   const t = TIERS.find(q => q.unlock === save.level); if (t) toastMsg('NEW GATE: ' + t.gate, t.tip, { snd: 1 });
   if (G.cfg.gates.some(g => g.k < 1) && !save.redTip) toastMsg('RED GATES!', 'They cost soldiers. Steer around them', { snd: 1, on: () => { save.redTip = 1; persist(); } }); // new hazards get a heads-up the first time
@@ -6602,6 +6794,7 @@ function win() {
 }
 function boom() {
   if (isBoss(G.level)) { healStart(); if (!G.sim) { const [cz, up] = citAt(); citFlash.position.set(0, 18 + up, cz + 4); CITF.t = 0; CITF.k = 1; } }
+  for (const o of fortDress.children) if (o.userData.veil) o.visible = false; // the magic in the bone wall goes out
   holdBlown(); burstHoard(); G.boomed = true; G.boom2 = 0; G.puff = 0; king.visible = false; P.n = 0; G.shake = 1.5; buzz([70, 30, 140]);
   burst(0, 4.2, -40.8, ['#ffd84a', '#ffffff', '#ff7af8', '#ffb040'], 70, 15, { sph: true, life: .95, g: 4, sz: 2.4, kind: PK.SPARK }); // a burst of white-hot sparks (they catch the glow)
   burst(0, 4.5, -41.2, [FOE, FOE_FX, '#ffffff', FOE], 120, 12, { vy: 10, life: 1.5, g: 15, sz: 2, kind: PK.ROCK });   // bone chips and purple shards
@@ -6611,7 +6804,7 @@ function boom() {
   burst(0, 2, FORT_Z, ['#e2d6c4', '#b9ad9c', '#cfc5b6'], 60, 10, { vy: 8, life: 1.6, g: 17, sz: 2.2, kind: PK.ROCK }); // rubble
   for (let i = 0; i < 16; i++) splat((rand() - .5) * 9.5, FORT_Z + .5 + rand() * 9, FOE, 1.6 + rand() * 2.6);
   roofs.forEach((r, i) => { r.userData.v = { x: (i ? 1 : -1) * (3 + rand() * 2), y: 15 + rand() * 4, z: 2 + rand() * 3, rx: (rand() - .5) * 8, rz: (i ? -1 : 1) * (3 + rand() * 4) }; });
-  G.crownV = { x: (rand() - .5) * 3, y: 16, z: 8.5 };
+  if (HOLD.i < 0 && G.level < 3) G.crownV = { x: (rand() - .5) * 3, y: 16, z: 8.5 }; else kingCrown.visible = false; // (after that he gets away with it on)
   const f = $('flash'); f.style.transition = 'none'; f.style.opacity = '.75'; void f.offsetWidth; f.style.transition = 'opacity .45s ease-out'; f.style.opacity = '0';
   smp('castleFalls', .85, 0); // recorded: a ship's hull blowing apart, the castle going up
   [523, 659, 784, 1046, 1318, 1568].forEach((fq, i) => setTimeout(() => tone(fq, .22, 'triangle', .06), 260 + i * 95));
@@ -6629,6 +6822,7 @@ function lose() {
   if (!G.sim) { mission("fired", G.fired - (G.firedSent || 0)); mission("kills", (G.kills || 0) - (G.killsSent || 0)); }
   save.fails = (save.fails || 0) + 1; persist();
 }
+const TGT = () => inHall() ? 'wall of bone' : 'castle', HALL_WIN = ['the wall of bone is broken', 'his guard is scattered', 'one step nearer the throne', 'the horde is routed'];
 const WIN_LINES = ["his castle has fallen", "his walls came tumbling down", "another castle lies in ruins", "the horde is routed"], LOSE_LINES = ["the horde broke through", "your camp was overrun", "the skeletons swarmed your walls"];
 // tips for a lost level: only about things that were in it
 const loseTips = () => { const c = G.cfg, n = G.level, g = c.gates; return ['Steer through the biggest × gates', 'Tap SEND as soon as the meter fills', g.some(q => q.arm != null) && 'Weapon gates make every soldier stronger', g.some(q => q.add) && 'Hit the +N gates while they are lit', g.some(q => q.k < 1) && 'Steer around the red gates', n >= 4 && 'Keep your army out of the red circles', c.charge && 'Block charging brutes: steer into the red lane', c.saws.length && 'Steer around the bone saw', c.bombs && 'Steer around the bomb skeletons'].filter(Boolean); };
@@ -6651,16 +6845,16 @@ function showResult(won) {
   const left = Math.round(100 * clamp(G.fortHp / G.fortMax, 0, 1)), close = !won && (left <= 25 || (WL.on && WL.alive && WL.hp / WL.max <= .25));
   if (close) { $('resTitle').textContent = 'SO CLOSE!'; $('resTitle').style.color = 'var(--gold)'; }
   $('result').classList.toggle('win', won);
-  $('resSub').textContent = won ? (isFinale() ? `Level ${G.level} · the Bone King has fallen!` : G.cfg.boss ? `Level ${G.level} · ${WL.done && WL.def ? wlName() + ' slain' : 'Boss defeated'} · double coins!` : isGold(G.level) ? `Level ${G.level} · gold rush · double coins!` : isCaptain(G.level) && CAP.done ? `Level ${G.level} · ${CAP.def.name} beaten` : `Level ${G.level} · ${WIN_LINES[G.level % WIN_LINES.length]}`)
-    : G.smashed ? `Level ${G.level} · ${wlName()} smashed your camp` : close ? `Level ${G.level} · so close, the castle nearly fell!` : `Level ${G.level} · ${LOSE_LINES[(G.level + (save.fails || 0)) % LOSE_LINES.length]}`;
-  $('resHintIco').setAttribute('href', '#i-star'); { const p = G.cfg.par, par = `${Math.floor(p / 60)}:${String(p % 60).padStart(2, '0')}`; let tip = won && isFinale() ? 'New Game+ · the horde returns stronger' : won && G.stars < 3 ? (late => late && G.stars < 2 ? `Missed: win in ${par}, keep half your camp` : late ? `Missed star: win within ${par}` : 'Missed star: keep half your camp')((G.clk || 0) > p) : '';
+  $('resSub').textContent = won ? (isFinale() ? `Level ${G.level} · Rowan wears the crown` : G.cfg.boss ? `Level ${G.level} · ${WL.done && WL.def ? wlName() + ' slain' : 'Boss defeated'} · double coins!` : isGold(G.level) ? `Level ${G.level} · gold rush · double coins!` : isCaptain(G.level) && CAP.done ? `Level ${G.level} · ${CAP.def.name} beaten` : `Level ${G.level} · ${(inHall() ? HALL_WIN : WIN_LINES)[G.level % 4]}`)
+    : G.smashed ? `Level ${G.level} · ${wlName()} smashed your camp` : close ? `Level ${G.level} · so close, the ${TGT()} nearly fell!` : `Level ${G.level} · ${LOSE_LINES[(G.level + (save.fails || 0)) % LOSE_LINES.length]}`;
+  $('resHintIco').setAttribute('href', '#i-star'); { const p = G.cfg.par, par = `${Math.floor(p / 60)}:${String(p % 60).padStart(2, '0')}`; let tip = won && isFinale() ? 'The Endless Road is open' : won && G.stars < 3 ? (late => late && G.stars < 2 ? `Missed: win in ${par}, keep half your camp` : late ? `Missed star: win within ${par}` : 'Missed star: keep half your camp')((G.clk || 0) > p) : '';
     if (!won) { // the cheapest upgrade they can buy with what they have plus this round's coins, or a tactic if nothing is affordable
       const have = save.coins + (G.reward || 0), lv = u => save.up[u.id] || 0;
       const can = UPG.filter(u => !(u.unlock && save.level < u.unlock) && !(u.max && lv(u) >= u.max) && have >= upCost(u, lv(u))).sort((a, b) => upCost(a, lv(a)) - upCost(b, lv(b)));
       tip = can.length ? 'Upgrade ready: ' + can[0].name : (q => q[(G.level + (save.fails || 0)) % q.length])(loseTips()); $('resHintIco').setAttribute('href', can.length ? '#' + can[0].ico : '#i-bolt'); /* the upgrade's own icon */
       const wl = WL.on && WL.alive, done = wl ? 1 - WL.hp / WL.max : 1 - left / 100;
       $('resProgFill').style.width = Math.round(clamp(done, 0, 1) * 100) + '%';
-      $('resProgTxt').textContent = wl ? wlName() + ' had ' + Math.max(1, Math.round(100 * WL.hp / WL.max)) + '% left' : left >= 100 ? 'His castle stands untouched' : 'You knocked down ' + (100 - left) + '% of his castle'; }
+      $('resProgTxt').textContent = wl ? wlName() + ' had ' + Math.max(1, Math.round(100 * WL.hp / WL.max)) + '% left' : left >= 100 ? (inHall() ? 'The wall of bone stands untouched' : 'His castle stands untouched') : 'You knocked down ' + (100 - left) + '% of ' + (inHall() ? 'the wall of bone' : 'his castle'); }
     $('result').classList.toggle('lose', !won); $('resHintTxt').textContent = tip; $('resHint').classList.toggle('on', !!tip); } // the star they missed, or what to do next, on its own pill
   $('resN').textContent = '+0';
   $('x3Btn').style.display = won ? '' : 'none'; G.adMul = G.cfg.boss ? 3 : 2; $('x3Btn').textContent = '▶ ×' + G.adMul + ' coins · watch ad'; // double on normal levels, triple on a boss
@@ -6757,18 +6951,20 @@ window.addEventListener('keydown', e => { if (e.key === 'p' || e.key === 'P' || 
   if ($('story').classList.contains('on')) return; // the story card has its own button (P/Esc started the battle behind it)
   if (G.paused) resumeGame(); else pauseGame(); } });
 // the realm map and the warlords' story cards
-const WORLD_COL = ['#5cc84a', '#e8b860', '#9fd8f5', '#ff7a2a'];
+const WORLD_COL = ['#5cc84a', '#e8b860', '#9fd8f5', '#ff7a2a', '#b44cff'];
 const STORY = [
   "He was the Meadow's hero once. Now he guards the King's road.",
   "The desert's greatest king. He woke when the crown called.",
   'His people called him the Protector. The ones who are left hide from him.',
-  'The finest smith who ever lived. He made the crown. Behind him, the Bone King is waiting.',
+  'The finest smith who ever lived. He made the crown.',
+  'He has the crown. Take it, and end the war.',
 ];
 const STORY_DREAD = [ // on later laps: you have beaten them before
   'You beat the butcher once. The Bone King has stitched him back together, and he is hungry.',
   'The sand gave the Pharaoh back, and more of his skeletons claw up with him this time.',
   'The Frost Jarl has thawed out, and he remembers you.',
-  'Melted down and forged again, Magmaw still guards the last road to the throne. Behind him, the Bone King is waiting.',
+  'Melted down and forged again, Magmaw still guards the road to the throne.',
+  'The crown has another head now. He wants it back.',
 ];
 function renderMap() {
   const lap = Math.floor((save.level - 1) / (WORLD_LEN * WORLDS.length)), inLap = (save.level - 1) % (WORLD_LEN * WORLDS.length) + 1, tro = { ...(save.trophies || {}) };
@@ -6776,14 +6972,12 @@ function renderMap() {
   const rows = [];
   const ICO = { star: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>', lock: '<svg viewBox="0 0 24 24" style="opacity:.75"><use href="#i-lock"/></svg>', crown: '<svg viewBox="0 0 40 24" style="width:30px"><use href="#i-crown"/></svg>' }; // drawn, not emoji, so every phone shows the same thing
   const card = (cls, wc, emb, name, sub, tag) => `<div class="mcard ${cls}" style="--wc:${wc}"><div class="emb e${emb}"><svg viewBox="0 0 48 ${emb === 4 ? 52 : 48}"><use href="#t-${emb}"/></svg></div><div><b>${name}</b><span>${sub}</span></div><i>${tag}</i></div>`;
-  const king = WARLORDS[4], kWon = tro[4];
-  rows.push(card((kWon ? 'won' : '') + (inLap === LAP_LEN ? ' here' : inLap <= LAP_LEN - WORLD_LEN && !kWon ? ' locked' : ''), '#b44cff', 4, 'The Throne', king.name.replace('THE ', 'The ').toLowerCase().replace(/(^|\s)\S/g, s => s.toUpperCase()) + ' · Level ' + (lap * LAP_LEN + LAP_LEN), kWon ? ICO.star : inLap <= LAP_LEN - WORLD_LEN ? ICO.lock : ICO.crown)); /* locked like any world until Ember is reached */
   for (let w = WORLDS.length - 1; w >= 0; w--) {
     const a = w * WORLD_LEN + 1, b = a + WORLD_LEN - 1, cls = (tro[w] ? 'won' : '') + (inLap >= a && inLap <= b ? ' here' : inLap < a && !tro[w] ? ' locked' : '');
-    const wn = ['Grimbald', 'Sek-Ra', 'Hrimgar', 'Magmaw'][w];
+    const wn = ['Grimbald', 'Sek-Ra', 'Hrimgar', 'Magmaw', 'The Bone King'][w];
     rows.push(card(cls, WORLD_COL[w], w, WORLDS[w].name, 'Levels ' + (lap * LAP_LEN + a) + '–' + (lap * LAP_LEN + b) + ' · ' + wn, tro[w] ? ICO.star : inLap >= a && inLap <= b ? (inLap - a + 1) + '/' + WORLD_LEN : ICO.lock));
   }
-  $('mapPath').innerHTML = rows.join(''); $('mapNg').textContent = save.ng ? 'New Game+ ' + save.ng : '';
+  $('mapPath').innerHTML = rows.join(''); $('mapNg').textContent = lap ? 'The Endless Road' : '';
 }
 $('mapBtn').onclick = () => { renderMap(); $('menu').classList.remove('on'); $('map').classList.add('on'); };
 $('mapClose').onclick = () => { $('map').classList.remove('on'); $('menu').classList.add('on'); };
@@ -6791,7 +6985,7 @@ $('mapClose').onclick = () => { $('map').classList.remove('on'); $('menu').class
 function maybeStory() {
   if (G.sim || G.cine || G.fin) return;
   if (G.level === 1 && !G.practice && !(save.storySeen || {})[1]) { $('storyEmb').parentNode.setAttribute('viewBox', '0 0 48 52'); $('storyEmb').setAttribute('href', '#t-4'); $('storyName').textContent = 'THE BONE CROWN'; $('storyTitle').textContent = 'on the Bone King\'s head'; $('storyTxt').textContent = 'The crown commands the dead. Take it, and end the war.'; G.paused = true; $('story').classList.add('on'); gameEl.classList.add('overlay'); return; }
-  if (!G.cfg.boss) return; $('storyEmb').parentNode.setAttribute('viewBox', '0 0 48 48');
+  if (!G.cfg.boss) return; $('storyEmb').parentNode.setAttribute('viewBox', worldOf(G.level) === HALLW ? '0 0 48 52' : '0 0 48 48');
   const w = worldOf(G.level) % WORLDS.length, wl = WARLORDS[w]; save.storySeen = save.storySeen || {};
   if (save.storySeen[G.level] && !G.practice) return;
   $('storyEmb').setAttribute('href', '#t-' + w); const lap = Math.floor((G.level - 1) / (WORLD_LEN * WORLDS.length)); $('storyName').textContent = wlName(wl, lap); $('storyTitle').textContent = wl.title;
@@ -6841,7 +7035,7 @@ $('rewardsBtn').onclick = () => { rwGained = 0; rwBefore = save.coins; renderRew
 $('rwBack').onclick = () => { $('rewards').classList.remove('on'); showMenu(); if (rwGained) coinFly(rwBefore, rwGained); };
 // the Paladin's coat: recolours his warhorse (coat, legs and the spirit-flame mane)
 function applySkin() { if (!horse || !horse.mats) return; const s = SKINS.find(q => q.id === (save.skin || 'snow')) || SKINS[0]; horse.mats.coat.color.copy(C(s.coat)); if (palArt) horse.mats.coat.color.multiplyScalar(s.id === 'gold' ? .62 : .86); /* (the sculpted coat takes the light more brightly than the old one) */ horse.mats.coatD.color.copy(C(s.dark)); horse.mats.spirit.color.copy(C(s.spirit)); }
-function lockSpoilers() { const tro = save.trophies || {}, seen = w => tro[w] || save.level > w * WORLD_LEN + WORLD_LEN; let any = false; document.querySelectorAll('#bossRow [data-w]').forEach(b => { b.hidden = !seen(+b.dataset.w - 1); any = any || !b.hidden; }); $('bossBtn').hidden = !any; if (!any) $('bossRow').hidden = true; $('finaleBtn').hidden = !(tro[4] || save.ng || save.level > LAP_LEN); }
+function lockSpoilers() { const tro = save.trophies || {}, seen = w => tro[w] || save.level > w * WORLD_LEN + WORLD_LEN; let any = false; document.querySelectorAll('#bossRow [data-w]').forEach(b => { b.hidden = !seen(+b.dataset.w - 1); any = any || !b.hidden; }); $('bossBtn').hidden = !any; if (!any) $('bossRow').hidden = true; $('finaleBtn').hidden = !(tro[4] || save.level > LAP_LEN); }
 $('bossBtn').onclick = () => { $('bossRow').hidden = !$('bossRow').hidden; };
 $('introBtn').onclick = () => { closeMore(); audio(); startCine(); }; /* replays the opening cinematic */
 $('finaleBtn').onclick = () => watchFinale(); /* replays the Bone King's last stand */
@@ -6887,7 +7081,7 @@ window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') 
 async function perfTest() {
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 8px);z-index:99;padding:10px 12px;border-radius:12px;background:rgba(8,12,30,.9);color:#fff;font:600 13px/1.45 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), rows = [];
-  box.textContent = 'Speed test v140: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
+  box.textContent = 'Speed test v141: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); box.textContent = 'Loading...'; G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 19; const on0 = MUS.on;
   save.up = { ...save.up, rate: 10, twin: 4, arsenal: 5 }; await Promise.race([loadLm('ember'), wait(8000)]); await wait(800);
   const pr = k => { pixelRatio = k; renderer.setPixelRatio(k); resize(); };
@@ -6908,7 +7102,7 @@ async function perfTest() {
   G.nestHp = G.nestMax = 30;
   await run('castle blows up', 4500, () => { G.fortMax = 100; G.fortHp = 0; });
   await wait(1500); save.level = 6; await run('new world', 5000, () => { $('result').classList.remove('on'); startPlay(); });
-  box.textContent = 'Speed test v140: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
+  box.textContent = 'Speed test v141: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
 }
 let last = performance.now();
 // keeps the frame rate smooth: renders at fewer pixels when a phone struggles, and at more (up to the screen's own sharpness) when it has headroom
@@ -7049,16 +7243,172 @@ function endCine() {
   $('menu').classList.add('slam'); setTimeout(() => $('menu').classList.remove('slam'), 1000);
   setTimeout(() => { tone(70, .5, 'sine', .22, .5); noise(.3, .1, 'lowpass', 1500, 200); }, 250); // the logo lands
 }
-$('cine').addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); if (G.cine && G.cine.t > .4) endCine(); else if (G.fin && G.fin.t > .4) endFinale(); });
+$('cine').addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); if (G.cine && G.cine.t > .4) endCine(); else if (G.end) { if (G.end.t > .6) finishEnding(); } else if (G.fin && G.fin.t > .4) endFinale(); });
 
+/* ---------------- level 50 and the ending ----------------
+   Shades of the four warlords, then the Bone King. Beaten, he drops to one knee and SEND lights up: the player strikes the last
+   blow. Then the story's end, about half a minute, letterboxed like the opening (tap to skip): Rowan takes the crown and it
+   works, the worlds heal, his eyes turn purple, the dead get up; his horse comes home alone and his squire takes the saddle. */
+const _rq = new THREE.Quaternion(), _pq = new THREE.Quaternion(), _hq = new THREE.Quaternion(), _qq = new THREE.Quaternion(), _ax = new THREE.Vector3();
+function poseFig(F, list) { // the rig's rest pose, then each bone turned about one of the figure's own axes
+  for (const [o, p, q] of F.rest) { o.position.copy(p); o.quaternion.copy(q); } F.root.position.y = 0; F.g.updateMatrixWorld(true); F.g.getWorldQuaternion(_rq);
+  for (const [n, ax, a] of list) { if (n === 'hipsY') { F.root.position.y = ax; F.root.updateMatrixWorld(true); continue; } const b = F.root.getObjectByName(n); if (!b) continue;
+    b.parent.getWorldQuaternion(_pq); _ax.set(ax[0], ax[1], ax[2]).applyQuaternion(_rq); _qq.setFromAxisAngle(_ax, a); b.getWorldQuaternion(_hq); _hq.premultiply(_qq); b.quaternion.copy(_pq.invert().multiply(_hq)); b.updateMatrixWorld(true); }
+}
+const X1 = [1, 0, 0], Y1 = [0, 1, 0], Z1 = [0, 0, 1], POSE = {
+  kneel: [['hipsY', -.34], ['upperlegr', X1, -1.45], ['lowerlegr', X1, 1.45], ['upperlegl', X1, .10], ['lowerlegl', X1, 1.35], ['spine', X1, .16], ['chest', X1, .10], ['head', X1, .08], ['upperarml', Z1, -1.25], ['upperarmr', Z1, 1.25], ['upperarmr', X1, .85]],
+  hold: [['upperarml', Y1, -1.15], ['upperarmr', Y1, 1.15], ['upperarml', X1, -.30], ['upperarmr', X1, -.30], ['head', X1, .16]],
+  stand: [['upperarml', Z1, -1.2], ['upperarmr', Z1, 1.2], ['lowerarml', Z1, -.15], ['lowerarmr', Z1, .15], ['chest', X1, -.10]],
+  point: [['upperarml', Z1, -1.05], ['upperarmr', Z1, .2], ['upperarmr', X1, -.6]],
+  sit: [['upperlegl', X1, -1.1], ['upperlegr', X1, -1.1], ['upperlegl', Z1, .55], ['upperlegr', Z1, -.55], ['lowerlegl', X1, .9], ['lowerlegr', X1, .9], ['upperarml', Z1, -.95], ['upperarmr', Z1, .95], ['upperarml', X1, -.7], ['upperarmr', X1, -.7]],
+};
+function ghost(b, on) { if (!b) return; b.ghost = on; if (on && !b.aura) b.aura = halo('#b050ff', 4.2, 0, 1.2, .2, b.g, .55); if (b.aura) b.aura.visible = on; for (const m of b.mats) { m.transparent = on; m.opacity = on ? .84 : 1; m.needsUpdate = true; if (!on && m.emissiveMap) m.color.setScalar(1); } }
+// ---- the King's last moments
+function kneelKing() {
+  WL.hp = 0; WL.alive = false; WL.done = true; hideTelegraphs(); resetKingShots(); resetCharges();
+  if (G.sim) { WL.ward = false; ward.visible = false; G.fortHp = 0; return; }
+  G.waveQ = 0; G.waveT = G.chT = 99; WL.state = 'kneel'; WL.st = 0; WL.b.mixer.stopAllAction(); WL.cur = null; G.kneel = true; G.firing = false; loadEndArt(); loadPaladinArt();
+  G.shake = Math.max(G.shake, 1.2); buzz([60, 30, 140]); tone(50, 1.2, 'sine', .3, .5); kingVoice('no', .8);
+  burst(WL.x, 2.5, WL.z, [WL.def.col, '#ffffff', FOE], 60, 9, { vy: 8, life: 1.2, g: 13, sz: 2.2, kind: PK.SPARK });
+  for (let j = 0; j < beetles.n; j++) { if (beetles.hp[j] <= 0) continue; if (j < 70) burst(beetles.x[j], .5, beetles.z[j], FOE_FX, 2, 3); if (rand() < .3) dropBones(beetles.x[j], beetles.z[j], beetles.big[j]); beetles.hp[j] = 0; } // without him the horde falls apart
+  G.charge = sendCharge(); $('giant').classList.add('last'); const f = popText('NO...', WL.x, 5.4, WL.z, '#ff8af0'); if (f) f.hold = 1; toastMsg('HE IS BEATEN', 'Tap SEND to end it', { now: true, snd: 1 }); G.toastT = 60;
+}
+function lastBlow() { if (G.end || WL.state !== 'kneel') return; G.pal = null; cineFlash(1, 700); G.shake = 1.4; buzz([90, 40, 160]); brass(523, .2, .07); brass(784, .6, .075, .16); startEnding(); }
+let endArt = null, squireArt = null;
+function loadSquire() { return squireArt ? Promise.resolve(squireArt) : loadArt('models/pc/squire/').then(A => squireArt = A).catch(e => { console.warn('the squire is missing', e); return null; }); }
+function loadEndArt() { if (endArt) return; loadSquire(); endArt = [0, 1, 2, 3].map(i => ['a', 'b'].map(k => { const im = new Image(); im.src = 'models/end/h' + i + k + '.webp'; return im; })); }
+// camera moves: [from, to, camera from, camera to, look from, look to, field of view]
+const END_SHOTS = [
+  [0, 2.9, [1.4, 7.6, -17.5], [1.0, 6.6, -19.6], [.1, 1.5, -34.5], [.1, 1.4, -34.5], 46],
+  [2.9, 5.8, [2.4, 6.4, -22.5], [1.5, 5.4, -25], [.4, 3.3, -39], [.2, 3.1, -38.5], 40],
+  [5.8, 9.8, [0, 10.4, -17], [0, 9.2, -21.5], [0, 3.4, -42], [0, 3.8, -44], 44],
+  [9.8, 15.6, [0, 9.2, -21.5], [0, 9.2, -21.5], [0, 3.8, -44], [0, 3.8, -44], 44],
+  [15.6, 19.0, [1.5, 6.7, -34], [.7, 6.3, -36.6], [0, 6.0, -46.4], [0, 6.1, -46.4], 34],
+  [19.0, 22.4, [0, 13.4, -16], [0, 11.2, -20], [0, 3.0, -42], [0, 3.4, -42], 44],
+  [22.4, 25.8, [2.4, 6.4, 1.2], [1.6, 5.2, -1.5], [.2, 2.2, -16], [.1, 2.0, -13], 46],
+  [25.8, 27.1, [2.4, 4.8, -.6], [2.0, 4.5, -1.6], [.2, 1.9, -12], [.2, 1.9, -12], 46],
+  [27.1, 30.4, [2.7, 5.6, -2.2], [2.2, 4.8, -3.8], [.1, 2.7, -12], [.1, 2.9, -12], 42],
+];
+const END_T = 30.4;
+function startEnding() {
+  if (!G.practice) { save.trophies = save.trophies || {}; save.trophies[4] = 1; save.crowned = 1; persist(); }
+  clearToasts(); $('giant').classList.remove('last'); for (const f of floats) f.t = Math.min(f.t, .01);
+  G.mode = 'ending'; G.firing = false; G.kneel = false; G.toastT = 0; gameEl.classList.add('cinema'); $('cine').classList.add('on', 'end');
+  ants.n = beetles.n = P.n = 0; hideTelegraphs(); ward.visible = false; resetPaladin(); rageGlow.visible = false;
+  for (const g of G.gates) g.mesh.visible = false; if (laneWalls) laneWalls.visible = false; sawGroup.visible = false; fortDress.visible = false; aim.visible = false; launcher.visible = campWall.visible = nest.visible = turret.visible = false; king.visible = kingCrown.visible = false;
+  if (WL.b) WL.b.g.visible = false; WL.on = false; WL.state = 'over';
+  const g = new THREE.Group(); g.userData.dyn = true; scene.add(g); const E = G.end = { t: 0, ev: {}, g, gold: 0 };
+  // the King as he fell: his bones and robe, and no crown
+  if (KINGM.nodes && KK.Skeleton_Warrior) { const root = THREE.SkeletonUtils.clone(KK.Skeleton_Warrior.scene); root.traverse(o => { if (o.isSkinnedMesh) o.skeleton.pose(); }); root.position.set(0, 0, 0); root.rotation.set(0, 0, 0); root.scale.setScalar(1); root.updateMatrixWorld(true); E.kingM = KINGM.mat.clone(); E.kingM.emissiveIntensity = 0; dressKing(root, E.kingM, false);
+    const kg = new THREE.Group(); kg.add(root); g.add(kg); kg.position.set(1.9, 0, -35.2); kg.rotation.y = -.8; kg.scale.setScalar(2.4); E.king = { g: kg, mixer: new THREE.AnimationMixer(root) }; const c = clipOf('Death_A'); if (c) { const a = E.king.mixer.clipAction(c); a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; a.play(); } }
+  if (palArt && KK.Knight) { const F = E.rowan = purpleEyes(knightFig(palArt)); setEyes(F, 0); F.g.visible = true; F.g.scale.setScalar(2.3); g.add(F.g); F.g.position.set(-1.9, 0, -32.6); F.g.rotation.y = Math.PI - .9; poseFig(F, POSE.stand); }
+  E.crown = new THREE.Mesh(kingCrown.geometry, kingCrown.material); E.crown.castShadow = true; g.add(E.crown); E.crown.scale.setScalar(3.4); E.crown.position.set(.1, .62, -33.6); E.crown.rotation.set(.5, .6, .35);
+  E.glow = halo('#ffd84a', 5, .1, 1, -33.6, g, .5);
+  buildPaladin(); if (palRig) palRig.visible = false; paladin.visible = true; paladin.scale.setScalar(1.6); paladin.position.set(-4.6, 0, -36.5); paladin.rotation.y = .6; for (const o of paladin.children) if (o.isSprite) o.visible = false; E.ph = 0;
+  for (const s of END_STILL()) s.remove(); const box = $('endHeal'); box.innerHTML = ''; for (const [a, b] of endArt || []) for (const im of [a, b]) { const n = im.cloneNode(); box.appendChild(n); }
+  endCap('');
+}
+const END_STILL = () => [...$('endHeal').children];
+function endCap(t, big) { const c = $('endCap'); c.textContent = t; c.classList.toggle('big', !!big); c.classList.toggle('on', !!t); }
+function citLight(k) { // the throne room's storm (0) to the gold morning it gets back (1)
+  const W = WORLDS[HALLW].stages, a = W[2], b = W[1], mix = (p, q) => wc.copy(C(p)).lerp(wc2.copy(C(q)), k);
+  paintSky(a.sky.map((c, j) => '#' + new THREE.Color(c).lerp(new THREE.Color(b.sky[j]), k).getHexString())); scene.fog.color.copy(mix(a.fog[0], b.fog[0])); hemi.color.copy(mix(a.hemi[0], b.hemi[0])); hemi.intensity = a.hemi[2] + (b.hemi[2] - a.hemi[2]) * k + .12 * k; sun.color.copy(mix(a.sun[0], b.sun[0])); sun.intensity = a.sun[1] + (b.sun[1] - a.sun[1]) * k + .25 * k;
+  if (CIT.glass) CIT.glass.color.copy(mix('#b090e0', '#f4f6ff')); for (const h of CIT.lights) h.material.color.copy(mix('#a060ff', '#6aa4ff')); G.shadowDirty = true;
+}
+function endRays(E, x, y, z) {
+  const t = canvasTex(64, 256, (q, w, h) => { const g = q.createLinearGradient(0, h, 0, 0); g.addColorStop(0, 'rgba(255,255,255,.75)'); g.addColorStop(1, 'rgba(255,255,255,0)'); q.fillStyle = g; q.beginPath(); q.moveTo(w * .42, h); q.lineTo(w * .58, h); q.lineTo(w, 0); q.lineTo(0, 0); q.fill(); });
+  E.rayM = new THREE.MeshBasicMaterial({ map: t, color: C('#ffd84a'), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }); E.rays = new THREE.Group(); E.rays.position.set(x, y, z); E.g.add(E.rays);
+  for (let k = 0; k < 12; k++) { const o = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 17).translate(0, 8.5, 0), E.rayM); o.rotation.z = k / 12 * Math.PI * 2; E.rays.add(o); }
+}
+function horseGait(k, sp) { if (!horse || !palLegs) return; for (const L of palLegs) { const a = k * sp + L.ph; L.hip.rotation.x = Math.sin(a) * .42; L.knee.rotation.x = Math.max(0, Math.sin(a + 1.2)) * .6; } horse.body.position.y = Math.abs(Math.sin(k * sp)) * .05; }
+function endTick(dt) {
+  const E = G.end; if (!E) return; const t = (E.t += dt), once = (k, at) => t > at && !E.ev[k] && (E.ev[k] = true), ease = u => { u = clamp(u, 0, 1); return u * u * (3 - 2 * u); };
+  if (E.king) E.king.mixer.update(dt);
+  const F = E.rowan, setCrown = (x, y, z, s, rx, ry, rz) => { E.crown.position.set(x, y, z); E.crown.scale.setScalar(s); E.crown.rotation.set(rx, ry, rz); };
+  horseGait(t < 22.4 ? 0 : t < 25.8 ? t : 0, 6.5); if (horse && horse.mane) for (let k = 0; k < horse.mane.length; k++) horse.mane[k].rotation.z = Math.sin(t * 5 + k) * .12;
+  if (t < 2.9) { E.crown.position.y = .62; E.glow.material.opacity = .4 + .15 * Math.sin(t * 5); }
+  if (once('whisper', .9)) { endCap('“Don’t... put it... on.”'); kingVoice('no', .3); }
+  if (once('lift', 2.9)) { endCap(''); if (F) { F.g.position.set(-.5, 0, -38.2); F.g.rotation.y = .12; } if (E.king) { E.king.g.position.set(2.4, 0, -35.2); } if (palRig) paladin.position.set(-5.2, 0, -37.5); }
+  if (t >= 2.9 && t < 5.8) { const u = ease((t - 3.1) / 1.0); if (F) poseFig(F, u < .05 ? POSE.stand : POSE.hold); setCrown(.1 - .35 * u, .6 + 2.45 * u + Math.sin(u * Math.PI) * .4, -34.6 - 1.0 * u, 3.4, .5 - .28 * u, .6 - .6 * u, .35 - .35 * u); E.glow.position.set(E.crown.position.x, E.crown.position.y + .4, E.crown.position.z - 3.6); E.glow.material.opacity = .38; }
+  if (once('throne', 5.8)) { paladin.visible = false; if (F) { F.g.position.set(0, 2.42, -46.4); F.g.rotation.y = 0; poseFig(F, POSE.hold); } for (let r = 0; r < 7; r++) for (let c = 0; c < 12; c++) { const j = addUnit(beetles, (c - 5.5) * .84 + (rand() - .5) * .3, -25.6 - r * 1.75 + (rand() - .5) * .4, 1, 2, 0, 0, 0); if (j >= 0) beetles.kind[j] = 1; } }
+  if (t >= 5.8 && t < 6.9) { const u = ease((t - 6.0) / .8); setCrown(0, 7.4 + (2.42 + 2.3 * (F ? F.hy + .9 : 2.1) - 7.4) * u, -46.3, 5.36, 0, 0, 0); E.glow.position.set(0, 7, -46.9); E.glow.scale.setScalar(6 + 3 * u); }
+  if (once('crowned', 6.9)) {
+    if (F) { poseFig(F, POSE.stand); crownOn(F); E.crown.visible = false; } endRays(E, 0, 6.4, -47.4); cineFlash(.75, 900); victoryFanfare(); buzz([40, 30, 120]); G.shake = .5;
+    burst(0, 7, -46, ['#ffe27a', '#ffffff', '#ffc62b'], 70, 8, { sph: true, life: 1.3, g: 2, sz: 2.4, kind: PK.SPARK });
+  }
+  if (t > 6.9 && t < 9.8) { E.gold = ease((t - 6.9) / 1.1); if (Math.abs(E.gold - (E.goldS ?? -1)) > .02) { E.goldS = E.gold; citLight(E.gold); } if (E.rayM) { E.rayM.opacity = .30 * E.gold; E.rays.rotation.z = t * .12; } }
+  if (t > 7.1 && t < 8.8) for (let j = 0; j < beetles.n; j++) if (beetles.hp[j] > 0 && t > 7.1 + (beetles.z[j] + 40) / 14) { beetles.hp[j] = 0; burst(beetles.x[j], .5, beetles.z[j], ['#fff6d0', '#ffe27a'], 2, 2, { vy: 2, life: .6, g: 4, sz: 1.6, kind: PK.SPARK }); if (rand() < .8) dropBones(beetles.x[j], beetles.z[j], false); } // the dead lie down, row by row
+  if (once('over', 7.7)) endCap('THE WAR IS OVER', true);
+  // the four worlds, storm to morning
+  if (once('heal', 9.8)) { endCap(''); $('endHeal').classList.add('on'); }
+  if (t > 9.8 && t < 15.6) { const im = END_STILL(); for (let k = 0; k < 4; k++) { const u = t - 9.8 - k * 1.42, a = im[k * 2], b = im[k * 2 + 1]; if (!a) continue; const on = u > 0 && u < 1.56; a.style.opacity = on ? 1 : 0; b.style.opacity = on ? ease((u - .3) / .55) : 0; a.style.transform = b.style.transform = `scale(${(1.06 + .04 * clamp(u / 1.5, 0, 1)).toFixed(3)})`; if (once('h' + k, 9.8 + k * 1.42 + .35)) [523, 659, 784, 1046].forEach((f, q) => setTimeout(() => tone(f * [1, 1.122, 1.26, 1.335][k], .22, 'triangle', .05), q * 70)); } }
+  // and then
+  if (once('close', 15.5)) { cineFlash(.6, 500); $('endHeal').classList.remove('on'); beetles.n = 0; clearBones(); if (E.rayM) E.rays.visible = false; E.glow.visible = false; citLight(1); if (actx) MUS.holdUntil = actx.currentTime + 7; }
+  if (once('turn', 16.9)) { cineFlash(.5, 160); setTimeout(() => cineFlash(.3, 140), 170); smp('thunder', .7, 0); tone(46, 2.2, 'sine', .3, .5); buzz([40, 60, 160]); G.shake = .4; }
+  if (t > 16.9 && t < 19) { const u = ease((t - 16.9) / .9); if (F) setEyes(F, u); if (Math.abs(1 - u - (E.goldS ?? 1)) > .02) { E.goldS = 1 - u; citLight(1 - u); } }
+  if (once('rise', 19)) { if (F) { setEyes(F, 1); poseFig(F, POSE.point); } if (!E.aura) E.aura = halo('#b030ff', 14, 0, 6, -48.4, E.g, .35); }
+  if (t > 19.5 && t < 21.4) { E.rn = E.rn || 0; const want = Math.floor((t - 19.5) / 1.9 * 190 * ((t - 19.5) / 1.9 + .25)); while (E.rn < Math.min(190, want)) { const k = E.rn++, first = k === 0, x = first ? 0 : (rand() - .5) * 9.4, z = first ? -29.5 : -24 - rand() * 16, j = addUnit(beetles, x, z, 1, first ? 2.3 : 2.05, 0, 0, 0); if (j >= 0) beetles.kind[j] = 1; burst(x, .4, z, ['#d050ff', '#ffffff', '#8a30d0'], 3, 2, { vy: 3, life: .6, g: 5, sz: 1, kind: PK.SPARK }); if (first) tone(1200, .2, 'triangle', .05, .6); } }
+  if (once('roar', 20.6)) { tone(70, 1.4, 'sawtooth', .08, .6); noise(1, .1, 'lowpass', 700, 120); }
+  if (once('black', 21.9)) $('endFade').classList.add('on');
+  if (once('bridge', 22.35)) { // his horse comes home over the bridge
+    beetles.n = 0; P.n = 0; clearBones(); if (F) F.g.visible = false; if (E.king) E.king.g.visible = false; if (E.aura) E.aura.visible = false; fortDress.visible = true; applyWorld(HALLW, 0); king.visible = kingCrown.visible = false; if (HOLD.b) HOLD.b.g.visible = false;
+    paladin.visible = true; if (palRig) palRig.visible = false; paladin.scale.setScalar(1.5); $('endFade').classList.remove('on');
+    if (squireArt && KK.Knight) { const Q = E.squire = knightFig(squireArt); Q.g.scale.setScalar(1.5 * .78 * 1.15); E.g.add(Q.g); Q.g.visible = false; }
+  }
+  if (t > 22.35 && t < 25.8) { const u = clamp((t - 22.4) / 3.3, 0, 1); paladin.position.set(.5 - .2 * u, 0, -27 + 14.6 * (1 - (1 - u) * (1 - u) * .55 - (1 - u) * .45)); paladin.rotation.y = .12 + .12 * u; if (rand() < dt * 9) sfx('hoof', 190, () => noise(.05, .05, 'lowpass', 900, 200)); }
+  if (once('meet', 25.8)) { paladin.position.set(-1.0, 0, -12.6); paladin.rotation.y = .75; if (E.squire) { const Q = E.squire; Q.g.visible = true; Q.g.position.set(1.7, 0, -11.2); Q.g.rotation.y = -1.5; poseFig(Q, POSE.stand); } }
+  if (once('ride', 27.1)) { cineFlash(.35, 350); paladin.position.set(0, 0, -12); paladin.rotation.y = .5; if (E.squire) { const Q = E.squire; Q.g.position.set(0, 2.55, -12); Q.g.rotation.y = .5; Q.g.scale.setScalar(1.5 * .78); poseFig(Q, POSE.sit); } chargeCall(); buzz([30, 40, 60]); burst(0, 2.2, -12.6, ['#ffd27a', '#ffffff', '#bff2ff'], 30, 6, { vy: 4, life: .8, g: 3, sz: 1, kind: PK.SPARK }); }
+  if (once('road', 28.0)) endCap('THE ENDLESS ROAD', true);
+  if (t > END_T) finishEnding();
+}
+function endCamera() {
+  const t = G.end.t, s = END_SHOTS.find(q => t < q[1]) || END_SHOTS[END_SHOTS.length - 1], u = cineEase(clamp((t - s[0]) / (s[1] - s[0]), 0, 1)), sh = G.shake * .3, wide = camera.aspect > .62 ? .86 : 1;
+  camera.position.set(s[2][0] + (s[3][0] - s[2][0]) * u + (rand() - .5) * sh, s[2][1] + (s[3][1] - s[2][1]) * u + (rand() - .5) * sh, s[2][2] + (s[3][2] - s[2][2]) * u);
+  camera.lookAt(_look.set(s[4][0] + (s[5][0] - s[4][0]) * u, s[4][1] + (s[5][1] - s[4][1]) * u, s[4][2] + (s[5][2] - s[4][2]) * u));
+  const f = s[6] * wide; if (camera.fov !== f) { camera.fov = f; camera.updateProjectionMatrix(); }
+}
+function clearEnding() { // everything the ending put on stage or put away
+  const E = G.end; if (!E) return; G.end = null;
+  scene.remove(E.g); E.g.traverse(o => { if (o.isMesh && o.material === E.rayM) o.geometry.dispose(); }); if (E.rayM) { E.rayM.map.dispose(); E.rayM.dispose(); } if (E.kingM) E.kingM.dispose();
+  $('cine').classList.remove('on', 'end'); $('endHeal').classList.remove('on'); $('endFade').classList.remove('on'); endCap(''); gameEl.classList.remove('cinema');
+  if (laneWalls) laneWalls.visible = true; sawGroup.visible = fortDress.visible = aim.visible = launcher.visible = campWall.visible = nest.visible = true; turret.visible = save.up.turret > 0; paladin.visible = false; paladin.scale.setScalar(PAL_S); paladin.rotation.y = Math.PI; if (palRig) palRig.visible = true; for (const o of paladin.children) if (o.isSprite) o.visible = true;
+  ants.n = beetles.n = P.n = 0; if (horse) horse.body.position.y = 0; resize(); dressRider();
+}
+function finishEnding() {
+  if (!G.end) return; const replay = !!G.fin; clearEnding(); if (worldSt !== 0) applyWorld(HALLW, 0); king.visible = kingCrown.visible = false;
+  if (replay) { endFinale(); return; }
+  G.stars = 1 + (clamp(G.nestHp / G.nestMax, 0, 1) >= .5 ? 1 : 0) + ((G.clk || 0) <= G.cfg.par ? 1 : 0); G.fortHp = 0; G.boomed = false; G.winT = 0;
+  save.stars = save.stars || {}; save.stars[G.level] = Math.max(save.stars[G.level] || 0, G.stars); G.reward = Math.round((20 + 8 * eff(G.level) + 8 * G.stars) * 4); mission('win', 1); if (G.stars === 3) mission('stars3', 1); mission('fired', G.fired - (G.firedSent || 0)); mission('kills', (G.kills || 0) - (G.killsSent || 0)); persist(); // (the last level of the story pays double a boss)
+  gameEl.classList.add('cine'); showResult(true);
+}
+// after the ending the squire rides: Rowan's arms and horse, their own helm and coat
+function dressRider() {
+  if (!save.crowned || G.practice || !horse || !palArt || !palRig || palRig.userData.squire) return;
+  loadSquire().then(A => { if (!A || !palRig || palRig.userData.squire) return; const r = THREE.SkeletonUtils.clone(KK.Knight.scene); r.position.copy(palRig.position); r.scale.copy(palRig.scale); r.rotation.copy(palRig.rotation);
+    r.traverse(o => { if (o.isSkinnedMesh) o.skeleton.pose(); }); const p0 = r.position.clone(), s0 = r.scale.clone(); r.position.set(0, 0, 0); r.scale.setScalar(1); r.updateMatrixWorld(true);
+    hangArt(r, A, A.mat); hangArt(r, { geo: palArt.geo, J: { nodes: palArt.J.nodes.filter(n => n.name === 'lance' || n.name === 'shield'), glow: [] } }, palArt.mat); r.position.copy(p0); r.scale.copy(s0); r.userData.sit = palRig.userData.sit; r.userData.squire = 1; r.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    const was = palRig; horse.body.remove(was); horse.body.add(r); palRig = r; palMixer = new THREE.AnimationMixer(r); const c = clipOf('Jump_Idle') || clipOf('Idle_A'); if (c) palMixer.clipAction(c).play(); });
+}
+/* ---- a look: after each warlord falls, Rowan turns his horse toward the citadel and the crown over its gate. A second and a half; a tap skips it */
+function startLook() {
+  if (G.lookDone || save.crowned || G.sim || G.practice || G.fin || !isBoss(G.level) || G.level >= LAP_LEN || !palReady() || !palArt || worldIdx >= HALLW || G.worldOverride != null) return false;
+  G.lookDone = true; buildPaladin(); if (!horse) return false; const [cz, up] = citAt(); G.look = { t: 0, gl: [halo('#ffd84a', 7, 0, 10.6 + up, cz + 5.8, scene, 0), halo('#ffffff', 2.4, 0, 10.6 + up, cz + 6, scene, 0)] };
+  paladin.visible = true; paladin.scale.setScalar(1.5); paladin.position.set(.1, 0, -25); paladin.rotation.y = Math.PI + .16; ants.n = 0; horseGait(0, 1); P.n = 0; for (const g of G.gates) g.mesh.visible = false; if (laneWalls) laneWalls.visible = false; sawGroup.visible = aim.visible = false; for (const o of paladin.children) if (o.isSprite) o.visible = false; tone(880, .9, 'triangle', .035, 1.5); return true;
+}
+function lookTick(dt) {
+  const L = G.look; L.t += dt; const k = Math.max(0, Math.sin(clamp((L.t - .25) / 1.2, 0, 1) * Math.PI)); L.gl[0].material.opacity = .75 * k; L.gl[0].scale.setScalar(5 + 4 * k); L.gl[1].material.opacity = k; if (palMixer) palMixer.update(dt); if (horse) horse.body.rotation.x = -.05 * k;
+  if (L.t > 1.75) { for (const g of L.gl) scene.remove(g); G.look = null; lookOff(); showResult(true); }
+}
+function lookOff() { paladin.visible = false; paladin.scale.setScalar(PAL_S); if (horse) horse.body.rotation.x = 0; for (const g of G.gates) g.mesh.visible = true; if (laneWalls) laneWalls.visible = true; sawGroup.visible = aim.visible = true; for (const o of paladin.children) if (o.isSprite) o.visible = true; }
+function lookCamera() { const u = cineEase(clamp(G.look.t / 1.7, 0, 1)); camera.position.set(-2.4 + .7 * u, 5.4 + .3 * u, -11.6 - 1.2 * u); camera.lookAt(_look.set(.6, 6.4 + .4 * u, -60)); }
+addEventListener('pointerdown', () => { if (G.look && G.look.t > .25) G.look.t = Math.max(G.look.t, 1.7); }, true);
 /* ---------------- "Watch finale": the Bone King's last stand, replayed ----------------
-   A practice round of level 20 (nothing is kept) with your army firing on its own: Magmaw steps out and falls at once,
-   the Bone King leaps down from his walls, fights for a few seconds, and falls; his castle blows; then back to the start
-   screen before the results card. Letterboxed like the intro, tap to skip. */
+   A practice round of level 50 (nothing is kept) with your army firing on its own: the Bone King leaps down from his throne,
+   fights for a few seconds and kneels; then the ending, and back to the start screen. Letterboxed like the intro, tap to skip. */
 async function watchFinale() {
   closeMore(); audio();
-  if (G.finWait) return; G.finWait = true; await Promise.race([Promise.all([loadWarlordArt(3), loadLm(LM_SETS[3])]), new Promise(r => setTimeout(r, 5000))]); G.finWait = false; if (G.mode !== 'menu') return; // (Magmaw steps out at once, so his art comes first)
-  G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = WORLD_LEN * WORLDS.length;
+  if (G.finWait) return; G.finWait = true; await Promise.race([Promise.all([loadPaladinArt(), loadSquire(), loadLm(LM_SETS[HALLW])]), new Promise(r => setTimeout(r, 5000))]); G.finWait = false; if (G.mode !== 'menu') return; // (everything the ending needs comes first)
+  G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = LAP_LEN; loadEndArt();
   save.up = { ...save.up, rate: Math.max(save.up.rate || 0, 9), twin: Math.max(save.up.twin || 0, 4), arsenal: Math.max(save.up.arsenal || 0, 5) };
   $('menu').classList.remove('on'); gameEl.classList.add('cinema'); gameEl.classList.remove('overlay');
   setupLevel(save.level); G.mode = 'play'; G.introT = 0; G.grandT = 0; G.hintT = 0;
@@ -7067,14 +7417,14 @@ async function watchFinale() {
 function finTick(dt) {
   const F = G.fin, t = (F.t += dt), once = k => !F.ev[k] && (F.ev[k] = true);
   if (G.mode === 'play') { G.firing = true; G.lx = Math.sin(t * .8) * 2.2; }
-  if (t > .6 && once('warlord') && !WL.alive) startWarlord();
-  if (t > 2.6 && once('magmaw') && WL.alive && WL.def.move !== 'barrage') hurtWarlord(WL.hp + 1); // his last warlord falls...
+  if (t > .8 && once('king0') && !WL.alive) startWarlord(4);
   if (WL.alive && WL.def.move === 'barrage' && WL.state === 'walk') F.kingT += dt; // ...the Bone King leaps down and fights
-  if (F.kingT > 3 && once('king')) hurtWarlord(WL.hp + 1); // and falls; win() takes it from there
-  if ((G.mode === 'won' && G.winT > 2.8) || t > 30) endFinale(); // back to the start screen just before the results card
+  if (F.kingT > 3 && once('king')) { hurtWarlord(WL.hp + 1); F.kn = t; } // he kneels; the last blow is sent by itself
+  if (F.kn && t > F.kn + 1.6 && once('send')) { G.charge = sendCharge(); G.pal = null; sendGiant(); if (!G.pal) lastBlow(); }
+  if (!G.end && t > 40) endFinale();
 }
 function endFinale() {
-  if (!G.fin) return; G.fin = null; G.firing = false; $('cine').classList.remove('on'); gameEl.classList.remove('cinema', 'cine');
+  if (!G.fin) return; clearEnding(); G.fin = null; G.firing = false; $('cine').classList.remove('on'); gameEl.classList.remove('cinema', 'cine');
   showMenu(); // the real save is back (practice round)
 }
 function prewarm() {
