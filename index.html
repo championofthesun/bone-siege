@@ -1265,8 +1265,9 @@ function hexWorld(t) {
     const cards = R.cards || ['#3a3150', '#544a6e', '#71688c'];
     for (let L = 2; L >= 0; L--) {
       const m = new THREE.MeshBasicMaterial({ color: C(cards[L]), fog: false, side: THREE.DoubleSide });
+      if (STG && worldSt === 2) HEAL.mats.push({ mat: m, from: C(cards[L]), to: C((((WORLDS[worldIdx].stages[0] || {}).realm || {}).cards || (HEX_DRESS[WORLDS[worldIdx].hex || 'meadow'].realm || {}).cards || cards)[L]) }); // the far mountains heal with the sky
       const top = 13 + L * 4.5, z = -122 - L * 18, g = bgRidge(R.river || 'magic', L), card = new THREE.Mesh(g, m); // each layer: how high its peaks reach, how far back
-      card.scale.set(1, top / 16, 1); card.position.set(L * 9 - 6, 0, z); card.userData.keepGeo = true; world.add(card);
+      card.scale.set(1, top / 16, 1); card.position.set(L * 9 - 6, 0, z); card.userData.keepGeo = true; if (STG && worldSt === 2) card.userData.dyn = true; world.add(card);
     }
   }
   // storm clouds over his land: soft cartoon cumulus (smooth round puffs on a flat base, lit on top, tinted with the realm's
@@ -1827,6 +1828,23 @@ function wPond(x, z, r, c1, c2, rimLo, rimHi, o = {}) {
   for (let i = 0, n = Math.round(r * 7); i < n; i++) { const a = i / n * 6.28 + rand() * .25, s = .2 + rand() * .16; stones.push(item(x + Math.cos(a) * (r + .1), z + Math.sin(a) * (r + .1), s)); }
   putP('rockB', () => GEO.rock(rimLo, rimHi), stones, { mat: softMat({ flatShading: true }), sh: 1.1, bark: rimHi });
 }
+// the oasis: full, then drawn in, then cracked mud (the water waits out of sight for the land to heal)
+const mudTex = () => canvasTex(256, 256, (x, w, h) => { const g = x.createRadialGradient(128, 128, 10, 128, 128, 128); g.addColorStop(0, '#6e4a34'); g.addColorStop(.7, '#8e6242'); g.addColorStop(1, '#b98a58'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+  const P = Array.from({ length: 46 }, () => [rand() * w, rand() * h]); x.strokeStyle = 'rgba(52,28,18,.85)'; x.lineCap = 'round';
+  for (const [a, b] of P) { const near = P.filter(q => q[0] !== a).sort((q, r) => (q[0] - a) ** 2 + (q[1] - b) ** 2 - (r[0] - a) ** 2 - (r[1] - b) ** 2).slice(0, 3); for (const q of near) { x.lineWidth = 2 + rand() * 4; x.beginPath(); x.moveTo(a, b); x.lineTo((a + q[0]) / 2 + (rand() - .5) * 14, (b + q[1]) / 2 + (rand() - .5) * 14); x.lineTo(q[0], q[1]); x.stroke(); } } });
+function wOasis(x, z, r) {
+  const k = STG && STG.land && STG.land.oasis !== undefined ? STG.land.oasis : 1;
+  if (k < 1) { const m = mesh(new THREE.CircleGeometry(r * 1.02, 30), std('#ffffff', .95, { map: mudTex() }), x, .03, z, world, false); m.rotation.x = -Math.PI / 2; m.receiveShadow = true; if (!k) m.userData.cls = 'dead'; }
+  const n0 = world.children.length; wPond(x, z, r, '#9fe8ff', '#2aa0d8', '#c9975a', '#f3dcae'); const w = world.children[n0];
+  if (k > 0 && k < 1) { w.scale.setScalar(k); w.position.y = .05; } else if (!k) { w.userData.cls = 'life'; w.userData.dyn = true; }
+}
+function wPalms(list) { // green, then dry, then mostly stumps
+  const L = STG && STG.land; if (!L || !L.palm || !MODELS['pr/palm']) return putP('palm', () => GEO.palm(), list, { mat: softMat({ side: THREE.DoubleSide }), sh: 1.3 });
+  if (worldSt !== 2) return putM('pr/palm', list, { sh: 1.3, leaf: L.palm });
+  const die = list.filter(doomed), live = list.filter(q => !doomed(q));
+  CLS = 'dead'; putM('pr/palm', live, { sh: 1.3, leaf: L.palm }); putM('pr/stump', die.map(q => { const c = q.slice(); c[3] *= 1.15; c[4] *= 1.5; c[5] *= 1.15; return c; }), { sh: .8, bark: '#c8986a' });
+  CLS = 'life'; putM('pr/palm', list, {}); CLS = '';
+}
 function wClouds(op = .1) { // slow cloud shadows drifting over the ground
   const t = canvasTex(256, 256, (x) => {
     for (let i = 0; i < 5; i++) { const cx = rand() * 256, cy = rand() * 256, r = 45 + rand() * 40; for (const ox of [-256, 0, 256]) for (const oy of [-256, 0, 256]) { const g = x.createRadialGradient(cx + ox, cy + oy, 0, cx + ox, cy + oy, r); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(cx + ox - r, cy + oy - r, r * 2, r * 2); } }
@@ -1917,7 +1935,13 @@ function wPyramid(x, z, r, steps = 7) {
 function wCabin(x, z) {
   const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = x < 0 ? .5 : -.5; world.add(g); propShadows.push([x, z, 2.7]);
   const p = [];
-  if (LMART.frost) lmMesh('frost', 'cabin', g, 0, 0, 0); else {
+  if (LMART.frost) {
+    lmMesh('frost', 'cabin', g, 0, 0, 0); const lit = STG && STG.land ? STG.land.lit : 1, at = new THREE.Vector3(.70, 1.08, 1.55).applyAxisAngle(new THREE.Vector3(0, 1, 0), g.rotation.y), fr = new THREE.Vector3(-.2, 0, 2.6).applyAxisAngle(new THREE.Vector3(0, 1, 0), g.rotation.y);
+    if (lit > 0) { halo('#ffc24a', 2.1, x + at.x, at.y, z + at.z, world, .75 * lit); lightPool('#ffb04a', 4.2, 3.4, x + fr.x, z + fr.z, world, .34 * lit); }
+    else { // dark, and caught in the ice until Hrimgar falls
+      const dk = new THREE.Group(); dk.position.copy(g.position); dk.rotation.copy(g.rotation); dk.userData.cls = 'dead'; world.add(dk); if (LMART.frost.geo.cabinice) lmMesh('frost', 'cabinice', dk, 0, 0, 0); mesh(new THREE.PlaneGeometry(.78, .66), basicMat('#16204a'), .70, 1.08, 1.475, dk, false);
+      const lf = new THREE.Group(); lf.position.copy(g.position); lf.rotation.copy(g.rotation); lf.userData.cls = 'life'; world.add(lf); halo('#ffc24a', 2.1, .70, 1.08, 1.55, lf, .75); } }
+  else {
   for (let i = 0; i < 6; i++) p.push({ g: new THREE.CylinderGeometry(.16, .16, 3.0, 8), m: M(0, .16 + i * .29, 1.12, 1, 1, 1, 0, 0, Math.PI / 2), c: i % 2 ? '#7d5230' : '#8f6038', c2: '#c08a56', y0: i * .29, y1: i * .29 + .34 },
     { g: new THREE.CylinderGeometry(.16, .16, 2.4, 8), m: M(1.36, .16 + i * .29, 0, 1, 1, 1, Math.PI / 2), c: '#7d5230', c2: '#b98150', y0: i * .29, y1: i * .29 + .34 }, { g: new THREE.CylinderGeometry(.16, .16, 2.4, 8), m: M(-1.36, .16 + i * .29, 0, 1, 1, 1, Math.PI / 2), c: '#7d5230', c2: '#b98150', y0: i * .29, y1: i * .29 + .34 });
   p.push({ g: new THREE.BoxGeometry(2.7, 1.7, 2.2), m: M(0, .85, 0), c: '#6e4526' },
@@ -1958,6 +1982,16 @@ function wVolcano(x, z, s = 1) {
   worldAnim.push(t => { h.scale.setScalar(7.5 + Math.sin(t * 2.2) * .9); for (let i = 0; i < 3; i++) { const pf = puffs[i], k = (t * .25 + i / 3) % 1; pf.position.y = 8 + k * 4; pf.scale.setScalar(.5 + k * 1.1); pf.visible = k < .92; } });
 }
 const spotTag = (n0, x, z, r) => { for (let i = n0; i < world.children.length; i++) if (!world.children[i].isInstancedMesh) world.children[i].userData.spot = [x, z, r]; };
+const crackTex = () => canvasTex(128, 256, (x, w, h) => { x.lineCap = x.lineJoin = 'round'; for (const [lw, c] of [[26, 'rgba(255,60,10,.20)'], [13, 'rgba(255,90,20,.55)'], [6, '#ffb040'], [2.5, '#fff0b0']]) { x.strokeStyle = c; x.lineWidth = lw; const seed = mulberry(91); let px = w / 2, py = 6; x.beginPath(); x.moveTo(px, py); const br = []; for (let k = 0; k < 9; k++) { px += (seed() - .5) * 40; py += 27; px = clamp(px, 24, w - 24); x.lineTo(px, py); if (k % 2) br.push([px, py, seed() < .5 ? -1 : 1, seed()]); } x.stroke(); x.lineWidth = lw * .6; for (const [a, b, q, u] of br) { x.beginPath(); x.moveTo(a, b); x.lineTo(a + q * (14 + u * 12), b + 12); x.lineTo(a + q * (22 + u * 20), b + 10 + u * 22); x.stroke(); } } });
+function wCracks(k) { // k: how wide the ground has split (0.55 at first light, 1, then 1.5 in the storm)
+  const t = crackTex(), m = new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }), n = Math.round(5 + 4 * k), list = [];
+  for (let j = 0; j < n * 2; j++) { const sx = j % 2 ? 1 : -1, z = -8 - (j >> 1) * (27 / n) - (j % 2) * 1.6, x = sx * (LANE + 1.35 + (Math.sin(j * 2.7) * .5 + .5) * 1.5), L = 2.6 + (Math.sin(j * 5.1) * .5 + .5) * 1.6; list.push([x, z, L]); const o = new THREE.Mesh(new THREE.PlaneGeometry(.62 * k * L * .42, L), m); o.rotation.set(-Math.PI / 2, 0, Math.sin(j * 3.3) * .5); o.position.set(x, .045, z); o.renderOrder = .4; o.userData.dyn = true; world.add(o); if (j % 3 === 0) lightPool('#ff5a1a', 2.6 * k, 3.2, x, z, world, .20 * k); }
+  worldAnim.push(tm => { m.opacity = .78 + .22 * Math.sin(tm * 1.7); });
+}
+function wEruption(x, y, z) { // sparks thrown from the crater beside the road
+  const q = Array.from({ length: 16 }, (_, k) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: C(k % 3 ? '#ff8a2a' : '#ffe08a'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false })); sp.userData.dyn = true; world.add(sp); return { sp, ph: k / 16, a: k * 2.4, v: .6 + (k % 5) * .22 }; });
+  worldAnim.push(t => { for (const e of q) { const u = (t * .55 + e.ph) % 1, d = u * (1.2 + e.v * 2.6); e.sp.position.set(x + Math.sin(e.a) * d, y + u * (9 + e.v * 5) - u * u * 13, z + Math.cos(e.a) * d); e.sp.scale.setScalar(.5 + 1.3 * (1 - u)); e.sp.material.opacity = HEAL.on ? 0 : 1 - u; } });
+}
 function wLavaPool(x, z, r) {
   const n0 = world.children.length;
   wPond(x, z, r, '#ffe680', '#ff5a1a', '#1d1824', '#4a3f52', { basic: true });
@@ -2036,6 +2070,13 @@ const WORLDS = [
 
   { name: 'Sunscorch Dunes', hex: 'dunes', sky: ['#3e2c4c', '#a77a8a', '#d6b4aa'], fog: ['#caaaa6', 62, 120], hemi: ['#f4ecff', '#b88a5c', .56], sun: ['#fff0d2', 1.45], exposure: 1.04, shade: .5,
     wall: '#ffe9c4', stone: '#e3c08a', motes: { c: '#ffe2a8', size: .22, op: .6, vx: 1.1, vy: .08, sway: .3, add: true },
+    stages: [
+      { sky: ['#1f6fd0', '#6db6f0', '#cfe9f6'], fog: ['#cfe2ea', 70, 126], hemi: ['#e8f4ff', '#c49a62', .62], sun: ['#fff6dc', 1.62], exposure: 1.06, // noon: blue sky, green palms, a full oasis
+        motes: { c: '#fff2c8', size: .2, op: .55, vx: .6, vy: .08, sway: .3, add: true }, realm: { cloud: '#ffffff', dusk: '#a08898', cards: ['#8a7690', '#a8909c', '#c4aeb0'] }, disc: ['#fffdf0', '#ffe9a0', 26, 40, 9] },
+      { sky: ['#4a2a5c', '#c0728a', '#f6b89a'], fog: ['#d09a94', 60, 116], hemi: ['#ffd0e8', '#a8708a', .64], sun: ['#ffb6b0', 1.3], exposure: 1.04, // a rose evening: the palms have dried, the oasis is drawing in
+        realm: { cloud: '#b07e90', dusk: '#8e6a7a', cards: ['#5e3c50', '#84545e', '#ac7470'] }, land: { ground: [.96, .78, .98], hill: '#e0a0a4', palm: '#b59a44', reed: '#a8924a', oasis: .68 } },
+      { sky: ['#2a0e1c', '#7c2a2a', '#d0703a'], fog: ['#b0603c', 52, 108], hemi: ['#ffc49a', '#8a4a3a', .62], sun: ['#ffae74', 1.25], exposure: 1.0, // the red storm: stumps, and cracked mud where the water was
+        motes: { c: '#ffb070', size: .3, op: .9, vx: 3.4, vy: .1, sway: .6 }, realm: { cloud: '#7a3a34', dusk: '#7a4a50', cards: ['#4a2226', '#6a342e', '#8e4a36'] }, disc: ['#ffb060', '#c8381c', -22, 23, 17], land: { ground: [1.0, .72, .62], hill: '#c8805a', palm: '#8e6c38', reed: '#86663a', oasis: 0, dead: .62 } }],
     build() {
       wGround('#dcae6c', ['#e8c084', '#cd9a58', '#efcd98', '#d4a462'], null, (x, w, h) => { for (let i = 0; i < 26; i++) { const py = (i + .5) * h / 26; x.strokeStyle = i % 2 ? 'rgba(255,238,200,.16)' : 'rgba(150,100,50,.12)'; x.lineWidth = 5; x.beginPath(); for (let px = 0; px <= w; px += 16) x.lineTo(px, py + Math.sin(px / w * Math.PI * 4 + i) * 6); x.stroke(); } x.strokeStyle = 'rgba(255,236,190,.28)'; x.lineWidth = 3; x.lineCap = 'round'; for (let i = 0; i < 40; i++) { const px = rand() * w, py = rand() * h; x.beginPath(); x.moveTo(px, py); x.quadraticCurveTo(px + 26, py - 10, px + 52, py); x.stroke(); } });
       wRoad('#8d7160', ['#dccab2', '#d0bca2', '#e4d5bf', '#c8b296'], { curb: ['#a5583a', '#d08a58'], edge: '110,64,34', verge: '#b98a54' });
@@ -2056,24 +2097,29 @@ const WORLDS = [
       for (let i = 0; i < 3; i++) palms.push(item(9.4 + Math.cos(i * 2.1 + .4) * 2.4, -31 + Math.sin(i * 2.1 + .4) * 2.2, .95 + i * .12));
       wSprinkle(120, (x, z) => { const s = .05 + rand() * .08; pebbles.push(item(x, z, s, { y: s * .3, h: .6, c: hslHex(.08, .35, .55 + rand() * .2) })); });
       wSprinkle(26, (x, z) => shells.push(item(x, z, .09 + rand() * .05, { y: .03, h: .5, c: rand() < .5 ? '#fff3e0' : '#ffc9b0' })));
-      putP('cactus', () => GEO.cactus(), cacti, { sh: .75 }); putP('palm', () => GEO.palm(), palms, { mat: softMat({ side: THREE.DoubleSide }), sh: 1.3 }); putP('mesa', () => GEO.mesa(), mesas, { mat: softMat({ flatShading: true }), sh: 1.25 }); putP('vase', () => GEO.vase(), vases, { sh: .5 });
+      putP('cactus', () => GEO.cactus(), cacti, { sh: .75 }); wPalms(palms); putP('mesa', () => GEO.mesa(), mesas, { mat: softMat({ flatShading: true }), sh: 1.25 }); putP('vase', () => GEO.vase(), vases, { sh: .5 });
       putP('col', () => GEO.column(2.3, '#c9975a', '#f7e0a8'), cols, { bark: '#e0b27c', mat: softMat({ flatShading: true }), sh: .65 }); putP('colb', () => GEO.column(.9, '#c9975a', '#f7e0a8'), broken, { bark: '#e0b27c', mat: softMat({ flatShading: true }), sh: .8 });
       MODELS['pr/bcactus'] ? putM('pr/bcactus', barrels, { sh: 1 }) : putMix(['Bush_1_A', 'Bush_3_A'], barrels, { wind: .12, h: .8, sh: 1.0, leaf: '#b8a24a' }, () => put(GEO.bush(), barrels, { sh: 1.1 })); putMix(ROCK_MODELS, rocks, { h: .8, sh: 1.1, bark: '#f0cf9a' }, () => put(GEO.rock('#b0703a', '#f0b872'), rocks, { mat: softMat({ flatShading: true }), sh: 1.2 })); const dry = []; wSprinkle(9, (x, z) => dry.push(item(x, z, .8 + rand() * .4))); putP('cactus', () => GEO.cactus(), dry, { sh: .75 }); /* (the bare trees read as red claws on the sand: more cacti instead) */
       putMix(['Grass_1_A', 'Grass_2_A'], tufts, { wind: 0, h: .6, leaf: '#e6c47a' }, () => put(GEO.tuft(), tufts, { mat: new THREE.MeshLambertMaterial({ vertexColors: true }), shadow: false }));
       put(new THREE.SphereGeometry(1, 7, 5), pebbles, { mat: lam('#ffffff'), shadow: false }); put(new THREE.SphereGeometry(1, 8, 5), shells, { mat: lam('#ffffff'), shadow: false });
-      wNeedles([[9.0, -21.5, 1, .3], [-8.6, -24, .85, .1]]);
+      wNeedles([[9.0, -21.5, 1, .3], [-8.7, -14, .85, .1]]);
       putP('tent', () => GEO.tent(), [item(8.2, -37.5, 1, { ry: -.6 }), item(10.6, -36.2, .8, { ry: -.2 })], { mat: softMat({ flatShading: true }), sh: 1.3 });
       wPyramid(-9.9, -41, 4.6); wPyramid(17, -58, 8); wPyramid(-24, -62, 9);
       wColossus(-8.5, -29.5, 1.45); // a seated pharaoh beside the road where the phone frame shows it (near the camera only a sliver beside the walls is visible)
       wNeedles([[8.4, -12.5, .9, -.2], [8.6, -26.5, 1.05, .4]]); // and a second pair of obelisks lining the way
-      wPond(9.4, -31, 1.6, '#9fe8ff', '#2aa0d8', '#c9975a', '#f3dcae');
-      const reeds = []; for (let i = 0; i < 8; i++) { const a = i * .8; reeds.push(item(9.4 + Math.cos(a) * 1.8, -31 + Math.sin(a) * 1.8, 1.2 + rand() * .8, { c: hslHex(.28, .55, .36 + rand() * .1) })); }
+      wOasis(9.4, -31, 1.6);
+      const reeds = []; for (let i = 0; i < 8; i++) { const a = i * .8; reeds.push(item(9.4 + Math.cos(a) * 1.8, -31 + Math.sin(a) * 1.8, 1.2 + rand() * .8, { c: STG && STG.land && STG.land.reed || hslHex(.28, .55, .36 + rand() * .1) })); }
       put(GEO.tuft(), reeds, { mat: new THREE.MeshLambertMaterial({ vertexColors: true }), shadow: false });
       wClouds(.08);
     } },
 
   { name: 'Frostbite Peaks', hex: 'frost', foeTint: '#d9cdea', sky: ['#28457e', '#6a97cf', '#c2def5'], fog: ['#b6cde6', 62, 116], hemi: ['#dceaff', '#6f90c8', .52], sun: ['#fff0da', 1.5], exposure: .98, shade: .62, // cooler, deeper shadows so the snow has shape
     wall: '#e6eefa', stone: '#c9d6e8', motes: { c: '#ffffff', size: .22, op: .95, vx: -.5, vy: -1.3, sway: .5, add: false },
+    stages: [null,
+      { sky: ['#2e2a6a', '#8a78c0', '#e6b8d8'], fog: ['#b9a8d2', 60, 114], hemi: ['#e6d8ff', '#8a7ab8', .56], sun: ['#ffd0c0', 1.3], exposure: .98, // a lilac dusk: the windows are dimming
+        realm: { cloud: '#a898c8', dusk: '#8074a6', cards: ['#4c4680', '#6e66a0', '#948cc2'] }, land: { ground: [.92, .86, 1.02], hill: '#d8ccf0', lit: .4 } },
+      { sky: ['#1e0a46', '#4a2890', '#a066d8'], fog: ['#6a4ca4', 56, 110], hemi: ['#c4a8ff', '#523c88', .72], sun: ['#dcb8ff', .78], exposure: 1.0, // the violet night: dark windows, cabins caught in ice
+        realm: { cloud: '#5a3e94', dusk: '#62509a', cards: ['#2c1a60', '#442e82', '#664ea6'] }, land: { ground: [.70, .60, .98], hill: '#a488d8', lit: 0 } }],
     build() {
       wGround('#b8cce8', ['#d2e1f4', '#9fb9de', '#dfe9f8', '#aac2e4'], null, (x, w, h) => { for (let i = 0; i < 30; i++) { const px = rand() * w, py = rand() * h, r = 26 + rand() * 50, g = x.createRadialGradient(px, py - r * .25, 0, px, py, r); g.addColorStop(0, 'rgba(255,255,255,.42)'); g.addColorStop(.7, 'rgba(255,255,255,.08)'); g.addColorStop(1, 'rgba(120,150,205,0)'); x.fillStyle = g; x.fillRect(px - r, py - r, r * 2, r * 2); } x.fillStyle = '#ffffff'; for (let i = 0; i < 160; i++) { x.globalAlpha = .4 + rand() * .5; x.fillRect(rand() * w, rand() * h, 2, 2); } x.globalAlpha = 1; });
       wRoad('#6a6880', ['#c6c2c8', '#bab6c0', '#d0ccd0', '#b2aebc'], { curb: ['#7f9cc2', '#c8d8ee'], edge: '70,90,120', hi: .26, moss: '#ffffff', verge: '#b8cbe2', deco: (x, w, h) => { x.fillStyle = 'rgba(255,255,255,.92)'; for (let i = 0; i < 26; i++) { const l = i % 2; x.beginPath(); x.ellipse(l ? w - rand() * 14 : rand() * 14, rand() * h, 10 + rand() * 16, 14 + rand() * 24, 0, 0, 7); x.fill(); } } });
@@ -2105,6 +2151,12 @@ const WORLDS = [
 
   { name: 'Ember Hollow', hex: 'ember', foeTint: '#ddcbd6', sky: ['#160c20', '#4a1e34', '#a8402e'], fog: ['#3a2232', 60, 125], hemi: ['#b8a0d0', '#5a3440', .86], sun: ['#ffc49c', 1.3], exposure: 1.2, shade: .5,
     wall: '#9a8fa6', stone: '#7a7084', motes: { c: '#ff9a3a', size: .2, op: .95, vx: .2, vy: 1.3, sway: .7, add: true },
+    stages: [
+      { sky: ['#5a2c2a', '#c8663a', '#f6b46a'], fog: ['#a8664a', 60, 122], hemi: ['#ffd8b0', '#7a4a3c', .9], sun: ['#ffd49a', 1.55], exposure: 1.2, // a smoky orange morning
+        realm: { cloud: '#c88a66', dusk: '#7a5650', cards: ['#5a3430', '#7c4a3e', '#a0664e'] }, land: { ground: [1.35, 1.12, .98], hill: '#c89a86', crack: .55 } },
+      null,
+      { sky: ['#0a0410', '#3a0a38', '#9a1c5c'], fog: ['#2c1230', 54, 112], hemi: ['#d090d8', '#4a2440', .92], sun: ['#ff9ac0', 1.1], exposure: 1.22, // black and magenta, ash falling, the volcano in full eruption
+        motes: { c: '#e0d0d8', size: .3, op: .85, vx: .4, vy: -.9, sway: .7 }, realm: { cloud: '#4a1c3c', dusk: '#4a2c44', cards: ['#180a1c', '#2c1230', '#481c44'] }, land: { ground: [.80, .72, .92], hill: '#8a7a90', crack: 1.5 } }],
     build() {
       // side: the road's glowing lava cracks keep to the outer quarter on each side (bright zig-zags across the middle read
       // like a hazard warning, running right under the gates and the army)
@@ -2129,7 +2181,7 @@ const WORLDS = [
       putMix(['Tree_Bare_1_A', 'Tree_Bare_2_A'], dead, { wind: .9, h: 4.0, sh: .8, bark: '#ffe2ee' }, () => put(GEO.deadTree(), dead, { sh: .9 })); putP('xtal', () => GEO.crystal('#3a1a5a', '#e06aff'), crystals, { bark: '#e06aff', mat: softMat({ roughness: .2, flatShading: true }), sh: .7 }); putP('spire', () => GEO.spire(), spires, { mat: softMat({ flatShading: true }), sh: 1.0 });
       putMix(ROCK_MODELS, rocks, { h: .8, sh: 1.1, bark: '#5a5066' }, () => put(GEO.rock('#1d1824', '#5a4f66'), rocks, { mat: softMat({ flatShading: true }), sh: 1.2 })); putP('ribs', () => GEO.ribs(), ribs, { sh: 1.0 }); putP('colb', () => GEO.column(.9, '#3a3342', '#7a7084'), pillars, { mat: softMat({ flatShading: true }), sh: .8 });
       putMix(['Grass_1_A', 'Grass_2_A'], tufts, { wind: 0, h: .5, leaf: '#7a4038' }, () => put(GEO.tuft(), tufts, { mat: new THREE.MeshLambertMaterial({ vertexColors: true }), shadow: false })); put(new THREE.SphereGeometry(1, 7, 5), cinders, { mat: basicMat('#ffffff'), shadow: false });
-      wVolcano(-11, -45, 1.1);
+      wVolcano(-11, -45, 1.1); wCracks(STG && STG.land && STG.land.crack || 1); if (worldSt === 2) wEruption(-11, 8.2, -45);
       wLavaPool(9.4, -31, 1.7);
     } },
 ];
@@ -2276,6 +2328,7 @@ const fortDress = new THREE.Group();
 function dressGate(i) {
   if (fortDress.parent !== fort) fort.add(fortDress); for (const o of [...fortDress.children]) fortDress.remove(o);
   const A = LMART[LM_SETS[i]]; if (A && A.geo.gtrim) bdHalf(A, 'gtrim').forEach(g => bdMesh(g, A.mat, 0, 0, 0, fortDress));
+  if (A && i === 3) { halo('#ff8a2a', 2.6, 0, 3.75, 3.3, fortDress, .75); halo('#ffd060', 1.1, 0, 3.7, 3.4, fortDress, .8); for (const q of [-1, 1]) { halo('#ff7a1a', 1.7, q * 2.86, .35, 3.95, fortDress, .7); for (const [a, z, w] of [[-.4, 1.6, 1.3], [.45, 1.9, 1.4], [.1, 3.1, .9]]) halo('#ff6a1a', w, q * (4.9 + Math.sin(a) * 1.5), z, 2.2 + Math.cos(a) * 1.5, fortDress, .42); } } // Magmaw's fires
 }
 // every world gets its own arrangement, so the same pieces never sit in the same spots twice
 function redesignLandmarks(i) {
@@ -2295,17 +2348,25 @@ function redesignLandmarks(i) {
       monumentSkull(-12.6, -28, 1.68, '#d7aa72', false);
       ancientColumn(11.7, -18, 5.3, '#d8a66e'); ancientColumn(9.8, -20.5, 3.8, '#dfb77f', true);
       royalBanner3D(8.6, -8.5, 1); cursedObelisk(10.3, -34, 3, '#9b705d');
+      if (LMART.dunes && LMART.dunes.geo.tomb) { const g = landmark(-8.1, -23.2, 1.9, .8); g.rotation.y = .42; lmMesh('dunes', 'tomb', g, 0, 0, 0, { s: .92 }); propShadows.push([-8.1, -23.2, 1.5]); // Sek-Ra's tomb, thrown open
+        mesh(new THREE.PlaneGeometry(1.3, 1.86), new THREE.MeshBasicMaterial({ map: glowTex, color: C('#d050ff'), transparent: true, opacity: .8, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }), 0, 1.22, .34, g, false).userData.sharedMaps = true; halo('#b040ff', 3.6, 0, 1.3, .9, g, .55); lightPool('#b040ff', 3.6, 3.2, 0, 1.9, g, .4); }
       break;
     case 2: // Frostbite Peaks: icy columns making a frozen gateway, an old skull in the snow, crystals on the left by his castle
-      ancientColumn(-10.6, -24, 4.4, '#c9e4f4'); ancientColumn(10.5, -24, 4.4, '#c9e4f4', true);
+      ancientColumn(-10.6, -24, 4.4, '#c9e4f4'); ancientColumn(10.4, -19, 4.4, '#c9e4f4', true);
       monumentSkull(11.4, -14, 1.1, '#d7e9f5', false); cursedObelisk(-10.7, -34, 3.3, '#a8b4d7');
       royalBanner3D(-8.1, -7, .95); cursedCrystals([[-8.6, -30.5, 1], [-9.7, -32.2, 0], [-8.2, -33.4, 1]]);
+      if (LMART.frost && LMART.frost.geo.throne) { const g = landmark(-8.0, -22.6, 1.8, 1); lmMesh('frost', 'throne', g, 0, 0, 0, { s: .72, ry: .42 }); propShadows.push([-8.0, -22.6, 1.5]); halo('#8fe6ff', 3.2, 0, 1.2, .8, g, .22); } // Hrimgar's throne, empty
+      clearAround(9.0, -25.4, 2.6); LM_SPOTS.push([9.0, -25.4, 2.4]); wCabin(9.0, -25.4);
       break;
     case 3: // Ember Hollow: burning pylons, a crowned skull sentry, his banners pushed far into your side, crystals both sides
       lavaChainPylon(-10.3, -25); lavaChainPylon(10.5, -25);
       monumentSkull(11.8, -34, 1.36, '#645565', true); cursedObelisk(-9.3, -12, 3.9);
       royalBanner3D(-8.4, -20, 1.1, true); royalBanner3D(8.4, -15, 1, true);
       cursedCrystals([[-8.1, -30, 1], [8.2, -30.5, 0], [-9, -33, 0], [9.2, -33.3, 1]]);
+      if (LMART.ember && LMART.ember.geo.smith) { // the smith Magmaw was, his anvil, and the mold he broke
+        const g = landmark(8.15, -26.2, 1.8, 1); lmMesh('ember', 'smith', g, 0, 0, 0, { s: .76, ry: -.32 }); propShadows.push([8.15, -26.2, 1.3]); halo('#ffd24a', 1.6, .5, 4.2, .6, g, .4);
+        const a = landmark(7.6, -22.9, 1.0, 1); lmMesh('ember', 'anvil', a, 0, 0, 0, { s: .56, ry: .5 }); propShadows.push([7.6, -22.9, .7]); halo('#ff9a2a', 1.2, 0, 1.2, 0, a, .5);
+        const m = landmark(-7.8, -23.2, 1.2, 1); lmMesh('ember', 'mold', m, 0, 0, 0, { s: .68, ry: .35 }); propShadows.push([-7.8, -23.2, .9]); halo('#ffd24a', 1.1, 0, .7, .3, m, .3); }
       break;
   }
 }
@@ -2315,17 +2376,18 @@ function redesignLandmarks(i) {
    Beating the boss heals it: the storm lifts, the dead trees and crystals sink away and the living ones come back up. ---- */
 const stageOf = n => { const f = ((n - 1) % WORLD_LEN + 1) / WORLD_LEN; return f <= .4 ? 0 : f <= .8 ? 1 : 2; };
 let worldSt = 0, STG = null, CLS = ''; // CLS: what the pieces being placed do when the land heals ('life' comes up, 'dead' goes down)
-const HEAL = { on: false, t: 0, list: [], mats: [], cloth: [] }, HEALED = { value: 0 };
+const HEAL = { on: false, t: 0, list: [], mats: [], cloth: [], fx: [] }, HEALED = { value: 0 };
 const landLeaf = n => { const L = STG && STG.land; if (!L) return undefined; return /Grass/.test(n) ? L.tuft : /Bush/.test(n) ? L.bush : /Tree_4|trees_A|tree_single_A/.test(n) ? L.pine : /[Tt]ree/.test(n) ? L.leaf[n.length % L.leaf.length] : undefined; };
 function healStart() { if (!STG || worldSt !== 2 || HEAL.on) return; HEAL.on = true; HEAL.t = -.55; }
 function healTick(dt) {
   if (!HEAL.on || HEAL.t >= 3.4) return; HEAL.t += dt; if (HEAL.t < 0) return;
-  const w0 = { ...WORLDS[worldIdx], ...STG }, w1 = WORLDS[worldIdx], e = clamp(HEAL.t / 2.2, 0, 1), k = e * e * (3 - 2 * e), mix = (a, b) => wc.copy(C(a)).lerp(wc2.copy(C(b)), k);
+  const w0 = { ...WORLDS[worldIdx], ...STG }, w1 = { ...WORLDS[worldIdx], ...(WORLDS[worldIdx].stages[0] || {}) }, e = clamp(HEAL.t / 2.2, 0, 1), k = e * e * (3 - 2 * e), mix = (a, b) => wc.copy(C(a)).lerp(wc2.copy(C(b)), k);
   if (HEAL.t - dt < 0) for (const h of HEAL.list) if (h.cls === 'life') { h.o.visible = true; }
   paintSky(w0.sky.map((c, j) => '#' + new THREE.Color(c).lerp(new THREE.Color(w1.sky[j]), k).getHexString())); scene.fog.color.copy(mix(w0.fog[0], w1.fog[0])); scene.fog.near = w0.fog[1] + (w1.fog[1] - w0.fog[1]) * k; scene.fog.far = w0.fog[2] + (w1.fog[2] - w0.fog[2]) * k;
   hemi.color.copy(mix(w0.hemi[0], w1.hemi[0])); hemi.groundColor.copy(mix(w0.hemi[1], w1.hemi[1])); hemi.intensity = w0.hemi[2] + (w1.hemi[2] - w0.hemi[2]) * k;
   sun.color.copy(mix(w0.sun[0], w1.sun[0])); sun.intensity = w0.sun[1] + (w1.sun[1] - w0.sun[1]) * k; renderer.toneMappingExposure = w0.exposure + (w1.exposure - w0.exposure) * k;
-  HEALED.value = k; for (const m of HEAL.mats) m.mat.color.copy(m.from).lerp(WHITE, k);
+  for (const f of HEAL.fx) f(k);
+  HEALED.value = k; for (const m of HEAL.mats) m.mat.color.copy(m.from).lerp(m.to || WHITE, k);
   if (k > .5 && HEAL.cloth.length) { for (const m of HEAL.cloth) m.map = royalBanTex; HEAL.cloth.length = 0; }
   for (const h of HEAL.list) { // the wave runs from his castle to you, band by band
     const u = clamp((HEAL.t - h.d) / 1.1, 0, 1), y = h.cls === 'life' ? -7 * Math.pow(1 - u, 3) + (u < 1 ? Math.sin(u * Math.PI) * .5 : 0) : -5 * u * u * u;
@@ -2604,18 +2666,18 @@ function addSkyline(i) {
   const glow = (col, size, x, y, z, parent, op = .6) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: C(col), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: op, fog: false, toneMapped: false })); s.scale.set(size, size, 1); s.position.set(x, y, z); parent.add(s); return s; };
   const tube = (a, b, r, mat, parent) => { const d = new THREE.Vector3().subVectors(b, a), m = mesh(new THREE.CylinderGeometry(r, r, d.length(), 6), mat, 0, 0, 0, parent, false); m.position.copy(a).addScaledVector(d, .5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); return m; };
   // the moon (Dunes: a huge low sun), with soft craters, low over the peaks
-  { const cols = [['#efe4ff', '#b8a6dc'], ['#ffc27a', '#ff7a5a'], ['#e6f6ff', '#9ec4e6'], ['#ff6a4a', '#7a1a20']][i] || ['#ffffff', '#cccccc'];
+  const skyDisc = (DC, op) => { const cols = DC || [['#efe4ff', '#b8a6dc'], ['#ffc27a', '#ff7a5a'], ['#e6f6ff', '#9ec4e6'], ['#ff6a4a', '#7a1a20']][i] || ['#ffffff', '#cccccc'];
     const tx = canvasTex(256, 256, (x, w, h) => { const g = x.createRadialGradient(w * .42, h * .4, w * .05, w / 2, h / 2, w / 2); g.addColorStop(0, cols[0]); g.addColorStop(1, cols[1]); x.fillStyle = g; x.beginPath(); x.arc(w / 2, h / 2, w / 2 - 1, 0, 7); x.fill();
       x.save(); x.clip(); if (i === 1) { x.fillStyle = 'rgba(255,240,200,.25)'; for (let k = 0; k < 5; k++) x.fillRect(0, h * (.55 + k * .09), w, h * .035); } else for (let k = 0; k < 9; k++) { x.fillStyle = `rgba(0,0,0,${.06 + rand() * .08})`; x.beginPath(); x.arc(30 + rand() * (w - 60), 30 + rand() * (h - 60), 8 + rand() * 26, 0, 7); x.fill(); } x.restore(); });
-    const mx = i === 1 ? -22 : 26, my = i === 1 ? 23 : 28, mz = -200, r = i === 1 ? 17 : 13;
-    const moon = mesh(new THREE.CircleGeometry(r, 48), new THREE.MeshBasicMaterial({ map: tx, transparent: true, fog: false, toneMapped: false, depthWrite: false }), mx, my, mz, sky, false); moon.renderOrder = -2;
-    glow(cols[0], r * 5.5, mx, my, mz - 1, sky, i === 3 ? .5 : .32).renderOrder = -3; }
-  if (STG && worldSt === 2) { // the storm is his: his eyes burn in the cloud over the citadel, and look away now and then
-    const ez = citAt()[0] - 14, ey = 40 + citAt()[1], mat = q => new THREE.SpriteMaterial({ map: canvasTex(256, 160, (x, w, h) => { // a slanted ember, brow down towards the middle
-      x.translate(w / 2, h / 2); x.scale(q, 1); x.rotate(.2); const eye = k => { x.beginPath(); x.moveTo(-100 * k, -22 * k); x.quadraticCurveTo(-10 * k, -34 * k, 92 * k, 6 * k); x.quadraticCurveTo(20 * k, 62 * k, -60 * k, 40 * k); x.quadraticCurveTo(-98 * k, 24 * k, -100 * k, -22 * k); x.closePath(); };
-      x.shadowColor = '#ff3ad0'; x.shadowBlur = 34; x.fillStyle = 'rgba(214,40,190,.9)'; eye(.8); x.fill(); x.fill(); x.shadowBlur = 12; const g = x.createRadialGradient(0, 8, 2, 0, 8, 70); g.addColorStop(0, '#ffffff'); g.addColorStop(.35, '#ffc4f4'); g.addColorStop(1, '#f03ad0'); x.fillStyle = g; eye(.6); x.fill(); x.fillStyle = '#4a0648'; x.beginPath(); x.ellipse(2, 8, 7, 24, 0, 0, 7); x.fill(); }), transparent: true, depthWrite: false, fog: false, toneMapped: false, opacity: .9 });
-    const es = [-1, 1].map(q => { const o = new THREE.Sprite(mat(q)); o.renderOrder = -1; dyn.add(o); return [o, q]; });
-    worldAnim.push(t => { const u = (t * .16) % 1, lid = HEAL.on ? Math.max(0, 1 - Math.max(0, HEAL.t) * 2) : u > .94 ? Math.abs((u - .97) / .03) : 1, dx = Math.sin(t * .37) * .9; for (const [o, q] of es) { o.visible = lid > 0; o.position.set(q * 6.6 + dx, ey + Math.sin(t * .5) * .4, ez); o.scale.set(11.5, 7.2 * Math.max(.06, lid), 1); } });
+    const mx = DC ? DC[2] : i === 1 ? -22 : 26, my = DC ? DC[3] : i === 1 ? 23 : 28, mz = -200, r = DC ? DC[4] : i === 1 ? 17 : 13, go = i === 3 ? .5 : .32;
+    const moon = mesh(new THREE.CircleGeometry(r, 48), new THREE.MeshBasicMaterial({ map: tx, transparent: true, opacity: op, fog: false, toneMapped: false, depthWrite: false }), mx, my, mz, sky, false); moon.renderOrder = -2;
+    const gl = glow(cols[0], r * 5.5, mx, my, mz - 1, sky, go * op); gl.renderOrder = -3;
+    return o => { moon.material.opacity = o; moon.visible = o > 0; gl.material.opacity = go * o; }; };
+  { const d0 = STG && STG.disc, d1 = STG && worldSt === 2 ? (WORLDS[i].stages[0] || {}).disc || null : null, f0 = skyDisc(d0, 1);
+    if (STG && worldSt === 2 && JSON.stringify(d0 || 0) !== JSON.stringify(d1 || 0)) { const f1 = skyDisc(d1, 0); f1(0); HEAL.fx.push(k => { f0(Math.max(0, 1 - k * 2)); f1(Math.max(0, k * 2 - 1)); }); } } // the storm's sun goes, the old sky's own comes back
+  if (STG && worldSt === 2) { // the storm is his: the eyes of his citadel's skull burn through it
+    const [cz, up] = citAt(), es = [-1, 1].map(q => [glow('#ff4ad8', 5, q * 1.28, 8.35 + up, cz + 8.2, dyn, .95), glow('#ffffff', 1.5, q * 1.28, 8.35 + up, cz + 8.4, dyn, .9)]), aura = glow('#c040ff', 17, 0, 9 + up, cz + 7.6, dyn, .42);
+    worldAnim.push(t => { const on = HEAL.on ? Math.max(0, 1 - Math.max(0, HEAL.t) * 1.4) : 1, f = on * (.82 + .18 * Math.sin(t * 2.3) + .08 * Math.sin(t * 17)); for (const [a, b] of es) { a.scale.setScalar(.01 + 5.4 * f); b.scale.setScalar(.01 + 1.7 * f); } aura.scale.setScalar(.01 + 17 * f); });
   }
   // spirit wisps circling the keep in the realm's glow colour
   { const wc = R.glow || '#c070ff', ws = Array.from({ length: 7 }, (_, k) => ({ s: glow(wc, 1.6, 0, 0, 0, dyn, .85), a: k / 7 * Math.PI * 2, y: 13 + (k % 3) * 2.4, r: 5.5 + (k % 2) * 1.6, sp: .5 + (k % 3) * .12 }));
@@ -2693,10 +2755,10 @@ function addSkyline(i) {
         mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 28, (.55 - k % 2 * .15) * s, 6, false), k % 2 ? lava : lava2, 0, 0, 0, sky, false); }
       if (!plume) return;
       const puffs = Array.from({ length: 9 }, (_, k) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: smokeTex, color: C(k % 3 ? '#6a5258' : '#8a5a50'), transparent: true, depthWrite: false, fog: false, opacity: .8 })); dyn.add(sp); return { sp, ph: k / 9 }; });
-      const sparks = Array.from({ length: 10 }, (_, k) => ({ s: glow(k % 2 ? '#ffb040' : '#ff5a1a', 1.4, 0, 0, 0, dyn, .95), ph: rand(), dx: (rand() - .5) * 2, dz: (rand() - .5) * 2 }));
+      const ER = STG && worldSt === 2 ? 1 : 0, sparks = Array.from({ length: ER ? 24 : 10 }, (_, k) => ({ s: glow(k % 2 ? '#ffb040' : '#ff5a1a', 1.4, 0, 0, 0, dyn, .95), ph: rand(), dx: (rand() - .5) * 2, dz: (rand() - .5) * 2 }));
       worldAnim.push(t => {
         for (const p of puffs) { const u = (t * .07 + p.ph) % 1; p.sp.position.set(top.x + Math.sin(u * 3 + p.ph * 9) * 3 + u * 10, top.y + 2 + u * 26, top.z); p.sp.scale.setScalar(6 + u * 18); p.sp.material.opacity = .85 * Math.min(1, u * 6) * (1 - u); }
-        for (const e of sparks) { const u = (t * .45 + e.ph) % 1; e.s.position.set(top.x + e.dx * u * 9, top.y + 1 + u * 14 - u * u * 16, top.z + e.dz * u * 9); e.s.material.opacity = .95 * (1 - u); }
+        for (const e of sparks) { const u = (t * .45 + e.ph) % 1; e.s.position.set(top.x + e.dx * u * (9 + 7 * ER), top.y + 1 + u * (14 + 16 * ER) - u * u * (16 + 14 * ER), top.z + e.dz * u * 9); if (ER) e.s.scale.setScalar(2.6 * (1.1 - u)); e.s.material.opacity = .95 * (1 - u); }
       });
     };
     volcano(-15, -112, 1, true); volcano(22, -118, .6, false);
@@ -2707,7 +2769,7 @@ const vigEl = (() => { const d = document.createElement('div'); d.id = 'vignette
 function applyVignette(i) { const c = ['20,40,10', '70,40,10', '20,40,80', '40,0,20'][i] || '0,0,0'; vigEl.style.background = `radial-gradient(ellipse 85% 70% at 50% 46%, rgba(${c},0) 58%, rgba(${c},.34) 100%)`; }
 function applyWorld(i, st) {
   st = !WORLDS[i].stages ? 0 : G.sim ? worldSt : st === undefined ? stageOf(G.level || save.level) : st;
-  if (i === worldIdx && st === worldSt) return; worldIdx = i; worldSt = st; STG = WORLDS[i].stages ? WORLDS[i].stages[st] : null; CLS = ''; for (const m of HEAL.mats) m.mat.color.copy(m.from); HEAL.on = false; HEAL.t = 0; HEAL.list.length = HEAL.mats.length = HEAL.cloth.length = 0; HEALED.value = 0; lmWorld(i); const w = STG ? { ...WORLDS[i], ...STG } : WORLDS[i], HD0 = HEX_DRESS[w.hex || 'meadow'], HD = STG && STG.realm ? { ...HD0, realm: { ...HD0.realm, ...STG.realm } } : HD0; if (crowdReady && !G.sim) loadWarlordArt(i); // (its warlord's art, ready before he is needed)
+  if (i === worldIdx && st === worldSt) return; worldIdx = i; worldSt = st; STG = WORLDS[i].stages ? WORLDS[i].stages[st] : null; CLS = ''; for (const m of HEAL.mats) m.mat.color.copy(m.from); HEAL.on = false; HEAL.t = 0; HEAL.list.length = HEAL.mats.length = HEAL.cloth.length = HEAL.fx.length = 0; HEALED.value = 0; lmWorld(i); const w = STG ? { ...WORLDS[i], ...STG } : WORLDS[i], HD0 = HEX_DRESS[w.hex || 'meadow'], HD = STG && STG.realm ? { ...HD0, realm: { ...HD0.realm, ...STG.realm } } : HD0; if (crowdReady && !G.sim) loadWarlordArt(i); // (its warlord's art, ready before he is needed)
   for (const o of [...world.children]) {
     world.remove(o);
     o.traverse(c => {
@@ -2726,7 +2788,7 @@ function applyWorld(i, st) {
   { const lk = FOE_LOOKS[lookOf(i)]; if (lk && lk.tint) FOE_TINT.copy(C(lk.tint)); else FOE_TINT.copy(w.foeTint ? C(w.foeTint) : WHITE).multiply(FOE_WARM); } /* aged ivory bone, so the horde never reads as white ghosts (worlds with their own horde look bring their own tint) */ bakeFoes(lookOf(i)); /* and dressed for this world */ G.hex = !!MODELS["hex/hex_grass"]; CUR_DUSK = (HD.realm || {}).dusk || null; w.build(); if (G.hex) hexWorld(HD); redesignLandmarks(i); dressGate(i); for (const [x, z, r] of LM_SPOTS) clearAround(x, z, r); addAmbient(i); if (G.hex) addSkyline(i); noFarShadows(world); G.baked = bakeStatic(world); bakeScenery(world);
   if (STG) for (const o of world.children) { // what the healing moves and recolours
     if (o.userData.cls) { if (o.geometry && !o.geometry.boundingSphere) o.geometry.computeBoundingSphere(); const z = o.isGroup || o.isInstancedMesh ? o.position.z : o.geometry.boundingSphere.center.z; HEAL.list.push({ o, cls: o.userData.cls, z, d: clamp((z + 62) / 50, 0, 1) * 1.1 }); if (o.userData.cls === 'life') o.visible = false; }
-    if (o.userData.ground && o.material && STG.land) { const f = new THREE.Color().setRGB(...STG.land.ground); o.material.color.copy(f); HEAL.mats.push({ mat: o.material, from: f }); }
+    if (o.userData.ground && o.material && STG.land) { const f = new THREE.Color().setRGB(...STG.land.ground); o.material.color.copy(f); { const g0 = ((WORLDS[i].stages[0] || {}).land || {}).ground; HEAL.mats.push({ mat: o.material, from: f, to: g0 && new THREE.Color().setRGB(...g0) }); } }
   }
   GLOW.gather(); applyVignette(i); applyGrade(i);
   { const keep = FLAME_AT.filter(f => !LM_SPOTS.some(q => (q[0] - f[0]) ** 2 + (q[1] - f[2]) ** 2 < q[2] * q[2])); FLAME_AT.length = 0; FLAME_AT.push(...keep); } layFlames(); // (none over a torch that made way for a landmark)
@@ -5636,12 +5698,28 @@ function updateWarlord(dt, play) {
 const CAPTAINS = [{ name: 'THE CARVER' }, { name: 'THE EMBALMER' }, { name: 'THE HUSCARL' }, { name: 'THE BELLOWS' }];
 const CAP = { on: false, alive: false, done: false, hp: 0, max: 1, x: 0, z: 0, t: 0, def: CAPTAINS[0] };
 const capPool = lightPool('#ffffff', 7, 7, 0, 0, scene, .001); capPool.material = capPool.material.clone(); capPool.visible = false;
-function resetCaptain() { CAP.on = CAP.alive = CAP.done = false; capPool.visible = false; }
+let capArt = null, capWait = null;
+function loadCaptainArt() { return capWait || (capWait = loadArt('models/wl/captain/').then(A => capArt = A).catch(e => { console.warn('sculpted captains missing, the brute stands in', e); capWait = null; return null; })); }
+function buildCaptain(w) { // one of the four figures in the set, hung on the same rig as everyone else
+  if (!capArt || !KK.Skeleton_Warrior || !THREE.SkeletonUtils || G.sim) return null;
+  const B = CAP.built || (CAP.built = []); if (B[w]) return B[w];
+  const root = THREE.SkeletonUtils.clone(KK.Skeleton_Warrior.scene); root.position.set(0, 0, 0); root.rotation.set(0, 0, 0); root.scale.setScalar(1);
+  root.traverse(o => { if (o.isSkinnedMesh) o.skeleton.pose(); }); root.updateMatrixWorld(true);
+  const m = capArt.mat.clone(); hangArt(root, { geo: capArt.geo, J: { nodes: capArt.J.nodes.filter(n => n.name.startsWith('c' + w + '_')), glow: [] } }, m);
+  const g = new THREE.Group(); g.add(root); g.visible = false; g.userData.dyn = true; wlGroup.add(g);
+  const mixer = new THREE.AnimationMixer(root), acts = {};
+  for (const [k, n, alt] of [['walk', 'Walking_A', 'Running_A'], ['strike', 'Throw', 'Use_Item'], ['die', 'Death_A', 'Death_B']]) { const c = clipOf(n) || clipOf(alt); if (!c) continue; const a = acts[k] = mixer.clipAction(c); if (k !== 'walk') { a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; } }
+  if (acts.walk) acts.walk.timeScale = .85;
+  return (B[w] = { g, root, mixer, acts, m });
+}
+const CAP_S = 1.95;
+function resetCaptain() { if (CAP.b) { CAP.b.g.visible = false; CAP.b.mixer.stopAllAction(); CAP.b = null; } if (isCaptain(G.level) && !G.sim && crowdReady) loadCaptainArt(); else if (capArt && !G.sim) for (const t of capArt.tex) t.dispose();  CAP.on = CAP.alive = CAP.done = false; capPool.visible = false; }
 function startCaptain() {
   const w = worldOf(G.level), cfg = G.cfg, soft = (G.level <= WORLD_LEN ? .75 : 1) * Math.max(.55, 1 - .15 * (G.level === save.level ? save.fails || 0 : 0));
   Object.assign(CAP, { on: true, alive: true, def: CAPTAINS[w], x: 0, z: FORT_Z + .6, t: 2.6, w });
   CAP.max = CAP.hp = Math.round(Math.max(G.fortMax * .3 * soft, (G.dps || 0) * CAP_HPK * soft));
   WL.ward = true; WL.wardHp = G.fortMax * CAP_WARD; G.fortHp = Math.max(G.fortHp, WL.wardHp); ward.visible = true;
+  CAP.b = buildCaptain(w); if (CAP.b) { const b = CAP.b; b.g.visible = true; b.g.rotation.set(0, 0, 0); b.g.position.set(0, 0, CAP.z); b.g.scale.setScalar(CAP_S); b.mixer.stopAllAction(); if (b.acts.walk) b.acts.walk.reset().setEffectiveWeight(1).play(); CAP.dead = 0; CAP.flash = 0; }
   addUnit(beetles, 0, CAP.z, CAP.max, 5.2, 1.3, 0, 1, F_CAP);
   for (const [ox, oz, big] of [[-1.7, 1.2, 1], [1.7, 1.2, 1], [-.8, 2.2, 0], [.8, 2.2, 0], [-2.6, .2, 0], [2.6, .2, 0]]) addUnit(beetles, ox, CAP.z + oz, big ? cfg.stagHp * 1.2 : cfg.beetleHp * 2, big ? 2.2 : 1, 1.25, 0, big);
   G.shake = Math.max(G.shake, 1); buzz([80, 40, 120]); G.fortFlash = 1; const col = WARLORDS[w].col;
@@ -5652,6 +5730,7 @@ function startCaptain() {
 let CAP_HPK = 9, CAP_WARD = .45;
 function captainDown(x, z, through) { // he falls, or breaks into your camp: either way his shield goes with him
   if (!CAP.alive) return; CAP.alive = false; CAP.done = true; WL.ward = false; ward.visible = false; capPool.visible = false;
+  if (CAP.b) { const b = CAP.b; CAP.dead = .001; b.mixer.stopAllAction(); if (through) b.g.visible = false; else if (b.acts.die) b.acts.die.reset().setEffectiveWeight(1).play(); }
   if (through) return;
   G.shake = Math.max(G.shake, 1); buzz([60, 30, 120]); const col = WARLORDS[CAP.w].col;
   burst(x, 1.8, z, [col, FOE_FX, '#ffffff', FOE], 50, 9, { vy: 8, life: 1.1, g: 13, sz: 2.2, kind: PK.ROCK }); burst(x, 2, z, ['#ffc62b', '#ffd84a'], 26, 6, { vy: 9, life: 1.4, g: 16, sz: 2, kind: PK.COIN }); splat(x, z, FOE, 4);
@@ -5659,11 +5738,12 @@ function captainDown(x, z, through) { // he falls, or breaks into your camp: eit
 }
 function captainTick(dt, play) {
   if (play && !CAP.on && !CAP.done && isCaptain(G.level) && G.fortHp <= G.fortMax * CAP_WARD) startCaptain();
+  if (CAP.b && CAP.b.g.visible) { const b = CAP.b; b.mixer.update(dt); CAP.flash = Math.max(0, (CAP.flash || 0) - dt * 5); b.m.color.setScalar(1 + CAP.flash * .9); if (CAP.act && (CAP.actT -= dt) <= 0) { CAP.act.fadeOut(.2); CAP.act = null; if (b.acts.walk) b.acts.walk.setEffectiveWeight(1); } if (CAP.dead) { CAP.dead += dt; if (CAP.dead > 1.8) b.g.position.y -= dt * 1.5; if (CAP.dead > 4) b.g.visible = false; } }
   if (!CAP.alive) return;
   let j = -1; for (let k = 0; k < beetles.n; k++) if (beetles.tier[k] === F_CAP && beetles.hp[k] > 0) { j = k; break; }
   if (j < 0) { captainDown(CAP.x, CAP.z); return; }
-  CAP.x = beetles.x[j]; CAP.z = beetles.z[j]; CAP.hp = beetles.hp[j]; beetles.ph[j] = 0; capPool.position.set(CAP.x, .04, CAP.z);
-  if (play && (CAP.t -= dt) <= 0 && ants.n > 8) { CAP.t = 4.4; hurlShot(CAP.w, _kv.set(CAP.x, 3.2, CAP.z + .6), 1.15, 1.7); }
+  CAP.x = beetles.x[j]; CAP.z = beetles.z[j]; CAP.hp = beetles.hp[j]; beetles.ph[j] = 0; capPool.position.set(CAP.x, .04, CAP.z); if (CAP.b) { CAP.b.g.position.set(CAP.x, 0, CAP.z); if (beetles.flash[j] > .5) CAP.flash = 1; }
+  if (play && (CAP.t -= dt) <= 0 && ants.n > 8) { CAP.t = 4.4; if (hurlShot(CAP.w, _kv.set(CAP.x, 3.6, CAP.z + .8), 1.15, 1.7) && CAP.b && CAP.b.acts.strike) { const a = CAP.act = CAP.b.acts.strike; CAP.actT = a.getClip().duration * .92; if (CAP.b.acts.walk) CAP.b.acts.walk.setEffectiveWeight(.15); a.reset().setEffectiveWeight(1).fadeIn(.08).play(); } }
 }
 /* ---------------- world hazards ----------------
    Each world plays differently from its second level on. Meadow: gusts of wind shove your stream sideways (arrows on the
@@ -6186,7 +6266,7 @@ const popOf = (p, i) => { if (p === beetles && p.pass[i] === 1) { if (p.tier[i] 
 function drawSprites(p, sm) {
   const cell = sm.geometry.attributes.aCell.array, party = G.boomed && p === ants;
   for (let i = 0; i < p.n; i++) {
-    const s = p.s[i] * US * popOf(p, i), air = liftOf(p, i), flying = air > 0.05, t = unitType(p, i);
+    const s = p === beetles && p.tier[i] === F_CAP && CAP.b ? .001 : p.s[i] * US * popOf(p, i), air = liftOf(p, i), flying = air > 0.05, t = unitType(p, i); // (the sculpted captain is drawn in place of his brute)
     const hopK = party ? Math.abs(Math.sin(G.t * 7 + p.ph[i])) : 0;
     let f = flying || hopK > .35 || (p === beetles && p.kind[i] && !(p.atk[i] > 0)) ? JUMP_F : p.atk[i] > 0 ? ATK_F : Math.floor(((G.t * (p.big[i] ? 1.1 : 1.55) + p.ph[i] * .16) % 1) * RUN_FRAMES);
     _m.makeScale(s, s, s); _m.setPosition(p.x[i], air + hopK * .55 * s, p.z[i]);
@@ -6807,7 +6887,7 @@ window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') 
 async function perfTest() {
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 8px);z-index:99;padding:10px 12px;border-radius:12px;background:rgba(8,12,30,.9);color:#fff;font:600 13px/1.45 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), rows = [];
-  box.textContent = 'Speed test v139: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
+  box.textContent = 'Speed test v140: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); box.textContent = 'Loading...'; G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 19; const on0 = MUS.on;
   save.up = { ...save.up, rate: 10, twin: 4, arsenal: 5 }; await Promise.race([loadLm('ember'), wait(8000)]); await wait(800);
   const pr = k => { pixelRatio = k; renderer.setPixelRatio(k); resize(); };
@@ -6828,7 +6908,7 @@ async function perfTest() {
   G.nestHp = G.nestMax = 30;
   await run('castle blows up', 4500, () => { G.fortMax = 100; G.fortHp = 0; });
   await wait(1500); save.level = 6; await run('new world', 5000, () => { $('result').classList.remove('on'); startPlay(); });
-  box.textContent = 'Speed test v139: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
+  box.textContent = 'Speed test v140: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
 }
 let last = performance.now();
 // keeps the frame rate smooth: renders at fewer pixels when a phone struggles, and at more (up to the screen's own sharpness) when it has headroom
