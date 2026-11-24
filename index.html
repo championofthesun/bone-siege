@@ -459,6 +459,15 @@ svg.ico.sm{width:18px;height:18px}
     <path d="M12 18 13.500 5.500l6 6L24 3l4.500 8.500 6-6L36 18z" fill="url(#gGold)" stroke="#7a4300" stroke-width="2" stroke-linejoin="round"/>
     <circle cx="24" cy="13.500" r="2" fill="#b45cff"/>
   </symbol>
+  <symbol id="t-6" viewBox="0 0 48 52">
+    <!-- the Bone King on the Endless Road: no crown -->
+    <path d="M24 13C13 13 6 21 6 31c0 5.500 2.700 8.700 7 10v5c0 2 1.500 3.500 3.500 3.500h15c2 0 3.500-1.500 3.500-3.500v-5c4.300-1.300 7-4.500 7-10 0-10-7-18-18-18z" fill="#f4ecd8" stroke="#3a2450" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M10 27q4-5 9-2M38 27q-4-5-9-2" fill="none" stroke="#3a2450" stroke-width="2.200" stroke-linecap="round"/>
+    <ellipse cx="17" cy="32" rx="5" ry="5.300" fill="#2a1240"/><ellipse cx="31" cy="32" rx="5" ry="5.300" fill="#2a1240"/>
+    <circle cx="17" cy="32.500" r="2.200" fill="#ff3df0"/><circle cx="31" cy="32.500" r="2.200" fill="#ff3df0"/>
+    <path d="M24 37l-2.600 4h5.200z" fill="#2a1240"/>
+    <path d="M19 44.500v4.500M24 44.500v4.500M29 44.500v4.500" stroke="#3a2450" stroke-width="1.800" stroke-linecap="round"/>
+  </symbol>
   <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M14 2 5 13.500h5.500L9 22l10-12.500h-6z" fill="url(#gGold)" stroke="#7a4300" stroke-width="1.800" stroke-linejoin="round"/></symbol>
   <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 2 4.500 4.800v6.200c0 5 3.200 9.300 7.500 11 4.300-1.700 7.500-6 7.500-11V4.800z" fill="url(#gBlue)" stroke="#0b2a5c" stroke-width="1.800" stroke-linejoin="round"/><path d="M12 4.500v15M6.800 10.500h10.400" stroke="#ffc62b" stroke-width="2.200" stroke-linecap="round"/></symbol>
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M4 21V9h2.500V6.500H9V9h2V6.500h2V9h2V6.500h2.500V9H20v12z" fill="#d9d2c4" stroke="#5a5146" stroke-width="1.700" stroke-linejoin="round"/><path d="M10 21v-4.500a2 2 0 0 1 4 0V21z" fill="#5a3a20"/><path d="M12 6.500V1.800l4 1.300-4 1.300" fill="#2a6cf0" stroke="#0b2a5c" stroke-width="1.100" stroke-linejoin="round"/><path d="M4 13h16" stroke="#5a5146" stroke-width="1"/></symbol>
@@ -686,7 +695,7 @@ function laneGates(n, r) {
   // quickly, so lining up on it is a gamble against the sure thing in the side lanes. The castle is sized as if
   // it were still the gate it replaced (k0, see kOf), so landing it really is a bonus. Its own random stream keeps the rest of the layout unchanged.
   const r3 = mulberry(n * 3571 + 11);
-  if (n >= 8 && !isBoss(n) && r3() < .45) Object.assign(mid, { k0: mid.k, w: 1.1, k: n >= 26 ? 6 : 5, move: .6, spd: 1.9 + r3() * .6, jack: 1 }); // narrow and quick: aim at the middle and under half your soldiers catch it (about a ×3 on average); time it and it's ×5
+  if (n >= 8 && !isBoss(n) && (r3() < .45 || n > LAP_LEN && featOf(n) === 'jack') && !/frozen/.test(featOf(n))) Object.assign(mid, { k0: mid.k, w: 1.1, k: (n >= 26 ? 6 : 5) * (n > LAP_LEN && featOf(n) === 'jack' ? 2 : 1), move: .6, spd: 1.9 + r3() * .6, jack: 1 }); // narrow and quick: aim at the middle and under half your soldiers catch it (about a ×3 on average); time it and it's ×5
   if (r() < .5) out.push({ z: -18.8, x: 0, w: 4.4, k: 2 });
   else { const f2 = r() < .5; out.push({ z: -18.8, x: -2.6, w: 3.4, k: f2 ? 2 : 3 }, { z: -18.8, x: 2.6, w: 3.4, k: f2 ? 3 : 2 }); }
   // red gates (÷2, later ÷3) cost soldiers, so a mindless sweep across the road pays for it. They're drawn from their own
@@ -714,16 +723,42 @@ function makeGates(n, r) {
   }
   return armGates(out, n, r);
 }
+/* ---- one new thing a world, from its third level on ----
+   Dunes: a shield wall (arrows bounce off it). Frostbite: frozen gates (march into the ice to break it; what is inside is worth
+   more). Ember: a necromancer (he raises the fallen until you cut him down). Citadel: shifting gates (the last row swaps on a
+   beat). Each keeps to its own world, and the Endless Road deals them out as its twists. */
+const FEATS = ['', 'shield', 'frozen', 'necro', 'shift'];
+function featOf(n) { // which one this level has, if any
+  if (n > LAP_LEN) return roadTwist(n);
+  const w = Math.floor((n - 1) / WORLD_LEN), k = (n - 1) % WORLD_LEN + 1; if (!w || isBoss(n) || isCaptain(n) || isGold(n) || k < 3) return '';
+  return k === 3 || mulberry(n * 5003 + 7)() < .62 ? FEATS[w] : '';
+}
+function featGates(n, gates) {
+  const f = featOf(n);
+  if (f === 'frozen') { const mid = gates.find(g => g.z === -12 && !g.jack && g.k > 1), last = gates.filter(g => g.z === -18.8 && g.k > 1).sort((a, b) => a.k - b.k)[0], g = mid || last; if (g) { g.k0 = g.k; g.k = Math.min(6, g.k + 2); g.ice = g.iceN = Math.round(Math.min(20, 10 + eff(n) * .5)); } }
+  if (f === 'shift') { for (let i = gates.length - 1; i >= 0; i--) if (gates[i].z === -18.8) gates.splice(i, 1); const q = mulberry(n * 733 + 1)() < .5 ? 1 : -1; gates.push({ z: -18.8, x: q * 2.6, w: 3.4, k: 3, shift: 1 }, { z: -18.8, x: -q * 2.6, w: 3.4, k: 1 / 3, bad: 1, shift: 1 }); }
+  return gates;
+}
+/* ---- the Endless Road (51 on) ----
+   A new world every five levels, in an order that never repeats itself, at any hour of its story; one twist a level; a captain
+   every fifth, and every tenth one of the five comes back. Rowan holds the wall. It grows gently and has no end. */
+const roadN = n => n - LAP_LEN, onRoadLv = n => n > LAP_LEN;
+function roadWorld(n) {
+  if (isBoss(n)) return (roadN(n) / 10 - 1) % 5; const leg = Math.floor((roadN(n) - 1) / 5), deal = b => { const r = mulberry(b * 131 + 7), a = [0, 1, 2, 3, 4]; for (let i = 4; i > 0; i--) { const j = r() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const b = Math.floor(leg / 5), a = deal(b); if (b && a[0] === deal(b - 1)[4]) [a[0], a[1]] = [a[1], a[0]]; return a[leg % 5];
+}
+const roadStage = n => isBoss(n) ? (roadWorld(n) === HALLW ? 0 : 2) : mulberry(Math.floor((roadN(n) - 1) / 5) * 53 + 9)() * 3 | 0;
+const TWISTS = { shield: ['SHIELD WALL', 'Arrows bounce off. Use mages or cannons'], frozen: ['FROZEN GATE', 'March into the ice to break it'], necro: ['NECROMANCER', 'It raises the fallen until you cut it down'], shift: ['SHIFTING GATES', 'The last row swaps on a beat'], saws: ['TWO SAWS', 'Two bone saws share the road'], jack: ['JACKPOT ROAD', 'The middle gate pays double'], bombs: ['POWDER KEGS', 'Twice as many bomb skeletons'], rain: ['BONE RAIN', 'Twice as many archers behind the horde'] };
+const roadTwist = n => isBoss(n) || isCaptain(n) || isGold(n) ? '' : Object.keys(TWISTS)[(roadN(n) * 3 + Math.floor(roadN(n) / 8)) % 8];
 // every world ends on a boss level; inside a world the difficulty eases in, rises, then peaks on the boss
 const isBoss = n => n % WORLD_LEN === 0, isCaptain = n => n % WORLD_LEN === CAP_AT, isGold = n => n % WORLD_LEN === 6;
-const eff = n => 1 + (n - 1) * EFF_K; // a level's place on the old 5-a-world curve
+const eff = n => n <= LAP_LEN ? 1 + (n - 1) * EFF_K : 1 + (LAP_LEN - 1) * EFF_K + (n - LAP_LEN) * .2; // a level's place on the old 5-a-world curve (the Endless Road climbs a third as fast)
 let EFF_K = .6;
-// third-star times: seconds of play after the intro flyover. Measured in v95 by simulation: a strong and an average player
-// through the campaign, plus six average runs of each level with that stage's usual upgrades; the median winning time x1.45
-// for human hands, at least 25 s, bosses at least 45 s (the warlord takes a fight). The gates are fixed per level, which is
-// why levels differ (level 3's layout is a slow one). Past level 40 the second lap's times repeat.
-const PAR_T = [25, 45, 65, 50, 50, 25, 30, 60, 45, 35, 30, 35, 35, 30, 30, 60, 35, 40, 30, 30, 70, 60, 45, 25, 45, 35, 40, 35, 40, 40, 30, 25, 25, 35, 35, 25, 30, 25, 35, 30, 35, 35, 35, 40, 45, 30, 40, 40, 45, 110];
-const parOf = n => Math.max(PAR_T[(n - 1) % 50], isBoss(n) ? 45 : isCaptain(n) ? 40 : 25);
+// third-star times: seconds of play after the intro flyover. Measured for v142 by simulation: five players of different hands at
+// each level, with the upgrades that level's coins usually buy, on two seeds; the median winning time x1.45 for human hands, at
+// least 25 s (captains 40, bosses 45). World 1 keeps any kinder time it had. The gates are fixed per level, so levels differ.
+const PAR_T = [25, 45, 65, 50, 50, 25, 30, 60, 45, 50, 25, 30, 30, 40, 50, 50, 35, 40, 30, 60, 50, 45, 30, 25, 40, 25, 30, 35, 40, 60, 25, 35, 35, 40, 60, 25, 40, 25, 45, 60, 40, 30, 35, 40, 60, 25, 45, 40, 40, 140];
+const parOf = n => onRoadLv(n) ? (isBoss(n) ? 70 : isCaptain(n) ? 60 : 45) : Math.max(PAR_T[(n - 1) % 50], isBoss(n) ? 45 : isCaptain(n) ? 40 : 25);
 const WORLD_CURVE = [.86, .9, .94, .98, 1.02, .72, .96, 1, 1.05, 1.1]; // arrive, settle, something new, mix, captain, gold rush, build up, long siege, boss
 let FORT_K = 1.7, HORDE_K = 1.25; // castle toughness and skeleton numbers overall (phase 5: battles were over in ~10 s)
 let BOMB_K = 1, ARCH_K = 1;       // how many bomb skeletons and bone archers overall
@@ -748,11 +783,12 @@ function levelCfg(n, fails = 0) {
     beetleHp: (1 + 0.12 * (e - 1)) * late * Math.sqrt(ease),
     stagEvery: n < 3 ? 0 : Math.max(2, 5 - Math.floor(e / 4)),
     stagHp: 8 + 3 * e,
-    bombs: n < 3 ? 0 : Math.round(BOMB_K * Math.min(16, 3 + .5 * (e - 2))),   // bomb skeletons scattered through the horde
-    archers: n < 7 ? 0 : Math.round(ARCH_K * Math.min(12, 5 + .3 * (e - 4))),  // and a row of bone archers at its back
+    feat: featOf(n), shields: featOf(n) === 'shield' ? 8 : 0, necros: featOf(n) === 'necro' ? (n > LAP_LEN ? 2 : 1) : 0,
+    bombs: n < 3 ? 0 : Math.round(BOMB_K * Math.min(16, 3 + .5 * (e - 2)) * (n > LAP_LEN && featOf(n) === 'bombs' ? 2 : 1)),   // bomb skeletons scattered through the horde
+    archers: n < 7 ? 0 : Math.round(ARCH_K * Math.min(12, 5 + .3 * (e - 4)) * (n > LAP_LEN && featOf(n) === 'rain' ? 2 : 1)),  // and a row of bone archers at its back
     par: parOf(n), // seconds of play to beat for the third star (see PAR_T)
     surgeAt: Math.round(23 + .12 * e + (isBoss(n) ? 20 : isCaptain(n) ? 10 : 0)) * 1.6, // when a dragged-out battle makes the horde surge (unchanged; it used to ride on the old star time)
-    saws: n < 13 ? [] : [{ z: -9.1, range: 3.9, spd: .62 + Math.min(.6, .025 * (e - 8)) }], // the bone saw past the weapon row
+    saws: n < 13 ? [] : [{ z: -9.1, range: 3.9, spd: .62 + Math.min(.6, .025 * (e - 8)) }, ...(n > LAP_LEN && featOf(n) === 'saws' ? [{ z: -21.6, range: 3.9, spd: .9 }] : [])], // the bone saw past the weapon row
     charge: n < 6 ? null : { gap: Math.max(isBoss(n) ? 5.5 : 7, (11 - .1 * (e - 4)) * (isBoss(n) ? .75 : 1)), hp: Math.round(ease * CHARGE_HPK * (20 + 4 * e)), dbl: isBoss(n) ? .3 : e < 25 ? 0 : Math.min(.3, .1 + .01 * (e - 25)) }, // brute charges down the road edges
     beetleSpeed: 3 + Math.min(1.5, 0.05 * e),
     boss: isBoss(n),
@@ -760,7 +796,7 @@ function levelCfg(n, fails = 0) {
   };
 }
 // what a player who changes lanes between rows can multiply by: the best × gate in each row (weapon and +N gates count as ×1)
-const kOf = g => g.jack ? g.k0 : g.k; // the castle is sized as if the jackpot were still the gate it replaced
+const kOf = g => g.k0 || g.k; // the castle is sized as if the jackpot were still the gate it replaced
 function bestSteer(gates) { const rows = {}; for (const g of gates) rows[g.z] = Math.max(rows[g.z] || 1, kOf(g)); return Object.values(rows).reduce((p, k) => p * k, 1); }
 function bestLine(gates) {
   let best = 1;
@@ -776,7 +812,7 @@ function fairGates(n, r) {
   if (n < 3) return gates;
   const par = n < 5 ? 6 : 18;
   for (let i = 0; i < 30 && bestLine(gates) < par; i++) gates = makeGates(n, r);
-  return gates;
+  return featGates(n, gates);
 }
 
 /* ---------------- three setup ---------------- */
@@ -2529,7 +2565,7 @@ function redesignLandmarks(i) {
 /* ---- a world's three stages: first light, dusk, storm (how far through its levels you are). Each can change the sky, the
    light, the drifting motes and the land (STG.land): what colour the leaves and ground have gone, how many trees have died.
    Beating the boss heals it: the storm lifts, the dead trees and crystals sink away and the living ones come back up. ---- */
-const stageOf = n => { if (worldOf(n) === HALLW) { const k = citK(n); return k <= 5 ? 0 : k <= 8 ? 1 : 2; } const f = ((n - 1) % WORLD_LEN + 1) / WORLD_LEN; return f <= .4 ? 0 : f <= .8 ? 1 : 2; };
+const stageOf = n => { if (n > LAP_LEN) return roadStage(n); if (worldOf(n) === HALLW) { const k = citK(n); return k <= 5 ? 0 : k <= 8 ? 1 : 2; } const f = ((n - 1) % WORLD_LEN + 1) / WORLD_LEN; return f <= .4 ? 0 : f <= .8 ? 1 : 2; };
 let worldSt = 0, STG = null, CLS = ''; // CLS: what the pieces being placed do when the land heals ('life' comes up, 'dead' goes down)
 const HEAL = { on: false, t: 0, list: [], mats: [], cloth: [], fx: [] }, HEALED = { value: 0 };
 const landLeaf = n => { const L = STG && STG.land; if (!L) return undefined; return /Grass/.test(n) ? L.tuft : /Bush/.test(n) ? L.bush : /Tree_4|trees_A|tree_single_A/.test(n) ? L.pine : /[Tt]ree/.test(n) ? L.leaf[n.length % L.leaf.length] : undefined; };
@@ -2553,7 +2589,7 @@ function healTick(dt) {
   }
   G.shadowDirty = true;
 }
-const worldOf = level => Math.floor((level - 1) / WORLD_LEN) % WORLDS.length;
+const worldOf = level => level > LAP_LEN ? roadWorld(level) : Math.floor((level - 1) / WORLD_LEN) % WORLDS.length;
 // static batching: the scenery is hundreds of small untextured meshes (lamps, rails, rocks, bridge, citadel, landmarks...),
 // one draw call each. Once a world is built, every static opaque one is baked into a few big meshes, grouped by material
 // look, with its colour moved into vertex colours. ~600 draw calls become ~20. Animated pieces (userData.dyn up the tree),
@@ -3331,6 +3367,8 @@ const UNIT_TYPES = [
   { id: 'sbomb', model: 'Skeleton_Minion', foe: true, bomb: true }, // the horde's bomb skeletons: red-hot bones and a lit bomb on the skull
   { id: 'sarcher', model: 'Skeleton_Minion', l: 'w_bow_withString', foe: true, quiver: true }, // its archers, who hold the back row and loose volleys
 ];
+UNIT_TYPES.push({ id: 'sshield', model: 'Skeleton_Warrior', r: 'ws_Skeleton_Axe', l: 'ws_Skeleton_Shield_Small_A', foe: true }); // the Dunes' shield bearers
+UNIT_TYPES.push({ id: 'snecro', model: 'Skeleton_Mage', r: 'ws_Skeleton_Staff', foe: true }); // the Ember Wastes' necromancer (fifteen of the sprite sheet's sixteen places)
 const UT = {}; UNIT_TYPES.forEach((u, i) => { u.i = i; UT[u.id] = i; });
 const TIER_TYPE = [UT.recruit, UT.knight, UT.archer, UT.mage, UT.cannon];
 const RUN_FRAMES = 8, JUMP_F = 8, ATK_F = 9, FPT = 10;  // 8 running frames, a mid-air frame and an attack frame per type
@@ -3363,7 +3401,7 @@ function cannonModel() {
 // the crowd sprite sheet, 20 x 7 cells. Since the camera moved in, a phone shows soldiers at up to ~85 screen pixels per
 // metre, so on WebGL2 the sheet is baked 1.5x larger (70 px per metre, was 47): sprites are no longer stretched on phones
 const ATLAS_K = renderer.capabilities.isWebGL2 && renderer.capabilities.maxTextureSize >= 4096 ? 1.5 : 1;
-const CELL_W = Math.round(102 * ATLAS_K), CELL_H = Math.round(136 * ATLAS_K), ATLAS_COLS = 20, ATLAS_W = 2048 * ATLAS_K, ATLAS_H = 1024 * ATLAS_K;
+const CELL_W = Math.round(102 * ATLAS_K), CELL_H = Math.round(136 * ATLAS_K), ATLAS_COLS = 20, ATLAS_W = 2048 * ATLAS_K, ATLAS_H = 1088 * ATLAS_K;
 const BAKE_H = 2.9, BAKE_W = BAKE_H * CELL_W / CELL_H, BAKE_EL = 52 * Math.PI / 180, BAKE_TARGET_Y = 1.15;
 const SPRITE_FOOT = (BAKE_H / 2 - BAKE_TARGET_Y * Math.cos(BAKE_EL)) / BAKE_H; // where the feet sit inside a cell (0 = bottom)
 const UNIT_K = .3;                                      // character model units -> game units
@@ -3664,7 +3702,7 @@ function bakeStrip(u, look) {
    Every unit's ten frames are rendered in Blender into one strip (straight alpha, sRGB) and copied onto the sprite sheet as
    they load, so none of the army's 3D models are needed. The five regular horde units have a strip for each world's look,
    fetched when that world is first seen. If any of them can't be loaded, the old models are fetched and baked instead. */
-const SPR = { on: false, m: null, qs: null, qc: null, looked: new Set(['minion', 'srogue', 'warrior', 'smage', 'sarcher']) };
+const SPR = { on: false, m: null, qs: null, qc: null, looked: new Set(['minion', 'srogue', 'warrior', 'smage', 'sarcher', 'sshield']) };
 const sprFile = (u, look) => 'models/un/' + u.id + (SPR.looked.has(u.id) && look && look !== 'meadow' ? '_' + look : '') + '.webp';
 async function sprLoad(u, look) { const t = await new THREE.TextureLoader().loadAsync(sprFile(u, look)); t.generateMipmaps = false; t.minFilter = t.magFilter = THREE.LinearFilter; return t; }
 function sprBake(u, t) { // one strip onto the sheet, decoded to its linear, premultiplied colour
@@ -3779,7 +3817,7 @@ function spriteCrowd(cap, mat) {
 }
 const allySprites = spriteCrowd(ACAP, spriteMat), foeSprites = spriteCrowd(BCAP, foeSpriteMat);
 // which card a unit shows: its type's row, the frame of its run cycle (or the mid-air frame while flying)
-const FOE_TYPE = [UT.minion, UT.srogue, UT.smage, UT.warrior, UT.sbomb, UT.sarcher], F_BOMB = 4, F_ARCH = 5, F_CAP = 6; // a skeleton's tier is its look
+const FOE_TYPE = [UT.minion, UT.srogue, UT.smage, UT.warrior, UT.sbomb, UT.sarcher, UT.warrior, UT.sshield, UT.snecro], F_BOMB = 4, F_ARCH = 5, F_CAP = 6, F_SHLD = 7, F_NEC = 8; // a skeleton's tier is its look
 const unitType = (p, i) => p === ants ? (p.big[i] ? UT.champion : p.kind[i] ? UT.bomber : TIER_TYPE[p.tier[i]]) : (p.big[i] ? UT.warrior : FOE_TYPE[p.tier[i]]);
 // each skeleton is given its look when it spawns (kept through the pool's reshuffles): grunts, hooded blades, casters, and the odd elite
 const foeLook = () => { const r = rand(); return r < .42 ? 0 : r < .72 ? 1 : r < .88 ? 2 : 3; };
@@ -3838,7 +3876,7 @@ function dressKing(root, mat, crown = false) {
   const out = { root, head: bones[bi('head')], chest: bones[bi('chest')], collar: null };
   for (const n of KINGM.nodes) {
     const g = KINGM.geo[n.name];
-    if (n.name === 'crown') { if (crown) { const i = bi('head'); hang('crown@', () => g.clone().applyMatrix4(toBone(i)), i, 'King_crown'); } continue; }
+    if (n.name === 'crown') { if (crown) { const i = bi('head'); hang('crown@', () => g.clone().applyMatrix4(toBone(i)), i, 'King_crown', KINGM.mat); } continue; } // (its own draw: on the Endless Road he has lost it)
     if (n.bone[0] === '=') { hang(n.name + '@', () => g.clone().scale(...(n.name === 'axe' ? [.8, .86, .86] : [.88, .88, .88])), bi(n.bone.slice(1)), 'King_' + n.name); continue; } // (a little smaller than sculpted: full size, the blade met his cheek on the wind-up)
     if (n.name === 'collar') { // pivots at the neck and turns with his head (kingTick)
       const i = bi('chest'), M = toBone(i), pv = new THREE.Vector3(0, 1.2, 0).applyMatrix4(M); out.collar = hang('collar@', () => g.clone().applyMatrix4(M).translate(-pv.x, -pv.y, -pv.z), i, 'King_collar'); out.collar.position.copy(pv); continue; }
@@ -3851,7 +3889,7 @@ function dressKing(root, mat, crown = false) {
     const x = gs[0].index.array, y = new Uint16Array(x.length * 2); y.set(x); for (let k = 0; k < x.length; k++) y[x.length + k] = x[k] + nv; g.setIndex(new THREE.BufferAttribute(y, 1)); return g; }, hi, 'King_Eyes', KINGM.eye).castShadow = false;
   for (const e of [-1, 1]) { const sp = new THREE.Sprite(KINGM.eyeGlow || (KINGM.eyeGlow = new THREE.SpriteMaterial({ map: glowTex, color: C('#ff3df0'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: .55, fog: false, toneMapped: false }))); sp.scale.setScalar(.34); sp.position.set(e * .163, 1.632 + e * .02, .40).applyMatrix4(HM); bones[hi].add(sp); }
   if (!/[?&]nobake/.test(location.search)) { // his pieces are each fixed to one bone, so they can all be drawn as a single skinned mesh (it was 21 draws, and 21 more for his shadow)
-    const parts = []; root.traverse(o => { if (o.isMesh && o.material === mat) parts.push(o); });
+    const parts = []; root.traverse(o => { if (o.isMesh && o.material === mat && o.name !== 'King_crown') parts.push(o); });
     const joints = parts.map(o => { if (o !== out.collar) return o.parent; const b = new THREE.Bone(); b.position.copy(o.position); b.quaternion.copy(o.quaternion); o.parent.add(b); return out.collar = b; });
     const key = 'one@' + (crown ? 1 : 0), one = KINGM.geo[key] || (KINGM.geo[key] = (() => {
       let nv = 0, ni = 0; for (const o of parts) { nv += o.geometry.attributes.position.count; ni += o.geometry.index.count; }
@@ -4914,7 +4952,7 @@ const shineTex = canvasTex(256, 64, (x, w, h) => {
 shineTex.center.set(.5, .5); shineTex.rotation = .5;
 const shineMat = new THREE.MeshBasicMaterial({ map: shineTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: .5, toneMapped: false });
 const gateWood = std("#8a5a32", .7), gateGold = std("#ffc62b", .3, { metalness: .4 });
-const gateCol = g => g.jack ? '#f07000' : g.arm != null ? TIERS[g.arm].col : g.add ? (g.big ? '#1f6bff' : '#25b8ff') : g.k < 1 ? '#ff2f45' : GATE_COL[g.k] || '#ffffff';
+const gateCol = g => g.jack || g.iceN ? '#f07000' : g.arm != null ? TIERS[g.arm].col : g.add ? (g.big ? '#1f6bff' : '#25b8ff') : g.k < 1 ? '#ff2f45' : GATE_COL[g.k] || '#ffffff';
 // the weapon gates' icons, drawn rather than typed (an emoji looks and measures differently on every phone). Same family as the
 // realm-map emblems: chunky filled shapes, one navy outline weight, a white highlight on top, so they read at a glance on a
 // moving gate. Crossed swords, a recurve bow with an arrow nocked, a fireball, and the royal cannon itself (bronze on blue).
@@ -4976,8 +5014,17 @@ function redGateLabel(x, w, h, n) {
   const tx = x0 + dw + gap + m.actualBoundingBoxLeft, ty = cy + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
   x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.lineWidth = 18; x.strokeStyle = NAVY; x.strokeText(word, tx, ty + 2); x.fillStyle = '#ffffff'; x.fillText(word, tx, ty);
 }
+// shifting gates: the two boards of the last row trade places on a beat. A sign between them winds down to the swap
+const SHIFT_T = 4.2;
+function shiftTick(g, dt, play) {
+  const m = g.mesh.userData, flip = g.flip || 0; if (flip > 0) { g.flip = Math.max(0, flip - dt * 2.6); const u = 1 - g.flip; m.panel.rotation.y = Math.PI * u; if (u >= .5 && !g.swapped) { g.swapped = true; m.panel.material.map = g.k > 1 ? m.good : m.poor; } if (g.flip <= 0) { m.panel.rotation.y = 0; g.swapped = false; } }
+  if (!play || g.lead === false) return; const o = g.lead ? g.twin : (g.twin = G.gates.find(q => q.shift && q !== g && q.z === g.z)); if (!o) return; if (!g.lead) { g.lead = true; o.lead = false; }
+  g.beat = (g.beat ?? SHIFT_T) - dt; const u = clamp(g.beat / SHIFT_T, 0, 1); if (m.sign) { m.sign.visible = true; m.signFill.scale.x = Math.max(.001, u); const w = g.beat < .8 ? 1 + .12 * Math.abs(Math.sin(g.beat * 16)) : 1; m.sign.scale.setScalar(w); m.signFill.material.color.copy(C(g.beat < .8 ? '#ffd84a' : '#c8a0ff')); }
+  if (g.beat <= 0) { g.beat = SHIFT_T; [g.k, o.k] = [o.k, g.k]; [g.bad, o.bad] = [o.bad, g.bad]; g.flip = o.flip = 1; if (!G.sim) { tone(520, .12, 'triangle', .05, 1.5); tone(780, .16, 'triangle', .04, 1.3); for (const q of [g, o]) burst(q.cx, 1.1, q.z, ['#c8a0ff', '#ffffff'], 10, 3.4, { vy: 3, life: .5, g: 6, sz: 1.3, kind: PK.SPARK }); } }
+}
 function makeGateMesh(g) {
-  const grp = new THREE.Group(); const col = gateCol(g), H = 1.5, label = g.arm != null ? TIERS[g.arm].ico + ' ' + TIERS[g.arm].gate : g.add ? '+' + g.add : g.k < 1 ? '÷' + Math.round(1 / g.k) : '×' + g.k;
+  if (g.shift && !g.face) { const alt = makeGateMesh({ ...g, k: g.k > 1 ? 1 / g.k : 1 / g.k, face: 1 }), at = alt.userData.panel.material.map; scene.remove(alt); alt.traverse(o => { if (o.isMesh && o !== alt.userData.panel) { if (o.geometry && !o.userData.keepGeo) o.geometry.dispose(); } }); g.altMap = at; }
+  const grp = new THREE.Group(); const col = gateCol(g), H = 1.5, frameCol = g.shift ? '#b9a0ff' : col, label = g.arm != null ? TIERS[g.arm].ico + ' ' + TIERS[g.arm].gate : g.add ? '+' + g.add : g.k < 1 ? '÷' + Math.round(1 / g.k) : '×' + g.k;
   const BW = g.w - .3; // the board spans between the posts' inner faces (posts are .28 wide on the gate's edges); at full width it ran into them, and on the front row it covered them
   const tex = canvasTex(Math.round(BW * 128), Math.round(H * 128), (x, w, h) => {
     const LH = h; // the height the label is laid out in
@@ -4995,13 +5042,22 @@ function makeGateMesh(g) {
     if (g.k < 1 && !g.add && g.arm == null) { redGateLabel(x, w, LH, Math.round(1 / g.k)); return; }
     const fam = '"Lilita One", Fredoka, "Arial Black", sans-serif', arm = g.arm != null, word = arm ? TIERS[g.arm].gate : label;
     let fs = Math.round(LH * (arm ? .4 : .7)), m, tw, S = arm ? LH * .58 : 0, gap = arm ? LH * .07 : 0;
-    for (let k = 0; k < 6; k++) { x.font = `${fs}px ${fam}`; m = x.measureText(word); tw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight; if (S + gap + tw <= w - (w < 200 ? 24 : 46)) break; fs = Math.round(fs * .9); }
+    for (let k = 0; k < 9; k++) { x.font = `${fs}px ${fam}`; m = x.measureText(word); tw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight; if (S + gap + tw <= w - (w < 200 ? 24 : 46)) break; fs = Math.round(fs * .9); }
     const crew = arm && TIERS[g.arm].merge, x0 = (w - (S + gap + tw)) / 2, tx = x0 + S + gap + m.actualBoundingBoxLeft, ty = LH / 2 + 3 - (crew ? LH * .12 : 0) + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
     x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.lineJoin = 'round'; x.lineWidth = arm ? 12 : 18; x.strokeStyle = 'rgba(11,42,92,.75)'; x.strokeText(word, tx, ty + 2);
     x.fillStyle = '#ffffff'; x.fillText(word, tx, ty);
     if (crew) { const t = crew + ' → 1'; x.font = `${Math.round(LH * .27)}px ${fam}`; x.textAlign = 'center'; x.lineWidth = 9; x.strokeText(t, x0 + S + gap + tw / 2, LH * .8 + 2); x.fillStyle = '#fff3b8'; x.fillText(t, x0 + S + gap + tw / 2, LH * .8); }
     if (arm) gateIcon(x, g.arm, x0 + S / 2, LH / 2 + 3, S);
   });
+  if (g.ice) { // locked in ice: a clear slab over the board, crystals round its foot, a bar that fills as it cracks
+    const iceG = new THREE.Group(); grp.add(iceG); grp.userData.ice = iceG; iceG.userData.dyn = true;
+    const it = canvasTex(256, 128, (x, w, h) => { const q = x.createLinearGradient(0, 0, w, h); q.addColorStop(0, 'rgba(225,246,255,.38)'); q.addColorStop(.5, 'rgba(150,212,248,.08)'); q.addColorStop(1, 'rgba(205,238,255,.32)'); x.fillStyle = q; rrect(x, 2, 2, w - 4, h - 4, 18); x.fill(); const e = x.createRadialGradient(w / 2, h / 2, h * .3, w / 2, h / 2, w * .56); e.addColorStop(0, 'rgba(235,250,255,0)'); e.addColorStop(1, 'rgba(235,250,255,.72)'); x.fillStyle = e; rrect(x, 2, 2, w - 4, h - 4, 18); x.fill(); x.strokeStyle = 'rgba(255,255,255,.85)'; x.lineWidth = 2; for (let k = 0; k < 6; k++) { let px = rand() * w, py = rand() * h; x.beginPath(); x.moveTo(px, py); for (let j = 0; j < 3; j++) { px += (rand() - .5) * 60; py += (rand() - .5) * 46; x.lineTo(px, py); } x.stroke(); } x.lineWidth = 7; rrect(x, 4, 4, w - 8, h - 8, 18); x.stroke(); });
+    const slab = new THREE.Mesh(new THREE.PlaneGeometry(BW + .22, H + .2), new THREE.MeshBasicMaterial({ map: it, transparent: true, depthWrite: false, side: THREE.DoubleSide, toneMapped: false })); slab.position.set(0, 1.0 + .02, .07); slab.rotation.x = -.3; slab.renderOrder = 3.2; slab.userData.dyn = true; iceG.add(slab);
+    const cm = new THREE.MeshStandardMaterial({ color: C('#9fdcff'), emissive: C('#2a7cc0'), emissiveIntensity: .35, roughness: .15, transparent: true, opacity: .9, flatShading: true });
+    for (let k = 0; k < 11; k++) { const u = k / 10 - .5, c = new THREE.Mesh(new THREE.ConeGeometry(.16 + .1 * ((k * 7) % 3) / 2, .5 + .5 * ((k * 5) % 4) / 3, 5), cm); c.position.set(u * (g.w + .1), .2, .16 + .1 * (k % 2)); c.rotation.set(.25, k, -u * .8); c.userData.dyn = true; iceG.add(c); }
+    const bar = new THREE.Group(); bar.position.set(0, 2.3, .1); bar.rotation.x = -.45; iceG.add(bar); const tr = new THREE.Mesh(new THREE.PlaneGeometry(1.56, .32), new THREE.MeshBasicMaterial({ map: canvasTex(156, 32, (x, w, h) => { rrect(x, 2, 2, w - 4, h - 4, 14); x.fillStyle = '#0e4a8c'; x.fill(); x.lineWidth = 5; x.strokeStyle = '#ffffff'; x.stroke(); }), transparent: true, depthWrite: false, toneMapped: false })), fg = new THREE.PlaneGeometry(1, .15); fg.translate(.5, 0, 0); const fl = new THREE.Mesh(fg, new THREE.MeshBasicMaterial({ color: C('#8fe6ff'), transparent: true, depthWrite: false, toneMapped: false })); fl.position.set(-.69, 0, .004); fl.scale.x = .001; tr.renderOrder = 4; fl.renderOrder = 5; tr.userData.dyn = fl.userData.dyn = true; bar.add(tr, fl); grp.userData.iceBar = fl;
+    halo('#8fe6ff', 3, 0, 1.1, -.5, iceG, .28);
+  }
   if (g.jack) { // a gold JACKPOT sign rides above it
     const st = canvasTex(320, 80, (x, w, h) => { rrect(x, 3, 3, w - 6, h - 6, 22); x.fillStyle = '#5a2a00'; x.fill(); x.lineWidth = 6; x.strokeStyle = '#ffd84a'; x.stroke();
       x.font = '50px "Lilita One", Fredoka, "Arial Black", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = '#ffd84a'; x.fillText('JACKPOT', w / 2, h / 2 + 3, w - 30); });
@@ -5009,7 +5065,10 @@ function makeGateMesh(g) {
     sign.position.set(0, 2.95, .05); sign.rotation.x = -.45; sign.renderOrder = 4; grp.add(sign); // above the gold post caps (on this narrow gate they hid the J and the T)
   }
   const panel = new THREE.Mesh(new THREE.PlaneGeometry(BW, H), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }));
-  panel.position.y = 1.0; panel.rotation.x = -0.3; panel.renderOrder = 2.6; grp.add(panel); grp.userData.panel = panel; // (after the ground shadows, splats and warning rings, which lie at 2 and below: they painted over the number)
+  panel.position.y = 1.0; panel.rotation.x = -0.3; panel.renderOrder = 2.6; grp.add(panel); grp.userData.panel = panel;
+  if (g.shift && !g.face) { panel.userData.dyn = true; panel.rotation.order = 'XYZ'; grp.userData.good = g.k > 1 ? tex : g.altMap; grp.userData.poor = g.k > 1 ? g.altMap : tex;
+    if (g.x > 0) { const st = canvasTex(256, 96, (x, w, h) => { rrect(x, 3, 3, w - 6, h - 6, 26); x.fillStyle = '#2a1450'; x.fill(); x.lineWidth = 6; x.strokeStyle = '#c8a0ff'; x.stroke(); x.strokeStyle = '#ffffff'; x.fillStyle = '#ffffff'; x.lineWidth = 9; x.lineCap = x.lineJoin = 'round'; for (const [y, d] of [[32, 1], [60, -1]]) { x.beginPath(); x.moveTo(128 - 52 * d, y); x.lineTo(128 + 40 * d, y); x.moveTo(128 + 26 * d, y - 13); x.lineTo(128 + 46 * d, y); x.lineTo(128 + 26 * d, y + 13); x.stroke(); } });
+      const sg = new THREE.Group(); sg.position.set(-g.x, 2.15, .1); sg.rotation.x = -.45; grp.add(sg); const pl = new THREE.Mesh(new THREE.PlaneGeometry(1.5, .56), new THREE.MeshBasicMaterial({ map: st, transparent: true, depthWrite: false, toneMapped: false })), bg = new THREE.PlaneGeometry(1, .1); bg.translate(.5, 0, 0); const fl = new THREE.Mesh(bg, new THREE.MeshBasicMaterial({ color: C('#c8a0ff'), transparent: true, depthWrite: false, toneMapped: false })); fl.position.set(-.6, -.21, .01); const fw = new THREE.Group(); fw.scale.x = 1.2; pl.renderOrder = 4; fl.renderOrder = 5; pl.userData.dyn = fl.userData.dyn = true; fw.position.set(0, 0, 0); sg.add(pl); fl.geometry.scale(1.2, 1, 1); sg.add(fl); grp.userData.sign = sg; grp.userData.signFill = fl; } } // (after the ground shadows, splats and warning rings, which lie at 2 and below: they painted over the number)
   // the front row stands right at the muzzle, where the cannon barrel cut across its label. Its board rides a little higher and
   // further back between the posts instead (it used to draw over everything, which also hid knights fresh out of the cannon)
   if (g.z > MUZZLE_Z - 1.2) panel.position.set(0, panel.position.y + .32, -.42);
@@ -5024,15 +5083,15 @@ function makeGateMesh(g) {
   }
   const shine = new THREE.Mesh(new THREE.PlaneGeometry(BW - .3, H - .3), shineMat); // a glint sweeps the glossy board
   shine.position.set(0, panel.position.y + .006, panel.position.z + .025); shine.rotation.x = -0.3; shine.renderOrder = 2.8; shine.userData.keepMat = true; grp.add(shine);
-  lightPool(col, g.w + 1.6, 3, 0, .2, grp, .25); if (g.jack) { halo('#ffd84a', 2.6, 0, 1.3, -.7, grp, .14); lightPool('#ffd84a', 3, 4, 0, .2, grp, .28); } // the jackpot glows from a distance (a soft glow well behind the board, so the ×5 stays crisp)
+  lightPool(frameCol, g.w + 1.6, 3, 0, .2, grp, .25); if (g.jack) { halo('#ffd84a', 2.6, 0, 1.3, -.7, grp, .14); lightPool('#ffd84a', 3, 4, 0, .2, grp, .28); } // the jackpot glows from a distance (a soft glow well behind the board, so the ×5 stays crisp)
   // medieval frame: square oak posts banded in the gate's colour, gold caps, a pennant on each, and a stone footing
-  const PH = 2.1, bandM = std(col, .4, { emissive: C(col), emissiveIntensity: .25 });
+  const PH = 2.1, bandM = std(frameCol, .4, { emissive: C(frameCol), emissiveIntensity: .25 });
   for (const sx of [-1, 1]) {
     if (!BART.camp) mesh(new THREE.BoxGeometry(0.28, PH, 0.28), gateWood, sx * g.w / 2, PH / 2, 0, grp);
     for (const y of [.55, 1.55]) mesh(bevelBox(.33, .12, .33, .03), bandM, sx * g.w / 2, y, 0, grp, false);
     if (!BART.camp) { mesh(new THREE.ConeGeometry(0.24, 0.34, 4), gateGold, sx * g.w / 2, PH + .17, 0, grp, false).rotation.y = Math.PI / 4; mesh(new THREE.SphereGeometry(0.08, 8, 6), gateGold, sx * g.w / 2, PH + .38, 0, grp, false); }
     { const P = new THREE.Shape(); P.moveTo(0, .15); P.quadraticCurveTo(.2, .17, .46, .03); P.lineTo(.34, 0); P.lineTo(.46, -.05); P.quadraticCurveTo(.2, -.13, 0, -.13); P.closePath(); const pg = new THREE.ShapeGeometry(P, 5), q = pg.attributes.position; for (let i = 0; i < q.count; i++) q.setZ(i, Math.sin(q.getX(i) * 9) * .05); pg.computeVertexNormals(); const pn = mesh(pg, std(col, .6, { side: THREE.DoubleSide, emissive: C(col), emissiveIntensity: .12 }), sx * (g.w / 2 + .14), PH - .05, .02, grp, false); pn.scale.x = sx; }
-    halo(col, 1.0, sx * g.w / 2, PH + .2, .02, grp, .4);
+    halo(frameCol, 1.0, sx * g.w / 2, PH + .2, .02, grp, .4);
     if (!BART.camp) mesh(new THREE.BoxGeometry(0.5, 0.2, 0.5), std('#cfc5b6', .8), sx * g.w / 2, 0.1, 0, grp);
   }
   if (BART.camp) { const p = bdMesh(postGeo(g.w), BART.camp.mat, 0, 0, 0, grp); p.userData.keepGeo = false; } // the sculpted posts (the bands and pennants keep the gate's colour)
@@ -5073,20 +5132,21 @@ function wallX(x, px, z, r) {
 function setupLevel(n) {
   if (!G.sim) clearToasts(); G.tauntT = -99; MUS.lift = MUS.push = 0; // (the King's taunt timer runs on G.t, which restarts each level, and the music's key change must not carry over)
   gameEl.classList.remove('cine'); G.level = n; if (HEAL.on) worldIdx = -1; /* (a healed land is built again as it was) */ G.cfg = levelCfg(n, n === save.level ? save.fails || 0 : 0); if (G.sim && G.cfgPatch) Object.assign(G.cfg, G.cfgPatch); applyWorld(G.worldOverride != null ? G.worldOverride : worldOf(n)); citPlace(n);
-  for (const g of G.gates) disposeGroup(g.mesh);
+  for (const g of G.gates) { disposeGroup(g.mesh); if (g.mesh.userData.good) { g.mesh.userData.good.dispose(); g.mesh.userData.poor.dispose(); } }
   G.gates = G.cfg.gates.map((g, i) => ({ ...g, z: g.z - 2.1, bit: 1 << i, cx: g.x, pulse: 0, ready: true, cool: 0, mesh: makeGateMesh({ ...g, z: g.z - 2.1 }) })); // rows sit a little further up, clear of the gatehouse
   buildLaneWalls(n);
   { const lanes = {}; for (const g of G.gates) if (g.add) { const k = (g.x > 0 ? 'r' : 'l') + (g.big ? 'b' : ''); const L = lanes[k] || (lanes[k] = { grp: 1, x: g.x, z: 0, n: 0 }); L.z += g.z; L.n++; g.grp = L; } for (const L of Object.values(lanes)) L.z /= L.n; } // each +N lane shares one running label, shown halfway up it
   ants.n = 0; beetles.n = 0; P.n = 0; SH.n = 0; D.life.fill(0);
-  G.fortMax = G.fortHp = G.cfg.fortHp; G.nestMax = G.nestHp = nestHp(save.up.nest);
+  G.fortMax = G.fortHp = G.cfg.fortHp; G.nestMax = G.nestHp = Math.round(nestHp(save.up.nest) * (1 + .15 * clamp((n === save.level ? save.fails || 0 : 0) - 1, 0, 4))); // (from the second loss on, each one also makes your camp a little sturdier)
   for (const o of fortDress.children) if (o.userData.veil) o.visible = true; clearEnding(); if (G.look) { for (const g of G.look.gl) scene.remove(g); G.look = null; lookOff(); } G.lookDone = false;
   G.lx = 0; G.charge = 0; G.waveT = n === 1 ? 3.2 : 2.2; G.waveQ = 0; G.waves = 0; G.fired = 0; G.firedSent = 0; G.killsSent = 0; G.firing = false; G.fireT = 0;
   G.shake = 0; G.fortFlash = 0; G.endT = 0; G.t = 0; G.clk = 0; G.squash = 0; G.continued = false; G.kingS = G.cfg.boss ? 9.2 : 8; G.crowdShown = 0;
   for (const f of floats) { f.t = 0; f.el.style.opacity = 0; }
   G.shadowDirty = true; resetCastle(); turret.visible = save.up.turret > 0; G.turT = 1; blasts.forEach(b => { b.visible = false; });
   clearBones(); spawnHorde(G.cfg.horde); G.kingT = 4; G.casts = 0; resetKingShots(); resetCharges(); resetHoard(); resetSaws(); resetPaladin(); resetWarlord(); resetCaptain(); setHolder(holderOf(n)); resetHazards(); G.kills = 0; G.dps = 0; G.fortPrev = null; G.surged = false; G.rage = false; rageGlow.visible = false;
-  $('lvlPill').textContent = 'Level ' + n;
+  $('lvlPill').textContent = lvName(n);
 }
+const lvName = n => n > LAP_LEN ? 'Road ' + (n - LAP_LEN) : 'Level ' + n;
 
 /* ---------------- actions ---------------- */
 function launchAnt() {
@@ -5185,6 +5245,19 @@ function spawnHorde(n0) {
     const x = -LANE + .9 + (k + .5 + (rand() - .5) * .5) * (2 * LANE - 1.8) / na, i = addUnit(beetles, x, HORDE_Z0 - .55 + rand() * .3, cfg.beetleHp * 1.6, 1.2, cfg.beetleSpeed * .45, 0, 0, F_ARCH);
     if (i >= 0) { beetles.kind[i] = 1; beetles.pass[i] = 1; }
   }
+  const frontZ = HORDE_Z0 + Math.min(HORDE_DEPTH, 2 + rows * .3);
+  for (let k = 0; k < (cfg.shields || 0); k++) { const i = addUnit(beetles, -LANE + .75 + k * (2 * LANE - 1.5) / (cfg.shields - 1), frontZ + .9 + (k % 2) * .16, cfg.beetleHp * 6, 2.15, cfg.beetleSpeed * .4, 0, 0, F_SHLD); if (i >= 0) { beetles.kind[i] = 1; beetles.pass[i] = 1; } }
+  NEC.at.length = 0; NEC.t = 5; for (let k = 0; k < (cfg.necros || 0); k++) { const i = addUnit(beetles, cfg.necros > 1 ? (k ? 2.6 : -2.6) : 0, HORDE_Z0 + 2.4, cfg.stagHp * 2.6, 3.7, cfg.beetleSpeed * .3, 0, 0, F_NEC); if (i >= 0) { beetles.kind[i] = 1; beetles.pass[i] = 1; } }
+}
+// the necromancer: where skeletons fell lately, and when he next calls them back up
+const NEC = { at: [], t: 5 }, necHalo = [0, 1].map(() => { const g = new THREE.Group(); g.visible = false; g.userData.dyn = true; scene.add(g); halo('#4aff7a', 6, 0, 1.2, -1.6, g, .42); const r = new THREE.Mesh(new THREE.RingGeometry(1.35, 1.62, 40), new THREE.MeshBasicMaterial({ color: C('#5aff8a'), transparent: true, opacity: .7, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false })); r.rotation.x = -Math.PI / 2; r.position.y = -.1; g.add(r); g.userData.ring = r; return g; });
+function necTick(dt, play, fz) {
+  let k = 0; if (G.cfg.necros) for (let j = 0; j < beetles.n && k < 2; j++) { if (beetles.tier[j] !== F_NEC || beetles.hp[j] <= 0) continue; const h = necHalo[k++]; h.visible = !G.sim; h.position.set(beetles.x[j], 1.4, beetles.z[j]); h.userData.ring.scale.setScalar(1 + .15 * Math.sin(G.t * 4)); h.userData.ring.rotation.z = G.t; if (beetles.atk[j] > 0) beetles.atk[j] -= dt; if (!G.sim && rand() < dt * 8) burst(beetles.x[j] + (rand() - .5) * 1.4, .4 + rand() * 2.4, beetles.z[j], ['#5aff8a', '#c8ffd8'], 1, .6, { vy: 1.6, life: .7, g: -.4, sz: 1.3, kind: PK.SPARK }); }
+  for (let q = k; q < 2; q++) necHalo[q].visible = false;
+  if (!play || !k || (NEC.t -= dt) > 0 || NEC.at.length < 3 || G.kneel) return; NEC.t = 4.6;
+  const n = Math.min(4 + Math.round(eff(G.level) * .25), NEC.at.length) * k; for (let q = 0; q < n; q++) { const [x, z] = NEC.at.splice(rand() * NEC.at.length | 0, 1)[0] || []; if (x === undefined) break; const i = addUnit(beetles, x, Math.min(z, fz - 2.5), G.cfg.beetleHp, 1, G.cfg.beetleSpeed * .45, 1, 0, foeLook()); if (i >= 0) { beetles.kind[i] = 0; beetles.flash[i] = 1; } if (!G.sim) burst(x, .3, z, ['#5aff8a', '#ffffff', '#2ac060'], 4, 2.4, { vy: 3, life: .6, g: 4, sz: 1.5, kind: PK.SPARK }); }
+  for (let j = 0; j < beetles.n; j++) if (beetles.tier[j] === F_NEC) beetles.atk[j] = .7;
+  if (!G.sim) { sfx('raise', 800, () => { tone(150, .7, 'sawtooth', .045, 1.7); tone(300, .6, 'sine', .05, 1.5); }); }
 }
 function spawnBeetle(x, z, hp, s, sp, big) {
   x = clamp(x, -LANE + .4, LANE - .4); const look = big ? 0 : foeLook(), el = look === 3; addUnit(beetles, x, z, el ? hp * 1.6 : hp, el ? s * 1.25 : s, sp, 0, big, look);
@@ -5213,7 +5286,8 @@ function fireShot(i, s, tx, ty, tz, fort) {
 function killFoe(j) {
   if (beetles.tier[j] === F_CAP) captainDown(beetles.x[j], beetles.z[j]);
   if (beetles.tier[j] === F_BOMB) return foeBomb(j); // shot down, a bomb skeleton blows where he stands
-  G.kills = (G.kills || 0) + 1;
+  G.kills = (G.kills || 0) + 1; if (G.cfg.necros && !beetles.big[j] && beetles.tier[j] < F_BOMB) { NEC.at.push([beetles.x[j], beetles.z[j]]); if (NEC.at.length > 40) NEC.at.shift(); }
+  if (beetles.tier[j] === F_NEC) { burst(beetles.x[j], 1.6, beetles.z[j], ['#5aff8a', '#ffffff', '#2ac060'], 50, 8, { vy: 7, life: 1, g: 8, sz: 2, kind: PK.SPARK }); if (!G.sim) { toastMsg('NECROMANCER DOWN', 'The fallen stay down', { live: true }); [392, 523, 659].forEach((f, q) => setTimeout(() => tone(f, .22, 'triangle', .05), q * 100)); } }
   beetles.hp[j] = 0; burst(beetles.x[j], .4, beetles.z[j], FOE_FX, beetles.big[j] ? 16 : 3);
   splat(beetles.x[j], beetles.z[j], FOE, beetles.big[j] ? 2.8 : .8 + rand() * .5);
   meleeKill(); if (beetles.big[j] || rand() < .22) dropBones(beetles.x[j], beetles.z[j], beetles.big[j]);
@@ -5229,8 +5303,8 @@ function landShot(k) {
     return;
   }
   if (WL.alive) { const dx = x - WL.x, dz = z - WL.z, rr = WL_R + R + .4; if (dx * dx + dz * dz < rr * rr) hurtWarlord(dmg); } // arrows, fireballs and cannonballs that land on the warlord
-  if (R > 0) foesNear(x, z, R, j => { const dx = beetles.x[j] - x, dz = beetles.z[j] - z; if (dx * dx + dz * dz < R * R) hurtFoe(j, dmg); }); // (nearby cells only)
-  else { let best = -1, bd = .55; foesNear(x, z, .55, j => { const d = Math.abs(beetles.x[j] - x) + Math.abs(beetles.z[j] - z); if (d < bd) { bd = d; best = j; } }); if (best >= 0) hurtFoe(best, dmg); }
+  if (R > 0) foesNear(x, z, R, j => { const dx = beetles.x[j] - x, dz = beetles.z[j] - z; if (dx * dx + dz * dz < R * R) hurtFoe(j, beetles.tier[j] === F_SHLD ? dmg * 2.5 : dmg); }); // (nearby cells only; fire and shot break shields)
+  else { let best = -1, bd = .55; foesNear(x, z, .55, j => { const d = Math.abs(beetles.x[j] - x) + Math.abs(beetles.z[j] - z); if (d < bd) { bd = d; best = j; } }); if (best >= 0) { if (beetles.tier[best] === F_SHLD && kind === 0) { if (rand() < .6) burst(beetles.x[best], 1.1, beetles.z[best] + .5, ['#ffe9a0', '#ffffff'], 2, 2.4, { vy: 2.4, life: .25, g: 6, sz: 1, kind: PK.SPARK }); sfx('ting', 90, () => tone(2100, .07, 'triangle', .025, .8)); } else hurtFoe(best, dmg); } } // (arrows ring off a tower shield)
   if (kind === 1) { burst(x, .4, z, ['#ffe680', '#ff9a2a', '#ff4a1a', '#ffffff'], 12, 4.5, { vy: 4, life: .5, g: 9, sz: 1.8, kind: PK.SPARK }); splat(x, z, '#7a5a40', R * .9); sfx('fwhump', 60, () => smp('fireLand', .4, .06)); }
   else if (kind === 2) {
     burst(x, .5, z, ['#ffe680', '#ffb02a', '#ff6a1a', '#ffffff'], 18, 6.5, { vy: 6, life: .6, g: 13, sz: 2.4, kind: PK.SPARK }); burst(x, .4, z, ['#8a7f72', '#5a5048'], 6, 4, { vy: 5, life: .8, g: 16, sz: 1.3, kind: PK.ROCK });
@@ -5413,6 +5487,7 @@ function foeSpecials(dt, play) {
     if (t === F_ARCH && beetles.atk[j] > 0) beetles.atk[j] -= dt;
     else if (t === F_BOMB) { near = Math.min(near, fz - beetles.z[j]); if (!G.sim && rand() < dt * 7) burst(beetles.x[j] + .08, 1.28 * beetles.s[j], beetles.z[j], ['#ffe08a', '#ff8a2a'], 1, .9, { vy: 1.6, life: .3, g: 2, sz: 1.1, kind: PK.SPARK }); } // the fuse spits sparks
   }
+  necTick(dt, play, fz);
   if (play && !G.sim && near < 7 && !save.bombTip) { toastMsg('BOMB SKELETONS!', 'They explode when touched. Steer around the red glow', { live: true, on: () => { save.bombTip = 1; persist(); } }); }
   if (play && G.cfg.archers && ants.n && (G.volT -= dt) <= 0) { // a volley: every archer in range looses at once (a little ragged)
     G.volT = ARCH_GAP * (G.cfg.boss ? .8 : 1) * (.9 + rand() * .2);
@@ -5722,6 +5797,7 @@ function startWarlord(force) {
   if (WL.b && WL.b !== b) { WL.b.g.visible = false; ghost(WL.b, false); } ghost(b, shade); WL.shade = shade;
   WL.b = b; WL.def = WARLORDS[i]; WL.lap = Math.floor((G.level - 1) / (WORLD_LEN * WORLDS.length));
   const down = HOLD.b === b; if (HOLD.i !== ROWAN) { if (HOLD.b && !down) HOLD.b.g.visible = false; HOLD.b = HOLD.act = null; } b.mixer.stopAllAction(); WL.cur = null; // he comes down from his wall
+  b.g.traverse(o => { if (o.name === 'King_crown') o.visible = !onRoadLv(G.level); }); // (Rowan has it now)
   if (b.g.parent !== wlGroup) wlGroup.add(b.g); b.g.visible = true; b.g.rotation.set(0, 0, 0); if (b.pool) b.pool.visible = true; for (const o of b.fx.arms || []) o.visible = true;
   WL.on = WL.alive = WL.ward = true; WL.wardHp = G.fortMax * WL_WARD; G.fortHp = Math.max(G.fortHp, WL.wardHp);
   // his health is matched to the army you have on the road when he comes out (castle-relative health melted late in the game)
@@ -5746,7 +5822,7 @@ function startWarlord(force) {
     const j = addUnit(beetles, clamp(ox, -LANE + .4, LANE - .4), WL.z + oz, big ? cfg.stagHp * 1.5 : cfg.beetleHp * 2.5, big ? 2.2 : 1, WL.sp, 0, big);
     if (j >= 0) beetles.kind[j] = 0;
   }
-  if (!G.sim && !G.cine) { toastMsg(WL.def.title.toUpperCase(), wlName(), { live: true, name: true }); if (!save.wardTip && WL.def.move !== 'barrage') toastMsg((inHall() ? 'WALL' : 'CASTLE') + ' SHIELDED!', 'Defeat ' + wlName() + ' to break the shield', { ok: () => WL.alive, on: () => { save.wardTip = 1; persist(); } }); kingVoice("roar", .8); tone(70, 1, 'sawtooth', .08, .5); noise(.9, .14, 'lowpass', 700, 120); }
+  if (!G.sim && !G.cine) { toastMsg(WL.def.title.toUpperCase(), wlName(), { live: true, name: true }); if (!save.wardTip && WL.def.move !== 'barrage') toastMsg((inHall() ? 'WALL' : 'CASTLE') + ' SHIELDED!', 'Defeat ' + wlName() + ' to break the shield', { ok: () => WL.alive, on: () => { save.wardTip = 1; persist(); } }); kingVoice("roar", .8); tone(70, 1, 'sawtooth', .08, .5); noise(.9, .14, 'lowpass', 700, 120); if (G.level > LAP_LEN && WL.def.move === 'barrage') { const f = popText(['I WORK FOR HIM NOW?!', 'MY OWN THRONE. MY OWN!', 'DEMOTED! ME!', 'HE KEEPS IT POLISHED...'][Math.floor(roadN(G.level) / 50) % 4], 0, 8.4, FORT_Z, '#e070ff'); if (f) f.hold = 1.6; } }
 }
 function hurtWarlord(d) {
   if (!WL.alive) return; WL.hp -= d; WL.flash = 1;
@@ -5905,7 +5981,7 @@ const CAP_S = 1.95;
 function resetCaptain() { if (CAP.b) { CAP.b.g.visible = false; CAP.b.mixer.stopAllAction(); CAP.b = null; } if (isCaptain(G.level) && !G.sim && crowdReady) loadCaptainArt(); else if (capArt && !G.sim) for (const t of capArt.tex) t.dispose();  CAP.on = CAP.alive = CAP.done = false; capPool.visible = false; }
 function startCaptain() {
   const w = worldOf(G.level), cfg = G.cfg, soft = (G.level <= WORLD_LEN ? .75 : 1) * Math.max(.55, 1 - .15 * (G.level === save.level ? save.fails || 0 : 0));
-  Object.assign(CAP, { on: true, alive: true, def: CAPTAINS[w], x: 0, z: FORT_Z + .6, t: 2.6, w });
+  Object.assign(CAP, { on: true, alive: true, def: CAPTAINS[w], x: 0, z: FORT_Z + .6, t: 2.6, w, face: 0 });
   CAP.max = CAP.hp = Math.round(Math.max(G.fortMax * .3 * soft, (G.dps || 0) * CAP_HPK * soft));
   WL.ward = true; WL.wardHp = G.fortMax * CAP_WARD; G.fortHp = Math.max(G.fortHp, WL.wardHp); ward.visible = true;
   CAP.b = buildCaptain(w); if (CAP.b) { const b = CAP.b; b.g.visible = true; b.g.rotation.set(0, 0, 0); b.g.position.set(0, 0, CAP.z); b.g.scale.setScalar(CAP_S); b.mixer.stopAllAction(); if (b.acts.walk) b.acts.walk.reset().setEffectiveWeight(1).play(); CAP.dead = 0; CAP.flash = 0; }
@@ -5916,7 +5992,7 @@ function startCaptain() {
   capPool.material.color.copy(C(col)); capPool.material.opacity = .6; capPool.visible = !G.sim;
   if (!G.sim) { toastMsg(wlName(WARLORDS[w], 0) + "'S CAPTAIN", CAP.def.name, { live: true, name: true }); if (!save.wardTip) toastMsg((inHall() ? 'WALL' : 'CASTLE') + ' SHIELDED!', 'Beat ' + CAP.def.name + ' to break the shield', { ok: () => CAP.alive, on: () => { save.wardTip = 1; persist(); } }); holdHead(_kv); popText('CRUSH THEM!', _kv.x, _kv.y + 1.5, _kv.z + 1, wallSay().col); kingVoice('roar', .8); }
 }
-let CAP_HPK = 9, CAP_WARD = .45;
+let CAP_HPK = 10, CAP_WARD = .45, CAP_TURN = 1.7;
 function captainDown(x, z, through) { // he falls, or breaks into your camp: either way his shield goes with him
   if (!CAP.alive) return; CAP.alive = false; CAP.done = true; WL.ward = false; ward.visible = false; capPool.visible = false;
   if (CAP.b) { const b = CAP.b; CAP.dead = .001; b.mixer.stopAllAction(); if (through) b.g.visible = false; else if (b.acts.die) b.acts.die.reset().setEffectiveWeight(1).play(); }
@@ -5931,7 +6007,8 @@ function captainTick(dt, play) {
   if (!CAP.alive) return;
   let j = -1; for (let k = 0; k < beetles.n; k++) if (beetles.tier[k] === F_CAP && beetles.hp[k] > 0) { j = k; break; }
   if (j < 0) { captainDown(CAP.x, CAP.z); return; }
-  CAP.x = beetles.x[j]; CAP.z = beetles.z[j]; CAP.hp = beetles.hp[j]; beetles.ph[j] = 0; capPool.position.set(CAP.x, .04, CAP.z); if (CAP.b) { CAP.b.g.position.set(CAP.x, 0, CAP.z); if (beetles.flash[j] > .5) CAP.flash = 1; }
+  { const a = clamp(Math.atan2(beetles.x[j] - CAP.x, Math.max(1e-4, beetles.z[j] - CAP.z)), -.75, .75); if (dt > 0) CAP.face = (CAP.face || 0) + (a - (CAP.face || 0)) * Math.min(1, dt * 5); } // he faces where he walks
+  CAP.x = beetles.x[j]; CAP.z = beetles.z[j]; CAP.hp = beetles.hp[j]; beetles.ph[j] = 0; capPool.position.set(CAP.x, .04, CAP.z); if (CAP.b) { CAP.b.g.position.set(CAP.x, 0, CAP.z); CAP.b.g.rotation.y = CAP.face; if (beetles.flash[j] > .5) CAP.flash = 1; }
   if (play && (CAP.t -= dt) <= 0 && ants.n > 8) { CAP.t = 4.4; if (hurlShot(CAP.w, _kv.set(CAP.x, 3.6, CAP.z + .8), 1.15, 1.7) && CAP.b && CAP.b.acts.strike) { const a = CAP.act = CAP.b.acts.strike; CAP.actT = a.getClip().duration * .92; if (CAP.b.acts.walk) CAP.b.acts.walk.setEffectiveWeight(.15); a.reset().setEffectiveWeight(1).fadeIn(.08).play(); } }
 }
 /* ---------------- world hazards ----------------
@@ -6175,6 +6252,7 @@ function update(dt) {
   if (play && !(G.introT > 0) && !(G.grandT > 0)) G.clk = (G.clk || 0) + dt; // the third-star clock runs only once the flyover is over
 
   for (const g of G.gates) {
+    if (g.shift) shiftTick(g, dt, play);
     if (g.move) { const lim = LANE - g.w / 2 - 0.1; g.cx = clamp(g.x + Math.sin(G.t * g.spd) * g.move, -lim, lim); g.mesh.position.x = g.cx; }
     g.pulse = Math.max(0, g.pulse - dt * 4); g.mesh.scale.setScalar(1 + g.pulse * 0.12);
     if (g.add && !g.ready && (g.cool -= dt) <= 0) { g.ready = true; g.pulse = .8; } // a +N gate lights up again once it has refilled
@@ -6221,7 +6299,7 @@ function update(dt) {
     if (G.waveT <= 0) {
       G.waves++; const slow = G.t > G.cfg.surgeAt; if (slow && !G.surged) { G.surged = true; if (!G.sim) toastMsg('HORDE SURGE!', inHall() ? 'Reinforcements pour from the crypts' : 'Reinforcements pour from the castle', { live: true }); } // drag a battle out and the horde starts pouring in
       const rage = (G.fortHp < G.fortMax * 0.5 ? 1.35 : 1) * (slow ? 1.4 + Math.min(1, (G.t - G.cfg.surgeAt) / 30) : 1);
-      G.waveQ += Math.round(cfg.waveSize * rage); G.waveX = (rand() - .5) * 6; G.waveT = cfg.waveGap;
+      G.waveQ += Math.round(cfg.waveSize * rage); G.waveX = (rand() - .5) * 6; G.waveT = cfg.waveGap * (CAP.alive ? 1.6 : 1);
       if (cfg.stagEvery && G.waves % cfg.stagEvery === 0) spawnBeetle((rand() - .5) * 5, FORT_Z + 1.4, cfg.stagHp, 2.2, cfg.beetleSpeed * .7, 1);
     }
     if (G.waveQ > 0) {
@@ -6240,6 +6318,11 @@ function update(dt) {
       if ((ants.pass[i] & g.bit) || !(pz > g.z && z <= g.z) || Math.abs(x - g.cx) > g.w / 2) continue;
       if (sandOff()) { ants.pass[i] |= g.bit; continue; } /* lost in the sandstorm: the gate does nothing */
       ants.pass[i] |= g.bit; g.pulse = 1; ants.flash[i] = 1;
+      if (g.ice > 0) { // still frozen: whoever reaches it only chips the ice
+        g.ice -= ants.big[i] ? 8 : 1; if (!G.sim) { const u = clamp(1 - g.ice / g.iceN, 0, 1); g.mesh.userData.iceBar.scale.x = Math.max(.001, u * 1.38); if (rand() < .5) burst(x, 1 + rand() * .6, g.z, ['#dff8ff', '#8fe6ff', '#ffffff'], 2, 2.6, { vy: 3, life: .5, g: 9, sz: 1.3, kind: PK.SPARK }); sfx('chip', 70, () => tone(1500 + rand() * 500, .06, 'triangle', .03, .7)); }
+        if (g.ice <= 0) { g.ice = 0; if (!G.sim) { g.mesh.userData.ice.visible = false; burst(g.cx, 1.1, g.z, ['#dff8ff', '#8fe6ff', '#ffffff', '#4ab0f0'], 46, 7, { vy: 7, life: 1, g: 14, sz: 2, kind: PK.ROCK }); popText('SHATTERED!', g.cx, 2.8, g.z, '#bfefff'); G.shake = Math.max(G.shake, .4); buzz(40); noise(.35, .12, 'highpass', 2400, 900); tone(1760, .3, 'triangle', .05, .6); } }
+        continue;
+      }
       if (g.arm != null) { // weapon gate: soldiers pick up the new weapon (champions and powder kegs walk straight through)
         if (ants.big[i] || ants.kind[i] || ants.tier[i] >= g.arm) continue;
         const T = TIERS[g.arm];
@@ -6292,11 +6375,12 @@ function update(dt) {
   for (let j = 0; j < beetles.n; j++) {
     if (beetles.hp[j] <= 0) continue;
     if (beetles.kind[j]) { // (archers never leave their row)
-      if (!play || beetles.tier[j] === F_ARCH || (beetles.z[j] < front - 3.2 && beetles.flash[j] <= 0)) { beetles.flash[j] = Math.max(0, beetles.flash[j] - dt * 6); continue; }
+      if (!play || beetles.tier[j] === F_ARCH || beetles.tier[j] === F_NEC || (beetles.z[j] < front - 3.2 && beetles.flash[j] <= 0)) { beetles.flash[j] = Math.max(0, beetles.flash[j] - dt * 6); continue; }
       beetles.kind[j] = 0;
     }
     const brute = beetles.pass[j] === 2; // a charging brute runs dead straight and kicks up dust
     let z = beetles.z[j] + beetles.sp[j] * dt; let x = beetles.x[j] + (brute ? 0 : Math.sin(beetles.ph[j] + G.t * 2.4) * 0.3 * dt);
+    if (beetles.tier[j] === F_CAP && fc) x += clamp(fx * .9 - x, -1, 1) * CAP_TURN * dt; // a captain goes for your army (walking dead straight, he passed between its columns)
     if (brute && rand() < .45) burst(x, .25, z - .4, ['#c8bcaa', '#9a8f80'], 1, 1.4, { vy: 1.6, life: .45, g: 3, sz: 1.7, kind: PK.ROCK });
     if (beetles.pass[j] === 1 && fc) x += clamp(fx + (beetles.ph[j] - 3.14) * .5 - x, -1, 1) * 2.2 * dt; // the horde closes in on your army (spread a little, so it hits as a wall)
     if (z >= NEST_Z && beetles.tier[j] === F_BOMB) { beetles.z[j] = NEST_Z - .3; if (play) G.nestHp -= NEST_HIT * 3; foeBomb(j); continue; } // a bomb that reaches your camp blows there
@@ -6448,9 +6532,9 @@ const STAG_TINT = new THREE.Color(.78, .62, .7), WHITE = new THREE.Color(1, 1, 1
 const hopOf = (p, i) => Math.abs(Math.sin(G.t * (p.big[i] ? 5.5 : 9) + p.ph[i]));
 // player slimes fly out of the cannon in an arc before they start hopping
 const FLY_T = .3, MUZZLE_H = 1.64; // a soldier fired from the cannon is in the air this long, from the muzzle's height down to the road
-const liftOf = (p, i) => { if (!p.fly || !p.fly[i]) return 0; const u = p.age[i] / FLY_T; return u >= 1 ? 0 : (1 - u) * MUZZLE_H + Math.sin(u * Math.PI) * .75; };
+const liftOf = (p, i) => { if (p === beetles && p.tier[i] === F_NEC) return 1.5 + Math.sin(G.t * 1.7) * .18; if (!p.fly || !p.fly[i]) return 0; const u = p.age[i] / FLY_T; return u >= 1 ? 0 : (1 - u) * MUZZLE_H + Math.sin(u * Math.PI) * .75; };
 const HORDE_REST = .66; // the waiting horde stands a little smaller (it reads as a sea), and grows to full size as it wakes. (Its age never ran while it waited, so it was drawn at a third of its size: crumbs along the castle foot)
-const popOf = (p, i) => { if (p === beetles && p.pass[i] === 1) { if (p.tier[i] === F_ARCH) return 1; const u = Math.min(1, p.age[i] * 2.2); return HORDE_REST + (1 - HORDE_REST) * u * (2 - u); } const t = Math.min(1, p.age[i] * 5); return t < 1 ? .35 + .65 * t + Math.sin(t * Math.PI) * .3 : 1; };
+const popOf = (p, i) => { if (p === beetles && p.pass[i] === 1) { if (p.tier[i] === F_ARCH || p.tier[i] >= F_SHLD) return 1; const u = Math.min(1, p.age[i] * 2.2); return HORDE_REST + (1 - HORDE_REST) * u * (2 - u); } const t = Math.min(1, p.age[i] * 5); return t < 1 ? .35 + .65 * t + Math.sin(t * Math.PI) * .3 : 1; };
 // sprite crowds: units run (a cycle per second or so, each a little out of step), fly out of the cannon in the mid-air pose,
 // and jump for joy once the castle falls
 function drawSprites(p, sm) {
@@ -6458,11 +6542,11 @@ function drawSprites(p, sm) {
   for (let i = 0; i < p.n; i++) {
     const s = p === beetles && p.tier[i] === F_CAP && CAP.b ? .001 : p.s[i] * US * popOf(p, i), air = liftOf(p, i), flying = air > 0.05, t = unitType(p, i); // (the sculpted captain is drawn in place of his brute)
     const hopK = party ? Math.abs(Math.sin(G.t * 7 + p.ph[i])) : 0;
-    let f = flying || hopK > .35 || (p === beetles && p.kind[i] && !(p.atk[i] > 0)) ? JUMP_F : p.atk[i] > 0 ? ATK_F : Math.floor(((G.t * (p.big[i] ? 1.1 : 1.55) + p.ph[i] * .16) % 1) * RUN_FRAMES);
+    let f = p === beetles && p.tier[i] === F_NEC ? p.atk[i] > 0 ? ATK_F : JUMP_F : flying || hopK > .35 || (p === beetles && p.kind[i] && !(p.atk[i] > 0)) ? JUMP_F : p.atk[i] > 0 ? ATK_F : Math.floor(((G.t * (p.big[i] ? 1.1 : 1.55) + p.ph[i] * .16) % 1) * RUN_FRAMES);
     _m.makeScale(s, s, s); _m.setPosition(p.x[i], air + hopK * .55 * s, p.z[i]);
     sm.setMatrixAt(i, _m); // powder kegs are sappers in the sprite sheet now
     cell[i] = t * FPT + f;
-    _c.copy(p === beetles ? FOE_TINT : WHITE); if (p === beetles && p.tier[i] === F_CAP) _c.lerp(wc2.set(WARLORDS[CAP.w].col).convertSRGBToLinear(), .3).multiplyScalar(1.5); if (p.flash[i] > 0) _c.multiplyScalar(1 + p.flash[i] * 1.2); // skeletons get the world's tint (deeper on snow)
+    _c.copy(p === beetles ? FOE_TINT : WHITE); if (p === beetles && p.tier[i] === F_CAP) _c.lerp(wc2.set(WARLORDS[CAP.w].col).convertSRGBToLinear(), .3).multiplyScalar(1.5); if (p === beetles && p.tier[i] === F_NEC) _c.setScalar(1.12); if (p.flash[i] > 0) _c.multiplyScalar(1 + p.flash[i] * 1.2); // skeletons get the world's tint (deeper on snow)
     sm.setColorAt(i, _c);
   }
   sm.count = p.n; sm.instanceMatrix.needsUpdate = true; sm.instanceColor.needsUpdate = true; sm.geometry.attributes.aCell.needsUpdate = true;
@@ -6714,16 +6798,16 @@ function renderUpgrades() {
   $('menu').classList.toggle('many', shown > 4 && $('menu').classList.contains('open'));
   const ready = UPG.filter(u => { const l = save.up[u.id] || 0; return !(u.unlock && save.level < u.unlock) && !(u.max && l >= u.max) && save.coins >= upCost(u, l); }).length;
   $('upReady').textContent = ready ? ready : '';
-  $('menuLvl').textContent = 'Level ' + save.level;
+  $('menuLvl').textContent = lvName(save.level);
   const wn = Math.floor((save.level - 1) / WORLD_LEN) + 1;
   $('menuWorld').textContent = G.worldOverride != null ? 'Previewing · ' + WORLDS[G.worldOverride].name : (save.level > LAP_LEN ? 'Endless Road · ' : 'World ' + wn + ' · ') + WORLDS[worldOf(save.level)].name;
-  $('menuLvl').classList.toggle('boss', isBoss(save.level)); if (isBoss(save.level)) $('menuLvl').textContent = 'Boss · Level ' + save.level;
+  $('menuLvl').classList.toggle('boss', isBoss(save.level)); if (isBoss(save.level)) $('menuLvl').textContent = 'Boss · ' + lvName(save.level);
   // the road through this world: cleared levels, the current one, and the boss at the end
   const start = (wn - 1) * WORLD_LEN + 1; let trail = '';
   for (let k = 0; k < WORLD_LEN; k++) {
     const L = start + k, cls = L < save.level ? 'done' : L === save.level ? 'now' : '';
     const sn = (save.stars && save.stars[L]) || 0;
-    trail += (k ? `<i class="${L <= save.level ? 'done' : ''}"></i>` : '') + `<b class="${cls}${isBoss(L) ? ' boss' : isCaptain(L) ? ' cap' : ''}">${isBoss(L) ? '<svg viewBox="0 0 40 24"><use href="#i-crown"/></svg>' : L}${sn ? '<s>' + '★'.repeat(sn) + '</s>' : ''}</b>`;
+    trail += (k ? `<i class="${L <= save.level ? 'done' : ''}"></i>` : '') + `<b class="${cls}${isBoss(L) ? ' boss' : isCaptain(L) ? ' cap' : ''}">${isBoss(L) ? '<svg viewBox="0 0 40 24"><use href="#i-crown"/></svg>' : L > LAP_LEN ? L - LAP_LEN : L}${sn ? '<s>' + '★'.repeat(sn) + '</s>' : ''}</b>`;
   }
   $('trail').innerHTML = trail;
   setHud('coinN', save.coins); setHud('menuCoinN', G.walletShown != null ? G.walletShown : save.coins);
@@ -6759,17 +6843,18 @@ function toastTick(dt) {
   }
 }
 // a warlord's name: on later laps they return as "Dread"
-const wlName = (d = WL.def, lap = WL.lap) => (lap && d.move !== 'barrage' ? 'DREAD ' : '') + d.name;
+const wlName = (d = WL.def) => d.name;
 function startPlay() {
   audio(); $('menu').classList.remove('on'); gameEl.classList.remove('overlay');
   setupLevel(save.level); G.mode = 'play'; G.hintT = save.level <= 2 ? 6 : 0; G.introT = G.sim ? 0 : INTRO_T; G.grandT = !G.sim && (save.level - 1) % WORLD_LEN === 0 ? GRAND_T : 0; G.waveT += G.introT + G.grandT; G.kingT += G.introT + G.grandT; G.chT += G.introT + G.grandT; /* (the first brute charge came during the opening swoop) */
   maybeStory();
-  $('lvlPill').textContent = (G.cfg.boss ? 'Boss · ' : 'Level ') + save.level; $('lvlPill').classList.toggle('boss', G.cfg.boss);
+  $('lvlPill').textContent = G.cfg.boss ? 'Boss · ' + (save.level > LAP_LEN ? 'Road ' + roadN(save.level) : save.level) : lvName(save.level); $('lvlPill').classList.toggle('boss', G.cfg.boss);
   if (G.worldOverride != null) toastMsg('PREVIEW', WORLDS[worldIdx].name, { name: true, fly: true });
-  else if ((save.level - 1) % WORLD_LEN === 0) toastMsg(save.level > LAP_LEN ? 'THE ENDLESS ROAD' : 'WORLD ' + (Math.floor((save.level - 1) / WORLD_LEN) + 1), WORLDS[worldIdx].name, { name: true, fly: true });
+  else if ((save.level - 1) % (save.level > LAP_LEN ? 5 : WORLD_LEN) === 0) toastMsg(save.level > LAP_LEN ? 'THE ENDLESS ROAD' : 'WORLD ' + (Math.floor((save.level - 1) / WORLD_LEN) + 1), WORLDS[worldIdx].name, { name: true, fly: true });
   if (G.cfg.boss && !$('story').classList.contains('on')) { const wd = WARLORDS[worldOf(save.level) % WARLORDS.length]; toastMsg('BOSS LEVEL', wlName(wd, Math.floor((save.level - 1) / LAP_LEN)) + (worldOf(save.level) === HALLW ? ' is waiting' : ' has nowhere left to run'), { snd: 1 }); } // (his story card says it the first time)
   if (!G.practice && G.worldOverride == null && save.level <= LAP_LEN) { const w = worldOf(save.level), k = (save.level - 1) % WORLD_LEN; if (save.level === 3) toastMsg('NOW ON THE WALL', 'GRIMBALD', { name: true }); else if (k === 0 && w) toastMsg('THE BONE KING', ['', 'WAKE UP, SEK-RA!', 'STOP THEM, HRIMGAR!', 'MAGMAW, THEY\'RE AT MY DOOR!', 'GUARDS! HOLD THE BRIDGE!'][w], { fly: true }); else if (save.level === 46) toastMsg('YOU ARE INSIDE', 'THE THRONE ROOM', { name: true }); }
   if (!G.practice && G.worldOverride == null && save.level === LAP_LEN + 1) toastMsg('NOW ON THE WALL', 'ROWAN', { name: true });
+  if (G.cfg.feat && TWISTS[G.cfg.feat]) { const f = G.cfg.feat; save.featTold = save.featTold || {}; if (save.level > LAP_LEN || !save.featTold[f]) toastMsg(TWISTS[f][0], TWISTS[f][1], { snd: 1, on: () => { save.featTold[f] = 1; persist(); } }); } // the world's new thing the first time; on the Endless Road, this level's twist
   if (isGold(save.level)) toastMsg('GOLD RUSH', 'Double coins on this level', { snd: 1 });
   const t = TIERS.find(q => q.unlock === save.level); if (t) toastMsg('NEW GATE: ' + t.gate, t.tip, { snd: 1 });
   if (G.cfg.gates.some(g => g.k < 1) && !save.redTip) toastMsg('RED GATES!', 'They cost soldiers. Steer around them', { snd: 1, on: () => { save.redTip = 1; persist(); } }); // new hazards get a heads-up the first time
@@ -6778,7 +6863,7 @@ function startPlay() {
 // where the Bone King's speech goes: over his head on the walls, or over the King on the road once he has leapt down
 const kingSays = (txt, col) => { let f; if (WL.b && WL.def && (WL.on && WL.alive || WL.def.move === 'barrage' && G.kingFell)) f = popText(txt, WL.x, 5.2, WL.z, col); else if (HOLD.b || king.visible) { holdHead(_kv); f = popText(txt, _kv.x, _kv.y + 1.6, _kv.z + 1, col); } return f; };
 function win() {
-  clearToasts(); if (G.kingFell) toastMsg('THE BONE KING FALLS!', 'His castle crumbles with him', { now: true }); for (const f of floats) f.t = Math.min(f.t, .2); // clear banners and numbers: the explosion gets the stage
+  clearToasts(); if (G.kingFell) toastMsg('THE BONE KING FALLS!', onRoadLv(G.level) ? 'Again. He is not happy about it' : 'His castle crumbles with him', { now: true }); for (const f of floats) f.t = Math.min(f.t, .2); // clear banners and numbers: the explosion gets the stage
   G.mode = 'won'; G.endT = 2.9; G.winT = 0; G.firing = false; G.shake = 0.5; buzz(40); gameEl.classList.add('cine');
   for (let j = 0; j < beetles.n; j++) { if (j < 60) { burst(beetles.x[j], .4, beetles.z[j], FOE_FX, 3); splat(beetles.x[j], beetles.z[j], FOE, .9); } beetles.hp[j] = 0; }
   tone(180, BOOM_AT + .15, 'sawtooth', .03, 5); // rising whine while the king swells
@@ -6845,8 +6930,8 @@ function showResult(won) {
   const left = Math.round(100 * clamp(G.fortHp / G.fortMax, 0, 1)), close = !won && (left <= 25 || (WL.on && WL.alive && WL.hp / WL.max <= .25));
   if (close) { $('resTitle').textContent = 'SO CLOSE!'; $('resTitle').style.color = 'var(--gold)'; }
   $('result').classList.toggle('win', won);
-  $('resSub').textContent = won ? (isFinale() ? `Level ${G.level} · Rowan wears the crown` : G.cfg.boss ? `Level ${G.level} · ${WL.done && WL.def ? wlName() + ' slain' : 'Boss defeated'} · double coins!` : isGold(G.level) ? `Level ${G.level} · gold rush · double coins!` : isCaptain(G.level) && CAP.done ? `Level ${G.level} · ${CAP.def.name} beaten` : `Level ${G.level} · ${(inHall() ? HALL_WIN : WIN_LINES)[G.level % 4]}`)
-    : G.smashed ? `Level ${G.level} · ${wlName()} smashed your camp` : close ? `Level ${G.level} · so close, the ${TGT()} nearly fell!` : `Level ${G.level} · ${LOSE_LINES[(G.level + (save.fails || 0)) % LOSE_LINES.length]}`;
+  $('resSub').textContent = won ? (isFinale() ? `${lvName(G.level)} · Rowan wears the crown` : G.cfg.boss ? `${lvName(G.level)} · ${WL.done && WL.def ? wlName() + ' slain' : 'Boss defeated'} · double coins!` : isGold(G.level) ? `${lvName(G.level)} · gold rush · double coins!` : isCaptain(G.level) && CAP.done ? `${lvName(G.level)} · ${CAP.def.name} beaten` : `${lvName(G.level)} · ${(inHall() ? HALL_WIN : WIN_LINES)[G.level % 4]}`)
+    : G.smashed ? `${lvName(G.level)} · ${wlName()} smashed your camp` : close ? `${lvName(G.level)} · so close, the ${TGT()} nearly fell!` : `${lvName(G.level)} · ${LOSE_LINES[(G.level + (save.fails || 0)) % LOSE_LINES.length]}`;
   $('resHintIco').setAttribute('href', '#i-star'); { const p = G.cfg.par, par = `${Math.floor(p / 60)}:${String(p % 60).padStart(2, '0')}`; let tip = won && isFinale() ? 'The Endless Road is open' : won && G.stars < 3 ? (late => late && G.stars < 2 ? `Missed: win in ${par}, keep half your camp` : late ? `Missed star: win within ${par}` : 'Missed star: keep half your camp')((G.clk || 0) > p) : '';
     if (!won) { // the cheapest upgrade they can buy with what they have plus this round's coins, or a tactic if nothing is affordable
       const have = save.coins + (G.reward || 0), lv = u => save.up[u.id] || 0;
@@ -6959,25 +7044,26 @@ const STORY = [
   'The finest smith who ever lived. He made the crown.',
   'He has the crown. Take it, and end the war.',
 ];
-const STORY_DREAD = [ // on later laps: you have beaten them before
-  'You beat the butcher once. The Bone King has stitched him back together, and he is hungry.',
-  'The sand gave the Pharaoh back, and more of his skeletons claw up with him this time.',
-  'The Frost Jarl has thawed out, and he remembers you.',
-  'Melted down and forged again, Magmaw still guards the road to the throne.',
-  'The crown has another head now. He wants it back.',
+const STORY_ROAD = [ // on the Endless Road they serve Rowan
+  'Rowan woke him. He is hungry again.',
+  'A new head wears the crown. He answers to it.',
+  'He guards this road for Rowan now.',
+  'He made the crown. He serves whoever wears it.',
+  'He had a throne once. Now he guards a bridge.',
 ];
 function renderMap() {
-  const lap = Math.floor((save.level - 1) / (WORLD_LEN * WORLDS.length)), inLap = (save.level - 1) % (WORLD_LEN * WORLDS.length) + 1, tro = { ...(save.trophies || {}) };
+  const lap = Math.floor((save.level - 1) / (WORLD_LEN * WORLDS.length)), inLap = lap > 0 ? 999 : (save.level - 1) % (WORLD_LEN * WORLDS.length) + 1, tro = { ...(save.trophies || {}) };
   for (let w = 0; w < 5; w++) if (lap > 0 || inLap > (w + 1) * WORLD_LEN) tro[w] = 1; // progress made before trophies existed still counts
   const rows = [];
   const ICO = { star: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>', lock: '<svg viewBox="0 0 24 24" style="opacity:.75"><use href="#i-lock"/></svg>', crown: '<svg viewBox="0 0 40 24" style="width:30px"><use href="#i-crown"/></svg>' }; // drawn, not emoji, so every phone shows the same thing
   const card = (cls, wc, emb, name, sub, tag) => `<div class="mcard ${cls}" style="--wc:${wc}"><div class="emb e${emb}"><svg viewBox="0 0 48 ${emb === 4 ? 52 : 48}"><use href="#t-${emb}"/></svg></div><div><b>${name}</b><span>${sub}</span></div><i>${tag}</i></div>`;
+  if (lap > 0) rows.push(`<div class="mcard here" style="--wc:#d070ff"><div class="emb e4"><svg viewBox="0 0 48 52"><use href="#t-5"/></svg></div><div><b>The Endless Road</b><span>${WORLDS[worldOf(save.level)].name} · Rowan</span></div><i>${roadN(save.level)}</i></div>`);
   for (let w = WORLDS.length - 1; w >= 0; w--) {
     const a = w * WORLD_LEN + 1, b = a + WORLD_LEN - 1, cls = (tro[w] ? 'won' : '') + (inLap >= a && inLap <= b ? ' here' : inLap < a && !tro[w] ? ' locked' : '');
     const wn = ['Grimbald', 'Sek-Ra', 'Hrimgar', 'Magmaw', 'The Bone King'][w];
-    rows.push(card(cls, WORLD_COL[w], w, WORLDS[w].name, 'Levels ' + (lap * LAP_LEN + a) + '–' + (lap * LAP_LEN + b) + ' · ' + wn, tro[w] ? ICO.star : inLap >= a && inLap <= b ? (inLap - a + 1) + '/' + WORLD_LEN : ICO.lock));
+    rows.push(card(cls, WORLD_COL[w], w, WORLDS[w].name, 'Levels ' + a + '–' + b + ' · ' + wn, tro[w] ? ICO.star : inLap >= a && inLap <= b ? (inLap - a + 1) + '/' + WORLD_LEN : ICO.lock));
   }
-  $('mapPath').innerHTML = rows.join(''); $('mapNg').textContent = lap ? 'The Endless Road' : '';
+  $('mapPath').innerHTML = rows.join(''); $('mapNg').textContent = '';
 }
 $('mapBtn').onclick = () => { renderMap(); $('menu').classList.remove('on'); $('map').classList.add('on'); };
 $('mapClose').onclick = () => { $('map').classList.remove('on'); $('menu').classList.add('on'); };
@@ -6988,8 +7074,8 @@ function maybeStory() {
   if (!G.cfg.boss) return; $('storyEmb').parentNode.setAttribute('viewBox', worldOf(G.level) === HALLW ? '0 0 48 52' : '0 0 48 48');
   const w = worldOf(G.level) % WORLDS.length, wl = WARLORDS[w]; save.storySeen = save.storySeen || {};
   if (save.storySeen[G.level] && !G.practice) return;
-  $('storyEmb').setAttribute('href', '#t-' + w); const lap = Math.floor((G.level - 1) / (WORLD_LEN * WORLDS.length)); $('storyName').textContent = wlName(wl, lap); $('storyTitle').textContent = wl.title;
-  $('storyTxt').textContent = (lap ? STORY_DREAD : STORY)[w]; G.paused = true; $('story').classList.add('on'); gameEl.classList.add('overlay');
+  const lap = Math.floor((G.level - 1) / (WORLD_LEN * WORLDS.length)); $('storyEmb').setAttribute('href', '#t-' + (lap && w === HALLW ? 6 : w)); $('storyName').textContent = wlName(wl); $('storyTitle').textContent = lap && w === HALLW ? 'demoted' : wl.title;
+  $('storyTxt').textContent = (lap ? STORY_ROAD : STORY)[w]; G.paused = true; $('story').classList.add('on'); gameEl.classList.add('overlay');
 }
 // the Paladin's arrival, on the story card: his horse for an emblem, a fanfare, and the Stable opens
 function showPalUnlock() {
@@ -7081,7 +7167,7 @@ window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') 
 async function perfTest() {
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 8px);z-index:99;padding:10px 12px;border-radius:12px;background:rgba(8,12,30,.9);color:#fff;font:600 13px/1.45 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), rows = [];
-  box.textContent = 'Speed test v141: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
+  box.textContent = 'Speed test v142: tap here to start\n(about 45 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); box.textContent = 'Loading...'; G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 19; const on0 = MUS.on;
   save.up = { ...save.up, rate: 10, twin: 4, arsenal: 5 }; await Promise.race([loadLm('ember'), wait(8000)]); await wait(800);
   const pr = k => { pixelRatio = k; renderer.setPixelRatio(k); resize(); };
@@ -7102,7 +7188,7 @@ async function perfTest() {
   G.nestHp = G.nestMax = 30;
   await run('castle blows up', 4500, () => { G.fortMax = 100; G.fortHp = 0; });
   await wait(1500); save.level = 6; await run('new world', 5000, () => { $('result').classList.remove('on'); startPlay(); });
-  box.textContent = 'Speed test v141: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
+  box.textContent = 'Speed test v142: done. Screenshot this.\n                 fps  95% max >30\n' + rows.join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  audio ' + (actx ? actx.state : 'none');
 }
 let last = performance.now();
 // keeps the frame rate smooth: renders at fewer pixels when a phone struggles, and at more (up to the screen's own sharpness) when it has headroom
@@ -7267,7 +7353,7 @@ function ghost(b, on) { if (!b) return; b.ghost = on; if (on && !b.aura) b.aura 
 function kneelKing() {
   WL.hp = 0; WL.alive = false; WL.done = true; hideTelegraphs(); resetKingShots(); resetCharges();
   if (G.sim) { WL.ward = false; ward.visible = false; G.fortHp = 0; return; }
-  G.waveQ = 0; G.waveT = G.chT = 99; WL.state = 'kneel'; WL.st = 0; WL.b.mixer.stopAllAction(); WL.cur = null; G.kneel = true; G.firing = false; loadEndArt(); loadPaladinArt();
+  G.waveQ = 0; G.waveT = G.chT = 99; WL.state = 'kneel'; WL.st = 0; WL.y = 0; WL.z = Math.max(WL.z, FORT_Z + 1.5); /* (never mid-leap) */ WL.b.mixer.stopAllAction(); WL.cur = null; G.kneel = true; G.firing = false; loadEndArt(); loadPaladinArt();
   G.shake = Math.max(G.shake, 1.2); buzz([60, 30, 140]); tone(50, 1.2, 'sine', .3, .5); kingVoice('no', .8);
   burst(WL.x, 2.5, WL.z, [WL.def.col, '#ffffff', FOE], 60, 9, { vy: 8, life: 1.2, g: 13, sz: 2.2, kind: PK.SPARK });
   for (let j = 0; j < beetles.n; j++) { if (beetles.hp[j] <= 0) continue; if (j < 70) burst(beetles.x[j], .5, beetles.z[j], FOE_FX, 2, 3); if (rand() < .3) dropBones(beetles.x[j], beetles.z[j], beetles.big[j]); beetles.hp[j] = 0; } // without him the horde falls apart
