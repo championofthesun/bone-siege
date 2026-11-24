@@ -7210,7 +7210,7 @@ window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') 
 async function perfTest() { // ?perf: speed test 4. First the frame rate (an empty page, then a battle as you play it), then what each part of a frame costs the GPU when it is kept busy
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:6px;right:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;padding:9px 11px;border-radius:12px;background:rgba(8,12,30,.92);color:#fff;font:600 12px/1.42 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(r)), rows = [], gl = renderer.getContext(), px = new Uint8Array(4), med = a => a.sort((x, y) => x - y)[a.length >> 1];
-  const V = 'Speed test 4 (v145' + (LEAN ? ', lean)' : ')'), show = s => { box.textContent = V + ': ' + s + '\n' + rows.join('\n'); };
+  const V = 'Speed test 4 (v146' + (LEAN ? ', lean)' : ')'), show = s => { box.textContent = V + ': ' + s + '\n' + rows.join('\n'); };
   box.textContent = V + ': tap here to start\n(about 40 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); show('loading...'); G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 11; save.v = 3;
   await Promise.race([loadLm('dunes'), wait(8000)]); await wait(800);
@@ -7243,6 +7243,20 @@ async function perfTest() { // ?perf: speed test 4. First the frame rate (an emp
   G.paused = false; await wait(1500); await cadence('battle, after', 4000);
   rows.push('', gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  ' + (gl.getParameter(gl.VERSION).includes('2') ? 'gl2' : 'gl1') + '  ' + renderer.info.programs.length + ' shaders'); show('done. Screenshot this.');
 }
+/* ---- the session log (three quick taps on the Level label) ----
+   One row per half minute of battle: when, level, frames a second, the share that came on time, and how long the battle's rules,
+   handing over the picture and the browser's own part took. "cpu" times the same small sum each row: if it grows, the phone has
+   slowed itself down (heat); if it stays and the frames still fall, the cost is ours or the screen's. */
+const SLOG = (() => {
+  const X = { rows: [], d: null, t0: performance.now() }, zero = () => ({ n: 0, t: 0, ok: 0, u: 0, r: 0, p: 0, pn: 0 });
+  const ch = new MessageChannel(); let at = 0, wait = null; ch.port1.onmessage = () => { if (wait) { wait.p += performance.now() - at; wait.pn++; wait = null; } };
+  const sum = () => { const t = performance.now(); let a = 0; for (let k = 0; k < 400000; k++) a += Math.sqrt(k * 1.7 + a % 3); X.junk = a; return performance.now() - t; };
+  X.push = () => { const d = X.d; X.d = null; if (!d || d.n < 240) return; const f = v => v.toFixed(1), row = { a: [((performance.now() - X.t0) / 60000).toFixed(0).padStart(3), String(G.level).padStart(4), (1000 * d.n / d.t).toFixed(0).padStart(4), (Math.round(100 * d.ok / d.n) + '%').padStart(5), f(d.u / d.n).padStart(6), f(d.r / d.n).padStart(5), f(d.pn ? d.p / d.pn : 0).padStart(5)].join(''), cpu: '    -', b: (pixelRatio.toFixed(2) + (LEAN ? '/' + (G.leanLv || 0) : '')).padStart(7) }; X.rows.push(row); if (X.rows.length > 10) X.rows.shift();
+    if (G.mode !== 'play') setTimeout(() => { if (G.mode !== 'play') row.cpu = f([0, 1, 2].map(sum).sort((p, q) => p - q)[1]).padStart(5); }, 4000); }; // (never during a battle: the sum itself would be a hitch)
+  X.frame = (raw, u, r, end) => { if (G.mode !== 'play' || G.t < 3 || raw > .4) { if (X.d && G.mode !== 'play') X.push(); return; } const d = X.d || (X.d = zero()); d.n++; d.t += raw * 1000; if (raw < .021) d.ok++; d.u += u; d.r += r; if (!wait && d.n % 5 === 0) { wait = d; at = end; ch.port2.postMessage(0); } if (d.t > 30000) X.push(); };
+  X.text = () => X.rows.length ? '\nmin lvl fps  60% rules draw page  cpu  sharp\n' + X.rows.map(q => q.a + q.cpu + q.b).join('\n') : '\n(a row appears here after each battle)';
+  return X;
+})();
 /* ---- ?ab: where the time goes while somebody really plays ----
    Every couple of seconds one thing is switched off in turn, and the frame rate and the cost of each part are kept for each.
    rules = the battle, draw = handing the picture over, page = what the browser does after us (buttons, text, putting it on
@@ -7260,7 +7274,7 @@ const AB = /[?&]ab(=|&|$)/.test(location.search) ? (() => {
   const show = () => {
     if (!X.box) { X.box = document.createElement('div'); X.box.style.cssText = 'position:fixed;left:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;pointer-events:none;padding:7px 9px;border-radius:10px;background:rgba(8,12,30,.88);color:#fff;font:600 11px/1.35 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(X.box); }
     const c = Math.min(...D.map(d => d.t)) / (SLOT - SKIP), f = (a, b) => (b ? a / b : 0).toFixed(1).padStart(5);
-    X.done = c >= 3.9; X.box.textContent = (X.done ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (v145' + (LEAN ? ' lean' : '') + ')\n' + 'off now'.padEnd(16) + ' fps  60% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + pixelRatio + '  ' + ants.n + '/' + beetles.n + '  touches ' + (D[0].n ? D[0].ev / D[0].n : 0).toFixed(1);
+    X.done = c >= 3.9; X.box.textContent = (X.done ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (v146' + (LEAN ? ' lean' : '') + ')\n' + 'off now'.padEnd(16) + ' fps  60% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + pixelRatio + '  ' + ants.n + '/' + beetles.n + '  touches ' + (D[0].n ? D[0].ev / D[0].n : 0).toFixed(1);
   };
   X.frame = (now, dt, raw) => { // stands in for update + render
     if (G.mode !== 'play' || G.paused || G.t < 2.5) { if (X.on) { put(X.m, false); X.on = false; } X.at = 0; return false; }
@@ -7283,7 +7297,7 @@ function setLowQuality(on) {
   if (on) { prCap = Math.min(prCap, 1.25); if (!G.sim) console.info("Bone Siege: low quality mode"); }
 }
 // hidden readout for checking a real phone: tap the Level pill three times quickly
-const statsEl = document.createElement('div'); statsEl.style.cssText = 'position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 92px);transform:translateX(-50%);z-index:9;display:none;padding:4px 10px;border-radius:10px;background:rgba(8,14,40,.75);color:#fff;font:600 12px/1.3 system-ui,sans-serif;white-space:nowrap;pointer-events:none';
+const statsEl = document.createElement('div'); statsEl.style.cssText = 'position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 92px);transform:translateX(-50%);z-index:9;display:none;padding:4px 10px;border-radius:10px;background:rgba(8,14,40,.75);color:#fff;font:600 12px/1.3 system-ui,sans-serif;white-space:nowrap;pointer-events:none;white-space:pre;font-family:ui-monospace,Menlo,monospace;font-size:11px';
 gameEl.appendChild(statsEl);
 { let taps = []; $('lvlPill').addEventListener('pointerdown', e => { e.stopPropagation(); const t = performance.now(); taps = taps.filter(x => t - x < 700); taps.push(t); if (taps.length >= 3) { taps = []; statsEl.style.display = statsEl.style.display === 'block' ? 'none' : 'block'; statsEl.textContent = '…'; } }); }
 function leanStep() { // one step lighter; false when there is nothing left to drop
@@ -7298,20 +7312,22 @@ function adaptResolution(raw) {
   if (frT < 1.2) return;
   frBuf.sort((a, b) => a - b); const keep = Math.max(1, Math.ceil(frBuf.length * .88)); let ts = 0; for (let i = 0; i < keep; i++) ts += frBuf[i]; frBuf.length = 0; // the slowest eighth (a hitch, a shader, a loaded picture) doesn't count
   const avg = ts / keep, sd = Math.sqrt(Math.max(0, frSq / frN - (frSum / frN) ** 2)); frSum = frSq = frN = frT = 0;
-  if (statsEl.style.display === 'block') statsEl.textContent = Math.round(1 / avg) + ' fps · ' + pixelRatio.toFixed(2) + '× of ' + DPR.toFixed(1) + ' · sharpen ' + (POST.on && !G.lowQ ? POST.mat.uniforms.uSharp.value.toFixed(2) : 'off') + (G.lowQ ? ' · low' : '') + (LEAN ? ' · lean ' + (G.leanLv || 0) : '') + (G.capped ? ' · capped' : '');
+  if (statsEl.style.display === 'block') statsEl.textContent = Math.round(1 / avg) + ' fps · ' + pixelRatio.toFixed(2) + '× of ' + DPR.toFixed(1) + ' · sharpen ' + (POST.on && !G.lowQ ? POST.mat.uniforms.uSharp.value.toFixed(2) : 'off') + (G.lowQ ? ' · low' : '') + (LEAN ? ' · lean ' + (G.leanLv || 0) : '') + SLOG.text() + (G.capped ? ' · capped' : '');
   if (frCool > 0) return;
   // a steady 30 fps (iPhone Low Power Mode, some in-app browsers) is the browser's cap, not the game struggling: dropping
   // resolution wouldn't make it any faster, only blurry, so hold the sharpness
   G.capped = pixelRatio <= 2 && avg > 1 / 33 && avg < 1 / 27.5 && sd < .0035; if (G.capped) return;
   let next = pixelRatio;
   if (LEAN && G.mode === 'play' && avg > 1 / 52 && !(avg > 1 / 33 && avg < 1 / 27.5 && sd < .0025 && G.leanLv >= 3)) { if ((G.leanSlow = (G.leanSlow || 0) + 1) >= 2 && leanStep()) { G.leanSlow = 0; frCool = 3; return; } } else if (LEAN) G.leanSlow = 0;
-  const slow = avg > (pixelRatio > 2 ? 1 / 54 : LEAN ? 1 / 45 : 1 / 27); frSlow = slow ? frSlow + 1 : 0; if (slow && frSlow < 2) return; // one slow stretch isn't enough: two in a row
+  if (LEAN && G.prTry) { const q = G.prTry; G.prTry = null; if (avg > q.avg * .92 && pixelRatio < q.pr) { G.noStep = true; prCap = pixelRatio = q.pr; renderer.setPixelRatio(pixelRatio); resize(); frCool = 4; return; } }
+  const slow = !(LEAN && G.noStep) && avg > (pixelRatio > 2 ? 1 / 54 : LEAN ? 1 / 45 : 1 / 27); frSlow = slow ? frSlow + 1 : 0; if (slow && frSlow < 2) return; // one slow stretch isn't enough: two in a row
   if (!slow && avg < 1 / 50 && prCap < MAX_PR && prTries < 2 && (frGood += 1) >= 10) { prTries++; frGood = 0; prCap = Math.min(MAX_PR, prCap + .25); } else if (avg >= 1 / 50) frGood = 0; // running well for a good while: it may climb back a step (twice at most, so it never flickers)
   if (G.mode === 'play') { G.fought = avg < 1 / 57; if (G.fought && pixelRatio > 2 && G.prKept !== pixelRatio) { G.prKept = pixelRatio; try { localStorage.setItem('bs.pr', pixelRatio); } catch (e) {} } }
   if (avg > 1 / 22 && pixelRatio <= PR_MIN && !G.lowQ && (G.slowWin = (G.slowWin || 0) + 1) >= 2) setLowQuality(true); // still slow at the lowest resolution: drop the expensive extras
   if (slow && pixelRatio > PR_MIN) { /* like most mobile games, a steady 30 fps is fine: only step down below ~27 fps (it used to below 50, so phones capped at 30 sank to their lowest, blurriest setting) */ next = pixelRatio > 2 ? (pixelRatio > 2.5 ? 2.5 : 2) : Math.max(PR_MIN, pixelRatio - .25); prCap = next; }
   else if (avg < 1 / 58 && pixelRatio < prCap) next = pixelRatio >= 2 ? (G.mode !== 'play' && G.fought && sd < .003 ? Math.min(prCap, pixelRatio + .5) : pixelRatio) : Math.min(prCap, pixelRatio + .25); // past 2x it only climbs between battles, after one that ran well, where the change can't be noticed
   if (next < pixelRatio) { G.prKept = 0; try { localStorage.removeItem('bs.pr'); } catch (e) {} }
+  if (LEAN && next < pixelRatio) G.prTry = { pr: pixelRatio, avg };
   if (next !== pixelRatio) { frCool = next > pixelRatio ? 2.5 : 4; pixelRatio = next; renderer.setPixelRatio(pixelRatio); resize(); }
 }
 const ease01 = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
@@ -7325,7 +7341,7 @@ function frame(now) {
   const wt = G.winT; // slow motion on the winning hit and again as the king pops
   if (G.perf && G.mode === 'play') { G.firing = true; G.lx = Math.sin(now / 900) * 2; }
   if (AB && AB.frame(now, dt, raw)) G.pauseDrawn = false;
-  else if (!G.paused) { update(dt * (G.mode === "won" ? winSpeed(wt) : 1)); render(); G.pauseDrawn = false; }
+  else if (!G.paused) { const p0 = performance.now(); update(dt * (G.mode === "won" ? winSpeed(wt) : 1)); const p1 = performance.now(); render(); const p2 = performance.now(); SLOG.frame(raw, p1 - p0, p2 - p1, p2); G.pauseDrawn = false; }
   else if (!G.pauseDrawn) { render(); G.pauseDrawn = true; } // paused: the scene holds still, so it is drawn once, not every frame
 }
 
