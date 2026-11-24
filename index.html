@@ -6592,6 +6592,7 @@ function drawDecals() {
   decalMesh.count = k; decalMesh.instanceMatrix.needsUpdate = true; decalMesh.instanceColor.needsUpdate = true;
 }
 // the HUD only touches the page when a value actually changes (rewriting text every frame makes phones re-layout)
+const VIEW = { w: 390, h: 844 }; // the game's size on screen, kept by resize(): reading it back every frame made the browser lay the page out again
 const _hud = {};
 const setHud = (id, v) => { if (_hud[id] !== v) { _hud[id] = v; $(id).textContent = v; } };
 const setCss = (id, p, v) => { const k = id + p; if (_hud[k] !== v) { _hud[k] = v; $(id).style[p] = v; } };
@@ -6648,17 +6649,17 @@ function render() {
   } // the third-star clock
   setHud('coinN', save.coins); setHud('menuCoinN', G.walletShown != null ? G.walletShown : save.coins);
   // crowd counter rides above the front of your army, like a banner
-  const cEl = $('crowd'), W = gameEl.clientWidth, H = gameEl.clientHeight;
+  const cEl = $('crowd'), W = VIEW.w, H = VIEW.h;
   if (G.mode === 'play' && ants.n > 0) {
     let fz = 1e9; for (let i = 0; i < ants.n; i++) if (ants.z[i] < fz) fz = ants.z[i];
     let sx = 0, sz = 0, c = 0; for (let i = 0; i < ants.n; i++) if (ants.z[i] < fz + 2.2) { sx += ants.x[i]; sz += ants.z[i]; c++; }
     _v.set(sx / c, 1.9, sz / c).project(camera);
     if (ants.n > G.crowdShown * 1.15 + 3) { const b = cEl.classList.contains('pop'); cEl.classList.toggle('pop', !b); cEl.classList.toggle('pop2', b); } // twin animations, swapped: no forced layout
-    G.crowdShown = ants.n; setHud('crowdN', ants.n);
+    G.crowdShown = ants.n; if (G.frameN % 6 === 0 || ants.n < 10) setHud('crowdN', ants.n);
     const cx0 = _v.x, cy = (-_v.y * .5 + .5) * H; _v.set(0, 0, FORT_Z + 5.5).project(camera); const castleY = (-_v.y * .5 + .5) * H; // the counter never rides over the castle or the king
     let floorY = castleY + 34; if (WL.alive) { _v.set(WL.x, 0, WL.z + 1.6).project(camera); floorY = Math.max(floorY, (-_v.y * .5 + .5) * H + 22); } // nor over a warlord standing in front of it
-    G.pillX = (cx0 * .5 + .5) * W; G.pillY = Math.max(cy, floorY); cEl.style.transform = `translate(${G.pillX}px,${G.pillY}px)`; cEl.style.opacity = 1;
-  } else { cEl.style.opacity = 0; G.pillY = null; }
+    G.pillX = (cx0 * .5 + .5) * W; G.pillY = Math.max(cy, floorY); cEl.style.transform = `translate(${G.pillX}px,${G.pillY}px)`; if (_hud.cOn !== 1) { _hud.cOn = 1; cEl.style.opacity = 1; }
+  } else { if (_hud.cOn !== 0) { _hud.cOn = 0; cEl.style.opacity = 0; } G.pillY = null; }
   for (const f of floats) {
     if (f.t <= 0) continue; _v.set(f.x, f.y, f.z).project(camera);
     const fx = clamp((_v.x * .5 + .5) * W, 54, W - 54); let fy = (-_v.y * .5 + .5) * H; if (G.pillY != null && Math.abs(fx - G.pillX) < 78 && fy > G.pillY - 62 && fy < G.pillY + 26) fy = G.pillY - 62; // a number rides above the army's counter rather than on it
@@ -6669,7 +6670,7 @@ function render() {
   if (_hud.wlBar !== wlBar) { _hud.wlBar = wlBar; $('fortBar').classList.toggle('wl', wlBar); }
   if (capBar) { setCss('fortFill', 'transform', `scaleX(${clamp(CAP.hp / CAP.max, 0, 1).toFixed(3)})`); setHud('fortTxt', CAP.def.name + ' · ' + Math.max(0, Math.ceil(CAP.hp))); }
   else if (wlBar) { setCss('fortFill', 'transform', `scaleX(${clamp(WL.hp / WL.max, 0, 1).toFixed(3)})`); setHud('fortTxt', wlName() + ' · ' + Math.max(0, Math.ceil(WL.hp))); }
-  else { setCss('fortFill', 'transform', `scaleX(${fp.toFixed(3)})`); setHud('fortTxt', (inHall() ? 'Wall of Bone · ' : 'Bone Castle · ') + Math.max(0, Math.ceil(G.fortHp))); }
+  else { setCss('fortFill', 'transform', `scaleX(${fp.toFixed(3)})`); if (G.frameN % 6 === 0) setHud('fortTxt', (inHall() ? 'Wall of Bone · ' : 'Bone Castle · ') + Math.max(0, Math.ceil(G.fortHp))); }
   setCss('nestFill', 'transform', `scaleX(${np.toFixed(3)})`); setHud('nestTxt', 'Your Camp · ' + Math.max(0, Math.ceil(G.nestHp)));
   const gc = sendCharge(), pct = Math.round(100 * G.charge / gc);
   const gEl = $('giant'); if (_hud.gp !== pct) { _hud.gp = pct; gEl.style.setProperty('--p', pct); } gEl.classList.toggle('ready', pct >= 100 && G.mode === 'play'); { const ch = !palReady(); if (_hud.ch !== ch) { _hud.ch = ch; gEl.classList.toggle('champ', ch); for (const u of gEl.querySelectorAll('.hu')) u.setAttribute('href', ch ? '#i-champ' : '#i-horse'); gEl.setAttribute('aria-label', ch ? 'Send the Champion' : 'Send the Paladin'); } }
@@ -6810,7 +6811,7 @@ function sizePost() {
   POST.mat.uniforms.uSharp.value = clamp(.15 + .2 * (DPR / pixelRatio - 1), .15, .35); // kept light: strong sharpening on an upscaled image turns the sprites' hard outlines into stair-steps
 }
 function resize() { G.pauseDrawn = false; // (a resize clears the canvas: redraw the paused frame)
-  const w = gameEl.clientWidth, h = gameEl.clientHeight; if (!w || !h) return;
+  const w = gameEl.clientWidth, h = gameEl.clientHeight; if (!w || !h) return; VIEW.w = w; VIEW.h = h;
   renderer.setSize(w, h, false); camera.aspect = w / h; sizePost();
   const tall = camera.aspect < .72; CAM.copy(tall ? CAM_TALL : CAM_WIDE); LOOK.copy(tall ? LOOK_TALL : LOOK_WIDE);
   camera.fov = tall ? (camera.aspect < .5 ? 59 : 57) : 54; camera.updateProjectionMatrix();
@@ -7192,7 +7193,7 @@ canvas.addEventListener('pointerdown', e => {
 });
 canvas.addEventListener('pointermove', e => {
   if (!G.firing || e.pointerId !== G.dragId) return; const dx = e.clientX - G.dragX; G.dragX = e.clientX;
-  G.lx = clamp(G.lx + dx / gameEl.clientWidth * 12, -LANE + .6, LANE - .6);
+  G.lx = clamp(G.lx + dx / (VIEW.w || 390) * 12, -LANE + .6, LANE - .6);
 });
 const stop = e => { if (e.pointerId !== G.dragId) return; G.firing = false; G.dragId = null; };
 canvas.addEventListener('pointerup', stop); canvas.addEventListener('pointercancel', stop);
@@ -7209,7 +7210,7 @@ window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') 
 async function perfTest() { // ?perf: speed test 4. First the frame rate (an empty page, then a battle as you play it), then what each part of a frame costs the GPU when it is kept busy
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:6px;right:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;padding:9px 11px;border-radius:12px;background:rgba(8,12,30,.92);color:#fff;font:600 12px/1.42 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(r)), rows = [], gl = renderer.getContext(), px = new Uint8Array(4), med = a => a.sort((x, y) => x - y)[a.length >> 1];
-  const V = 'Speed test 4 (v144' + (LEAN ? ', lean)' : ')'), show = s => { box.textContent = V + ': ' + s + '\n' + rows.join('\n'); };
+  const V = 'Speed test 4 (v145' + (LEAN ? ', lean)' : ')'), show = s => { box.textContent = V + ': ' + s + '\n' + rows.join('\n'); };
   box.textContent = V + ': tap here to start\n(about 40 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); show('loading...'); G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 11; save.v = 3;
   await Promise.race([loadLm('dunes'), wait(8000)]); await wait(800);
@@ -7242,6 +7243,36 @@ async function perfTest() { // ?perf: speed test 4. First the frame rate (an emp
   G.paused = false; await wait(1500); await cadence('battle, after', 4000);
   rows.push('', gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  ' + (gl.getParameter(gl.VERSION).includes('2') ? 'gl2' : 'gl1') + '  ' + renderer.info.programs.length + ' shaders'); show('done. Screenshot this.');
 }
+/* ---- ?ab: where the time goes while somebody really plays ----
+   Every couple of seconds one thing is switched off in turn, and the frame rate and the cost of each part are kept for each.
+   rules = the battle, draw = handing the picture over, page = what the browser does after us (buttons, text, putting it on
+   screen). The level can't end while it runs, and nothing is saved. */
+const AB = /[?&]ab(=|&|$)/.test(location.search) ? (() => {
+  const N = ['as it is', 'no text/buttons', 'no sound', 'no picture', 'no battle', 'no armies', 'no scenery', '1x sharp'], D = N.map(() => ({ n: 0, t: 0, ok: 0, u: 0, r: 0, p: 0, pn: 0, ev: 0 })), SLOT = 2400, SKIP = 600;
+  const X = { m: 0, at: 0, ev: 0, box: null, pr0: 0, done: false }; addEventListener('pointermove', () => { X.ev++; }, true);
+  const ch = new MessageChannel(); let t1 = 0, cur = null; ch.port1.onmessage = () => { if (cur) { cur.p += performance.now() - t1; cur.pn++; cur = null; } };
+  const put = (m, on) => {
+    if (m === 1) for (const id of ['hud', 'vignette', 'sandHaze', 'flash']) { const e = $(id); if (e) e.style.visibility = on ? 'hidden' : ''; }
+    if (m === 2 && actx) on ? actx.suspend() : actx.resume();
+    if (m === 5) allySprites.visible = foeSprites.visible = !on; if (m === 6) world.visible = !on;
+    if (m === 7) { if (on) X.pr0 = pixelRatio; pixelRatio = on ? 1 : X.pr0; renderer.setPixelRatio(pixelRatio); resize(); }
+  };
+  const show = () => {
+    if (!X.box) { X.box = document.createElement('div'); X.box.style.cssText = 'position:fixed;left:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;pointer-events:none;padding:7px 9px;border-radius:10px;background:rgba(8,12,30,.88);color:#fff;font:600 11px/1.35 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(X.box); }
+    const c = Math.min(...D.map(d => d.t)) / (SLOT - SKIP), f = (a, b) => (b ? a / b : 0).toFixed(1).padStart(5);
+    X.done = c >= 3.9; X.box.textContent = (X.done ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (v145' + (LEAN ? ' lean' : '') + ')\n' + 'off now'.padEnd(16) + ' fps  60% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + pixelRatio + '  ' + ants.n + '/' + beetles.n + '  touches ' + (D[0].n ? D[0].ev / D[0].n : 0).toFixed(1);
+  };
+  X.frame = (now, dt, raw) => { // stands in for update + render
+    if (G.mode !== 'play' || G.paused || G.t < 2.5) { if (X.on) { put(X.m, false); X.on = false; } X.at = 0; return false; }
+    G.practice = true; if (!G.practiceKeep) G.practiceKeep = JSON.stringify(save); G.nestHp = G.nestMax = 1e6; G.fortHp = G.fortMax = 1e7;
+    if (!X.at) { X.at = now; put(X.m, true); X.on = true; }
+    else if (now - X.at > SLOT) { put(X.m, false); X.m = (X.m + 1) % N.length; put(X.m, true); X.at = now; X.ev = 0; show(); }
+    const a = performance.now(); if (X.m !== 4) update(dt); const b = performance.now(); if (X.m !== 3) render(); t1 = performance.now();
+    if (now - X.at > SKIP) { const d = D[X.m]; d.n++; d.t += raw * 1000; if (raw < .021) d.ok++; d.u += b - a; d.r += t1 - b; d.ev += X.ev; if (!cur) { cur = d; ch.port2.postMessage(0); } } X.ev = 0;
+    return true;
+  };
+  return X;
+})() : null;
 let last = performance.now();
 // keeps the frame rate smooth: renders at fewer pixels when a phone struggles, and at more (up to the screen's own sharpness) when it has headroom
 const PR_MIN = DPR >= 2 ? 1.25 : 1; // sharp phone screens never drop below 1.25× (at 1× text and edges smear)
@@ -7263,7 +7294,7 @@ function leanStep() { // one step lighter; false when there is nothing left to d
   return true;
 }
 function adaptResolution(raw) {
-  if (raw <= 0 || raw > .25) return; if (G.mode === 'won' || (G.mode === 'play' && G.t < 3) || G.perf) { frSum = frSq = frN = frT = 0; frBuf.length = 0; return; } /* nor while a level is still settling in; never mid-explosion: rebuilding the buffers is a visible hitch */ frBuf.push(raw); frSum += raw; frSq += raw * raw; frN++; frT += raw; if (frCool > 0) frCool -= raw;
+  if (raw <= 0 || raw > .25) return; if (G.mode === 'won' || (G.mode === 'play' && G.t < 3) || G.perf || AB && AB.on) { frSum = frSq = frN = frT = 0; frBuf.length = 0; return; } /* nor while a level is still settling in; never mid-explosion: rebuilding the buffers is a visible hitch */ frBuf.push(raw); frSum += raw; frSq += raw * raw; frN++; frT += raw; if (frCool > 0) frCool -= raw;
   if (frT < 1.2) return;
   frBuf.sort((a, b) => a - b); const keep = Math.max(1, Math.ceil(frBuf.length * .88)); let ts = 0; for (let i = 0; i < keep; i++) ts += frBuf[i]; frBuf.length = 0; // the slowest eighth (a hitch, a shader, a loaded picture) doesn't count
   const avg = ts / keep, sd = Math.sqrt(Math.max(0, frSq / frN - (frSum / frN) ** 2)); frSum = frSq = frN = frT = 0;
@@ -7293,7 +7324,8 @@ function frame(now) {
   if (keys.ArrowRight) G.lx = clamp(G.lx + dt * 9, -LANE + .6, LANE - .6);
   const wt = G.winT; // slow motion on the winning hit and again as the king pops
   if (G.perf && G.mode === 'play') { G.firing = true; G.lx = Math.sin(now / 900) * 2; }
-  if (!G.paused) { update(dt * (G.mode === "won" ? winSpeed(wt) : 1)); render(); G.pauseDrawn = false; }
+  if (AB && AB.frame(now, dt, raw)) G.pauseDrawn = false;
+  else if (!G.paused) { update(dt * (G.mode === "won" ? winSpeed(wt) : 1)); render(); G.pauseDrawn = false; }
   else if (!G.pauseDrawn) { render(); G.pauseDrawn = true; } // paused: the scene holds still, so it is drawn once, not every frame
 }
 
