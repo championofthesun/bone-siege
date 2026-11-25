@@ -767,7 +767,7 @@ let EFF_K = .6;
 // each level, with the upgrades that level's coins usually buy, on two seeds; the median winning time x1.45 for human hands, at
 // least 25 s (captains 40, bosses 45). World 1 keeps any kinder time it had. The gates are fixed per level, so levels differ.
 const PAR_T = [25, 45, 65, 50, 50, 25, 30, 60, 45, 50, 25, 30, 30, 40, 50, 50, 35, 40, 30, 60, 50, 45, 30, 25, 40, 25, 30, 35, 40, 60, 25, 35, 35, 40, 60, 25, 40, 25, 45, 60, 40, 30, 35, 40, 60, 25, 45, 40, 40, 140];
-const parOf = n => onRoadLv(n) ? (isBoss(n) ? 70 : isCaptain(n) ? 60 : 45) : Math.max(PAR_T[(n - 1) % 50], isBoss(n) ? 45 : isCaptain(n) ? 40 : 25);
+const parOf = n => { const k = onRoadLv(n) ? (isBoss(n) ? 70 : isCaptain(n) ? 60 : 45) : Math.max(PAR_T[(n - 1) % 50], isBoss(n) ? 45 : isCaptain(n) ? 40 : 25); return Math.round((k * 1.35 + 14) / 5) * 5; }; // (PAR_T is the bot's pace; a person's thumb needs about half as long again)
 const WORLD_CURVE = [.86, .9, .94, .98, 1.02, .72, .96, 1, 1.05, 1.1]; // arrive, settle, something new, mix, captain, gold rush, build up, long siege, boss
 let FORT_K = 1.7, HORDE_K = 1.25; // castle toughness and skeleton numbers overall (phase 5: battles were over in ~10 s)
 let BOMB_K = 1, ARCH_K = 1;       // how many bomb skeletons and bone archers overall
@@ -827,10 +827,13 @@ function fairGates(n, r) {
 /* ---------------- three setup ---------------- */
 const gameEl = $('game'), canvas = $('c');
 // phones with sharp screens (pixel ratio 2+) skip multisampling and instead render at more pixels, which looks crisper for less work
-const GEOJ = /[?&]lean(=|&|$)/.test(location.search) ? 'geo_lite.json' : 'geo.json'; // (blender/lite.py: about half the triangles)
-const LEAN = /[?&]lean(=|&|$)/.test(location.search); // the phone-smooth trial: the same game with far less to draw each frame (see SHC, leanStep)
-const DPR = window.devicePixelRatio || 1, MAX_PR = Math.min(DPR, LEAN ? 2 : 3); // starts at 2x with 4x multisampling; a phone that holds 60 fps climbs towards its screen's own 3x on the menu (see adaptResolution)
-let pixelRatio = Math.min(DPR, 2); try { const q = +localStorage.getItem('bs.pr'); if (q > 2) pixelRatio = Math.min(MAX_PR, q); } catch (e) {} // (kept from a battle that ran well at that sharpness: see adaptResolution)
+// phones and tablets get the light version of the same game: still scenery kept as one picture (BACK), the HUD drawn in the picture (GHUD),
+// kept shadows (SHC), joined pieces (FUSE), cheap sound. ?lean forces it on anything, ?full turns it off
+const LEAN = !/[?&]full(=|&|$)/.test(location.search) && (/[?&]lean(=|&|$)/.test(location.search) || !!(window.matchMedia && matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) <= 1100));
+const GEOJ = LEAN ? 'geo_lite.json' : 'geo.json'; // (blender/lite.py: about half the triangles)
+const geoFetch = p => { const full = () => fetch(p + 'geo.json').then(r => { if (!r.ok) throw new Error(p + ' ' + r.status); return r.json(); }); return LEAN ? fetch(p + GEOJ).then(r => r.ok ? r.json() : full(), full) : full(); }; // (a copy of the game without the light shapes still runs)
+const DPR = window.devicePixelRatio || 1, MAX_PR = Math.min(DPR, LEAN ? 2.5 : 3), PHONE_PRS = [2.5, 2, 1.75]; // starts at 2x with 4x multisampling; a phone that holds 60 fps climbs towards its screen's own 3x on the menu (see adaptResolution)
+let pixelRatio = Math.min(DPR, LEAN ? 2.5 : 2); try { const q = +localStorage.getItem('bs.pr'); if (q > 2 && !LEAN) pixelRatio = Math.min(MAX_PR, q); if (LEAN) { const k = JSON.parse(localStorage.getItem('bs.phone') || 'null'); if (k && Date.now() - k.at < 36e5) pixelRatio = Math.min(MAX_PR, k.pr); } } catch (e) {} // (kept from a battle that ran well at that sharpness: see adaptResolution)
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: DPR < 2, powerPreference: 'high-performance' });
 renderer.setPixelRatio(pixelRatio);
 renderer.outputEncoding = THREE.sRGBEncoding;
@@ -1106,8 +1109,9 @@ function prepMat(mat, o) {
     }
     if (wind !== undefined) {
       sh.uniforms.uWind = WIND;
+      if (LEAN) { sh.vertexShader = 'varying float vSway;\n' + sh.vertexShader; sh.fragmentShader = 'varying float vSway;\n' + sh.fragmentShader.replace('#include <dithering_fragment>', '#include <dithering_fragment>\ngl_FragColor.a = 1.0 - vSway;'); }
       sh.vertexShader = 'uniform float uWind;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
-        { float hgt = max(0.0, position.y - ${wind.toFixed(2)});
+        { float hgt = max(0.0, position.y - ${wind.toFixed(2)}); ${LEAN ? 'vSway = clamp(hgt / 3.0, 0.0, 1.0);' : ''}
           #ifdef USE_INSTANCING
             vec2 ip = instanceMatrix[3].xz;
           #else
@@ -2628,13 +2632,13 @@ function noFarShadows(root) {
    On an iPhone every draw is expensive (each one crosses into Safari's graphics process), and a battle took over 400. Three
    helpers bring that down: bakeScenery joins the placed props (trees, rocks, houses...) into a few big meshes by area, fuse joins
    the fixed pieces of one building, and the glow batch draws every soft light at once. */
-const SCN_MATS = { vs: `attribute vec4 aLeaf; attribute vec3 aRoof; attribute vec3 aFx; attribute vec3 aTint; uniform float uWind; varying vec3 vTint; varying vec4 vLeaf; varying vec3 vRoof; varying vec2 vSnow;\n`,
-  fs: 'varying vec3 vTint; varying vec4 vLeaf; varying vec3 vRoof; varying vec2 vSnow;\n' };
+const SCN_MATS = { vs: `attribute vec4 aLeaf; attribute vec3 aRoof; attribute vec3 aFx; attribute vec3 aTint; uniform float uWind; varying vec3 vTint; varying vec4 vLeaf; varying vec3 vRoof; varying vec2 vSnow; varying float vSway;\n`,
+  fs: 'varying vec3 vTint; varying vec4 vLeaf; varying vec3 vRoof; varying vec2 vSnow; varying float vSway;\n' };
 function sceneryShader(m) { // prepMat's leaf, roof, snow and wind, with the settings carried by each vertex instead of each material
   m.onBeforeCompile = sh => {
     sh.uniforms.uWind = WIND; sh.uniforms.uHeal = HEALED;
     sh.vertexShader = SCN_MATS.vs + sh.vertexShader.replace('#include <beginnormal_vertex>', `#include <beginnormal_vertex>
-      vTint = aTint; vLeaf = aLeaf; vRoof = aRoof; vSnow = vec2(aFx.z, normalize(objectNormal).y);`).replace('#include <begin_vertex>', `#include <begin_vertex>
+      vTint = aTint; vLeaf = aLeaf; vRoof = aRoof; vSnow = vec2(aFx.z, normalize(objectNormal).y); vSway = clamp(aFx.x / 3.0, 0.0, 1.0);`).replace('#include <begin_vertex>', `#include <begin_vertex>
       transformed.x += sin(uWind * 1.6 + aFx.y) * .045 * aFx.x; transformed.z += cos(uWind * 1.25 + aFx.y) * .03 * aFx.x;`);
     sh.fragmentShader = 'uniform float uHeal;\n' + SCN_MATS.fs + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
       diffuseColor.rgb *= vTint;
@@ -2643,6 +2647,7 @@ function sceneryShader(m) { // prepMat's leaf, roof, snow and wind, with the set
       if (vLeaf.w > .5) { float gn = clamp((diffuseColor.g - max(diffuseColor.r, diffuseColor.b)) * vLeaf.w, 0.0, 1.0);
         diffuseColor.rgb = mix(diffuseColor.rgb, vLeaf.rgb * dot(diffuseColor.rgb, vec3(.3, .59, .11)) * 2.6, gn * (1.0 - uHeal)); }
       if (vSnow.x > .01) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.9, .94, 1.0), smoothstep(.5 - .3 * vSnow.x, .95 - .3 * vSnow.x, vSnow.y) * .92);`);
+    if (LEAN) sh.fragmentShader = sh.fragmentShader.replace('#include <dithering_fragment>', '#include <dithering_fragment>' + String.fromCharCode(10) + 'gl_FragColor.a = 1.0 - vSway;');
   };
   m.customProgramCacheKey = () => 'scenery';
 }
@@ -3948,7 +3953,7 @@ const artFlip = g0 => { const g = g0.clone(), p = g.attributes.position.array, n
 async function loadKingArt() {
   const size = artSize(), TL = new THREE.TextureLoader();
   const tex = async (k, srgb) => { const t = await TL.loadAsync('models/king/king_' + k + '_' + size + '.webp'); if (srgb) t.encoding = THREE.sRGBEncoding; t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy()); return t; };
-  const [J, map, orm, nm] = await Promise.all([fetch('models/king/king_' + GEOJ).then(r => { if (!r.ok) throw new Error('king_geo ' + r.status); return r.json(); }), tex('color', 1), tex('orm'), tex('normal')]);
+  const [J, map, orm, nm] = await Promise.all([geoFetch('models/king/king_'), tex('color', 1), tex('orm'), tex('normal')]);
   const env = studioEnv();
   KINGM.mat = new THREE.MeshStandardMaterial({ map, normalMap: nm, aoMap: orm, roughnessMap: orm, metalnessMap: orm, roughness: 1, metalness: 1, envMap: env, envMapIntensity: 1.05 });
   const et = canvasTex(128, 128, x => { const g = x.createRadialGradient(64, 60, 4, 64, 64, 64); // burning eyes: a magenta ember with a slit of white flame
@@ -4010,7 +4015,7 @@ function loadWarlordArt(i, ahead) { // ahead: only fetched, so it is there when 
 async function loadArt(dir) { // geo.json, its four textures, and the material that wears them
   const size = artSize(), TL = new THREE.TextureLoader();
   const tex = async (k, srgb) => { const t = await TL.loadAsync(dir + k + '_' + size + '.webp'); if (srgb) t.encoding = THREE.sRGBEncoding; t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy()); return t; };
-  const [J, map, orm, nm, em] = await Promise.all([fetch(dir + GEOJ).then(r => { if (!r.ok) throw new Error(dir + ' ' + r.status); return r.json(); }), tex('color', 1), tex('orm'), tex('normal'), tex('emit', 1)]);
+  const [J, map, orm, nm, em] = await Promise.all([geoFetch(dir), tex('color', 1), tex('orm'), tex('normal'), tex('emit', 1)]);
   const A = { J, geo: {}, tex: [map, orm, nm, em] }; for (const n of J.nodes) { A.geo[n.name] = artGeo(n); n.pos = n.nor = n.uv = n.idx = null; }
   A.mat = new THREE.MeshStandardMaterial({ map, normalMap: nm, aoMap: orm, roughnessMap: orm, metalnessMap: orm, roughness: 1, metalness: 1, envMap: studioEnv(), envMapIntensity: .85, emissive: C('#ffffff'), emissiveMap: em, emissiveIntensity: 1.1 });
   return A;
@@ -4024,7 +4029,7 @@ async function loadSet(into, k, dir) {
   const size = artSize(), TL = new THREE.TextureLoader();
     try {
       const tex = async (n, srgb) => { const t = await TL.loadAsync(dir + n + '_' + size + '.webp'); if (srgb) t.encoding = THREE.sRGBEncoding; t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy()); return t; };
-      const got = Promise.all([fetch(dir + GEOJ).then(r => { if (!r.ok) throw new Error(dir + ' ' + r.status); return r.json(); }), tex('color', 1), k === 'autumn' ? null : tex('normal')]);
+      const got = Promise.all([geoFetch(dir), tex('color', 1), k === 'autumn' ? null : tex('normal')]);
       const [J, map, nm] = await Promise.race([got, new Promise((ok, no) => setTimeout(() => no(new Error('timed out')), 45000))]);
       const A = { geo: {}, mat: new THREE.MeshStandardMaterial({ map, normalMap: nm, roughness: .8, metalness: 0 }) };
       for (const n of J.nodes) { A.geo[n.name] = artGeo(n); A.geo[n.name].computeBoundingSphere(); }
@@ -6933,7 +6938,7 @@ const POST = (() => {
 const GHUD = (() => {
   if (!LEAN || /[?&]pagehud/.test(location.search)) return null;
   gameEl.classList.add('glhud'); sandEl.style.display = 'none';
-  const FONT = "'Lilita One',Fredoka,'Arial Black',sans-serif", AW = 2048, AH = 1600, CAPQ = 700;
+  const FONT = "'Lilita One',Fredoka,'Arial Black',sans-serif", AW = 2048, CAPQ = 700; let AH = 1600;
   const cv = document.createElement('canvas'), X = cv.getContext('2d'); let tex = null, S = 0, cells = {}, pen = null, icons = null, ready = false, box = null, boxAt = '', sheetOf = '';
   const H = { own: { fortTxt: 1, nestTxt: 1, giantTxt: 1, crowdN: 1, parTxt: 1 }, crowd: { on: false, x: 0, y: 0, pop: 0 }, haze: 0, vis: 0, fl: 0, rdyAt: 0, tipT: 0 };
   H.stub = () => { const c = new Set(); return { textContent: '', style: {}, bump: 0, classList: { contains: k => c.has(k), toggle(k, on) { const v = on === undefined ? !c.has(k) : !!on; if (k === 'bump' || k === 'bump2') H.bumped = true; v ? c.add(k) : c.delete(k); return v; } } }; };
@@ -6961,7 +6966,7 @@ const GHUD = (() => {
   const lays = new Map();
   function lay(st, t) { const k = st + t; let L = lays.get(k); if (L) return L; const d = ST[st]; X.font = d.px + 'px ' + FONT; const m = X.measureText('Hg'), asc = m.fontBoundingBoxAscent || d.px * .93, desc = m.fontBoundingBoxDescent || d.px * .22, xs = []; for (let i = 0; i < t.length; i++) xs.push(X.measureText(t.slice(0, i)).width + i * d.ls); L = { t, xs, w: X.measureText(t).width + t.length * d.ls, asc, desc }; if (lays.size > 300) lays.clear(); lays.set(k, L); return L; }
   function build() {
-    S = Math.max(2, pixelRatio); cv.width = AW; cv.height = AH; X.imageSmoothingQuality = 'high'; cells = {}; lays.clear(); pen = { x: 1, y: 1, h: 0 };
+    S = Math.max(2, pixelRatio); AH = Math.min(4096, Math.ceil((1500 + Math.max(0, box.fort.w - 360) * 1.6) * S * S / 4)); cv.width = AW; cv.height = AH; X.imageSmoothingQuality = 'high'; cells = {}; lays.clear(); pen = { x: 1, y: 1, h: 0 };
     if (tex) tex.dispose(); tex = new THREE.CanvasTexture(cv); tex.flipY = false; tex.premultiplyAlpha = true; tex.generateMipmaps = false; tex.minFilter = tex.magFilter = THREE.LinearFilter; mat.uniforms.uMap.value = tex;
     cell('white', 4, 4, 0, c => { c.fillStyle = '#fff'; c.fillRect(-2, -2, 8, 8); });
     for (const [k, w, glow] of [['fort', box.fort.w, ''], ['wl', box.fort.w, 'rgba(255,80,60,.55)'], ['nest', box.nest.w, '']]) {
@@ -7044,12 +7049,13 @@ const BACK = (() => {
   const MASK = 1 << 3, X = { on: false, bakes: 0, still: [], live: new WeakSet(), n: 0, why: [], t0: 0 };
   let color = null, depth = null, hold = 0, want = false, since = 0, snap = new Map(); const cm = new Float32Array(32);
   const mat = new THREE.ShaderMaterial({ depthFunc: THREE.AlwaysDepth, depthWrite: true, depthTest: true, toneMapped: false, fog: false,
-    uniforms: { uCol: { value: null }, uDep: { value: null }, uLive: { value: null }, uKept: { value: null }, uMov: { value: 0 }, uInv: { value: new THREE.Matrix4() }, uSh: { value: new THREE.Matrix4() }, uTexel: { value: 1 / 2048 }, uBias: { value: .002 }, uTint: { value: new THREE.Vector3(.6, .56, .66) } },
+    uniforms: { uCol: { value: null }, uDep: { value: null }, uLive: { value: null }, uKept: { value: null }, uMov: { value: 0 }, uInv: { value: new THREE.Matrix4() }, uSh: { value: new THREE.Matrix4() }, uTexel: { value: 1 / 2048 }, uBias: { value: .002 }, uTint: { value: new THREE.Vector3(.6, .56, .66) }, uT: WIND, uAspect: { value: .56 } },
     vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
     fragmentShader: `#include <packing>
-    uniform sampler2D uCol, uLive, uKept; uniform highp sampler2D uDep; uniform float uMov, uTexel, uBias; uniform mat4 uInv, uSh; uniform vec3 uTint; varying vec2 vUv;
+    uniform sampler2D uCol, uLive, uKept; uniform highp sampler2D uDep; uniform float uMov, uTexel, uBias; uniform mat4 uInv, uSh; uniform vec3 uTint; uniform float uT, uAspect; varying vec2 vUv;
     float one(vec2 p, float z) { float a = unpackRGBAToDepth(texture2D(uLive, p)); if (a > z) return 0.0; return step(z, unpackRGBAToDepth(texture2D(uKept, p))); } // in the shade of something that moves, and not already in the shade of something still
-    void main() { vec3 c = texture2D(uCol, vUv).rgb; float d = texture2D(uDep, vUv).r;
+    void main() { vec4 t0 = texture2D(uCol, vUv); vec3 c = t0.rgb; float d = texture2D(uDep, vUv).r, sw = 1.0 - t0.a;
+      if (sw > .02) { float ph = vUv.x * 9.0 + vUv.y * 6.0; vec4 t1 = texture2D(uCol, vUv + vec2(sin(uT * 1.6 + ph) * .0034 / uAspect, cos(uT * 1.25 + ph) * .0014) * min(1.0, sw * 1.4) * mix(1.0, .4, smoothstep(.55, .95, vUv.y))); if (t1.a < .98) c = t1.rgb; } // leaves stir within their own outline
       if (uMov > 0.0 && d < 1.0) { vec4 w = uInv * vec4(vec3(vUv, d) * 2.0 - 1.0, 1.0); vec4 q = uSh * vec4(w.xyz / w.w, 1.0); vec3 s = q.xyz / q.w;
         if (s.x > 0.0 && s.x < 1.0 && s.y > 0.0 && s.y < 1.0 && s.z < 1.0) { float z = s.z - uBias, r = uTexel * 1.4, k = one(s.xy + vec2(-r, -r * .4), z) + one(s.xy + vec2(r, r * .4), z) + one(s.xy + vec2(-r * .4, r), z) + one(s.xy + vec2(r * .4, -r), z); c *= mix(vec3(1.0), uTint, k * .25); } }
       gl_FragColor = vec4(c, 1.0); gl_FragDepthEXT = d; }` });
@@ -7071,7 +7077,7 @@ const BACK = (() => {
   const put1 = () => { for (const o of X.still) if (o.layers.mask === MASK) o.layers.mask = 1; X.still.length = 0; };
   X.off = () => { if (X.still.length) put1(); quad.visible = false; X.on = false; };
   X.reset = () => { X.off(); snap = new Map(); X.live = new WeakSet(); hold = 0; want = false; };
-  function size() { const w = POST.rt.width, h = POST.rt.height; if (color && color.width === w && color.height === h) return; if (color) { color.dispose(); depth.dispose(); } const o = { format: THREE.RGBAFormat, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, generateMipmaps: false, stencilBuffer: false }; color = new THREE.WebGLRenderTarget(w, h, { ...o, depthBuffer: false }); depth = new THREE.WebGLRenderTarget(w, h, { ...o, depthBuffer: true }); depth.texture.encoding = THREE.sRGBEncoding; depth.depthTexture = new THREE.DepthTexture(w, h, THREE.UnsignedIntType); depth.depthTexture.minFilter = depth.depthTexture.magFilter = THREE.NearestFilter; }
+  function size() { const w = POST.rt.width, h = POST.rt.height; if (color && color.width === w && color.height === h) return; if (color) { color.dispose(); depth.dispose(); } const o = { format: THREE.RGBAFormat, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, generateMipmaps: false, stencilBuffer: false }; mat.uniforms.uAspect.value = w / h; color = new THREE.WebGLRenderTarget(w, h, { ...o, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: false }); depth = new THREE.WebGLRenderTarget(w, h, { ...o, depthBuffer: true }); depth.texture.encoding = THREE.sRGBEncoding; depth.depthTexture = new THREE.DepthTexture(w, h, THREE.UnsignedIntType); depth.depthTexture.minFilter = depth.depthTexture.magFilter = THREE.NearestFilter; }
   function bake() {
     X.off(); size(); const list = []; pool(o => { const e = snap.get(o); if (e && e.n >= 6 && !X.live.has(o) && fit(o)) list.push(o); }); if (!list.length) return false;
     for (const o of list) { o.layers.mask = MASK; X.still.push(o); }
@@ -7112,7 +7118,7 @@ const GRADES = [
 function applyGrade(i) { const g = GRADES[i] || GRADES[0], u = POST.mat.uniforms; u.uShadow.value.set(...g[0]); u.uHigh.value.set(...g[1]); u.uSat.value = g[2]; u.uCon.value = g[3]; u.uGlow.value = G.noGlowPass || /[?&]noglow/.test(location.search) ? 0 : g[4]; POST.extract.uniforms.uThr.value = g[5]; }
 const _db = new THREE.Vector2();
 function sizePost() {
-  if (POST.rt.samples) { const n = pixelRatio > 2.25 || G.leanLv >= 1 ? 2 : 4; if (POST.rt.samples !== n) { POST.rt.samples = n; POST.rt.dispose(); } } // so many pixels need less multisampling
+  if (POST.rt.samples) { const n = pixelRatio > 2.25 || LEAN ? 2 : 4; if (POST.rt.samples !== n) { POST.rt.samples = n; POST.rt.dispose(); } } // so many pixels need less multisampling
   renderer.getDrawingBufferSize(_db); if (POST.rt.width !== _db.x || POST.rt.height !== _db.y) POST.rt.setSize(_db.x, _db.y);
   const qw = Math.max(1, Math.round(_db.x / 4)), qh = Math.max(1, Math.round(_db.y / 4)); for (const t of [POST.qA, POST.qB]) t.setSize(qw, qh); for (const t of [POST.eA, POST.eB]) t.setSize(Math.max(1, qw >> 1), Math.max(1, qh >> 1));
   POST.extract.uniforms.uTexel.value.set(1 / _db.x, 1 / _db.y);
@@ -7516,112 +7522,6 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') G.firing = false; });
 
 /* loop */
-async function perfTest() { // ?perf: speed test 4. First the frame rate (an empty page, then a battle as you play it), then what each part of a frame costs the GPU when it is kept busy
-  const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:6px;right:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;padding:9px 11px;border-radius:12px;background:rgba(8,12,30,.92);color:#fff;font:600 12px/1.42 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
-  const wait = ms => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(r)), rows = [], gl = renderer.getContext(), px = new Uint8Array(4), med = a => a.sort((x, y) => x - y)[a.length >> 1];
-  const V = 'Speed test 4 (v152' + (LEAN ? ', lean)' : ')'), show = s => { box.textContent = V + ': ' + s + '\n' + rows.join('\n'); };
-  box.textContent = V + ': tap here to start\n(about 40 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
-  audio(); show('loading...'); G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 11; save.v = 3;
-  await Promise.race([loadLm('dunes'), wait(8000)]); await wait(800);
-  const pr = k => { pixelRatio = k; renderer.setPixelRatio(k); resize(); };
-  const cadence = async (name, ms) => { // how often a frame really comes: frames per second, then the share of frames at 60, at 30 and slower
-    const t = []; let l = await raf(); const t0 = l; while (l - t0 < ms) { const n = await raf(); t.push(n - l); l = n; }
-    const avg = t.reduce((a, b) => a + b, 0) / t.length, pc = f => Math.round(100 * t.filter(f).length / t.length) + '%';
-    rows.push(name.padEnd(13) + (1000 / avg).toFixed(0).padStart(4) + ' fps  60:' + pc(x => x < 21).padStart(4) + ' 30:' + pc(x => x >= 21 && x < 38).padStart(4) + ' slower:' + pc(x => x >= 38).padStart(4)); show('running...');
-  };
-  pr(Math.min(DPR, 2)); G.paused = true; await wait(600); await cadence('empty page', 2500);
-  G.paused = false; startPlay(); G.nestHp = G.nestMax = G.fortHp = G.fortMax = 1e9; await wait(7000); await cadence('battle 2x', 5000);
-  G.paused = true; const units = ants.n + '/' + beetles.n;
-  // Each row draws four frames on end and waits for them, so the GPU is kept busy and can't hide the cost by slowing its clock
-  const busy = () => { const t = performance.now(); for (let k = 0; k < 4; k++) { G.frameN = (G.frameN || 0); render(); } gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); return (performance.now() - t) / 4; };
-  const cost = async (name, on, off) => { const a = []; try { if (on) on(); for (let k = 0; k < 4; k++) { await raf(); busy(); } for (let k = 0; k < 14; k++) { await raf(); a.push(busy()); } } catch (e) { if (off) off(); rows.push(name.padEnd(16) + '  failed'); return; } if (off) off(); const g = med(a); if (cost.base == null) cost.base = g; rows.push(name.padEnd(16) + g.toFixed(2).padStart(6) + (name === 'whole picture' ? '' : (g - cost.base >= 0 ? '  +' : '  ') + (g - cost.base).toFixed(2))); show('running...'); };
-  const mats = () => scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => { m.needsUpdate = true; }); }), hid = []; let sr = renderer.shadowMap.render;
-  const hide = q => () => { hid.length = 0; scene.traverse(o => { if (o !== scene && o.visible && q(o)) { hid.push(o); o.visible = false; } }); }, back = () => { for (const o of hid) o.visible = true; };
-  rows.push('', 'GPU busy, ms a frame (2x)'); await cost('whole picture'); cost.base = null; rows.pop(); await cost('whole picture');
-  if (SHC) await cost('shadows redrawn', () => { SHC.on = false; }, () => { SHC.on = true; SHC.reset(); });
-  await cost('no shadow draw', () => { renderer.shadowMap.render = () => {}; }, () => { renderer.shadowMap.render = sr; });
-  await cost('no shadows', () => { renderer.shadowMap.enabled = false; mats(); }, () => { renderer.shadowMap.enabled = true; mats(); });
-  await cost('no glow pass', () => { POST.on = false; }, () => { POST.on = true; });
-  if (POST.rt.samples) { await cost('2x edges', () => { POST.rt.samples = 2; POST.rt.dispose(); }, () => { POST.rt.dispose(); sizePost(); }); await cost('no edge smooth', () => { POST.rt.samples = 1; POST.rt.dispose(); }, () => { POST.rt.dispose(); sizePost(); }); }
-  await cost('at 1x', () => pr(1), () => pr(2)); if (DPR > 2.2) await cost('at 3x', () => pr(3), () => pr(2));
-  { const fb = new THREE.MeshBasicMaterial({ color: 0x888888 }), fs = new THREE.MeshBasicMaterial({ color: 0x888888, skinning: true }), was = []; await cost('flat colours', () => scene.traverse(o => { if (o.isMesh && !Array.isArray(o.material) && /Standard|Lambert/.test(o.material.type)) { was.push([o, o.material]); o.material = o.isSkinnedMesh ? fs : fb; } }), () => { for (const [o, m] of was) o.material = m; }); }
-  await cost('no scenery', hide(o => o === world), back); await cost('no castle', hide(o => o === fort), back);
-  await cost('no armies', hide(o => o === allySprites || o === foeSprites), back);
-  await cost('no see-through', hide(o => o.material && [].concat(o.material)[0].transparent), back);
-  await cost('nothing at all', hide(o => o.parent === scene && !o.isLight && !o.isCamera), back);
-  G.paused = false; await wait(1500); await cadence('battle, after', 4000);
-  rows.push('', gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + DPR.toFixed(1) + '  units ' + units + '  ' + (gl.getParameter(gl.VERSION).includes('2') ? 'gl2' : 'gl1') + '  ' + renderer.info.programs.length + ' shaders'); show('done. Screenshot this.');
-}
-/* ---- the session log (three quick taps on the Level label) ----
-   One row per half minute of battle: when, level, frames a second, the share that came on time, and how long the battle's rules,
-   handing over the picture and the browser's own part took. "cpu" times the same small sum each row: if it grows, the phone has
-   slowed itself down (heat); if it stays and the frames still fall, the cost is ours or the screen's. */
-const SLOG = (() => {
-  const X = { rows: [], d: null, t0: performance.now() }, zero = () => ({ n: 0, t: 0, ok: 0, u: 0, r: 0, p: 0, pn: 0 });
-  const ch = new MessageChannel(); let at = 0, wait = null; ch.port1.onmessage = () => { if (wait) { wait.p += performance.now() - at; wait.pn++; wait = null; } };
-  const sum = () => { const t = performance.now(); let a = 0; for (let k = 0; k < 400000; k++) a += Math.sqrt(k * 1.7 + a % 3); X.junk = a; return performance.now() - t; };
-  X.push = () => { const d = X.d; X.d = null; if (!d || d.n < 240) return; const f = v => v.toFixed(1), row = { a: [((performance.now() - X.t0) / 60000).toFixed(0).padStart(3), String(G.level).padStart(4), (1000 * d.n / d.t).toFixed(0).padStart(4), (Math.round(100 * d.ok / d.n) + '%').padStart(5), f(d.u / d.n).padStart(6), f(d.r / d.n).padStart(5), f(d.pn ? d.p / d.pn : 0).padStart(5)].join(''), cpu: '    -', b: (pixelRatio.toFixed(2) + (LEAN ? '/' + (G.leanLv || 0) : '')).padStart(7) }; X.rows.push(row); if (X.rows.length > 10) X.rows.shift();
-    if (G.mode !== 'play') setTimeout(() => { if (G.mode !== 'play') row.cpu = f([0, 1, 2].map(sum).sort((p, q) => p - q)[1]).padStart(5); }, 4000); }; // (never during a battle: the sum itself would be a hitch)
-  X.frame = (raw, u, r, end) => { if (G.mode !== 'play' || G.t < 3 || raw > .4) { if (X.d && G.mode !== 'play') X.push(); return; } const d = X.d || (X.d = zero()); d.n++; d.t += raw * 1000; if (raw < .021) d.ok++; d.u += u; d.r += r; if (!wait && d.n % 5 === 0) { wait = d; at = end; ch.port2.postMessage(0); } if (d.t > 30000) X.push(); };
-  X.text = () => X.rows.length ? '\nmin lvl fps  60% rules draw page  cpu  sharp\n' + X.rows.map(q => q.a + q.cpu + q.b).join('\n') : '\n(a row appears here after each battle)';
-  return X;
-})();
-/* ---- ?ab: where the time goes while somebody really plays ----
-   Every couple of seconds one thing is switched off in turn, and the frame rate and the cost of each part are kept for each.
-   rules = the battle, draw = handing the picture over, page = what the browser does after us (buttons, text, putting it on
-   screen). The level can't end while it runs, and nothing is saved. */
-const AB = /[?&]ab(=1)?(&|$)/.test(location.search) ? (() => {
-  const N = ['as it is', 'no text/buttons', 'no sound', 'no picture', 'no battle', 'no armies', 'no scenery', '1x sharp'], D = N.map(() => ({ n: 0, t: 0, ok: 0, u: 0, r: 0, p: 0, pn: 0, ev: 0 })), SLOT = 2400, SKIP = 600;
-  const X = { m: 0, at: 0, ev: 0, box: null, pr0: 0, done: false }; addEventListener('pointermove', () => { X.ev++; }, true);
-  const ch = new MessageChannel(); let t1 = 0, cur = null; ch.port1.onmessage = () => { if (cur) { cur.p += performance.now() - t1; cur.pn++; cur = null; } };
-  const put = (m, on) => {
-    if (m === 1) for (const id of ['hud', 'vignette', 'sandHaze', 'flash']) { const e = $(id); if (e) e.style.visibility = on ? 'hidden' : ''; }
-    if (m === 2 && actx) on ? actx.suspend() : actx.resume();
-    if (m === 5) allySprites.visible = foeSprites.visible = !on; if (m === 6) world.visible = !on;
-    if (m === 7) { if (on) X.pr0 = pixelRatio; pixelRatio = on ? 1 : X.pr0; renderer.setPixelRatio(pixelRatio); resize(); }
-  };
-  const show = () => {
-    if (!X.box) { X.box = document.createElement('div'); X.box.style.cssText = 'position:fixed;left:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;pointer-events:none;padding:7px 9px;border-radius:10px;background:rgba(8,12,30,.88);color:#fff;font:600 11px/1.35 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(X.box); }
-    const c = Math.min(...D.map(d => d.t)) / (SLOT - SKIP), f = (a, b) => (b ? a / b : 0).toFixed(1).padStart(5);
-    X.done = c >= 3.9; X.box.textContent = (X.done ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (v152' + (LEAN ? ' lean' : '') + ')\n' + 'off now'.padEnd(16) + ' fps  60% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + pixelRatio + '  ' + ants.n + '/' + beetles.n + '  touches ' + (D[0].n ? D[0].ev / D[0].n : 0).toFixed(1);
-  };
-  X.frame = (now, dt, raw) => { // stands in for update + render
-    if (G.mode !== 'play' || G.paused || G.t < 2.5) { if (X.on) { put(X.m, false); X.on = false; } X.at = 0; return false; }
-    G.practice = true; if (!G.practiceKeep) G.practiceKeep = JSON.stringify(save); G.nestHp = G.nestMax = 1e6; G.fortHp = G.fortMax = 1e7;
-    if (!X.at) { X.at = now; put(X.m, true); X.on = true; }
-    else if (now - X.at > SLOT) { put(X.m, false); X.m = (X.m + 1) % N.length; put(X.m, true); X.at = now; X.ev = 0; show(); }
-    const a = performance.now(); if (X.m !== 4) update(dt); const b = performance.now(); if (X.m !== 3) render(); t1 = performance.now();
-    if (now - X.at > SKIP) { const d = D[X.m]; d.n++; d.t += raw * 1000; if (raw < .021) d.ok++; d.u += b - a; d.r += t1 - b; d.ev += X.ev; if (!cur) { cur = d; ch.port2.postMessage(0); } } X.ev = 0;
-    return true;
-  };
-  return X;
-})() : null;
-/* ---- ?ab=2: the same question in real, saved play ----
-   Nothing is made easier and nothing is held back from the save: every three seconds one thing is switched, and the frame rate is
-   kept for each. Runs over as many levels as it takes. */
-const AB2 = /[?&]ab=2(&|$)/.test(location.search) ? (() => {
-  const N = ['as it is', 'no page motion', 'bars frozen', 'no text/buttons', 'no sound', 'no armies', '1x sharp', 'blank picture'], D = N.map(() => ({ n: 0, t: 0, ok: 0, half: 0, u: 0, r: 0, p: 0, pn: 0 })), LEN = k => k === 7 ? 1800 : 3000, SKIP = 700;
-  const X = { m: 0, at: 0, box: null, pr0: 0, on: false }, ch = new MessageChannel(); let t1 = 0, cur = null; ch.port1.onmessage = () => { if (cur) { cur.p += performance.now() - t1; cur.pn++; cur = null; } };
-  const put = (m, on) => {
-    if (m === 1) { const e = $('beat'); if (e) e.style.display = on ? 'none' : ''; } if (m === 2) G.hudFreeze = on;
-    if (m === 3) for (const id of ['hud', 'vignette', 'sandHaze', 'flash', 'beat']) { const e = $(id); if (e) e.style.display = on ? 'none' : ''; }
-    if (m === 4 && actx) on ? actx.suspend() : actx.resume(); if (m === 5) allySprites.visible = foeSprites.visible = !on;
-    if (m === 6) { if (on) X.pr0 = pixelRatio; pixelRatio = on ? 1 : X.pr0 || pixelRatio; renderer.setPixelRatio(pixelRatio); resize(); }
-  };
-  const show = () => {
-    if (!X.box) { X.box = document.createElement('div'); X.box.style.cssText = 'position:fixed;left:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;pointer-events:none;padding:7px 9px;border-radius:10px;background:rgba(8,12,30,.88);color:#fff;font:600 11px/1.35 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(X.box); }
-    const c = Math.min(...D.map((d, k) => d.t / (LEN(k) - SKIP))), f = (a, b) => (b ? a / b : 0).toFixed(1).padStart(5);
-    X.box.textContent = (c >= 3.9 ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (real play, v152' + (LEAN ? ' lean' : '') + ')\n' + 'changed'.padEnd(16) + ' fps  60%  30% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + (d.n ? Math.round(100 * d.half / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n');
-  };
-  X.frame = (now, dt, raw) => {
-    if (G.mode !== 'play' || G.paused || G.t < 2.5) { if (X.on) { put(X.m, false); X.on = false; } X.at = 0; return false; }
-    if (!X.at) { X.at = now; put(X.m, true); X.on = true; if (!X.box) show(); } else if (now - X.at > LEN(X.m)) { put(X.m, false); X.m = (X.m + 1) % N.length; put(X.m, true); X.at = now; show(); }
-    const a = performance.now(); update(dt); const b = performance.now(); if (X.m !== 7) render(); t1 = performance.now();
-    if (now - X.at > SKIP) { const d = D[X.m]; d.n++; d.t += raw * 1000; if (raw < .021) d.ok++; else if (raw < .038) d.half++; d.u += b - a; d.r += t1 - b; if (!cur) { cur = d; ch.port2.postMessage(0); } }
-    return true;
-  };
-  return X;
-})() : null;
 let last = performance.now();
 // keeps the frame rate smooth: renders at fewer pixels when a phone struggles, and at more (up to the screen's own sharpness) when it has headroom
 const PR_MIN = DPR >= 2 ? 1.25 : 1; // sharp phone screens never drop below 1.25× (at 1× text and edges smear)
@@ -7635,34 +7535,29 @@ function setLowQuality(on) {
 const statsEl = document.createElement('div'); statsEl.style.cssText = 'position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 92px);transform:translateX(-50%);z-index:9;display:none;padding:4px 10px;border-radius:10px;background:rgba(8,14,40,.75);color:#fff;font:600 12px/1.3 system-ui,sans-serif;white-space:nowrap;pointer-events:none;white-space:pre;font-family:ui-monospace,Menlo,monospace;font-size:11px';
 gameEl.appendChild(statsEl);
 { let taps = []; $('lvlPill').addEventListener('pointerdown', e => { e.stopPropagation(); const t = performance.now(); taps = taps.filter(x => t - x < 700); taps.push(t); if (taps.length >= 3) { taps = []; statsEl.style.display = statsEl.style.display === 'block' ? 'none' : 'block'; statsEl.textContent = '…'; } }); }
-function leanStep() { // one step lighter; false when there is nothing left to drop
-  if (/[?&]leanstep/.test(location.search) ? (G.leanLv = G.leanLv || 0) >= 3 : true) return false; G.leanLv++; // (measured on an iPhone: none of these helped, so nothing is given up)
-  if (G.leanLv === 1) sizePost(); // softer edge smoothing
-  else if (G.leanLv === 2) G.shEvery = 6; // what moves redraws its shadow half as often
-  else { POST.mat.uniforms.uGlow.value = 0; G.noGlowPass = true; } // the glow's blur passes
-  return true;
-}
 function adaptResolution(raw) {
-  if (raw <= 0 || raw > .25) return; if (G.mode === 'won' || (G.mode === 'play' && G.t < 3) || G.perf || AB && AB.on || AB2 && AB2.on) { frSum = frSq = frN = frT = 0; frBuf.length = 0; return; } /* nor while a level is still settling in; never mid-explosion: rebuilding the buffers is a visible hitch */ frBuf.push(raw); frSum += raw; frSq += raw * raw; frN++; frT += raw; if (frCool > 0) frCool -= raw;
+  if (raw <= 0 || raw > .25) return; if (G.mode === 'won' || (G.mode === 'play' && G.t < 3)) { frSum = frSq = frN = frT = 0; frBuf.length = 0; return; } /* nor while a level is still settling in; never mid-explosion: rebuilding the buffers is a visible hitch */ frBuf.push(raw); frSum += raw; frSq += raw * raw; frN++; frT += raw; if (frCool > 0) frCool -= raw;
   if (frT < 1.2) return;
   frBuf.sort((a, b) => a - b); const keep = Math.max(1, Math.ceil(frBuf.length * .88)); let ts = 0; for (let i = 0; i < keep; i++) ts += frBuf[i]; frBuf.length = 0; // the slowest eighth (a hitch, a shader, a loaded picture) doesn't count
   const avg = ts / keep, sd = Math.sqrt(Math.max(0, frSq / frN - (frSum / frN) ** 2)); frSum = frSq = frN = frT = 0;
-  if (statsEl.style.display === 'block') statsEl.textContent = Math.round(1 / avg) + ' fps · ' + pixelRatio.toFixed(2) + '× of ' + DPR.toFixed(1) + ' · sharpen ' + (POST.on && !G.lowQ ? POST.mat.uniforms.uSharp.value.toFixed(2) : 'off') + (G.lowQ ? ' · low' : '') + (LEAN ? ' · lean ' + (G.leanLv || 0) : '') + SLOG.text() + (G.capped ? ' · capped' : '');
+  if (statsEl.style.display === 'block') statsEl.textContent = Math.round(1 / avg) + ' fps · ' + pixelRatio.toFixed(2) + '× of ' + DPR.toFixed(1) + ' · sharpen ' + (POST.on && !G.lowQ ? POST.mat.uniforms.uSharp.value.toFixed(2) : 'off') + (G.lowQ ? ' · low' : '') + (LEAN ? ' · phone' : '') + (G.capped ? ' · capped' : '');
   if (frCool > 0) return;
+  if (LEAN) { // a phone starts sharp; when a battle can't hold 60 for two stretches running it takes one step down (and remembers it for an hour)
+    if (G.mode !== 'play' || avg < 1 / 54) { frSlow = 0; return; } if (++frSlow < 2) return; frSlow = 0;
+    if (avg > 1 / 33 && avg < 1 / 27.5 && sd < .0025 && G.phStep === pixelRatio) return; // (a step down changed nothing and it is a steady 30: that is the phone's own cap)
+    const down = PHONE_PRS.find(k => k < pixelRatio - .01); if (!down) { if (avg > 1 / 24 && !G.lowQ) setLowQuality(true); return; }
+    G.phStep = down; pixelRatio = prCap = down; renderer.setPixelRatio(down); resize(); frCool = 5; try { localStorage.setItem('bs.phone', JSON.stringify({ pr: down, at: Date.now() })); } catch (e) {} return; }
   // a steady 30 fps (iPhone Low Power Mode, some in-app browsers) is the browser's cap, not the game struggling: dropping
   // resolution wouldn't make it any faster, only blurry, so hold the sharpness
   G.capped = pixelRatio <= 2 && avg > 1 / 33 && avg < 1 / 27.5 && sd < .0035; if (G.capped) return;
   let next = pixelRatio;
-  if (LEAN && G.mode === 'play' && avg > 1 / 52 && !(avg > 1 / 33 && avg < 1 / 27.5 && sd < .0025 && G.leanLv >= 3)) { if ((G.leanSlow = (G.leanSlow || 0) + 1) >= 2 && leanStep()) { G.leanSlow = 0; frCool = 3; return; } } else if (LEAN) G.leanSlow = 0;
-  if (LEAN && G.prTry) { const q = G.prTry; G.prTry = null; if (avg > q.avg * .92 && pixelRatio < q.pr) { G.noStep = true; prCap = pixelRatio = q.pr; renderer.setPixelRatio(pixelRatio); resize(); frCool = 4; return; } }
-  const slow = !LEAN && avg > (pixelRatio > 2 ? 1 / 54 : LEAN ? 1 / 45 : 1 / 27); frSlow = slow ? frSlow + 1 : 0; if (slow && frSlow < 2) return; // one slow stretch isn't enough: two in a row
+  const slow = avg > (pixelRatio > 2 ? 1 / 54 : 1 / 27); frSlow = slow ? frSlow + 1 : 0; if (slow && frSlow < 2) return; // one slow stretch isn't enough: two in a row
   if (!slow && avg < 1 / 50 && prCap < MAX_PR && prTries < 2 && (frGood += 1) >= 10) { prTries++; frGood = 0; prCap = Math.min(MAX_PR, prCap + .25); } else if (avg >= 1 / 50) frGood = 0; // running well for a good while: it may climb back a step (twice at most, so it never flickers)
   if (G.mode === 'play') { G.fought = avg < 1 / 57; if (G.fought && pixelRatio > 2 && G.prKept !== pixelRatio) { G.prKept = pixelRatio; try { localStorage.setItem('bs.pr', pixelRatio); } catch (e) {} } }
   if (avg > 1 / 22 && pixelRatio <= PR_MIN && !G.lowQ && (G.slowWin = (G.slowWin || 0) + 1) >= 2) setLowQuality(true); // still slow at the lowest resolution: drop the expensive extras
   if (slow && pixelRatio > PR_MIN) { /* like most mobile games, a steady 30 fps is fine: only step down below ~27 fps (it used to below 50, so phones capped at 30 sank to their lowest, blurriest setting) */ next = pixelRatio > 2 ? (pixelRatio > 2.5 ? 2.5 : 2) : Math.max(PR_MIN, pixelRatio - .25); prCap = next; }
   else if (avg < 1 / 58 && pixelRatio < prCap) next = pixelRatio >= 2 ? (G.mode !== 'play' && G.fought && sd < .003 ? Math.min(prCap, pixelRatio + .5) : pixelRatio) : Math.min(prCap, pixelRatio + .25); // past 2x it only climbs between battles, after one that ran well, where the change can't be noticed
   if (next < pixelRatio) { G.prKept = 0; try { localStorage.removeItem('bs.pr'); } catch (e) {} }
-  if (LEAN && next < pixelRatio) G.prTry = { pr: pixelRatio, avg };
   if (next !== pixelRatio) { frCool = next > pixelRatio ? 2.5 : 4; pixelRatio = next; renderer.setPixelRatio(pixelRatio); resize(); }
 }
 const ease01 = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
@@ -7675,9 +7570,7 @@ function frame(now) {
   if (keys.ArrowLeft) G.lx = clamp(G.lx - dt * 9, -LANE + .6, LANE - .6);
   if (keys.ArrowRight) G.lx = clamp(G.lx + dt * 9, -LANE + .6, LANE - .6);
   const wt = G.winT; // slow motion on the winning hit and again as the king pops
-  if (G.perf && G.mode === 'play') { G.firing = true; G.lx = Math.sin(now / 900) * 2; }
-  if (AB && AB.frame(now, dt, raw) || AB2 && AB2.frame(now, dt, raw)) G.pauseDrawn = false;
-  else if (!G.paused) { const p0 = performance.now(); update(dt * (G.mode === "won" ? winSpeed(wt) : 1)); const p1 = performance.now(); render(); const p2 = performance.now(); SLOG.frame(raw, p1 - p0, p2 - p1, p2); G.pauseDrawn = false; }
+  if (!G.paused) { update(dt * (G.mode === "won" ? winSpeed(wt) : 1)); render(); G.pauseDrawn = false; }
   else if (!G.pauseDrawn) { render(); G.pauseDrawn = true; } // paused: the scene holds still, so it is drawn once, not every frame
 }
 
@@ -7974,7 +7867,7 @@ function boot() {
     l.classList.add('tapgo'); l.innerHTML = '<svg viewBox="0 0 48 52"><use href="#i-king"/></svg><b>BONE SIEGE</b><span>Tap to begin</span>';
     l.addEventListener('pointerdown', () => { l.remove(); audio(); startCine(); }, { once: true }); return;
   }
-  showMenu(); prewarm(); render(); requestAnimationFrame(frame); setTimeout(smpPrep, 400); const l = $('loading'); if (l) l.remove(); if (/[?&]perf/.test(location.search)) perfTest(); else practiceBoss();
+  showMenu(); prewarm(); render(); requestAnimationFrame(frame); setTimeout(smpPrep, 400); const l = $('loading'); if (l) l.remove(); practiceBoss();
 }
 // boss practice: Boss fights on the menu (or ?boss=1..4 in the address) drops straight into that world's warlord fight. Nothing is
 // saved: the real save comes back when you return to the menu
