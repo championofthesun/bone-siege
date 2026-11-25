@@ -84,7 +84,7 @@ svg.ico.sm{width:18px;height:18px}
 .grid{margin-top:14px;display:flex;flex-direction:column;gap:8px;width:100%;max-width:420px}
 .up{display:flex;align-items:center;gap:10px;background:#fff;color:var(--ink);border-radius:16px;padding:8px 10px;box-shadow:0 4px 0 rgba(8,14,40,.4)}
 .up em{width:40px;height:40px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--c);box-shadow:inset 0 -3px 0 rgba(0,0,0,.12)}
-.up em svg{width:24px;height:24px}
+.up em svg{width:24px;height:24px}.up em.pic{width:48px;height:48px;border-radius:12px;overflow:hidden;box-shadow:0 0 0 2px #d9b866}.up em.pic img{width:100%;height:100%;object-fit:cover;display:block}
 .up .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .up b{font-family:var(--disp);font-weight:400;font-size:16px;letter-spacing:.3px;line-height:1.1;display:flex;align-items:center;gap:7px}
 .up b i{font:600 11px Fredoka,system-ui,sans-serif;color:var(--muted);background:#eef0f6;border-radius:999px;padding:2px 7px;letter-spacing:0;white-space:nowrap}
@@ -146,6 +146,7 @@ svg.ico.sm{width:18px;height:18px}
 .rw-sec{width:min(360px,92vw);display:flex;flex-direction:column;gap:8px}
 .rw-head{font-family:var(--disp);font-size:18px;color:#ffe9a8;letter-spacing:.5px}
 .rw-chest,.rw-m,.rw-skin{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.04));border:2px solid rgba(255,214,90,.4)}
+.rw-pic{width:50px;height:50px;flex:none;border-radius:14px;overflow:hidden;border:2px solid rgba(255,214,90,.75)}.rw-pic img{width:100%;height:100%;object-fit:cover;display:block}.rw-box.pic{filter:none;width:50px;height:50px;flex:none;border-radius:14px;overflow:hidden;border:2px solid rgba(255,214,90,.75);line-height:0}.rw-box.pic img{width:100%;height:100%;object-fit:cover}.rw-box.pic.done{filter:grayscale(.7) brightness(.75)}
 .rw-box{font-size:34px;filter:drop-shadow(0 0 8px rgba(255,214,90,.7))}
 .rw-chest b,.rw-m b,.rw-skin b{display:block;font-size:15px;color:#fff}
 .rw-chest span,.rw-m span,.rw-skin span{display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,.7)}
@@ -204,6 +205,7 @@ svg.ico.sm{width:18px;height:18px}
 @media (prefers-reduced-motion:reduce){.mcard .emb,.mcard .emb svg,.mcard .emb::before,.mcard .emb::after{animation:none!important}}
 #story{background:rgba(8,6,24,.82);justify-content:center}
 .story-card{width:min(340px,88vw);display:flex;flex-direction:column;align-items:center;text-align:center;padding:22px 20px 18px;border-radius:24px;background:linear-gradient(180deg,#2c1f52,#16112e);border:2px solid rgba(255,214,90,.55);box-shadow:0 10px 30px rgba(0,0,0,.6)}
+.story-art{display:none;align-self:stretch;height:auto;aspect-ratio:3/2;margin:-22px -20px -26px;border-radius:22px 22px 0 0;-webkit-mask-image:linear-gradient(#000 74%,transparent);mask-image:linear-gradient(#000 74%,transparent)}.story-card.art .story-art{display:block}.story-card.art .story-emb{display:none}.story-card.art .story-name{position:relative;text-shadow:0 2px 0 #16112e,0 0 14px #16112e,0 0 6px #16112e}
 .story-emb{width:72px;height:72px;filter:drop-shadow(0 0 12px rgba(255,214,90,.6))}
 .story-name{margin-top:6px;font-family:var(--disp);font-size:30px;color:#ff9a7a;letter-spacing:1px}
 .story-title{font-size:15px;font-weight:700;color:#e9d4ff}
@@ -609,9 +611,9 @@ svg.ico.sm{width:18px;height:18px}
 <div class="screen" id="pause"><div class="pause-card"><div class="res-title" style="color:var(--gold)">PAUSED</div><div class="res-sub" id="pauseSub"></div><div id="pauseBoons"></div><div class="stack"><button class="btn green big sm" id="resumeBtn">Resume</button><button class="btn violet big sm" id="restartBtn">Restart level</button><button class="link" id="quitBtn">Quit to menu</button></div></div></div>
   <div class="screen" id="boon"><div class="boon-h">Choose a boon</div><div class="boon-s" id="boonSub"></div><div id="boonRow"></div><div id="boonHave"></div></div>
   <div class="screen" id="map"><div class="map-head"><div class="map-title">The Realm</div><span class="map-ng" id="mapNg"></span></div><div class="map-path" id="mapPath"></div><button class="btn green big sm" id="mapClose">Back</button></div>
-  <div class="screen" id="story"><div class="story-card"><svg class="story-emb" viewBox="0 0 48 48"><use id="storyEmb" href="#t-0"/></svg><div class="story-name" id="storyName"></div><div class="story-title" id="storyTitle"></div><p class="story-txt" id="storyTxt"></p><button class="btn green big sm" id="storyGo">Fight!</button></div></div>
+  <div class="screen" id="story"><div class="story-card"><img class="story-art" id="storyArt" alt="" draggable="false"><svg class="story-emb" viewBox="0 0 48 48"><use id="storyEmb" href="#t-0"/></svg><div class="story-name" id="storyName"></div><div class="story-title" id="storyTitle"></div><p class="story-txt" id="storyTxt"></p><button class="btn green big sm" id="storyGo">Fight!</button></div></div>
   <div class="screen" id="rewards"><div class="map-title">Rewards</div>
-    <div class="rw-sec"><div class="rw-chest" id="rwChest"><div class="rw-box">🎁</div><div><b>Daily chest</b><span id="rwChestTxt"></span></div><button class="btn violet sm" id="rwChestBtn">Open</button></div></div>
+    <div class="rw-sec"><div class="rw-chest" id="rwChest"><div class="rw-box" id="rwBox"></div><div><b>Daily chest</b><span id="rwChestTxt"></span></div><button class="btn violet sm" id="rwChestBtn">Open</button></div></div>
     <div class="rw-sec"><div class="rw-head">Today's missions</div><div id="rwMissions"></div></div>
     <div class="rw-sec"><div class="rw-head">The Stable</div><div class="rw-stable" id="rwStable"></div></div>
     <button class="btn green big sm" id="rwBack">Back</button>
@@ -671,6 +673,8 @@ const arrow = (a, b, maxed) => maxed ? a : a + ' → ' + b, pct = v => Math.roun
 // the first four are always there; the rest unlock at the level shown and change how a battle plays
 // shop lines say what the next level gets you, in plain words ("Soldiers 20% tougher"), not raw stat pairs
 const gain = (a, b) => '+' + Math.max(1, Math.round((b / a - 1) * 100)) + '%';
+const artNo = {}, artFb = {}, art = (k, fb) => { artFb[k] = fb; return artNo[k] ? fb : `<img class="pic" src="models/art/${k}.webp" alt="" draggable="false" data-art="${k}">`; };
+const artWarm = k => { if (!artNo[k]) new Image().src = 'models/art/' + k + '.webp'; };
 const UPG = [
   { id: 'rate',   ico: 'i-bolt',   c: '#ffe27a', name: 'Fire Rate', base: 30, desc: (l, m) => m ? 'Your cannon fires at full speed' : gain(1 / fireInterval(l), 1 / fireInterval(l + 1)) + ' soldiers per second' },
   { id: 'tough',  ico: 'i-drop',   c: '#bfefff', name: 'Armor',        base: 40, desc: (l, m) => m ? 'Your soldiers are as tough as they get' : 'Soldiers ' + gain(antHp(l), antHp(l + 1)) + ' tougher' },
@@ -7309,7 +7313,7 @@ function renderUpgrades() {
     shown++;
     const maxed = !!u.max && l >= u.max, cost = upCost(u, l), fresh = u.unlock && l === 0;
     row.className = 'up';
-    row.innerHTML = `<em style="--c:${u.c}"><svg viewBox="0 0 24 24"><use href="#${u.ico}"/></svg></em><div class="m"><b>${u.name}<i class="${fresh ? 'new' : ''}">${fresh ? 'NEW' : 'Lv ' + (u.unlock ? l : l + 1)}</i></b><span>${u.desc(l, maxed)}</span></div>`;
+    row.innerHTML = `<em class="pic" style="--c:${u.c}">${art('u_' + u.id + (u.id === 'giant' && !palReady() ? 'C' : ''), `<svg viewBox="0 0 24 24"><use href="#${u.ico}"/></svg>`)}</em><div class="m"><b>${u.name}<i class="${fresh ? 'new' : ''}">${fresh ? 'NEW' : 'Lv ' + (u.unlock ? l : l + 1)}</i></b><span>${u.desc(l, maxed)}</span></div>`;
     const b = document.createElement('button'); b.className = 'btn'; b.innerHTML = maxed ? 'MAX' : `${COIN} ${cost}`; b.disabled = maxed || save.coins < cost;
     b.onclick = () => { if (maxed || save.coins < cost) return; audio(); save.coins -= cost; save.up[u.id] = l + 1; persist(); smp('buy', .45, .03); towerShow(); renderUpgrades(); };
     row.appendChild(b); box.appendChild(row);
@@ -7332,6 +7336,7 @@ function renderUpgrades() {
   setHud('coinN', save.coins); setHud('menuCoinN', G.walletShown != null ? G.walletShown : save.coins);
 }
 function showMenu() {
+  storyWarm();
   if (!G.menuIntroDone) { G.menuIntroDone = true; $('menu').classList.add('intro'); setTimeout(() => $('menu').classList.remove('intro'), 1500); } // the first open of a session: the logo drops in, the rest rises after it
   closeMore(); if (G.palCardDue) { G.palCardDue = false; setTimeout(showPalUnlock, 700); } // the Paladin card held back while a battle ran
   if (G.practice) { if (G.practiceKeep) save = JSON.parse(G.practiceKeep); G.practice = false; G.practiceKeep = null; }
@@ -7589,21 +7594,25 @@ function renderMap() {
 }
 $('mapBtn').onclick = () => { renderMap(); $('menu').classList.remove('on'); $('map').classList.add('on'); };
 $('mapClose').onclick = () => { $('map').classList.remove('on'); $('menu').classList.add('on'); };
+// the painting on the story card; the drawn emblem stays until it is here
+const STORY_ART = ['s_grimbald', 's_sekra', 's_hrimgar', 's_magmaw', 's_king'];
+function storyPic(k) { const im = $('storyArt'), c = im.parentNode; c.classList.remove('art'); im.onload = () => c.classList.add('art'); im.onerror = () => c.classList.remove('art'); im.src = 'models/art/' + k + '.webp'; if (im.complete && im.naturalWidth) c.classList.add('art'); }
+function storyWarm() { const n = save.level; if (n === 1 && !save.openSeen) artWarm('s_crown'); if (isBoss(n)) artWarm(onRoadLv(n) && worldOf(n) === HALLW ? 's_demoted' : STORY_ART[worldOf(n) % WORLDS.length]); if (n === CAP_AT) artWarm('s_rowan'); }
 // before a boss level, his story card (once per level); the battle waits behind it
 function maybeStory() {
   if (G.sim || G.cine || G.fin) return;
-  if (G.level === 1 && !save.openSeen && !G.practice && !(save.storySeen || {})[1]) { $('storyEmb').parentNode.setAttribute('viewBox', '0 0 48 52'); $('storyEmb').setAttribute('href', '#t-4'); $('storyName').textContent = 'THE BONE CROWN'; $('storyTitle').textContent = 'on the Bone King\'s head'; $('storyTxt').textContent = 'The crown commands the dead. Take it, and end the war.'; G.paused = true; $('story').classList.add('on'); gameEl.classList.add('overlay'); return; }
+  if (G.level === 1 && !save.openSeen && !G.practice && !(save.storySeen || {})[1]) { $('storyEmb').parentNode.setAttribute('viewBox', '0 0 48 52'); $('storyEmb').setAttribute('href', '#t-4'); storyPic('s_crown'); $('storyName').textContent = 'THE BONE CROWN'; $('storyTitle').textContent = 'on the Bone King\'s head'; $('storyTxt').textContent = 'The crown commands the dead. Take it, and end the war.'; G.paused = true; $('story').classList.add('on'); gameEl.classList.add('overlay'); return; }
   if (!G.cfg.boss) return; $('storyEmb').parentNode.setAttribute('viewBox', worldOf(G.level) === HALLW ? '0 0 48 52' : '0 0 48 48');
   const w = worldOf(G.level) % WORLDS.length, wl = WARLORDS[w]; save.storySeen = save.storySeen || {};
   if (save.storySeen[G.level] && !G.practice) return;
-  const lap = Math.floor((G.level - 1) / (WORLD_LEN * WORLDS.length)); $('storyEmb').setAttribute('href', '#t-' + (lap && w === HALLW ? 6 : w)); $('storyName').textContent = wlName(wl); $('storyTitle').textContent = lap && w === HALLW ? 'demoted' : wl.title;
+  const lap = Math.floor((G.level - 1) / (WORLD_LEN * WORLDS.length)); $('storyEmb').setAttribute('href', '#t-' + (lap && w === HALLW ? 6 : w)); storyPic(lap && w === HALLW ? 's_demoted' : STORY_ART[w]); $('storyName').textContent = wlName(wl); $('storyTitle').textContent = lap && w === HALLW ? 'demoted' : wl.title;
   $('storyTxt').textContent = (lap ? STORY_ROAD : STORY)[w]; G.paused = true; $('story').classList.add('on'); gameEl.classList.add('overlay');
 }
 // the Paladin's arrival, on the story card: his horse for an emblem, a fanfare, and the Stable opens
 function showPalUnlock() {
   loadPaladinArt();
   $('storyEmb').setAttribute('href', '#i-horse'); $('storyEmb').parentNode.setAttribute('viewBox', '0 0 48 44');
-  $('storyName').textContent = 'ROWAN'; $('storyTitle').textContent = 'the Paladin joins your army';
+  storyPic('s_rowan'); $('storyName').textContent = 'ROWAN'; $('storyTitle').textContent = 'the Paladin joins your army';
   $('storyTxt').textContent = 'Grimbald\'s captain is beaten, and Sir Rowan rides out on his white warhorse. Fill the meter and tap SEND: he tramples the horde and smashes the castle. New coats for his horse wait in the Stable.';
   $('storyGo').textContent = 'Ride!'; G.unlockCard = true; $('story').classList.add('on'); gameEl.classList.add('overlay');
   audio(); [392, 523, 659, 784, 1046].forEach((f, k) => setTimeout(() => tone(f, .28, 'triangle', .06), k * 110)); buzz([30, 40, 60]);
@@ -7627,10 +7636,10 @@ const missionPay = () => 40 + 6 * save.level, chestPay = () => 60 + 10 * save.le
 function rewardsReady() { const d = daily(); return !d.chest || d.ms.some(m => !m.claimed && m.prog >= m.goal); }
 let rwGained = 0, rwBefore = 0;
 function renderRewards() {
-  const d = daily(); $('rwChestTxt').textContent = d.chest ? 'Come back tomorrow' : chestPay() + ' coins inside'; $('rwChestBtn').disabled = d.chest; $('rwChestBtn').textContent = d.chest ? 'Opened' : 'Open';
+  const d = daily(); $('rwBox').innerHTML = art('r_chest', '🎁'); $('rwBox').className = 'rw-box' + (artNo.r_chest ? '' : ' pic') + (d.chest ? ' done' : ''); $('rwChestTxt').textContent = d.chest ? 'Come back tomorrow' : chestPay() + ' coins inside'; $('rwChestBtn').disabled = d.chest; $('rwChestBtn').textContent = d.chest ? 'Opened' : 'Open';
   $('rwMissions').innerHTML = d.ms.map((m, k) => `<div class="rw-m ${m.claimed ? 'done' : ''}"><div><b>${MISSIONS[m.id].txt(m.goal)}</b><span>${m.prog} / ${m.goal} · ${missionPay()} coins</span><div class="rw-bar"><i style="width:${Math.round(100 * m.prog / m.goal)}%"></i></div></div><button class="btn violet sm" data-m="${k}" ${m.claimed || m.prog < m.goal ? 'disabled' : ''}>${m.claimed ? 'Done' : 'Claim'}</button></div>`).join('');
   const own = save.skins || ['snow'], cur = save.skin || 'snow';
-  $('rwStable').innerHTML = !palReady() ? '<div class="rw-skin"><div class="rw-swatch" style="background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" style="width:22px;height:22px"><use href="#i-lock"/></svg></div><div><b>The Paladin</b><span>Beat Level ' + CAP_AT + ' to unlock him and his stable</span></div></div>' : SKINS.map(s => `<div class="rw-skin"><div class="rw-swatch" style="background:radial-gradient(circle at 35% 30%,${s.coat},${s.dark});box-shadow:0 0 10px ${s.spirit}"></div><div><b>${s.name}</b><span>${own.includes(s.id) ? (cur === s.id ? 'Riding now' : 'In your stable') : s.cost + ' coins'}</span></div><button class="btn ${own.includes(s.id) ? 'green' : 'violet'} sm" data-s="${s.id}" ${cur === s.id || (!own.includes(s.id) && save.coins < s.cost) ? 'disabled' : ''}>${cur === s.id ? 'Riding' : own.includes(s.id) ? 'Ride' : 'Buy'}</button></div>`).join('');
+  $('rwStable').innerHTML = !palReady() ? '<div class="rw-skin"><div class="rw-swatch" style="background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" style="width:22px;height:22px"><use href="#i-lock"/></svg></div><div><b>The Paladin</b><span>Beat Level ' + CAP_AT + ' to unlock him and his stable</span></div></div>' : SKINS.map(s => `<div class="rw-skin"><div class="rw-pic" style="box-shadow:0 0 10px ${s.spirit};background:radial-gradient(circle at 35% 30%,${s.coat},${s.dark})">${art('h_' + s.id, '')}</div><div><b>${s.name}</b><span>${own.includes(s.id) ? (cur === s.id ? 'Riding now' : 'In your stable') : s.cost + ' coins'}</span></div><button class="btn ${own.includes(s.id) ? 'green' : 'violet'} sm" data-s="${s.id}" ${cur === s.id || (!own.includes(s.id) && save.coins < s.cost) ? 'disabled' : ''}>${cur === s.id ? 'Riding' : own.includes(s.id) ? 'Ride' : 'Buy'}</button></div>`).join('');
   $('rewDot').classList.toggle('on', rewardsReady());
 }
 function payOut(n) { save.coins += n; rwGained += n; persist(); smp('reward', .4, .02); }
@@ -8052,7 +8061,7 @@ function boonTake(sv, n, id) { const w = boonWorld(n + 1); if (!sv.boons || sv.b
 const BOON_VB = { 'i-crown': '0 0 40 24', 'i-horse': '0 0 48 44' }, BOON_CH = { eager: 1, horn: 1 }, boonNoArt = {};
 const boonSrc = b => 'models/boon/' + b.id + (BOON_CH[b.id] && !palReady() ? 'C' : '') + '.webp', boonIco = b => `<svg viewBox="${BOON_VB[b.ico] || '0 0 24 24'}"><use href="#${b.ico}"/></svg>`;
 const boonPic = b => boonNoArt[b.id] ? boonIco(b) : `<img src="${boonSrc(b)}" alt="" draggable="false" data-boon="${b.id}">`;
-document.addEventListener('error', e => { const id = e.target.dataset && e.target.dataset.boon; if (id) { boonNoArt[id] = 1; e.target.outerHTML = boonIco(BOON_BY[id]); } }, true);
+document.addEventListener('error', e => { const k = e.target.dataset && e.target.dataset.art; if (k) { artNo[k] = 1; e.target.outerHTML = artFb[k] || ''; return; } const id = e.target.dataset && e.target.dataset.boon; if (id) { boonNoArt[id] = 1; e.target.outerHTML = boonIco(BOON_BY[id]); } }, true);
 function boonDue(n) { // won level n: what is on offer is kept, so closing the game doesn't lose or change it
   if (G.practice || n < 2 || n >= LAP_LEN && false) return false; boonTake(save, n, null); const ids = boonOffer(save, n, mulberry(n * 7919 + (save.wins || 0) * 31 + 5)); if (ids.length < 2) return false; save.boonDue = { n, ids }; for (const id of ids) new Image().src = boonSrc(BOON_BY[id]); return true;
 }
