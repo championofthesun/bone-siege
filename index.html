@@ -363,6 +363,14 @@ svg.ico.sm{width:18px;height:18px}
 #hint{text-shadow:0 3px 0 #10214b,0 0 18px rgba(48,102,255,.75)}
 @media(max-height:690px){.logo{max-width:240px}.tag{font-size:13px}.lvl{margin-top:8px}.worldname{margin-top:4px}}
 
+/* the phone-smooth trial: no blurred edges on anything that is repainted during a battle */
+#game.lean .bar{box-shadow:0 4px 0 rgba(8,14,40,.38),inset 0 2px 0 rgba(9,12,34,.6)}
+#game.lean #fortBar.wl{box-shadow:0 4px 0 rgba(8,14,40,.38),0 0 0 2px rgba(255,80,60,.55)}
+#game.lean #giant{box-shadow:0 3px 0 #141b3e,0 0 0 3px rgba(87,162,255,.2)}
+#game.lean #giant .h0{filter:none;opacity:.3}
+#game.lean .pill{box-shadow:0 3px 0 rgba(4,5,20,.3)}
+#game.lean #parPill.miss{filter:none}
+#beat{position:absolute;right:0;bottom:0;width:2px;height:2px;background:#0b1130;pointer-events:none;will-change:transform;animation:beat 1s linear infinite alternate}@keyframes beat{to{transform:translateX(-2px)}}
 </style>
 </head>
 <body>
@@ -6678,6 +6686,7 @@ function drawDecals() {
   decalMesh.count = k; decalMesh.instanceMatrix.needsUpdate = true; decalMesh.instanceColor.needsUpdate = true;
 }
 // the HUD only touches the page when a value actually changes (rewriting text every frame makes phones re-layout)
+if (LEAN) { gameEl.classList.add('lean'); const e = document.createElement('i'); e.id = 'beat'; gameEl.appendChild(e); } // (a two-pixel animation that never stops: see the trial's styles)
 const VIEW = { w: 390, h: 844 }; // the game's size on screen, kept by resize(): reading it back every frame made the browser lay the page out again
 const _hud = {};
 const setHud = (id, v) => { if (_hud[id] !== v) { _hud[id] = v; $(id).textContent = v; } };
@@ -6751,12 +6760,13 @@ function render() {
     const fx = clamp((_v.x * .5 + .5) * W, 54, W - 54); let fy = (-_v.y * .5 + .5) * H; if (G.pillY != null && Math.abs(fx - G.pillX) < 78 && fy > G.pillY - 62 && fy < G.pillY + 26) fy = G.pillY - 62; // a number rides above the army's counter rather than on it
     f.el.style.transform = `translate(${fx}px,${fy}px) scale(${.7 + Math.min(1, (0.7 - f.t) * 6) * .3})`; f.el.style.opacity = Math.min(1, f.t * 3);
   }
+  if (LEAN && G.mode === 'play' && (G.hudFreeze || G.frameN % 6)) return; // the bars and their numbers, ten times a second
   const fp = clamp(G.fortHp / G.fortMax, 0, 1), np = clamp(G.nestHp / G.nestMax, 0, 1);
   const capBar = CAP.alive, wlBar = capBar || WL.alive && WL.state !== 'enter'; // while a warlord or his captain fights, the top bar is his
   if (_hud.wlBar !== wlBar) { _hud.wlBar = wlBar; $('fortBar').classList.toggle('wl', wlBar); }
   if (capBar) { setCss('fortFill', 'transform', `scaleX(${clamp(CAP.hp / CAP.max, 0, 1).toFixed(3)})`); setHud('fortTxt', CAP.def.name + ' · ' + Math.max(0, Math.ceil(CAP.hp))); }
   else if (wlBar) { setCss('fortFill', 'transform', `scaleX(${clamp(WL.hp / WL.max, 0, 1).toFixed(3)})`); setHud('fortTxt', wlName() + ' · ' + Math.max(0, Math.ceil(WL.hp))); }
-  else { setCss('fortFill', 'transform', `scaleX(${fp.toFixed(3)})`); if (G.frameN % 6 === 0) setHud('fortTxt', (inHall() ? 'Wall of Bone · ' : 'Bone Castle · ') + Math.max(0, Math.ceil(G.fortHp))); }
+  else { setCss('fortFill', 'transform', `scaleX(${fp.toFixed(3)})`); if (LEAN || G.frameN % 6 === 0) setHud('fortTxt', (inHall() ? 'Wall of Bone · ' : 'Bone Castle · ') + Math.max(0, Math.ceil(G.fortHp))); }
   setCss('nestFill', 'transform', `scaleX(${np.toFixed(3)})`); setHud('nestTxt', 'Your Camp · ' + Math.max(0, Math.ceil(G.nestHp)));
   const gc = sendCharge(), pct = Math.round(100 * G.charge / gc);
   const gEl = $('giant'); if (_hud.gp !== pct) { _hud.gp = pct; gEl.style.setProperty('--p', pct); } gEl.classList.toggle('ready', pct >= 100 && G.mode === 'play'); { const ch = !palReady(); if (_hud.ch !== ch) { _hud.ch = ch; gEl.classList.toggle('champ', ch); for (const u of gEl.querySelectorAll('.hu')) u.setAttribute('href', ch ? '#i-champ' : '#i-horse'); gEl.setAttribute('aria-label', ch ? 'Send the Champion' : 'Send the Paladin'); } }
@@ -7296,7 +7306,7 @@ window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') 
 async function perfTest() { // ?perf: speed test 4. First the frame rate (an empty page, then a battle as you play it), then what each part of a frame costs the GPU when it is kept busy
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:6px;right:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;padding:9px 11px;border-radius:12px;background:rgba(8,12,30,.92);color:#fff;font:600 12px/1.42 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(r)), rows = [], gl = renderer.getContext(), px = new Uint8Array(4), med = a => a.sort((x, y) => x - y)[a.length >> 1];
-  const V = 'Speed test 4 (v147' + (LEAN ? ', lean)' : ')'), show = s => { box.textContent = V + ': ' + s + '\n' + rows.join('\n'); };
+  const V = 'Speed test 4 (v148' + (LEAN ? ', lean)' : ')'), show = s => { box.textContent = V + ': ' + s + '\n' + rows.join('\n'); };
   box.textContent = V + ': tap here to start\n(about 40 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); show('loading...'); G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 11; save.v = 3;
   await Promise.race([loadLm('dunes'), wait(8000)]); await wait(800);
@@ -7347,7 +7357,7 @@ const SLOG = (() => {
    Every couple of seconds one thing is switched off in turn, and the frame rate and the cost of each part are kept for each.
    rules = the battle, draw = handing the picture over, page = what the browser does after us (buttons, text, putting it on
    screen). The level can't end while it runs, and nothing is saved. */
-const AB = /[?&]ab(=|&|$)/.test(location.search) ? (() => {
+const AB = /[?&]ab(=1)?(&|$)/.test(location.search) ? (() => {
   const N = ['as it is', 'no text/buttons', 'no sound', 'no picture', 'no battle', 'no armies', 'no scenery', '1x sharp'], D = N.map(() => ({ n: 0, t: 0, ok: 0, u: 0, r: 0, p: 0, pn: 0, ev: 0 })), SLOT = 2400, SKIP = 600;
   const X = { m: 0, at: 0, ev: 0, box: null, pr0: 0, done: false }; addEventListener('pointermove', () => { X.ev++; }, true);
   const ch = new MessageChannel(); let t1 = 0, cur = null; ch.port1.onmessage = () => { if (cur) { cur.p += performance.now() - t1; cur.pn++; cur = null; } };
@@ -7360,7 +7370,7 @@ const AB = /[?&]ab(=|&|$)/.test(location.search) ? (() => {
   const show = () => {
     if (!X.box) { X.box = document.createElement('div'); X.box.style.cssText = 'position:fixed;left:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;pointer-events:none;padding:7px 9px;border-radius:10px;background:rgba(8,12,30,.88);color:#fff;font:600 11px/1.35 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(X.box); }
     const c = Math.min(...D.map(d => d.t)) / (SLOT - SKIP), f = (a, b) => (b ? a / b : 0).toFixed(1).padStart(5);
-    X.done = c >= 3.9; X.box.textContent = (X.done ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (v147' + (LEAN ? ' lean' : '') + ')\n' + 'off now'.padEnd(16) + ' fps  60% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + pixelRatio + '  ' + ants.n + '/' + beetles.n + '  touches ' + (D[0].n ? D[0].ev / D[0].n : 0).toFixed(1);
+    X.done = c >= 3.9; X.box.textContent = (X.done ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (v148' + (LEAN ? ' lean' : '') + ')\n' + 'off now'.padEnd(16) + ' fps  60% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + pixelRatio + '  ' + ants.n + '/' + beetles.n + '  touches ' + (D[0].n ? D[0].ev / D[0].n : 0).toFixed(1);
   };
   X.frame = (now, dt, raw) => { // stands in for update + render
     if (G.mode !== 'play' || G.paused || G.t < 2.5) { if (X.on) { put(X.m, false); X.on = false; } X.at = 0; return false; }
@@ -7369,6 +7379,32 @@ const AB = /[?&]ab(=|&|$)/.test(location.search) ? (() => {
     else if (now - X.at > SLOT) { put(X.m, false); X.m = (X.m + 1) % N.length; put(X.m, true); X.at = now; X.ev = 0; show(); }
     const a = performance.now(); if (X.m !== 4) update(dt); const b = performance.now(); if (X.m !== 3) render(); t1 = performance.now();
     if (now - X.at > SKIP) { const d = D[X.m]; d.n++; d.t += raw * 1000; if (raw < .021) d.ok++; d.u += b - a; d.r += t1 - b; d.ev += X.ev; if (!cur) { cur = d; ch.port2.postMessage(0); } } X.ev = 0;
+    return true;
+  };
+  return X;
+})() : null;
+/* ---- ?ab=2: the same question in real, saved play ----
+   Nothing is made easier and nothing is held back from the save: every three seconds one thing is switched, and the frame rate is
+   kept for each. Runs over as many levels as it takes. */
+const AB2 = /[?&]ab=2(&|$)/.test(location.search) ? (() => {
+  const N = ['as it is', 'no page motion', 'bars frozen', 'no text/buttons', 'no sound', 'no armies', '1x sharp', 'blank picture'], D = N.map(() => ({ n: 0, t: 0, ok: 0, half: 0, u: 0, r: 0, p: 0, pn: 0 })), LEN = k => k === 7 ? 1800 : 3000, SKIP = 700;
+  const X = { m: 0, at: 0, box: null, pr0: 0, on: false }, ch = new MessageChannel(); let t1 = 0, cur = null; ch.port1.onmessage = () => { if (cur) { cur.p += performance.now() - t1; cur.pn++; cur = null; } };
+  const put = (m, on) => {
+    if (m === 1) { const e = $('beat'); if (e) e.style.display = on ? 'none' : ''; } if (m === 2) G.hudFreeze = on;
+    if (m === 3) for (const id of ['hud', 'vignette', 'sandHaze', 'flash', 'beat']) { const e = $(id); if (e) e.style.display = on ? 'none' : ''; }
+    if (m === 4 && actx) on ? actx.suspend() : actx.resume(); if (m === 5) allySprites.visible = foeSprites.visible = !on;
+    if (m === 6) { if (on) X.pr0 = pixelRatio; pixelRatio = on ? 1 : X.pr0 || pixelRatio; renderer.setPixelRatio(pixelRatio); resize(); }
+  };
+  const show = () => {
+    if (!X.box) { X.box = document.createElement('div'); X.box.style.cssText = 'position:fixed;left:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;pointer-events:none;padding:7px 9px;border-radius:10px;background:rgba(8,12,30,.88);color:#fff;font:600 11px/1.35 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(X.box); }
+    const c = Math.min(...D.map((d, k) => d.t / (LEN(k) - SKIP))), f = (a, b) => (b ? a / b : 0).toFixed(1).padStart(5);
+    X.box.textContent = (c >= 3.9 ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (real play, v148' + (LEAN ? ' lean' : '') + ')\n' + 'changed'.padEnd(16) + ' fps  60%  30% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + (d.n ? Math.round(100 * d.half / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n');
+  };
+  X.frame = (now, dt, raw) => {
+    if (G.mode !== 'play' || G.paused || G.t < 2.5) { if (X.on) { put(X.m, false); X.on = false; } X.at = 0; return false; }
+    if (!X.at) { X.at = now; put(X.m, true); X.on = true; if (!X.box) show(); } else if (now - X.at > LEN(X.m)) { put(X.m, false); X.m = (X.m + 1) % N.length; put(X.m, true); X.at = now; show(); }
+    const a = performance.now(); update(dt); const b = performance.now(); if (X.m !== 7) render(); t1 = performance.now();
+    if (now - X.at > SKIP) { const d = D[X.m]; d.n++; d.t += raw * 1000; if (raw < .021) d.ok++; else if (raw < .038) d.half++; d.u += b - a; d.r += t1 - b; if (!cur) { cur = d; ch.port2.postMessage(0); } }
     return true;
   };
   return X;
@@ -7394,7 +7430,7 @@ function leanStep() { // one step lighter; false when there is nothing left to d
   return true;
 }
 function adaptResolution(raw) {
-  if (raw <= 0 || raw > .25) return; if (G.mode === 'won' || (G.mode === 'play' && G.t < 3) || G.perf || AB && AB.on) { frSum = frSq = frN = frT = 0; frBuf.length = 0; return; } /* nor while a level is still settling in; never mid-explosion: rebuilding the buffers is a visible hitch */ frBuf.push(raw); frSum += raw; frSq += raw * raw; frN++; frT += raw; if (frCool > 0) frCool -= raw;
+  if (raw <= 0 || raw > .25) return; if (G.mode === 'won' || (G.mode === 'play' && G.t < 3) || G.perf || AB && AB.on || AB2 && AB2.on) { frSum = frSq = frN = frT = 0; frBuf.length = 0; return; } /* nor while a level is still settling in; never mid-explosion: rebuilding the buffers is a visible hitch */ frBuf.push(raw); frSum += raw; frSq += raw * raw; frN++; frT += raw; if (frCool > 0) frCool -= raw;
   if (frT < 1.2) return;
   frBuf.sort((a, b) => a - b); const keep = Math.max(1, Math.ceil(frBuf.length * .88)); let ts = 0; for (let i = 0; i < keep; i++) ts += frBuf[i]; frBuf.length = 0; // the slowest eighth (a hitch, a shader, a loaded picture) doesn't count
   const avg = ts / keep, sd = Math.sqrt(Math.max(0, frSq / frN - (frSum / frN) ** 2)); frSum = frSq = frN = frT = 0;
@@ -7426,7 +7462,7 @@ function frame(now) {
   if (keys.ArrowRight) G.lx = clamp(G.lx + dt * 9, -LANE + .6, LANE - .6);
   const wt = G.winT; // slow motion on the winning hit and again as the king pops
   if (G.perf && G.mode === 'play') { G.firing = true; G.lx = Math.sin(now / 900) * 2; }
-  if (AB && AB.frame(now, dt, raw)) G.pauseDrawn = false;
+  if (AB && AB.frame(now, dt, raw) || AB2 && AB2.frame(now, dt, raw)) G.pauseDrawn = false;
   else if (!G.paused) { const p0 = performance.now(); update(dt * (G.mode === "won" ? winSpeed(wt) : 1)); const p1 = performance.now(); render(); const p2 = performance.now(); SLOG.frame(raw, p1 - p0, p2 - p1, p2); G.pauseDrawn = false; }
   else if (!G.pauseDrawn) { render(); G.pauseDrawn = true; } // paused: the scene holds still, so it is drawn once, not every frame
 }
