@@ -2382,7 +2382,7 @@ function citHall() {
   citMoon(17, 44, -190, 11, g); skyClouds({ river: storm ? 'storm' : 'night', bolt: '#f0a0ff' }, 15);
 }
 // the throne room has no castle: its parts are put away, and a wall of bone stands across the road instead
-function fortHall(on) { for (const o of fort.children) if (o !== king && o !== fortDress && !o.userData.holder && !WL.built.some(b => b && b.g === o)) { if (on) { if (o.visible) { o.visible = false; o.userData.hallOff = 1; } } else if (o.userData.hallOff) { o.visible = true; o.userData.hallOff = 0; } } hoard.visible = !on; }
+function fortHall(on) { campShow(); for (const o of fort.children) if (o !== king && o !== fortDress && !o.userData.holder && !WL.built.some(b => b && b.g === o)) { if (on) { if (o.visible) { o.visible = false; o.userData.hallOff = 1; } } else if (o.userData.hallOff) { o.visible = true; o.userData.hallOff = 0; } } hoard.visible = !on; }
 
 /* ===== roadside landmarks (from the v39 design pass, reworked): royal standards on your side, ruined columns, half-buried
    skull monuments and cursed obelisks nearer his castle. Each one clears the scenery props where it stands and sits on the
@@ -4218,6 +4218,7 @@ function rowanKing() {
   return (rowanK = F);
 }
 function setHolder(i) {
+  if (!G.sim) rxReset();
   if (HOLD.b && HOLD.b !== WL.b) HOLD.b.g.visible = false;
   HOLD.i = i; HOLD.b = HOLD.fly = null; if (!G.cine) G.kingSink = 0;
   king.visible = kingCrown.visible = i < 0; if (G.sim) return;
@@ -4244,7 +4245,7 @@ function holdTick(dt) {
   if (CITF.t < 1.6) { CITF.t += dt; const u = CITF.t / 1.6; citFlash.visible = u < 1; citFlash.material.opacity = Math.sin(Math.min(1, u) * Math.PI) * .9; citFlash.scale.setScalar((16 + 26 * u) * CITF.k); }
   if (WL.kingDue > 0 && !G.sim && !inHall()) { king.visible = kingCrown.visible = true; const u = clamp(WL.kingDue / 2.4, 0, 1); G.kingSink = KING_SINK * u * u; } // his last warlord is down: the King climbs onto the wall
   if (!b || b === WL.b && WL.on && !F) return;
-  b.mixer.update(dt); wlFx(b, dt, F ? b.g.position : _v.set(0, b.g.position.y, FORT_Z + (inHall() ? KPOS.z : KING_Z)), b.g.scale.x);
+  rxUndo(); b.mixer.update(dt); wlFx(b, dt, F ? b.g.position : _v.set(0, b.g.position.y, FORT_Z + (inHall() ? KPOS.z : KING_Z)), b.g.scale.x);
   if (HOLD.act && (HOLD.t -= dt) <= 0) { HOLD.act.fadeOut(.2); HOLD.act = null; if (b.acts.idle) b.acts.idle.setEffectiveWeight(1); }
   for (const m of b.mats) if (m.emissiveMap) m.color.setScalar(1 + G.fortFlash * .25 + G.puff * .9);
   if (F) { // off he goes, end over end, over the bridge and away
@@ -4253,13 +4254,104 @@ function holdTick(dt) {
     if (F.t > 1.75) { burst(b.g.position.x, b.g.position.y, b.g.position.z, ['#ffffff', '#fff3b0'], 14, 5, { sph: true, life: .5, g: 0, sz: 3.4, kind: PK.SPARK }); tone(1760, .3, 'triangle', .05, 1.4); b.g.visible = false; HOLD.fly = null; HOLD.b = null; }
     return;
   }
-  if (G.fortFlash > .9 && !HOLD.act && rand() < .06) holdAct('flinch');
-  const i = HOLD.i, wob = Math.sin(G.t * 30) * G.fortFlash * .04, pf = G.puff * (.2 + Math.sin(G.t * 60) * .04), ws = WALL_S[i] * (inHall() ? .7 : 1) * (G.cfg && G.cfg.boss ? 1.12 : 1);
-  b.g.position.y = (inHall() ? 2.42 : WALL_Y[i]) + G.puff * 1.6; b.g.scale.set(ws * (1 + wob + pf), ws * (1 - wob + pf), ws * (1 + wob + pf));
+  if (!G.sim) rxApply(dt, b.root || b.g, HOLD.i, b);
+  const i = HOLD.i, pf = G.puff * (.2 + Math.sin(G.t * 60) * .04), ws = WALL_S[i] * (inHall() ? .7 : 1) * (G.cfg && G.cfg.boss ? 1.12 : 1);
+  b.g.position.y = (inHall() ? 2.42 : WALL_Y[i]) + G.puff * 1.6; b.g.scale.setScalar(ws * (1 + pf));
 }
 function holdBlown() { // his castle goes up and takes him with it
-  const b = HOLD.b; if (!b || G.sim) return; b.g.getWorldPosition(_v); wlGroup.add(b.g); b.g.position.copy(_v); b.g.position.y += 1.5; b.mixer.stopAllAction(); const a = b.acts.flinch || b.acts.hit; if (a) a.reset().play();
+  const b = HOLD.b; if (!b || G.sim) return; rxReset(); b.g.getWorldPosition(_v); wlGroup.add(b.g); b.g.position.copy(_v); b.g.position.y += 1.5; b.mixer.stopAllAction(); const a = b.acts.flinch || b.acts.hit; if (a) a.reset().play();
   HOLD.fly = { b, t: 0, v: new THREE.Vector3((rand() < .5 ? -1 : 1) * (3 + rand() * 3), 15, -27) };
+}
+/* ---- how he takes it: whoever holds the wall answers your attack in his own way ----
+   (He used to squash and hop with every hit.) An ordinary hit is a small flinch of head and chest; under a real assault he makes
+   one of his own moves every few seconds. Both are turns of his joints laid over the idle, taken off again before the next frame's
+   animation is worked out. Numbers: head x back is minus; the right arm raises beside the head on +y, comes forward on +x. */
+const RX = { prev: -1, kt: 9, amp: 0, sx: 1, next: 0, heat: 0, mv: null, last: null, t: 0, w: 0, cool: 2.5, lean: 0, crown: 0, crownTo: 0, crownT: 0, side: 1, flare: 0, glow: 0, base: new Map(), bones: new WeakMap(), eyes: null, once: {} };
+const rxE = (t, a, b, c, d) => { const s = x => x * x * (3 - 2 * x); return t <= a || t >= d ? 0 : t < b ? s((t - a) / (b - a)) : t <= c ? 1 : 1 - s((t - c) / (d - c)); };
+const RX_HIT = { '-1': { head: [-.16, .14, .1], chest: [-.1, 0, 0] }, 0: { head: [-.22, .12, .1], chest: [-.14, 0, 0] }, 1: { head: [-.07, .06, 0] }, 2: { head: [-.16, .1, .05], chest: [-.1, 0, 0] }, 3: { head: [-.18, .1, .08], chest: [-.12, 0, 0] }, 5: { head: [-.12, .1, .06], chest: [-.1, 0, 0] } };
+const RX_ONCE = (k, at, fn) => { if (RX.t >= at && !RX.once[k]) { RX.once[k] = 1; fn(); } };
+const RX_MOVES = {
+  0: [ // Grimbald
+    { d: 1.9, arms: 1, pose: t => { const e = rxE(t, 0, .28, 1.45, 1.9), s = Math.sin(t * 17) * rxE(t, .25, .4, 1.25, 1.5); return { upperarmr: [0, 2.1 * e + s * .3, -.15 * e], lowerarmr: [s * .25, 0, 0], head: [-.2 * e, -.1 * e + s * .07, .06 * e], chest: [-.06 * e, -.1 * e, 0] }; } },
+    { d: 2.1, arms: 1, pose: t => { const e = rxE(t, 0, .3, 1.5, 2.1), up = rxE(t, .15, .4, .42, .56) + rxE(t, .7, .95, .97, 1.1); return { upperarml: [1.5 * e + .75 * up, 0, 0], upperarmr: [0, 1.7 * e, -.4 * e], head: [.06 * e - .14 * up, .1 * e, 0], chest: [.16 * e - .1 * up, 0, 0] }; },
+      tick() { for (const at of [.57, 1.11]) RX_ONCE('p' + at, at, () => { burst(2.1, 2.7, FORT_Z - 2.1, ['#d8c8a8', '#b9a88a', '#8f8577'], 12, 2.6, { vy: 3.4, life: .7, g: 10, sz: 1.5, kind: PK.ROCK }); smoke(2.1, 2.9, FORT_Z - 1.9, '#d8ccb8', 1.5, .6); if (!muted) { noise(.14, .05, 'lowpass', 460, 120); tone(74, .18, 'sine', .06, .6); } }); } }],
+  1: [ // Sek-Ra
+    { d: 3.1, pose: t => { const e = rxE(t, 0, .9, 2.2, 3.1); RX.flareTo = rxE(t, .35, .8, 2.2, 2.9); RX.glowTo = .9 * rxE(t, .4, .9, 2.1, 2.8); return { head: [0, .42 * RX.side * e, 0] }; } },
+    { d: 2.3, arms: 1, pose: t => { const e = rxE(t, 0, .5, 1.6, 2.3); RX.glowTo = .5 * e; return { upperarmr: [0, 2 * e, -.3 * e], head: [-.06 * e, -.16 * e, 0], chest: [-.04 * e, 0, 0] }; },
+      tick() { RX_ONCE('s', .55, () => burst(-2.5, 5.6, FORT_Z - 3.6, ['#ffe680', '#ffd23f', '#7ff0e0'], 14, 1.8, { vy: 1.2, life: .9, g: 1, sz: 1, kind: PK.SPARK })); } }],
+  2: [ // Hrimgar
+    { d: 2.7, pose: t => { const a = rxE(t, 0, .6, .8, 1.02), b = rxE(t, .85, 1.08, 1.8, 2.6); return { head: [-.2 * a - .04 * b, 0, 0], chest: [-.26 * a + .22 * b, 0, 0] }; },
+      tick() { if (RX.t > 1 && RX.t < 1.75) { const n = G.lowQ ? 1 : 3; for (let i = 0; i < n; i++) { const u = rand(), x = (rand() - .5) * (1 + u * 4.4); burst(x, 3.5 - u * 2.3, FORT_Z + .5 + u * 1.5, ['#ffffff', '#dff6ff', '#8fdcff'], 1, .9, { vy: -.3, life: .9, g: .8, sz: .8 + rand() * .8, kind: PK.SPARK }); } if (rand() < .22) { const u = rand(); smoke((rand() - .5) * (1 + u * 3.6), 3.4 - u * 2, FORT_Z + .5 + u * 1.4, '#e6f8ff', 1.5 + rand(), .9); } }
+        RX_ONCE('b', .98, () => { if (!muted) noise(.8, .035, 'bandpass', 1500, 500); }); } }],
+  3: [ // Magmaw
+    { d: 2.4, arms: 1, pose: t => { const r = rxE(t, 0, .5, .85, 1.0), s = rxE(t, .86, 1.0, 1.55, 2.4); RX.glowTo = 1.4 * r + .5 * s; return { upperarmr: [1.1 * s, 2.4 * r - .4 * s, -.2 * r - .6 * s], head: [-.2 * r - .08 * s, -.06 * r + .12 * s, 0], chest: [-.04 * r + .16 * s, -.12 * r + .15 * s, 0] }; },
+      tick() { RX_ONCE('s', .98, () => { burst(-3, 2.6, FORT_Z - 1.6, ['#ffe680', '#ff9a2a', '#ff4a1a', '#5a4a52'], 22, 4, { vy: 4.6, life: .8, g: 10, sz: 1.5, kind: PK.ROCK }); smoke(-3, 2.9, FORT_Z - 1.4, '#6a5a5a', 1.9, .8); if (!muted) { noise(.3, .07, 'lowpass', 600, 90); tone(52, .35, 'sine', .1, .5); } }); } },
+    { d: 2.1, pose: t => { const e = rxE(t, 0, .35, 1.3, 2.1); RX.glowTo = 1.6 * e; return { head: [-.28 * e, Math.sin(t * 13) * .04 * e, 0], chest: [-.14 * e, 0, 0] }; },
+      tick() { if (RX.t > .3 && RX.t < 1.2 && rand() < .35) burst((rand() - .5) * 2, 6.2, FORT_Z - 4.4, ['#ffe680', '#ff9a2a', '#ff4a1a'], 1, 1, { vy: 3, life: .8, g: 1, sz: 1.3, kind: PK.SPARK }); } }],
+  '-1': [ // the Bone King
+    { d: 2.2, pose: t => { const e = rxE(t, .2, .55, 1.7, 2.2), f = rxE(t, 0, .16, .18, .36), s = Math.sin(t * 16) * rxE(t, .55, .7, 1.45, 1.75); return { upperarmr: [0, 2.2 * e + s * .28, -.1 * e], head: [.02 * e, -.1 * e + s * .05, -.3 * f * RX.side], chest: [0, -.06 * e, 0] }; },
+      tick() { RX_ONCE('c', .2, () => { if (RX.crownTo) { RX.crownTo = 0; if (!muted) tone(1300, .07, 'triangle', .03, 1.2); } }); } },
+    { d: 1.8, pose: t => { const e = rxE(t, 0, .3, 1.2, 1.8); return { upperarmr: [1.1 * e, 0, 0], upperarml: [1.1 * e, 0, 0], chest: [.2 * e, 0, 0], head: [-.2 * e, Math.sin(t * 12) * .07 * e, 0] }; }, tick() { RX_ONCE('c', .9, () => { RX.crownTo = 0; }); } }],
+  5: [{ d: 1.9, arms: 1, pose: t => { const e = rxE(t, 0, .35, 1.4, 1.9); return { upperarmr: [0, 1.9 * e, -.2 * e], head: [-.06 * e, -.12 * e, 0], chest: [-.04 * e, -.06 * e, 0] }; } }] // Rowan, on the Endless Road
+};
+function rxUndo() { for (const [o, q] of RX.base) o.quaternion.copy(q); RX.base.clear(); }
+function rxReset() { rxUndo(); RX.mv = null; RX.kt = 9; RX.w = RX.heat = RX.lean = RX.crown = RX.crownTo = RX.flare = RX.flareTo = RX.glow = RX.glowTo = 0; RX.cool = 2.5; RX.prev = -1; if (RX.eyes) for (const e of RX.eyes) e.visible = false; const b = HOLD.b; if (b) rxGlow(b, 0); }
+function rxGlow(b, k) { for (const m of b.mats || []) if (m.emissiveMap && m.emissiveIntensity !== undefined) { if (m.userData.rx0 === undefined) m.userData.rx0 = m.emissiveIntensity; m.emissiveIntensity = m.userData.rx0 * (1 + k); } }
+const _rxq = new THREE.Quaternion(), _rxe = new THREE.Euler();
+function rxApply(dt, root, who, fig) { // after his own animation: what he does about the attack
+  const play = G.mode === 'play', R = RX, lost = R.prev < 0 ? 0 : R.prev - G.fortHp; R.prev = G.fortHp;
+  if (play && lost > 0 && lost < G.fortMax * .4) {
+    R.heat += lost / G.fortMax;
+    if (G.t >= R.next) { R.next = G.t + .3 + rand() * .35; R.kt = 0; R.amp = .55 + .45 * Math.min(1, lost / (G.fortMax * .004)); R.sx = rand() < .5 ? -1 : 1;
+      if (who < 0 && !R.crownTo && R.heat > .015 && rand() < .22) { R.crownTo = 1; R.crownT = 0; R.side = R.sx; if (!muted) tone(980, .05, 'triangle', .025, .8); } }
+  }
+  R.heat *= Math.exp(-dt / 2.6); R.kt += dt; R.cool -= dt; if (R.crownTo && (R.crownT += dt) > 6) R.crownTo = 0;
+  const busy = fig && HOLD.act; // a throw has his arms
+  if (!play || WL.on && WL.alive && WL.b === fig && fig) R.mv = null;
+  if (!R.mv && play && !busy && R.cool <= 0 && R.heat > .012 && !CAP.alive) { const L = RX_MOVES[who]; if (L) { let m = L[Math.floor(rand() * L.length)]; if (L.length > 1 && m === R.last) m = L[(L.indexOf(m) + 1) % L.length]; if (who < 0 && R.crownTo) m = L[0]; R.mv = R.last = m; R.t = 0; R.w = 1; R.once = {}; if (who === 1) R.side = rand() < .5 ? -1 : 1; } }
+  R.flareTo = R.glowTo = 0; const P = {}, add = (p, k) => { for (const n in p) { const a = P[n] || (P[n] = [0, 0, 0]); for (let i = 0; i < 3; i++) a[i] += p[n][i] * k; } };
+  if (R.mv) { R.t += dt; if (busy) R.w = Math.max(0, R.w - dt * 6); add(R.mv.pose(R.t), R.w); if (R.mv.tick && R.w > .5) R.mv.tick(); if (R.t >= R.mv.d || R.w <= 0) { R.mv = null; R.cool = 3 + rand() * 2.8; } }
+  const h = RX_HIT[who], kw = R.kt < .06 ? R.kt / .06 : Math.exp(-(R.kt - .06) * 6.5); if (h && kw > .01) { const k = kw * R.amp * (R.mv ? .45 : 1), f = {}; for (const n in h) f[n] = [h[n][0], h[n][1] * R.sx, h[n][2] * R.sx]; add(f, k); }
+  if (who < 0) { // past half his castle the King leans over the wall
+    const to = play && G.rage && G.fortHp > 0 && !G.kneel ? 1 : 0; R.lean += (to - R.lean) * Math.min(1, dt * 1.6); if (R.lean > .01) { const b = R.lean * (1 + Math.sin(G.t * 1.9) * .08), arms = R.mv ? .25 : 1; add({ chest: [.3 * b, 0, 0], head: [-.2 * b, 0, 0], upperarmr: [.9 * b * arms, 0, 0], upperarml: [.9 * b * arms, 0, 0] }, 1); }
+    R.crown += (R.crownTo - R.crown) * Math.min(1, dt * 14);
+    if (!R.eyes && kingHead) R.eyes = [-1, 1].map(s => halo('#ff6af6', .42, s * .2, .5, .5, kingHead, 0)); if (R.eyes) for (const e of R.eyes) { e.visible = R.lean > .05 && king.visible; e.material.opacity = R.lean * (.62 + .14 * Math.sin(G.t * 5)); }
+  }
+  R.flare += (R.flareTo - R.flare) * Math.min(1, dt * 6); R.glow += (R.glowTo - R.glow) * Math.min(1, dt * 9); if (fig) { rxGlow(fig, R.glow); if (fig.fx.arms) { const a = P.upperarmr, l = P.upperarml, on = !!(R.mv && R.mv.arms && (a && Math.abs(a[0]) + Math.abs(a[1]) > .5 || l && Math.abs(l[0]) > .5)); for (const o of fig.fx.arms) if (o.visible !== on) o.visible = on; } }
+  let B = R.bones.get(root); if (!B) { B = {}; root.traverse(o => { if (o.name && !B[o.name]) B[o.name] = o; }); R.bones.set(root, B); }
+  for (const n in P) { const o = B[n], a = P[n]; if (!o || Math.abs(a[0]) + Math.abs(a[1]) + Math.abs(a[2]) < 1e-4) continue; R.base.set(o, (o.userData.rxq || (o.userData.rxq = new THREE.Quaternion())).copy(o.quaternion)); o.quaternion.multiply(_rxq.setFromEuler(_rxe.set(a[0], a[1], a[2]))); }
+}
+/* ---- the palace: no camp of yours could stand in there ----
+   The doors you broke in by lie on the floor, your banners are planted, and your knights wait in ranks beside the cannon. What the
+   skeletons are after is that line. */
+const LINE = { g: null, men: [], on: false, perch: null, k: 0, ph: .5, py: 2.6 };
+function buildLine() {
+  if (LINE.g || !BART.camp) return; const g = LINE.g = new THREE.Group(); g.visible = false; scene.add(g);
+  const R = mulberry(37), wood = canvasTex(256, 512, (x, w, h) => { for (let i = 0; i < 5; i++) { x.fillStyle = ['#3a2a4e', '#33254a', '#402e56', '#362850', '#3d2c52'][i]; x.fillRect(i * w / 5, 0, w / 5, h); x.strokeStyle = 'rgba(10,6,20,.6)'; x.lineWidth = 3; x.strokeRect(i * w / 5, 0, w / 5, h); for (let k = 0; k < 10; k++) { x.strokeStyle = 'rgba(120,95,150,.22)'; x.lineWidth = 1.5; x.beginPath(); const y = R() * h; x.moveTo(i * w / 5 + 4, y); x.bezierCurveTo(i * w / 5 + 18, y + 14, i * w / 5 + 30, y - 10, (i + 1) * w / 5 - 4, y + 6); x.stroke(); } } });
+  const doorM = new THREE.MeshStandardMaterial({ map: wood, roughness: .75 }), gold = std('#d9a63a', .35, { metalness: .55 }), bone = std('#efe4cf', .7), stone = std('#6b5f86', .85), pole = std('#7a5a3e', .7);
+  const door = (x, z, ry, rx, broken) => { const d = new THREE.Group(), sh = new THREE.Shape(), w = 1.35, h = 4.3; sh.moveTo(-w, 0); sh.lineTo(w, 0);
+    if (broken) for (const [a, b] of [[w, 2.9], [.85, 2.55], [.5, 3.35], [.1, 2.7], [-.35, 3.7], [-.75, 3.2], [-w, 3.9]]) sh.lineTo(a, b); else { sh.lineTo(w, 3.2); sh.quadraticCurveTo(w, 4, -w, 4.3); } sh.closePath();
+    const ge = new THREE.ExtrudeGeometry(sh, { depth: .24, bevelEnabled: true, bevelSize: .05, bevelThickness: .05, bevelSegments: 1 }), u = ge.attributes.uv, p = ge.attributes.position; for (let i = 0; i < u.count; i++) u.setXY(i, (p.getX(i) + w) / (2 * w), p.getY(i) / h);
+    mesh(ge, doorM, 0, 0, 0, d); for (const y of [.5, 1.75, 2.5]) { mesh(new THREE.BoxGeometry(2 * w + .06, .22, .4), gold, 0, y, .12, d); for (const s of [-1, -.33, .33, 1]) mesh(new THREE.SphereGeometry(.09, 8, 6), gold, s * (w - .16), y, .34, d, false); }
+    mesh(new THREE.TorusGeometry(.26, .06, 8, 18), gold, w - .45, 2.1, .42, d, false); mesh(new THREE.SphereGeometry(.16, 10, 8), bone, w - .45, 2.36, .4, d, false); d.position.set(x, .12, z); d.rotation.set(rx, ry, 0, 'YXZ'); g.add(d); };
+  door(-4.75, -2.6, .5, -Math.PI / 2 + .07, false); door(4.9, -3, -.5, -Math.PI / 2 + .06, true);
+  for (let i = 0; i < 24; i++) { const s = R() < .5 ? -1 : 1, x = s * (3.3 + R() * 3.2), z = -3.6 + R() * 3.2; if (R() < .5) mesh(new THREE.BoxGeometry(.12 + R() * .1, .07, .5 + R() * .8), doorM, x, .06, z, g).rotation.set(R() * .2, R() * 6.3, R() * .3); else { const q = .14 + R() * .22; mesh(new THREE.DodecahedronGeometry(q, 0), stone, x, q * .6, z, g).rotation.set(R() * 3, R() * 3, R() * 3); } }
+  for (const s of [-1, 1]) { const x = s * 4.3, z = -4.9, k = 1.1; mesh(new THREE.CylinderGeometry(.05, .06, 3.9 * k, 8), pole, x, 1.95 * k, z, g); mesh(new THREE.ConeGeometry(.12, .34, 8), gold, x, 4.05 * k, z, g); mesh(new THREE.CylinderGeometry(.035, .035, 1.2 * k, 6), gold, x, 3.62 * k, z, g).rotation.z = Math.PI / 2; mesh(new THREE.CylinderGeometry(.34, .42, .22, 10), stone, x, .1, z, g);
+    const b = mesh(new THREE.PlaneGeometry(1.05 * k, 1.9 * k), new THREE.MeshLambertMaterial({ map: royalBanTex, transparent: true, alphaTest: .5, side: THREE.DoubleSide }), x, 2.66 * k, z + .05, g); b.userData.dyn = b.userData.sharedMaps = true; }
+  for (let r = 0; r < 2; r++) for (const s of [-1, 1]) for (let k = 0; k < (s < 0 ? 5 : 4); k++) LINE.men.push([s * (1.55 + k * .5 + (r % 2) * .25), -4.35 + r * .62 + .05 * k, R() * 6]); // (the right rank stops short of SEND)
+  LINE.men.map((q, i) => [R(), i]).sort((x, y) => x[0] - y[0]).forEach(([, i], k) => { LINE.men[i][3] = k; }); // the order they fall in
+  bakeStatic(g); // (few draws, and part of the kept picture on phones)
+}
+function campShow() { const hall = inHall(); if (hall) buildLine(); LINE.on = hall && !!LINE.g; campWall.visible = nest.visible = !LINE.on; if (LINE.g) LINE.g.visible = LINE.on; towerShow(); }
+function towerShow() { // your Guard Tower is no tower in there: its archer stands on one of the King's own columns, broken short
+  const on = save.up.turret > 0, A = LMART[LM_SETS[4]]; turret.visible = on && !LINE.on;
+  if (LINE.on && !LINE.perch && A) { const p = LINE.perch = new THREE.Group(); LINE.g.add(p); p.position.set(TOWER_X + .3, 0, TOWER_Z); lmMesh(LM_SETS[4], 'column', p, 0, 0, 0, { s: [.82, LINE.ph, .82] }); }
+  if (LINE.perch) LINE.perch.visible = on;
+}
+function lineUp() { // how many of them still stand: as many as the bar says
+  const n = LINE.men.length, play = G.mode === 'play' || G.mode === 'lost' || G.mode === 'resultLose', k = play && G.nestMax ? Math.ceil(n * clamp(G.nestHp / G.nestMax, 0, 1)) : n;
+  if (play && k < LINE.k) for (const q of LINE.men) if (q[3] >= k && q[3] < LINE.k) { burst(q[0], .6, q[1], ['#2f86ee', '#ffffff', '#ffd23f'], 8, 2.4, { vy: 3, life: .5, g: 9, sz: 1.1 }); smoke(q[0], .4, q[1], '#d8d2e8', .8, .4); }
+  return LINE.k = k;
 }
 const _kq = new THREE.Quaternion(), _kq2 = new THREE.Quaternion(), _kq0 = new THREE.Quaternion();
 function kingTick(K) { // the collar follows most of his head's turn relative to his chest
@@ -5281,7 +5373,7 @@ function setupLevel(n) {
   G.lx = 0; G.charge = 0; G.waveT = n === 1 ? 3.2 : 2.2; G.waveQ = 0; G.waves = 0; G.fired = 0; G.firedSent = 0; G.killsSent = 0; G.firing = false; G.fireT = 0;
   G.shake = 0; G.fortFlash = 0; G.endT = 0; G.t = 0; G.clk = 0; G.squash = 0; G.continued = false; G.kingS = G.cfg.boss ? 9.2 : 8; G.crowdShown = 0;
   for (const f of floats) { f.t = 0; f.el.style.opacity = 0; }
-  G.shadowDirty = true; if (SHC) SHC.reset(); resetCastle(); turret.visible = save.up.turret > 0; G.turT = 1; blasts.forEach(b => { b.visible = false; });
+  G.shadowDirty = true; if (SHC) SHC.reset(); resetCastle(); towerShow(); G.turT = 1; blasts.forEach(b => { b.visible = false; });
   clearBones(); spawnHorde(G.cfg.horde); G.kingT = 4; G.casts = 0; resetKingShots(); resetCharges(); resetHoard(); resetSaws(); resetPaladin(); resetWarlord(); resetCaptain(); setHolder(holderOf(n)); resetHazards(); G.kills = 0; G.dps = 0; G.fortPrev = null; G.surged = false; G.rage = false; rageGlow.visible = false;
   if (FUSE && !G.sim) FUSE.level();
   $('lvlPill').textContent = lvName(n);
@@ -5334,7 +5426,7 @@ function updateExtras(dt, play) {
   turretHead.rotation.y = Math.atan2(-(bx - tx), -(bz - tz));
   if (SH.n < SCAP) {
     const k = SH.n++, T = Math.max(.2, d / 16);
-    SH.x0[k] = tx; SH.y0[k] = TOWER_TOP; SH.z0[k] = tz; SH.tx[k] = bx; SH.ty[k] = .35; SH.tz[k] = bz + beetles.sp[best] * T;
+    SH.x0[k] = tx; SH.y0[k] = LINE.on ? LINE.py + .6 : TOWER_TOP; SH.z0[k] = tz; SH.tx[k] = bx; SH.ty[k] = .35; SH.tz[k] = bz + beetles.sp[best] * T;
     SH.t[k] = 0; SH.T[k] = T; SH.h[k] = d * .12; SH.kind[k] = 0; SH.dmg[k] = turretDmg(tl) * (beetles.pass[best] === 2 ? 3 : 1); SH.splash[k] = 0; SH.fort[k] = 0;
   }
   sfx('bow', 45, bowTwang);
@@ -5938,7 +6030,7 @@ function startWarlord(force) {
   if (!b) { WL.done = true; return; }
   if (WL.b && WL.b !== b) { WL.b.g.visible = false; ghost(WL.b, false); } ghost(b, shade); WL.shade = shade;
   WL.b = b; WL.def = WARLORDS[i]; WL.lap = Math.floor((G.level - 1) / (WORLD_LEN * WORLDS.length));
-  const down = HOLD.b === b; if (HOLD.i !== ROWAN) { if (HOLD.b && !down) HOLD.b.g.visible = false; HOLD.b = HOLD.act = null; } b.mixer.stopAllAction(); WL.cur = null; // he comes down from his wall
+  if (!G.sim) rxReset(); const down = HOLD.b === b; if (HOLD.i !== ROWAN) { if (HOLD.b && !down) HOLD.b.g.visible = false; HOLD.b = HOLD.act = null; } b.mixer.stopAllAction(); WL.cur = null; // he comes down from his wall
   b.g.traverse(o => { if (o.name === 'King_crown') o.visible = !onRoadLv(G.level); }); // (Rowan has it now)
   if (b.g.parent !== wlGroup) wlGroup.add(b.g); b.g.visible = true; b.g.rotation.set(0, 0, 0); if (b.pool) b.pool.visible = true; for (const o of b.fx.arms || []) o.visible = true;
   WL.on = WL.alive = WL.ward = true; WL.wardHp = G.fortMax * WL_WARD; G.fortHp = Math.max(G.fortHp, WL.wardHp);
@@ -6034,7 +6126,7 @@ function strike() {
 function wlFx(b, dt, at, k) { // a warlord's own signs of life, wherever he stands. k: his size
   const mv = b.d.move, q = k / WL_S, X = at.x, Y = at.y, Z = at.z;
   if (b.fx.flag) b.fx.flag.rotation.y = Math.sin(G.t * 4.2) * .3;
-  if (b.fx.orbit) { b.fx.orbit.rotation.y += dt * 1.7; b.fx.orbit.children.forEach((c, k) => { c.position.y = (b.art ? .98 + k * .1 : 1.4 + k * .25) + Math.sin(G.t * 3 + k * 2) * (b.art ? .06 : .12); c.rotation.y = -b.fx.orbit.rotation.y + k; }); }
+  if (b.fx.orbit) { const fl = HOLD.b === b ? RX.flare : 0; b.fx.orbit.scale.setScalar(1 + .3 * fl); b.fx.orbit.rotation.y += dt * (1.7 + 2.6 * fl); b.fx.orbit.children.forEach((c, k) => { c.position.y = (b.art ? .98 + k * .1 : 1.4 + k * .25) + Math.sin(G.t * 3 + k * 2) * (b.art ? .06 : .12); c.rotation.y = -b.fx.orbit.rotation.y + k; }); }
   if (mv === 'swarm' && rand() < .6 && Y < 1) { const a = rand() * 6.28, r = 1.6 + rand() * 1.4; burst(X + Math.cos(a) * r, Y + .2 + rand() * .6, Z + Math.sin(a) * r, ['#e8c890', '#d6aa6a', '#fff0c0'], 1, 1.2, { vy: .8, life: .7, g: .5, sz: 1.3, kind: PK.SPARK }); } // a whirl of sand at his feet
   if (mv === 'spears' && b.fx.mouth) { if (rand() < .3) burst(X + (rand() - .5) * 3 * q, Y + .5 + rand() * 3.5 * q, Z + (rand() - .5) * 2, ['#ffffff', '#bfefff'], 1, .6, { vy: -.4, life: 1, g: .3, sz: 1.1, kind: PK.SPARK });
     if ((WL.breathT = (WL.breathT || 0) - dt) <= 0) { WL.breathT = 1.4; b.fx.mouth.getWorldPosition(_kv); burst(_kv.x, _kv.y - .9 * q, _kv.z + .5, ['#dff8ff', '#bfefff'], 4, 1.1, { vy: -.2, life: .7, g: -.2, sz: 1, kind: PK.SPARK }); } } // frost on his breath
@@ -6646,17 +6738,16 @@ function update(dt) {
   } else if (kingHead) { // the crown sits on the Bone King's skull, following his head as he moves
     king.updateMatrixWorld(true); kingHead.getWorldPosition(_kv); const ks2 = king.scale.y * KING_RIG_S;
     kingCrown.scale.setScalar(ks2 * 2.3); kingCrown.position.set(_kv.x, _kv.y + ks2 * .98, _kv.z + ks2 * .05);
-    if (KINGM.rig) { kingCrown.position.set(0, .955, .03).applyMatrix4(kingHead.matrixWorld); kingHead.getWorldQuaternion(kingCrown.quaternion); }
+    if (KINGM.rig) { const ck = RX.crown; kingCrown.position.set(.16 * ck * RX.side, .955 - .03 * ck, .03).applyMatrix4(kingHead.matrixWorld); kingHead.getWorldQuaternion(kingCrown.quaternion); if (ck > .01) kingCrown.quaternion.multiply(_rxq.setFromEuler(_rxe.set(.08 * ck, 0, -.36 * ck * RX.side))); }
   } else { // the crown rides on the king's head
     const ky = king.scale.y; kingCrown.scale.copy(king.scale); kingCrown.position.set(0, king.position.y + fort.position.y + KING_TOP * ky * .949, -39.75 + KING_Z - KING_TOP * ky * .315);
   }
   if (kingMixer) {
-    if (G.fortFlash > .9 && kingActs.Hit_A && !kingActs.Hit_A.isRunning() && rand() < .08) kingActs.Hit_A.reset().play(); // a flinch blended over his idle
-    kingMixer.update(dt); kingTick(KINGM.rig);
+    if (HOLD.i < 0) rxUndo(); kingMixer.update(dt); if (HOLD.i < 0 && !G.sim && !G.cine && !G.end) rxApply(dt, kingRig, -1, null); kingTick(KINGM.rig);
   }
-  const wob = Math.sin(G.t * 30) * G.fortFlash * .05, idle = Math.sin(G.t * 2.2) * .025, pf = G.puff * (.26 + Math.sin(G.t * 60) * .04);
+  const idle = Math.sin(G.t * 2.2) * .025, pf = G.puff * (.26 + Math.sin(G.t * 60) * .04);
   king.position.y = KPOS.y + G.puff * 1.8 - (inHall() ? 0 : G.kingSink || 0); // he rises up out of the castle as he swells, instead of bulging through the wall
-  const ks = G.kingS || 8; king.scale.set(ks * (1 + wob + idle + pf), ks * (1 - wob - idle + pf), ks * (1 + wob + idle + pf));
+  const ks = G.kingS || 8; king.scale.set(ks * (1 + idle * .5 + pf), ks * (1 - idle * .5 + pf), ks * (1 + idle * .5 + pf));
 
   if (G.hintT > 0 && !(G.introT > 0) && !(G.grandT > 0)) G.hintT -= dt;
 }
@@ -6693,7 +6784,11 @@ function drawSprites(p, sm) {
     _c.copy(p === beetles ? FOE_TINT : WHITE); if (p === beetles && p.tier[i] === F_CAP) _c.lerp(wc2.set(WARLORDS[CAP.w].col).convertSRGBToLinear(), .3).multiplyScalar(1.5); if (p === beetles && p.tier[i] === F_NEC) _c.setScalar(1.12); if (p.flash[i] > 0) _c.multiplyScalar(1 + p.flash[i] * 1.2); // skeletons get the world's tint (deeper on snow)
     sm.setColorAt(i, _c);
   }
-  sm.count = p.n; sm.instanceMatrix.needsUpdate = true; sm.instanceColor.needsUpdate = true; sm.geometry.attributes.aCell.needsUpdate = true;
+  let nn = p.n; if (p === ants && LINE.on && G.mode !== 'won' && G.mode !== 'resultWin') { // the knights of your line, in the palace: ready, and at arms when a skeleton comes near
+    const up = lineUp(); let near = -99; for (let j = 0; j < beetles.n; j++) if (beetles.hp[j] > 0 && beetles.z[j] > near) near = beetles.z[j];
+    for (const q of LINE.men) { if (nn >= ACAP) break; if (q[3] >= up) continue; const s = US * .98, f = near > -8 && Math.sin(G.t * 7 + q[2]) > .35 ? ATK_F : 2; _m.makeScale(s, s, s); _m.setPosition(q[0], 0, q[1]); sm.setMatrixAt(nn, _m); cell[nn] = TIER_TYPE[0] * FPT + f; sm.setColorAt(nn, WHITE); nn++; }
+    if (save.up.turret > 0 && LINE.perch && nn < ACAP) { const s = US * 1.35; _m.makeScale(s, s, s); _m.setPosition(LINE.perch.position.x, LINE.py, TOWER_Z); sm.setMatrixAt(nn, _m); cell[nn] = TIER_TYPE[2] * FPT + (turretGap(save.up.turret) - G.turT < .24 ? ATK_F : 2); sm.setColorAt(nn, WHITE); nn++; } }
+  sm.count = nn; sm.instanceMatrix.needsUpdate = true; sm.instanceColor.needsUpdate = true; sm.geometry.attributes.aCell.needsUpdate = true;
   if (p === ants) bombMesh.count = 0; // (the 3D keg is only for the fallback crowd: in the sprite sheet kegs are sappers)
 }
 function drawPool(p, mesh, hat, tint) {
@@ -6721,6 +6816,7 @@ function drawBlobs() {
     // a soft contact shadow under every unit (the horde's overlap into a dark carpet under it)
     _m.makeScale(s, 1, s * .8); _m.setPosition(p.x[i], 0.025, p.z[i] + s * .06); blobMesh.setMatrixAt(k++, _m);
   }
+  if (LINE.on && G.mode !== 'won' && G.mode !== 'resultWin') for (const q of LINE.men) { if (q[3] >= LINE.k) continue; _m.makeScale(US * .8, 1, US * .64); _m.setPosition(q[0], .025, q[1] + US * .06); blobMesh.setMatrixAt(k++, _m); }
   blobMesh.count = k; blobMesh.instanceMatrix.needsUpdate = true;
 }
 function drawDecals() {
@@ -6818,7 +6914,7 @@ function render() {
   if (capBar) { setCss('fortFill', 'transform', `scaleX(${clamp(CAP.hp / CAP.max, 0, 1).toFixed(3)})`); setHud('fortTxt', CAP.def.name + ' · ' + Math.max(0, Math.ceil(CAP.hp))); }
   else if (wlBar) { setCss('fortFill', 'transform', `scaleX(${clamp(WL.hp / WL.max, 0, 1).toFixed(3)})`); setHud('fortTxt', wlName() + ' · ' + Math.max(0, Math.ceil(WL.hp))); }
   else { setCss('fortFill', 'transform', `scaleX(${fp.toFixed(3)})`); if (LEAN || G.frameN % 6 === 0) setHud('fortTxt', (inHall() ? 'Wall of Bone · ' : 'Bone Castle · ') + Math.max(0, Math.ceil(G.fortHp))); }
-  setCss('nestFill', 'transform', `scaleX(${np.toFixed(3)})`); setHud('nestTxt', 'Your Camp · ' + Math.max(0, Math.ceil(G.nestHp)));
+  setCss('nestFill', 'transform', `scaleX(${np.toFixed(3)})`); setHud('nestTxt', (LINE.on ? 'Your Line · ' : 'Your Camp · ') + Math.max(0, Math.ceil(G.nestHp)));
   const gc = sendCharge(), pct = Math.round(100 * G.charge / gc);
   const gEl = $('giant'); if (_hud.gp !== pct) { _hud.gp = pct; if (!GHUD || gEl.classList.contains('last')) gEl.style.setProperty('--p', pct); } gEl.classList.toggle('ready', pct >= 100 && G.mode === 'play'); { const ch = !palReady(); if (_hud.ch !== ch) { _hud.ch = ch; gEl.classList.toggle('champ', ch); for (const u of gEl.querySelectorAll('.hu')) u.setAttribute('href', ch ? '#i-champ' : '#i-horse'); gEl.setAttribute('aria-label', ch ? 'Send the Champion' : 'Send the Paladin'); } }
   setHud('giantTxt', pct >= 100 ? 'SEND!' : pct + '%');
@@ -7166,7 +7262,7 @@ function renderUpgrades() {
     row.className = 'up';
     row.innerHTML = `<em style="--c:${u.c}"><svg viewBox="0 0 24 24"><use href="#${u.ico}"/></svg></em><div class="m"><b>${u.name}<i class="${fresh ? 'new' : ''}">${fresh ? 'NEW' : 'Lv ' + (u.unlock ? l : l + 1)}</i></b><span>${u.desc(l, maxed)}</span></div>`;
     const b = document.createElement('button'); b.className = 'btn'; b.innerHTML = maxed ? 'MAX' : `${COIN} ${cost}`; b.disabled = maxed || save.coins < cost;
-    b.onclick = () => { if (maxed || save.coins < cost) return; audio(); save.coins -= cost; save.up[u.id] = l + 1; persist(); smp('buy', .45, .03); turret.visible = save.up.turret > 0; renderUpgrades(); };
+    b.onclick = () => { if (maxed || save.coins < cost) return; audio(); save.coins -= cost; save.up[u.id] = l + 1; persist(); smp('buy', .45, .03); towerShow(); renderUpgrades(); };
     row.appendChild(b); box.appendChild(row);
   }
   $('menu').classList.toggle('many', shown > 4 && $('menu').classList.contains('open'));
@@ -7282,7 +7378,7 @@ function lose() {
   save.fails = (save.fails || 0) + 1; persist();
 }
 const TGT = () => inHall() ? 'wall of bone' : 'castle', HALL_WIN = ['the wall of bone is broken', 'his guard is scattered', 'one step nearer the throne', 'the horde is routed'];
-const WIN_LINES = ["his castle has fallen", "his walls came tumbling down", "another castle lies in ruins", "the horde is routed"], LOSE_LINES = ["the horde broke through", "your camp was overrun", "the skeletons swarmed your walls"];
+const WIN_LINES = ["his castle has fallen", "his walls came tumbling down", "another castle lies in ruins", "the horde is routed"], LOSE_LINES = ["the horde broke through", "your camp was overrun", "the skeletons swarmed your walls"], LOSE_HALL = ["the horde broke through", "your line was overrun", "the skeletons swarmed your ranks"];
 // tips for a lost level: only about things that were in it
 const loseTips = () => { const c = G.cfg, n = G.level, g = c.gates; return ['Steer through the biggest × gates', 'Tap SEND as soon as the meter fills', g.some(q => q.arm != null) && 'Weapon gates make every soldier stronger', g.some(q => q.add) && 'Hit the +N gates while they are lit', g.some(q => q.k < 1) && 'Steer around the red gates', n >= 4 && 'Keep your army out of the red circles', c.charge && 'Block charging brutes: steer into the red lane', c.saws.length && 'Steer around the bone saw', c.bombs && 'Steer around the bomb skeletons'].filter(Boolean); };
 function showResult(won) {
@@ -7305,8 +7401,8 @@ function showResult(won) {
   if (close) { $('resTitle').textContent = 'SO CLOSE!'; $('resTitle').style.color = 'var(--gold)'; }
   $('result').classList.toggle('win', won);
   $('resSub').textContent = won ? (isFinale() ? `${lvName(G.level)} · Rowan wears the crown` : G.cfg.boss ? `${lvName(G.level)} · ${WL.done && WL.def ? wlName() + ' slain' : 'Boss defeated'} · double coins!` : isGold(G.level) ? `${lvName(G.level)} · gold rush · double coins!` : isCaptain(G.level) && CAP.done ? `${lvName(G.level)} · ${CAP.def.name} beaten` : `${lvName(G.level)} · ${(inHall() ? HALL_WIN : WIN_LINES)[G.level % 4]}`)
-    : G.smashed ? `${lvName(G.level)} · ${wlName()} smashed your camp` : close ? `${lvName(G.level)} · so close, the ${TGT()} nearly fell!` : `${lvName(G.level)} · ${LOSE_LINES[(G.level + (save.fails || 0)) % LOSE_LINES.length]}`;
-  $('resHintIco').setAttribute('href', '#i-star'); { const p = G.cfg.par, par = `${Math.floor(p / 60)}:${String(p % 60).padStart(2, '0')}`; let tip = won && isFinale() ? 'The Endless Road is open' : won && G.stars < 3 ? (late => late && G.stars < 2 ? `Missed: win in ${par}, keep half your camp` : late ? `Missed star: win within ${par}` : 'Missed star: keep half your camp')((G.clk || 0) > p) : '';
+    : G.smashed ? `${lvName(G.level)} · ${wlName()} smashed your ${inHall() ? 'line' : 'camp'}` : close ? `${lvName(G.level)} · so close, the ${TGT()} nearly fell!` : `${lvName(G.level)} · ${(inHall() ? LOSE_HALL : LOSE_LINES)[(G.level + (save.fails || 0)) % 3]}`;
+  $('resHintIco').setAttribute('href', '#i-star'); { const p = G.cfg.par, par = `${Math.floor(p / 60)}:${String(p % 60).padStart(2, '0')}`; let tip = won && isFinale() ? 'The Endless Road is open' : won && G.stars < 3 ? (late => late && G.stars < 2 ? `Missed: win in ${par}, keep half your ${inHall() ? 'line' : 'camp'}` : late ? `Missed star: win within ${par}` : 'Missed star: keep half your ' + (inHall() ? 'line' : 'camp'))((G.clk || 0) > p) : '';
     if (!won) { // the cheapest upgrade they can buy with what they have plus this round's coins, or a tactic if nothing is affordable
       const have = save.coins + (G.reward || 0), lv = u => save.up[u.id] || 0;
       const can = UPG.filter(u => !(u.unlock && save.level < u.unlock) && !(u.max && lv(u) >= u.max) && have >= upCost(u, lv(u))).sort((a, b) => upCost(a, lv(a)) - upCost(b, lv(b)));
@@ -7740,7 +7836,7 @@ function startEnding() {
   clearToasts(); $('giant').classList.remove('last'); for (const f of floats) f.t = Math.min(f.t, .01);
   G.mode = 'ending'; G.firing = false; G.kneel = false; G.toastT = 0; gameEl.classList.add('cinema'); $('cine').classList.add('on', 'end');
   ants.n = beetles.n = P.n = 0; hideTelegraphs(); ward.visible = false; resetPaladin(); rageGlow.visible = false;
-  for (const g of G.gates) g.mesh.visible = false; if (laneWalls) laneWalls.visible = false; sawGroup.visible = false; fortDress.visible = false; aim.visible = false; launcher.visible = campWall.visible = nest.visible = turret.visible = false; king.visible = kingCrown.visible = false;
+  for (const g of G.gates) g.mesh.visible = false; if (laneWalls) laneWalls.visible = false; sawGroup.visible = false; fortDress.visible = false; aim.visible = false; launcher.visible = campWall.visible = nest.visible = turret.visible = false; if (LINE.g) LINE.g.visible = LINE.on = false; king.visible = kingCrown.visible = false;
   if (WL.b) WL.b.g.visible = false; WL.on = false; WL.state = 'over';
   const g = new THREE.Group(); g.userData.dyn = true; scene.add(g); const E = G.end = { t: 0, ev: {}, g, gold: 0 };
   // the King as he fell: his bones and robe, and no crown
@@ -7816,7 +7912,7 @@ function clearEnding() { // everything the ending put on stage or put away
   const E = G.end; if (!E) return; G.end = null;
   scene.remove(E.g); E.g.traverse(o => { if (o.isMesh && o.material === E.rayM) o.geometry.dispose(); }); if (E.rayM) { E.rayM.map.dispose(); E.rayM.dispose(); } if (E.kingM) E.kingM.dispose();
   $('cine').classList.remove('on', 'end'); $('endHeal').classList.remove('on'); $('endFade').classList.remove('on'); endCap(''); gameEl.classList.remove('cinema');
-  if (laneWalls) laneWalls.visible = true; sawGroup.visible = fortDress.visible = aim.visible = launcher.visible = campWall.visible = nest.visible = true; turret.visible = save.up.turret > 0; paladin.visible = false; paladin.scale.setScalar(PAL_S); paladin.rotation.y = Math.PI; if (palRig) palRig.visible = true; for (const o of paladin.children) if (o.isSprite) o.visible = true;
+  if (laneWalls) laneWalls.visible = true; sawGroup.visible = fortDress.visible = aim.visible = launcher.visible = true; campShow(); paladin.visible = false; paladin.scale.setScalar(PAL_S); paladin.rotation.y = Math.PI; if (palRig) palRig.visible = true; for (const o of paladin.children) if (o.isSprite) o.visible = true;
   ants.n = beetles.n = P.n = 0; if (horse) horse.body.position.y = 0; resize(); dressRider();
 }
 function finishEnding() {
