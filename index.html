@@ -305,12 +305,12 @@ svg.ico.sm{width:18px;height:18px}
 .boon{position:relative;width:100%;border:0;padding:0;border-radius:20px;background:linear-gradient(180deg,#2d3f8a,#1c2763);box-shadow:0 0 0 3px var(--r),0 5px 0 3px var(--rd),0 14px 26px rgba(0,0,0,.45);color:#fff;text-align:left;display:flex;overflow:hidden;font-family:inherit;cursor:pointer;animation:boonIn .42s cubic-bezier(.2,1.2,.4,1) both;transition:transform .25s,opacity .3s}
 @keyframes boonIn{from{opacity:0;transform:translateY(26px) scale(.94)}to{opacity:1;transform:none}}
 .boon:active{transform:translateY(3px)}.boon.took{animation:none;transform:scale(1.05)}.boon.gone{animation:none;opacity:.18}
-.boon em{width:128px;min-height:118px;flex:none;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--r) 55%,#fff0),transparent 70%),linear-gradient(180deg,#24357c,#141c4e)}.boon em svg{width:66px;height:66px;filter:drop-shadow(0 4px 5px rgba(0,0,0,.45))}.boon em img{width:100%;height:100%;object-fit:cover;display:block}.boon em.art{background:#141c4e}
+.boon em{position:relative;width:128px;min-height:118px;flex:none;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--r) 55%,#fff0),transparent 70%),linear-gradient(180deg,#24357c,#141c4e)}.boon em svg{width:66px;height:66px;filter:drop-shadow(0 4px 5px rgba(0,0,0,.45))}.boon em img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .boon div{padding:10px 14px;display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0}.boon i{font-style:normal;font-family:var(--disp);font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--r)}.boon b{font-family:var(--disp);font-weight:400;font-size:23px;line-height:1.05}.boon span{font-weight:500;font-size:17px;line-height:1.25;color:#e6ebff}
 #boonHave,#boonMenu{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:7px;font-weight:600;font-size:16px;color:#d8d2fa;min-height:0}#boonHave{margin-top:8px}#boonMenu{margin-top:9px}#boonMenu:empty,#boonHave:empty{display:none}
 #boonHave em,#boonMenu em,#pauseBoons em{width:36px;height:36px;flex:none;border-radius:11px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#1c2763;box-shadow:0 0 0 2px var(--r)}#boonMenu em{width:30px;height:30px;border-radius:9px}#boonHave em svg,#boonMenu em svg,#pauseBoons em svg{width:64%;height:64%}#boonHave em img,#boonMenu em img,#pauseBoons em img{width:100%;height:100%;object-fit:cover}
 #menu.open #boonMenu{display:none}
-#pauseBoons{display:flex;flex-direction:column;gap:9px;width:100%;max-height:38vh;overflow-y:auto;text-align:left;margin:4px 0 10px}#pauseBoons:empty{display:none}#pauseBoons div{display:flex;gap:11px;align-items:center;font-weight:500;font-size:15px;line-height:1.2;color:#e6ebff;padding:3px}#pauseBoons b{display:block;font-family:var(--disp);font-weight:400;font-size:17px;color:#fff}
+#pauseBoons{padding-right:8px;display:flex;flex-direction:column;gap:9px;width:100%;max-height:38vh;overflow-y:auto;text-align:left;margin:4px 0 10px}#pauseBoons:empty{display:none}#pauseBoons div{display:flex;gap:11px;align-items:center;font-weight:500;font-size:15px;line-height:1.2;color:#e6ebff;padding:3px}#pauseBoons b{display:block;font-family:var(--disp);font-weight:400;font-size:17px;color:#fff}
 #cine.dir::before,#cine.dir::after{display:none}#cine.short .cine-skip{display:none}
 #dirT{position:absolute;left:4%;right:4%;bottom:12%;z-index:2;text-align:center;font-family:var(--disp);pointer-events:none;opacity:0;container-type:inline-size}
 #dirT i{display:block;font-style:normal;font-weight:400;font-size:20px;font-size:min(5.4cqw,30px);letter-spacing:.06em;text-transform:uppercase;color:#fff;text-shadow:0 2px 0 #1a0a30,0 0 12px rgba(20,0,40,.9);opacity:0}
@@ -8041,7 +8041,7 @@ const BOONS = [
   { id: 'grave', c: 'camp', name: 'Grave Robbers', d: '25% more coins', ico: 'i-coin' },
   { id: 'breaker', c: 'camp', name: 'Bone Breaker', d: '30% more damage to brutes, captains and bosses', ico: 'i-bomb' },
 ];
-const BOON_BY = Object.fromEntries(BOONS.map(b => [b.id, b])), BOON_ART = /*BOON_ART*/{}/*END*/, boonWorld = n => Math.floor((n - 1) / WORLD_LEN);
+const BOON_BY = Object.fromEntries(BOONS.map(b => [b.id, b])), boonWorld = n => Math.floor((n - 1) / WORLD_LEN);
 const boonList = () => save.boons && save.boons.w === boonWorld(save.level) ? save.boons.list : [];
 function boonsOn() { G.bn = {}; for (const id of boonList()) G.bn[id] = 1; } // (at the start of every battle)
 function boonOffer(sv, n, rnd) { // three to choose from after winning level n: never one you have, and no two of a kind if it can be helped
@@ -8049,16 +8049,17 @@ function boonOffer(sv, n, rnd) { // three to choose from after winning level n: 
   while (out.length < 3 && pool.length) { let c = pool.filter(b => !out.some(o => o.c === b.c)); if (!c.length) c = pool; const b = c[Math.floor(rnd() * c.length)]; out.push(b); pool.splice(pool.indexOf(b), 1); } return out.map(b => b.id);
 }
 function boonTake(sv, n, id) { const w = boonWorld(n + 1); if (!sv.boons || sv.boons.w !== w) sv.boons = { w, list: [] }; if (id && !sv.boons.list.includes(id)) sv.boons.list.push(id); }
-const boonArt = b => BOON_ART[b.id] ? `<img src="models/boon/${b.id}.webp" alt="">` : `<svg viewBox="0 0 24 24"><use href="#${b.ico}"/></svg>`;
-const BOON_VB = { 'i-crown': '0 0 40 24', 'i-horse': '0 0 48 44' };
-const boonPic = b => BOON_ART[b.id] ? boonArt(b) : `<svg viewBox="${BOON_VB[b.ico] || '0 0 24 24'}"><use href="#${b.ico}"/></svg>`;
+const BOON_VB = { 'i-crown': '0 0 40 24', 'i-horse': '0 0 48 44' }, BOON_CH = { eager: 1, horn: 1 }, boonNoArt = {};
+const boonSrc = b => 'models/boon/' + b.id + (BOON_CH[b.id] && !palReady() ? 'C' : '') + '.webp', boonIco = b => `<svg viewBox="${BOON_VB[b.ico] || '0 0 24 24'}"><use href="#${b.ico}"/></svg>`;
+const boonPic = b => boonNoArt[b.id] ? boonIco(b) : `<img src="${boonSrc(b)}" alt="" draggable="false" data-boon="${b.id}">`;
+document.addEventListener('error', e => { const id = e.target.dataset && e.target.dataset.boon; if (id) { boonNoArt[id] = 1; e.target.outerHTML = boonIco(BOON_BY[id]); } }, true);
 function boonDue(n) { // won level n: what is on offer is kept, so closing the game doesn't lose or change it
-  if (G.practice || n < 2 || n >= LAP_LEN && false) return false; boonTake(save, n, null); const ids = boonOffer(save, n, mulberry(n * 7919 + (save.wins || 0) * 31 + 5)); if (ids.length < 2) return false; save.boonDue = { n, ids }; return true;
+  if (G.practice || n < 2 || n >= LAP_LEN && false) return false; boonTake(save, n, null); const ids = boonOffer(save, n, mulberry(n * 7919 + (save.wins || 0) * 31 + 5)); if (ids.length < 2) return false; save.boonDue = { n, ids }; for (const id of ids) new Image().src = boonSrc(BOON_BY[id]); return true;
 }
 function showBoons(then) {
   const q = save.boonDue; if (!q) { then && then(); return; } const w = worldOf(q.n + 1), road = onRoadLv(q.n + 1), boss = road ? null : wlName(WARLORDS[w]);
   $('boonSub').textContent = boss ? 'It lasts until ' + (w === HALLW ? 'the Bone King' : boss.charAt(0) + boss.slice(1).toLowerCase().replace(/-([a-z])/, (m, c) => '-' + c.toUpperCase())) + ' falls' : 'It lasts ten levels'; $('boonRow').innerHTML = ''; let done = false;
-  q.ids.map(id => BOON_BY[id]).forEach((b, k) => { const c = BOON_CAT[b.c], el = document.createElement('button'); el.className = 'boon'; el.style.setProperty('--r', c[1]); el.style.setProperty('--rd', c[2]); el.style.animationDelay = (.08 + k * .09) + 's'; el.innerHTML = `<em class="${BOON_ART[b.id] ? 'art' : ''}">${boonPic(b)}</em><div><i>${b.c === 'send' && !palReady() ? 'Champion' : c[0]}</i><b>${b.name}</b><span>${b.c === 'send' && !palReady() ? b.d.replace('Rowan', 'the Champion') : b.d}</span></div>`;
+  q.ids.map(id => BOON_BY[id]).forEach((b, k) => { const c = BOON_CAT[b.c], el = document.createElement('button'); el.className = 'boon'; el.style.setProperty('--r', c[1]); el.style.setProperty('--rd', c[2]); el.style.animationDelay = (.08 + k * .09) + 's'; el.innerHTML = `<em>${boonPic(b)}</em><div><i>${b.c === 'send' && !palReady() ? 'Champion' : c[0]}</i><b>${b.name}</b><span>${b.c === 'send' && !palReady() ? b.d.replace('Rowan', 'the Champion') : b.d}</span></div>`;
     el.onclick = () => { if (done) return; done = true; boonTake(save, q.n, b.id); save.boonDue = null; persist(); audio(); el.classList.add('took'); for (const o of $('boonRow').children) if (o !== el) o.classList.add('gone'); [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => tone(f, .2, 'triangle', .05), i * 70)); buzz(30); setTimeout(() => { $('boon').classList.remove('on'); then && then(); }, 620); }; $('boonRow').appendChild(el); });
   const have = boonHeld(q.n); $('boonHave').innerHTML = have.length ? 'Yours ' + have.map(b => `<em style="--r:${BOON_CAT[b.c][1]}">${boonPic(b)}</em>`).join('') : ''; $('result').classList.remove('on'); $('boon').classList.add('on'); gameEl.classList.add('overlay'); shine(.8, 784);
 }
