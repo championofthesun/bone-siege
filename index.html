@@ -2653,7 +2653,7 @@ function bakeScenery(root) {
     gone.push(im);
     for (let i = 0; i < im.count; i++) {
       im.getMatrixAt(i, mi); const e = mi.elements; if (!(Math.abs(mi.determinant()) > 1e-9)) continue; // (cleared to make room for a landmark)
-      const z = e[14], cell = key + '#' + (z > -14 ? 0 : z > -31 ? 1 : z > -50 ? 2 : 3) + (cast && (Math.abs(e[12]) > 17 || z < -43) ? 'f' : '');
+      const z = e[14], cell = LEAN ? key : key + '#' + (z > -14 ? 0 : z > -31 ? 1 : z > -50 ? 2 : 3) + (cast && (Math.abs(e[12]) > 17 || z < -43) ? 'f' : '');
       let b = cells.get(cell); if (!b) { b = { key, far: /f$/.test(cell), m, im, cast, mapped, kk: mapped && (kk || m.isMeshStandardMaterial), pt, list: [], nv: 0, ni: 0 }; cells.set(cell, b); }
       b.list.push([im, i]); b.nv += A.position.count; b.ni += g.index ? g.index.count : A.position.count;
     }
@@ -2711,15 +2711,15 @@ const GLOW = (() => {
   const CAP = 400, g = new THREE.InstancedBufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-.5, -.5, 0, .5, -.5, 0, .5, .5, 0, -.5, .5, 0]), 3)); g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]), 2)); g.setIndex([0, 1, 2, 0, 2, 3]);
   const at = (n, k) => { const a = new THREE.InstancedBufferAttribute(new Float32Array(CAP * k), k); a.setUsage(THREE.DynamicDrawUsage); g.setAttribute(n, a); return a; };
   const iPos = at('iPos', 4), iScale = at('iScale', 2), iCol = at('iCol', 4); // iPos.w: 1 = fades with the fog
-  const m = new THREE.ShaderMaterial({ uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { map: { value: null } }]), fog: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false,
-    vertexShader: `attribute vec4 iPos; attribute vec2 iScale; attribute vec4 iCol; varying vec2 vUv; varying vec4 vCol; varying float vF;
+  const m = new THREE.ShaderMaterial({ uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { map: { value: null }, map2: { value: null } }]), fog: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false,
+    vertexShader: `attribute vec4 iPos; attribute vec2 iScale; attribute vec4 iCol; varying vec2 vUv; varying vec4 vCol; varying float vF, vK;
       #include <fog_pars_vertex>
-      void main() { vUv = uv; vCol = iCol; vF = iPos.w; vec4 mvPosition = viewMatrix * vec4(iPos.xyz, 1.0); mvPosition.xy += position.xy * iScale; gl_Position = projectionMatrix * mvPosition;
+      void main() { vUv = uv; vCol = iCol; vF = mod(iPos.w, 2.0); vK = step(1.5, iPos.w); vec4 mvPosition = viewMatrix * vec4(iPos.xyz, 1.0); mvPosition.xy += position.xy * iScale; gl_Position = projectionMatrix * mvPosition;
       #include <fog_vertex>
       }`,
-    fragmentShader: `uniform sampler2D map; varying vec2 vUv; varying vec4 vCol; varying float vF;
+    fragmentShader: `uniform sampler2D map, map2; varying vec2 vUv; varying vec4 vCol; varying float vF, vK;
       #include <fog_pars_fragment>
-      void main() { vec4 t = sRGBToLinear(texture2D(map, vUv)); vec3 c = vCol.rgb * t.rgb;
+      void main() { vec4 t = sRGBToLinear(vK > .5 ? texture2D(map2, vUv) : texture2D(map, vUv)); vec3 c = vCol.rgb * t.rgb;
       #ifdef USE_FOG
         c = mix(c, fogColor, smoothstep(fogNear, fogFar, fogDepth) * vF);
       #endif
@@ -2729,20 +2729,100 @@ const GLOW = (() => {
   m.uniforms.map.value = glowTex;
   const mesh = new THREE.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = .5; mesh.matrixAutoUpdate = false; mesh.userData.dyn = true; scene.add(mesh);
   let list = [], n = 0;
-  const ok = o => { const q = o.material; return q.map === glowTex && q.blending === THREE.AdditiveBlending && q.depthTest && !q.depthWrite && !q.rotation && !q.toneMapped && q.sizeAttenuation && !o.renderOrder; };
+  const ok = o => { const q = o.material; return (q.map === glowTex || LEAN && q.map === glintTex) && q.blending === THREE.AdditiveBlending && q.depthTest && !q.depthWrite && !q.rotation && !q.toneMapped && q.sizeAttenuation && !o.renderOrder; };
   return { mesh, get count() { return g.instanceCount; },
     gather() { list = []; if (/[?&]nobake/.test(location.search)) return; scene.traverse(o => { if (o.isSprite && ok(o) && list.length < CAP) { o.layers.mask = 0; list.push(o); } }); n = 0; },
     draw() {
       if (/[?&]nobake/.test(location.search)) { mesh.visible = false; return; }
       if (n-- <= 0) { this.gather(); n = 45; }
-      scene.updateMatrixWorld(); let k = 0;
+      if (!m.uniforms.map2.value) m.uniforms.map2.value = glintTex; scene.updateMatrixWorld(); let k = 0;
       for (const o of list) {
         const q = o.material; if (q.opacity <= .003) continue; let p = o, up = null; while (p && p.visible) { up = p; p = p.parent; } if (p || up !== scene) continue; // hidden, or no longer in the scene
-        const e = o.matrixWorld.elements, a = k * 4; iPos.array[a] = e[12]; iPos.array[a + 1] = e[13]; iPos.array[a + 2] = e[14]; iPos.array[a + 3] = q.fog ? 1 : 0;
+        const e = o.matrixWorld.elements, a = k * 4; iPos.array[a] = e[12]; iPos.array[a + 1] = e[13]; iPos.array[a + 2] = e[14]; iPos.array[a + 3] = (q.fog ? 1 : 0) + (q.map === glowTex ? 0 : 2);
         iScale.array[k * 2] = Math.hypot(e[0], e[1], e[2]); iScale.array[k * 2 + 1] = Math.hypot(e[4], e[5], e[6]); iCol.array[a] = q.color.r; iCol.array[a + 1] = q.color.g; iCol.array[a + 2] = q.color.b; iCol.array[a + 3] = q.opacity; k++;
       }
       g.instanceCount = k; mesh.visible = k > 0; for (const b of [iPos, iScale, iCol]) { b.updateRange.count = k * b.itemSize; b.needsUpdate = true; }
     } };
+})();
+/* ---- fewer drawing commands (the phone-smooth trial, ?lean) ----
+   On an iPhone every draw is worked through one by one by a separate part of the browser, on the processor: that, not the pixels,
+   is what a battle costs there. FUSE.world joins the still sculpted pieces of the scenery that share their textures (their tints
+   move into the vertices). FUSE.rig joins pieces that do move (a warlord's armour, the gates, the cannon): they stay in the scene
+   and go on moving, hiding and swaying, but are drawn together through one skinned mesh whose joints follow them. */
+const FUSE = (() => {
+  if (!LEAN) return null;
+  const sets = [], ZERO = new THREE.Matrix4().set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1), DEF = THREE.Material.prototype.onBeforeCompile, v = new THREE.Vector3(), nm = new THREE.Matrix3(), mw = new THREE.Matrix4();
+  const X = { on: true, sets };
+  // glow of its own colour, roughness and metal carried by the vertices, so pieces that only differ in that can share a material
+  const emitShader = m => { m.onBeforeCompile = sh => {
+    sh.vertexShader = 'attribute vec3 aEmi; attribute vec2 aRM; varying vec3 vEmi; varying vec2 vRM;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vEmi = aEmi; vRM = aRM;');
+    sh.fragmentShader = 'varying vec3 vEmi; varying vec2 vRM;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += vEmi;').replace('#include <roughnessmap_fragment>', 'float roughnessFactor = vRM.x;').replace('#include <metalnessmap_fragment>', 'float metalnessFactor = vRM.y;'); }; m.customProgramCacheKey = () => 'emi'; };
+  // parts: meshes alike but for their place (and colour). opt: tint = carry each one's colour, fade = and its opacity (additive), emi = and its own glow
+  X.rig = (parts, opt = {}) => {
+    if (parts.length < 2) return null; let nv = 0, ni = 0; const m0 = parts[0].material, uvs = !!parts[0].geometry.attributes.uv && !!m0.map, vc = !!parts[0].geometry.attributes.color && m0.vertexColors;
+    for (const o of parts) { const g = o.geometry; nv += g.attributes.position.count; ni += g.index ? g.index.count : g.attributes.position.count; }
+    const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), uv = uvs ? new Float32Array(nv * 2) : null, cs = opt.fade ? 4 : 3, col = opt.tint || vc ? new Float32Array(nv * cs) : null, emi = opt.emi ? new Float32Array(nv * 3) : null, rm = opt.emi ? new Float32Array(nv * 2) : null, si = new Uint16Array(nv * 4), sw = new Float32Array(nv * 4), idx = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni); let vo = 0, io = 0;
+    parts.forEach((o, j) => { const g = o.geometry, A = g.attributes, n = A.position.count, m = o.material, E = emi && m.emissive ? m.emissiveIntensity : 0;
+      for (let k = 0; k < n; k++) { const q = vo + k, t = q * 3; pos[t] = A.position.getX(k); pos[t + 1] = A.position.getY(k); pos[t + 2] = A.position.getZ(k); if (A.normal) { nor[t] = A.normal.getX(k); nor[t + 1] = A.normal.getY(k); nor[t + 2] = A.normal.getZ(k); } else nor[t + 1] = 1;
+        if (uv) { uv[q * 2] = A.uv.getX(k); uv[q * 2 + 1] = A.uv.getY(k); } if (col) { const c = A.color && m.vertexColors, h = q * cs; col[h] = (c ? A.color.getX(k) : 1) * m.color.r; col[h + 1] = (c ? A.color.getY(k) : 1) * m.color.g; col[h + 2] = (c ? A.color.getZ(k) : 1) * m.color.b; if (opt.fade) col[h + 3] = m.opacity; }
+        if (emi) { emi[t] = m.emissive.r * E; emi[t + 1] = m.emissive.g * E; emi[t + 2] = m.emissive.b * E; rm[q * 2] = m.roughness; rm[q * 2 + 1] = m.metalness; } si[q * 4] = j; sw[q * 4] = 1; }
+      if (g.index) for (let k = 0; k < g.index.count; k++) idx[io++] = vo + g.index.getX(k); else for (let k = 0; k < n; k++) idx[io++] = vo + k; vo += n; });
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); if (uv) { geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); geo.setAttribute('uv2', geo.attributes.uv); } if (col) geo.setAttribute('color', new THREE.BufferAttribute(col, cs)); if (emi) { geo.setAttribute('aEmi', new THREE.BufferAttribute(emi, 3)); geo.setAttribute('aRM', new THREE.BufferAttribute(rm, 2)); }
+    geo.setAttribute('skinIndex', new THREE.BufferAttribute(si, 4)); geo.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4)); geo.setIndex(new THREE.BufferAttribute(idx, 1));
+    const mat = m0.clone(); mat.skinning = true; mat.userData = {}; if (opt.emi) emitShader(mat); else if (m0.onBeforeCompile !== DEF) { mat.onBeforeCompile = m0.onBeforeCompile; mat.customProgramCacheKey = m0.customProgramCacheKey; }
+    if (opt.tint) { mat.color = new THREE.Color(1, 1, 1); mat.vertexColors = true; if (opt.fade) mat.opacity = 1; } else { mat.color = m0.color; } if (opt.emi) mat.emissive = new THREE.Color(0, 0, 0); else if (m0.emissive) mat.emissive = m0.emissive;
+    const joints = parts.map(() => { const b = new THREE.Bone(); b.matrixAutoUpdate = false; return b; }), sm = new THREE.SkinnedMesh(geo, mat); sm.frustumCulled = false; sm.matrixAutoUpdate = false; sm.userData.dyn = true; sm.renderOrder = parts[0].renderOrder; sm.castShadow = !!opt.cast; sm.receiveShadow = parts[0].receiveShadow; sm.name = 'fused';
+    scene.add(sm); sm.bind(new THREE.Skeleton(joints, joints.map(() => new THREE.Matrix4())), new THREE.Matrix4());
+    for (const o of parts) { if (o.userData.layer0 === undefined) o.userData.layer0 = o.layers.mask; o.layers.mask = 0; }
+    const S = { sm, parts, joints, m0, mat, opt, quiet: opt.quiet, dirty: true, sent: false }; sm.skeleton.update = function () { if (!S.dirty) return; S.dirty = false; S.sent = true; THREE.Skeleton.prototype.update.call(this); }; sets.push(S); return S; // (nothing is sent again while its pieces stand still)
+  };
+  X.drop = S => { if (!S) return; scene.remove(S.sm); S.sm.geometry.dispose(); S.mat.dispose(); if (S.sm.skeleton.boneTexture) S.sm.skeleton.boneTexture.dispose(); for (const o of S.parts) if (o.userData.layer0 !== undefined) { o.layers.mask = o.userData.layer0; delete o.userData.layer0; } const i = sets.indexOf(S); if (i >= 0) sets.splice(i, 1); };
+  // every mesh under a root that shares one material (three or more), each family as one
+  X.under = (root, opt = {}) => { const by = new Map(), out = []; root.traverse(o => { if (o.isMesh && !o.isInstancedMesh && !o.isSkinnedMesh && !Array.isArray(o.material) && o.layers.mask && o.geometry.attributes.position && (!opt.only || opt.only(o))) { const k = o.material.uuid + o.renderOrder; if (!by.has(k)) by.set(k, []); by.get(k).push(o); } }); for (const l of by.values()) if (l.length >= 3) out.push(X.rig(l, opt)); return out; };
+  X.tick = () => { // the joints follow their pieces; a hidden piece shrinks to nothing
+    for (const S of sets) { let any = false, moved = !S.sent; const put = (j, m) => { const a = S.joints[j].matrixWorld.elements, b = m.elements; for (let k = 0; k < 16; k++) if (a[k] !== b[k]) { S.joints[j].matrixWorld.copy(m); moved = true; return; } };
+      S.parts.forEach((o, j) => { let p = o, up = null; while (p && p.visible) { up = p; p = p.parent; } const on = !p && up === scene; if (on) { any = true; put(j, o.matrixWorld); } else put(j, ZERO); }); if (moved) S.dirty = true;
+      S.sm.visible = any; if (any) { const a = S.m0, b = S.mat; if (!S.opt.fade && b.opacity !== a.opacity) b.opacity = a.opacity; if (b.transparent !== a.transparent) { b.transparent = a.transparent; b.depthWrite = a.depthWrite; b.needsUpdate = true; } if (!S.opt.emi && a.emissiveIntensity !== undefined) b.emissiveIntensity = a.emissiveIntensity; if (S.quiet) S.sm.userData.quiet = S.quiet(); } }
+  };
+  // the still, sculpted, normal-mapped pieces of the scenery, joined by texture; birds and anything the healing moves keep to themselves
+  X.world = root => {
+    root.updateMatrixWorld(true); const by = new Map(), inv = new THREE.Matrix4().copy(root.matrixWorld).invert(), birds = BART.birds && BART.birds.mat;
+    for (const top of root.children) { if (top.userData.cls) continue; (function walk(o) { if (!o.visible) return; const m = o.material;
+      if (o.isMesh && !o.isInstancedMesh && !o.isSkinnedMesh && o.userData.dyn && !Array.isArray(m) && m.isMeshStandardMaterial && m.map && m.normalMap && m !== birds && !m.transparent && !m.alphaTest && m.onBeforeCompile === DEF && !m.vertexColors && o.geometry.index && o.geometry.attributes.uv && o.geometry.attributes.normal && !o.children.length && !o.renderOrder) {
+        const k = [m.map.uuid, m.normalMap.uuid, m.roughness, m.metalness, m.emissive.getHexString() + (m.emissive.getHex() ? m.emissiveIntensity : ''), m.emissiveMap ? m.emissiveMap.uuid : '', m.envMap ? 1 : 0, m.side, m.fog ? 1 : 0, m.flatShading ? 1 : 0, m.normalScale.x, o.castShadow ? 1 : 0, o.receiveShadow ? 1 : 0].join('|'); if (!by.has(k)) by.set(k, []); by.get(k).push(o); return; }
+      for (const c of o.children) walk(c); })(top); }
+    for (const list of by.values()) { if (list.length < 2) continue; let nv = 0, ni = 0, tint = false; const m0 = list[0].material; for (const o of list) { nv += o.geometry.attributes.position.count; ni += o.geometry.index.count; if (!o.material.color.equals(m0.color)) tint = true; }
+      const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), uv = new Float32Array(nv * 2), col = tint ? new Float32Array(nv * 3) : null, idx = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni); let vo = 0, io = 0;
+      for (const o of list) { const g = o.geometry, P = g.attributes.position, N = g.attributes.normal, U = g.attributes.uv, c = o.material.color; mw.multiplyMatrices(inv, o.matrixWorld); nm.getNormalMatrix(mw);
+        for (let k = 0; k < P.count; k++) { const t = vo + k; v.fromBufferAttribute(P, k).applyMatrix4(mw).toArray(pos, t * 3); v.fromBufferAttribute(N, k).applyMatrix3(nm).normalize().toArray(nor, t * 3); uv[t * 2] = U.getX(k); uv[t * 2 + 1] = U.getY(k); if (col) { col[t * 3] = c.r; col[t * 3 + 1] = c.g; col[t * 3 + 2] = c.b; } }
+        const flip = mw.determinant() < 0; for (let k = 0; k < g.index.count; k += 3) { const a = g.index.getX(k), b = g.index.getX(k + 1), d = g.index.getX(k + 2); idx[io++] = vo + a; idx[io++] = vo + (flip ? d : b); idx[io++] = vo + (flip ? b : d); } vo += P.count; }
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); if (col) geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.setIndex(new THREE.BufferAttribute(idx, 1)); geo.computeBoundingSphere();
+      let mat = m0; if (tint) { mat = m0.clone(); mat.color.set(0xffffff); mat.vertexColors = true; }
+      for (const o of list) o.parent.remove(o); // (their shapes belong to the set)
+      const one = new THREE.Mesh(geo, mat); one.castShadow = list[0].castShadow; one.receiveShadow = list[0].receiveShadow; one.matrixAutoUpdate = false; one.userData.dyn = one.userData.sharedMaps = true; if (!tint) one.userData.keepMat = true; root.add(one); }
+  };
+  // plain, untextured pieces of every colour and finish, joined; then whatever else in this world comes in threes
+  const alive = o => { let q = o; while (q.parent) q = q.parent; return q === scene; };
+  X.level = () => {
+    for (const S of [...sets]) if (!S.parts.some(alive)) X.drop(S);
+    const held = new Set(HEAL.mats.map(q => q.mat)), still = () => G.mode === 'play';
+    for (const roots of [[nest, campWall, hoard, fort], [world], [laneWalls, sawGroup]]) { const by = {};
+      for (const root of roots) if (root) root.traverse(o => { const m = o.material; if (!o.isMesh || o.isInstancedMesh || o.isSkinnedMesh || !o.layers.mask || Array.isArray(m) || !m.isMeshStandardMaterial || m.map || m.normalMap || m.transparent || m.alphaTest || m.emissiveMap || m.envMap || m.onBeforeCompile !== DEF || held.has(m) || fortWalls.includes(m) || m === fortStone || o.renderOrder || !o.geometry.attributes.normal) return; let q = o; while (q) { if (q.userData.cls) return; q = q.parent; }
+        const k = [m.flatShading ? 1 : 0, m.side, m.fog ? 1 : 0, m.toneMapped ? 1 : 0, o.castShadow ? 1 : 0].join(); (by[k] = by[k] || []).push(o); });
+      for (const l of Object.values(by)) if (l.length > 1) X.rig(l, { tint: true, emi: true, cast: l[0].castShadow, quiet: still }); }
+    const birds = BART.birds && BART.birds.mat; X.under(world, { only: o => o.material === birds || o.material.isMeshBasicMaterial && o.material.transparent && o.material.map && !o.userData.cls });
+    if (BART.fort) X.under(fort, { cast: true, quiet: still, only: o => o.material.normalMap && o.material.map && !o.material.transparent && o.userData.dyn });
+  };
+  // a level's gates: posts, coloured bands and pennants, the glint on the boards and the light on the ground, each family in one
+  let gateSets = [];
+  X.gates = list => {
+    for (const S of gateSets) X.drop(S); gateSets = []; const fam = { post: [], band: [], shine: [], pool: [] };
+    for (const g of list) g.mesh.traverse(o => { const m = o.material; if (!o.isMesh || Array.isArray(m) || o.userData.dyn && m !== (BART.camp && BART.camp.mat)) return; let p = o.parent; while (p && p !== g.mesh) { if (p.userData.dyn) return; p = p.parent; }
+      if (BART.camp && m === BART.camp.mat) fam.post.push(o); else if (m === shineMat) fam.shine.push(o); else if (m.isMeshBasicMaterial && m.map === glowTex && m.blending === THREE.AdditiveBlending) fam.pool.push(o); else if (m.isMeshStandardMaterial && !m.transparent && !m.map && m.onBeforeCompile === DEF && m.vertexColors) fam.band.push(o); });
+    const bands = {}; for (const o of fam.band) { const m = o.material, k = [m.flatShading, m.side].join(); (bands[k] = bands[k] || []).push(o); }
+    gateSets = [X.rig(fam.post, { cast: true }), X.rig(fam.shine), X.rig(fam.pool, { tint: true, fade: true }), ...Object.values(bands).map(l => X.rig(l, { tint: true, emi: true }))].filter(Boolean);
+  };
+  return X;
 })();
 function bakeStatic(root) {
   const DEF = THREE.Material.prototype.onBeforeCompile, buckets = new Map(), pick = [], tmpN = new THREE.Matrix3(), inv = new THREE.Matrix4();
@@ -2978,7 +3058,7 @@ function applyWorld(i, st) {
   sun.color.copy(C(w.sun[0])); sun.intensity = w.sun[1]; renderer.toneMappingExposure = w.exposure;
   for (const m of fortWalls) m.color.copy(C(w.wall)).multiplyScalar(m.userData.k || 1); fortStone.color.copy(C(w.stone));
   moteMat.color.copy(C(w.motes.c)); moteMat.size = w.motes.size; moteMat.opacity = w.motes.op; moteMat.blending = w.motes.add ? THREE.AdditiveBlending : THREE.NormalBlending; moteMat.needsUpdate = true; moteCfg = w.motes;
-  { const lk = FOE_LOOKS[lookOf(i)]; if (lk && lk.tint) FOE_TINT.copy(C(lk.tint)); else FOE_TINT.copy(w.foeTint ? C(w.foeTint) : WHITE).multiply(FOE_WARM); } /* aged ivory bone, so the horde never reads as white ghosts (worlds with their own horde look bring their own tint) */ bakeFoes(lookOf(i)); /* and dressed for this world */ G.hex = !!MODELS["hex/hex_grass"]; CUR_DUSK = (HD.realm || {}).dusk || null; CIT.far = null; CIT.lights.length = 0; w.build(); if (i < HALLW) { if (G.hex) hexWorld(HD); redesignLandmarks(i); } dressGate(i); fortHall(inHall()); citPlace(G.level || save.level); for (const [x, z, r] of LM_SPOTS) clearAround(x, z, r); addAmbient(i); if (G.hex && i < HALLW) addSkyline(i); noFarShadows(world); G.baked = bakeStatic(world); bakeScenery(world);
+  { const lk = FOE_LOOKS[lookOf(i)]; if (lk && lk.tint) FOE_TINT.copy(C(lk.tint)); else FOE_TINT.copy(w.foeTint ? C(w.foeTint) : WHITE).multiply(FOE_WARM); } /* aged ivory bone, so the horde never reads as white ghosts (worlds with their own horde look bring their own tint) */ bakeFoes(lookOf(i)); /* and dressed for this world */ G.hex = !!MODELS["hex/hex_grass"]; CUR_DUSK = (HD.realm || {}).dusk || null; CIT.far = null; CIT.lights.length = 0; w.build(); if (i < HALLW) { if (G.hex) hexWorld(HD); redesignLandmarks(i); } dressGate(i); fortHall(inHall()); citPlace(G.level || save.level); for (const [x, z, r] of LM_SPOTS) clearAround(x, z, r); addAmbient(i); if (G.hex && i < HALLW) addSkyline(i); noFarShadows(world); G.baked = bakeStatic(world); bakeScenery(world); if (FUSE) FUSE.world(world);
   if (STG) for (const o of world.children) { // what the healing moves and recolours
     if (o.userData.cls) { if (o.geometry && !o.geometry.boundingSphere) o.geometry.computeBoundingSphere(); const z = o.isGroup || o.isInstancedMesh ? o.position.z : o.geometry.boundingSphere.center.z; HEAL.list.push({ o, cls: o.userData.cls, z, d: clamp((z + 62) / 50, 0, 1) * 1.1 }); if (o.userData.cls === 'life') o.visible = false; }
     if (o.userData.ground && o.material && STG.land) { const f = new THREE.Color().setRGB(...STG.land.ground); o.material.color.copy(f); { const g0 = ((WORLDS[i].stages[0] || {}).land || {}).ground; HEAL.mats.push({ mat: o.material, from: f, to: g0 && new THREE.Color().setRGB(...g0) }); } }
@@ -3326,7 +3406,8 @@ const ACAP = 1400, BCAP = 2400, PCAP = 900, DCAP = 280, HCAP = 80;
 // every dynamic instanced mesh: before each frame is drawn, its buffers are told to upload only the instances in use (three
 // otherwise re-sends the whole capacity whenever they change: ~600 KB a frame with the crowd, blob and shot pools)
 const INST = [];
-function trimUploads() { for (const m of INST) { const n = Math.max(0, m.count); m.instanceMatrix.updateRange.count = n * 16; if (m.instanceColor) m.instanceColor.updateRange.count = n * 3; const at = m.geometry.attributes; for (const k in at) if (at[k].isInstancedBufferAttribute) at[k].updateRange.count = n * at[k].itemSize; } }
+function trimUploads() { for (const m of INST) { const n = Math.max(0, m.count); if (LEAN) { if (!n && m.visible) { m.visible = false; m.userData.idle = true; } else if (n && m.userData.idle) { m.visible = true; m.userData.idle = false; } if (!n) continue; } // (an empty pool still costs a draw)
+    m.instanceMatrix.updateRange.count = n * 16; if (m.instanceColor) m.instanceColor.updateRange.count = n * 3; const at = m.geometry.attributes; for (const k in at) if (at[k].isInstancedBufferAttribute) at[k].updateRange.count = n * at[k].itemSize; } }
 function instanced(geo, mat, cap) {
   const m = new THREE.InstancedMesh(geo, mat, cap);
   m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false;
@@ -4114,6 +4195,7 @@ function rowanKing() {
   if (rowanK || !palArt || !KK.Knight || !THREE.SkeletonUtils || !KINGM.rig) return rowanK;
   const F = purpleEyes(knightFig(palArt)); crownOn(F); setEyes(F, 1); F.d = WARLORDS[ROWAN];
   for (const [k, n, alt] of [['idle', 'Idle_A', 'Idle_B'], ['flinch', 'Hit_A', 'Hit_B'], ['strike', 'Throw', 'Interact']]) { const c = clipOf(n) || clipOf(alt); if (!c) continue; const q = F.acts[k] = F.mixer.clipAction(c); if (k !== 'idle') { q.setLoop(THREE.LoopOnce, 1); q.clampWhenFinished = true; } }
+  if (FUSE) FUSE.under(F.g, { cast: true, quiet: () => true });
   return (rowanK = F);
 }
 function setHolder(i) {
@@ -5136,6 +5218,7 @@ function setupLevel(n) {
   gameEl.classList.remove('cine'); G.level = n; if (HEAL.on) worldIdx = -1; /* (a healed land is built again as it was) */ G.cfg = levelCfg(n, n === save.level ? save.fails || 0 : 0); if (G.sim && G.cfgPatch) Object.assign(G.cfg, G.cfgPatch); applyWorld(G.worldOverride != null ? G.worldOverride : worldOf(n)); citPlace(n);
   for (const g of G.gates) { disposeGroup(g.mesh); if (g.mesh.userData.good) { g.mesh.userData.good.dispose(); g.mesh.userData.poor.dispose(); } }
   G.gates = G.cfg.gates.map((g, i) => ({ ...g, z: g.z - 2.1, bit: 1 << i, cx: g.x, pulse: 0, ready: true, cool: 0, mesh: makeGateMesh({ ...g, z: g.z - 2.1 }) })); // rows sit a little further up, clear of the gatehouse
+  if (FUSE && !G.sim) FUSE.gates(G.gates);
   buildLaneWalls(n);
   { const lanes = {}; for (const g of G.gates) if (g.add) { const k = (g.x > 0 ? 'r' : 'l') + (g.big ? 'b' : ''); const L = lanes[k] || (lanes[k] = { grp: 1, x: g.x, z: 0, n: 0 }); L.z += g.z; L.n++; g.grp = L; } for (const L of Object.values(lanes)) L.z /= L.n; } // each +N lane shares one running label, shown halfway up it
   ants.n = 0; beetles.n = 0; P.n = 0; SH.n = 0; D.life.fill(0);
@@ -5146,6 +5229,7 @@ function setupLevel(n) {
   for (const f of floats) { f.t = 0; f.el.style.opacity = 0; }
   G.shadowDirty = true; if (SHC) SHC.reset(); resetCastle(); turret.visible = save.up.turret > 0; G.turT = 1; blasts.forEach(b => { b.visible = false; });
   clearBones(); spawnHorde(G.cfg.horde); G.kingT = 4; G.casts = 0; resetKingShots(); resetCharges(); resetHoard(); resetSaws(); resetPaladin(); resetWarlord(); resetCaptain(); setHolder(holderOf(n)); resetHazards(); G.kills = 0; G.dps = 0; G.fortPrev = null; G.surged = false; G.rage = false; rageGlow.visible = false;
+  if (FUSE && !G.sim) FUSE.level();
   $('lvlPill').textContent = lvName(n);
 }
 const lvName = n => n > LAP_LEN ? 'Road ' + (n - LAP_LEN) : 'Level ' + n;
@@ -5749,7 +5833,8 @@ function finishWarlord(i, d, root, mats, fx, art) { // his animations, and the p
   }
   if (acts.walk) acts.walk.timeScale = .75;
   const rest = []; root.traverse(o => { if (o.isBone) rest.push([o, o.position.clone(), o.quaternion.clone()]); });
-  return (WL.built[i] = { g, root, mixer, acts, mats, fx, d, art, pool, rest });
+  const W = WL.built[i] = { g, root, mixer, acts, mats, fx, d, art, pool, rest }; if (FUSE && art) FUSE.under(g, { cast: true, quiet: () => HOLD.b === W });
+  return W;
 }
 // telegraphs: red strips (a cleave, ice spears) and a red ring (a quake) on the road, with a "!" over them
 const tgFill = () => new THREE.MeshBasicMaterial({ color: C('#ff2a2a'), transparent: true, opacity: .25, depthWrite: false, depthTest: false, toneMapped: false, side: THREE.DoubleSide });
@@ -5977,6 +6062,7 @@ function buildCaptain(w) { // one of the four figures in the set, hung on the sa
   const mixer = new THREE.AnimationMixer(root), acts = {};
   for (const [k, n, alt] of [['walk', 'Walking_A', 'Running_A'], ['strike', 'Throw', 'Use_Item'], ['die', 'Death_A', 'Death_B']]) { const c = clipOf(n) || clipOf(alt); if (!c) continue; const a = acts[k] = mixer.clipAction(c); if (k !== 'walk') { a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; } }
   if (acts.walk) acts.walk.timeScale = .85;
+  if (FUSE) FUSE.under(g, { cast: true });
   return (B[w] = { g, root, mixer, acts, m });
 }
 const CAP_S = 1.95;
@@ -6638,7 +6724,7 @@ function render() {
     if (scm.right !== sW) { scm.left = -sW; scm.right = sW; scm.top = sH; scm.bottom = -sH; scm.updateProjectionMatrix(); G.shadowDirty = G.shadowAll = true; } }
   if ((G.frameN = (G.frameN || 0) + 1) % (G.shEvery || 3) === 0 || (G.mode === 'won' ? G.frameN % 2 === 0 : G.shadowDirty)) { renderer.shadowMap.needsUpdate = true; G.shadowDirty = false; }
   spriteMat.uniforms.uSoft.value = foeSpriteMat.uniforms.uSoft.value = POST.on && !G.lowQ && POST.msaa ? 1 : 0; // soft, anti-aliased crowd edges only where there is multisampling to resolve them
-  trimUploads(); GLOW.draw();
+  trimUploads(); GLOW.draw(); if (FUSE) FUSE.tick();
   if (POST.on && !G.lowQ) { renderer.setRenderTarget(POST.rt); renderer.render(scene, camera); POST.run(); }
   else renderer.render(scene, camera);
 
@@ -6712,8 +6798,8 @@ const SHC = (() => {
   const look = () => { // sorts the casters; true when a mover has moved since the last drawing
     stat.length = mov.length = 0; let moved = false, h = 0; const wall = HOLD.b && HOLD.b.g;
     (function walk(o, quiet) {
-      if (!o.visible) return; if (o === wall || o === king) quiet = true;
-      if (o.isMesh && o.castShadow) {
+      if (!o.visible) return; if (o === wall || o === king || o.userData.quiet) quiet = true;
+      if (o.isMesh && o.castShadow && o.layers.mask) {
         const m = o.matrixWorld.elements, v = o.isInstancedMesh ? o.instanceMatrix.version * 31 + o.count : 0; let e = snap.get(o), ch = false;
         if (!e) { e = new Float32Array(17); snap.set(o, e); ch = 2; } else { if (e[16] !== v) ch = true; else for (let k = 0; k < 15; k++) if (Math.abs(e[k] - m[k]) > 2e-4) { ch = true; break; } }
         if (ch) { for (let k = 0; k < 16; k++) e[k] = m[k]; e[16] = v; }
@@ -6785,7 +6871,7 @@ const POST = (() => {
         draw(extract, qA);
         blur.uniforms.uMap.value = qA.texture; blur.uniforms.uDir.value.set(1 / qA.width, 0); draw(blur, qB);
         blur.uniforms.uMap.value = qB.texture; blur.uniforms.uDir.value.set(0, 1 / qA.height); draw(blur, qA);
-        copy.uniforms.uMap.value = qA.texture; draw(copy, eA);
+        if (LEAN) { mat.uniforms.uGlowB.value = qA.texture; draw(mat, null); return; } copy.uniforms.uMap.value = qA.texture; draw(copy, eA);
         blur.uniforms.uMap.value = eA.texture; blur.uniforms.uDir.value.set(1.5 / eA.width, 0); draw(blur, eB);
         blur.uniforms.uMap.value = eB.texture; blur.uniforms.uDir.value.set(0, 1.5 / eA.height); draw(blur, eA);
       }
@@ -7210,7 +7296,7 @@ window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') 
 async function perfTest() { // ?perf: speed test 4. First the frame rate (an empty page, then a battle as you play it), then what each part of a frame costs the GPU when it is kept busy
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:6px;right:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;padding:9px 11px;border-radius:12px;background:rgba(8,12,30,.92);color:#fff;font:600 12px/1.42 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(r)), rows = [], gl = renderer.getContext(), px = new Uint8Array(4), med = a => a.sort((x, y) => x - y)[a.length >> 1];
-  const V = 'Speed test 4 (v146' + (LEAN ? ', lean)' : ')'), show = s => { box.textContent = V + ': ' + s + '\n' + rows.join('\n'); };
+  const V = 'Speed test 4 (v147' + (LEAN ? ', lean)' : ')'), show = s => { box.textContent = V + ': ' + s + '\n' + rows.join('\n'); };
   box.textContent = V + ': tap here to start\n(about 40 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); show('loading...'); G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 11; save.v = 3;
   await Promise.race([loadLm('dunes'), wait(8000)]); await wait(800);
@@ -7274,7 +7360,7 @@ const AB = /[?&]ab(=|&|$)/.test(location.search) ? (() => {
   const show = () => {
     if (!X.box) { X.box = document.createElement('div'); X.box.style.cssText = 'position:fixed;left:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;pointer-events:none;padding:7px 9px;border-radius:10px;background:rgba(8,12,30,.88);color:#fff;font:600 11px/1.35 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(X.box); }
     const c = Math.min(...D.map(d => d.t)) / (SLOT - SKIP), f = (a, b) => (b ? a / b : 0).toFixed(1).padStart(5);
-    X.done = c >= 3.9; X.box.textContent = (X.done ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (v146' + (LEAN ? ' lean' : '') + ')\n' + 'off now'.padEnd(16) + ' fps  60% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + pixelRatio + '  ' + ants.n + '/' + beetles.n + '  touches ' + (D[0].n ? D[0].ev / D[0].n : 0).toFixed(1);
+    X.done = c >= 3.9; X.box.textContent = (X.done ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (v147' + (LEAN ? ' lean' : '') + ')\n' + 'off now'.padEnd(16) + ' fps  60% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + pixelRatio + '  ' + ants.n + '/' + beetles.n + '  touches ' + (D[0].n ? D[0].ev / D[0].n : 0).toFixed(1);
   };
   X.frame = (now, dt, raw) => { // stands in for update + render
     if (G.mode !== 'play' || G.paused || G.t < 2.5) { if (X.on) { put(X.m, false); X.on = false; } X.at = 0; return false; }
@@ -7301,7 +7387,7 @@ const statsEl = document.createElement('div'); statsEl.style.cssText = 'position
 gameEl.appendChild(statsEl);
 { let taps = []; $('lvlPill').addEventListener('pointerdown', e => { e.stopPropagation(); const t = performance.now(); taps = taps.filter(x => t - x < 700); taps.push(t); if (taps.length >= 3) { taps = []; statsEl.style.display = statsEl.style.display === 'block' ? 'none' : 'block'; statsEl.textContent = '…'; } }); }
 function leanStep() { // one step lighter; false when there is nothing left to drop
-  if ((G.leanLv = G.leanLv || 0) >= 3) return false; G.leanLv++;
+  if (/[?&]leanstep/.test(location.search) ? (G.leanLv = G.leanLv || 0) >= 3 : true) return false; G.leanLv++; // (measured on an iPhone: none of these helped, so nothing is given up)
   if (G.leanLv === 1) sizePost(); // softer edge smoothing
   else if (G.leanLv === 2) G.shEvery = 6; // what moves redraws its shadow half as often
   else { POST.mat.uniforms.uGlow.value = 0; G.noGlowPass = true; } // the glow's blur passes
@@ -7320,7 +7406,7 @@ function adaptResolution(raw) {
   let next = pixelRatio;
   if (LEAN && G.mode === 'play' && avg > 1 / 52 && !(avg > 1 / 33 && avg < 1 / 27.5 && sd < .0025 && G.leanLv >= 3)) { if ((G.leanSlow = (G.leanSlow || 0) + 1) >= 2 && leanStep()) { G.leanSlow = 0; frCool = 3; return; } } else if (LEAN) G.leanSlow = 0;
   if (LEAN && G.prTry) { const q = G.prTry; G.prTry = null; if (avg > q.avg * .92 && pixelRatio < q.pr) { G.noStep = true; prCap = pixelRatio = q.pr; renderer.setPixelRatio(pixelRatio); resize(); frCool = 4; return; } }
-  const slow = !(LEAN && G.noStep) && avg > (pixelRatio > 2 ? 1 / 54 : LEAN ? 1 / 45 : 1 / 27); frSlow = slow ? frSlow + 1 : 0; if (slow && frSlow < 2) return; // one slow stretch isn't enough: two in a row
+  const slow = !LEAN && avg > (pixelRatio > 2 ? 1 / 54 : LEAN ? 1 / 45 : 1 / 27); frSlow = slow ? frSlow + 1 : 0; if (slow && frSlow < 2) return; // one slow stretch isn't enough: two in a row
   if (!slow && avg < 1 / 50 && prCap < MAX_PR && prTries < 2 && (frGood += 1) >= 10) { prTries++; frGood = 0; prCap = Math.min(MAX_PR, prCap + .25); } else if (avg >= 1 / 50) frGood = 0; // running well for a good while: it may climb back a step (twice at most, so it never flickers)
   if (G.mode === 'play') { G.fought = avg < 1 / 57; if (G.fought && pixelRatio > 2 && G.prKept !== pixelRatio) { G.prKept = pixelRatio; try { localStorage.setItem('bs.pr', pixelRatio); } catch (e) {} } }
   if (avg > 1 / 22 && pixelRatio <= PR_MIN && !G.lowQ && (G.slowWin = (G.slowWin || 0) + 1) >= 2) setLowQuality(true); // still slow at the lowest resolution: drop the expensive extras
@@ -7631,7 +7717,7 @@ function prewarm() {
   } catch (e) { console.warn('prewarm', e); }
 }
 function boot() {
-  setTimeout(lmRest, 4000); if (BART.camp) buildCampArt(); dressFort(); dressTower(); dressHoard(); for (const g of [fort, hoard, nest, launcher, campWall]) bakeStatic(g); if (!/[?&]nobake/.test(location.search)) { fuse(fort, o => o === king || roofs.includes(o) || o === fortDress); fuse(campWall); } dressGate(Math.max(0, worldIdx)); resize(); syncAudioUi(); applyStyle(save.style);
+  setTimeout(lmRest, 4000); if (BART.camp) buildCampArt(); dressFort(); dressTower(); dressHoard(); for (const g of [fort, hoard, nest, launcher, campWall]) bakeStatic(g); if (!/[?&]nobake/.test(location.search)) { fuse(fort, o => o === king || roofs.includes(o) || o === fortDress); fuse(campWall); if (FUSE) { FUSE.under(launcher, { cast: true }); FUSE.under(hoard, { only: o => BART.town && o.material === BART.town.mat }); } } dressGate(Math.max(0, worldIdx)); resize(); syncAudioUi(); applyStyle(save.style);
   if (cineDue()) { // the day's first launch: a "tap to begin" card (the tap also lets the sound play), then the opening cinematic
     setupLevel(save.level); prewarm(); render(); requestAnimationFrame(frame); setTimeout(smpPrep, 400); const l = $('loading');
     if (!l) { startCine(); return; }
