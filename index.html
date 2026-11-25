@@ -5682,8 +5682,9 @@ function buildWarlord(i) {
   if (art) { // the sculpted warlord
     root.traverse(o => { if (o.isSkinnedMesh) o.skeleton.pose(); }); root.updateMatrixWorld(true);
     const m = art.mat.clone(), fx = {}; mats.push(m); const parts = hangArt(root, art, m); fx.arms = ['cleaver', 'hook', 'staff', 'flail', 'spear', 'shield', 'hammer'].map(n => parts[n]).filter(Boolean);
+    if (parts.hammer) parts.hammer.rotateX(.55); if (parts.cleaver) parts.cleaver.rotateX(.3); // held out to the side, clear of the face
     if (parts.flag) fx.flag = parts.flag; // Grimbald's banner sways
-    if (art.geo.scarab) { fx.orbit = new THREE.Group(); for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2, o = new THREE.Mesh(art.geo.scarab, m); o.position.set(Math.cos(a) * 1.15, 1.4 + k * .25, Math.sin(a) * 1.15); o.scale.setScalar(1.35); o.castShadow = true; o.frustumCulled = false; fx.orbit.add(o); } } // Sek-Ra's scarabs circle him
+    if (art.geo.scarab) { fx.orbit = new THREE.Group(); for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2, o = new THREE.Mesh(art.geo.scarab, m); o.position.set(Math.cos(a) * 1.45, .98 + k * .1, Math.sin(a) * 1.45); o.scale.setScalar(1.1); o.castShadow = true; o.frustumCulled = false; fx.orbit.add(o); } m.emissiveIntensity = 1.7; } // Sek-Ra's scarabs circle him at the chest, never over his face; his eyes burn a little brighter
     if (art.J.mouth) { fx.mouth = new THREE.Object3D(); fx.mouth.position.set(...art.J.mouth); rigOn(root, 'head', fx.mouth); } // Hrimgar's frosty breath
     return finishWarlord(i, d, root, mats, fx, art);
   }
@@ -5987,12 +5988,12 @@ function strike() {
 function wlFx(b, dt, at, k) { // a warlord's own signs of life, wherever he stands. k: his size
   const mv = b.d.move, q = k / WL_S, X = at.x, Y = at.y, Z = at.z;
   if (b.fx.flag) b.fx.flag.rotation.y = Math.sin(G.t * 4.2) * .3;
-  if (b.fx.orbit) { b.fx.orbit.rotation.y += dt * 1.7; b.fx.orbit.children.forEach((c, k) => { c.position.y = 1.4 + k * .25 + Math.sin(G.t * 3 + k * 2) * .12; c.rotation.y = -b.fx.orbit.rotation.y + k; }); }
+  if (b.fx.orbit) { b.fx.orbit.rotation.y += dt * 1.7; b.fx.orbit.children.forEach((c, k) => { c.position.y = (b.art ? .98 + k * .1 : 1.4 + k * .25) + Math.sin(G.t * 3 + k * 2) * (b.art ? .06 : .12); c.rotation.y = -b.fx.orbit.rotation.y + k; }); }
   if (mv === 'swarm' && rand() < .6 && Y < 1) { const a = rand() * 6.28, r = 1.6 + rand() * 1.4; burst(X + Math.cos(a) * r, Y + .2 + rand() * .6, Z + Math.sin(a) * r, ['#e8c890', '#d6aa6a', '#fff0c0'], 1, 1.2, { vy: .8, life: .7, g: .5, sz: 1.3, kind: PK.SPARK }); } // a whirl of sand at his feet
   if (mv === 'spears' && b.fx.mouth) { if (rand() < .3) burst(X + (rand() - .5) * 3 * q, Y + .5 + rand() * 3.5 * q, Z + (rand() - .5) * 2, ['#ffffff', '#bfefff'], 1, .6, { vy: -.4, life: 1, g: .3, sz: 1.1, kind: PK.SPARK });
-    if ((WL.breathT = (WL.breathT || 0) - dt) <= 0) { WL.breathT = 1.4; b.fx.mouth.getWorldPosition(_kv); burst(_kv.x, _kv.y, _kv.z + .3, ['#ffffff', '#dff8ff', '#bfefff'], 7, 1.4, { vy: .3, life: .9, g: -.4, sz: 2, kind: PK.SPARK }); } } // frost on his breath
+    if ((WL.breathT = (WL.breathT || 0) - dt) <= 0) { WL.breathT = 1.4; b.fx.mouth.getWorldPosition(_kv); burst(_kv.x, _kv.y - .9 * q, _kv.z + .5, ['#dff8ff', '#bfefff'], 4, 1.1, { vy: -.2, life: .7, g: -.2, sz: 1, kind: PK.SPARK }); } } // frost on his breath
   if (mv === 'cleave' && rand() < .15) burst(X + (rand() - .5) * 2, Y + .3 + (Y > .05 ? 3 * rand() : 0), Z + (rand() - .5), ['#ff3a3a', '#8a1020'], 1, .8, { vy: 1, life: .5, g: 2, sz: 1.2, kind: PK.SPARK });
-  if (mv === 'quake' && rand() < .45) burst(X + (rand() - .5) * 1.6 * q, Y + 1 + rand() * 3.5 * q, Z + (rand() - .5) * 1.2, ['#ffe680', '#ff9a2a', '#ff4a1a'], 1, .8, { vy: 2.2, life: .7, g: -.6, sz: 1.4, kind: PK.SPARK }); // embers rising off him
+  if (mv === 'quake' && rand() < .07) burst(X + (rand() - .5) * 3.4 * q, Y + (4.1 + rand() * .7) * q, Z - .4, ['#ffe680', '#ff9a2a', '#ff4a1a'], 1, .8, { vy: 2.2, life: .7, g: -.6, sz: 1.4, kind: PK.SPARK }); // embers rising off him
 }
 function updateWarlord(dt, play) {
   captainTick(dt, play); holdTick(dt);
@@ -6039,7 +6040,7 @@ function updateWarlord(dt, play) {
         if (ants.kind[i]) { explode(ants.x[i], ants.z[i]); ants.hp[i] = 0; continue; }
         hurtWarlord(ants.hp[i]); ants.hp[i] = 0; hits++; if (rand() < .4) burst(ants.x[i], 1 + rand() * 2, ants.z[i], [ALLY_FX, '#ffffff', WL.def.col], 2, 3, { vy: 3, life: .4, g: 8, sz: 1.4, kind: PK.SPARK }); if (!WL.alive) break; }
       if (hits) meleeHit(); }
-    if (WL.def.move === 'quake' && rand() < .5 && b.fx.head) { b.fx.head.getWorldPosition(_kv); burst(_kv.x + (rand() - .5) * .6, _kv.y + .5, _kv.z, ['#ffe680', '#ff9a2a', '#ff4a1a'], 1, 1.2, { vy: 2.5, life: .5, g: -1, sz: 1.8, kind: PK.SPARK }); }
+    if (WL.def.move === 'quake' && rand() < .14 && b.fx.head) { b.fx.head.getWorldPosition(_kv); burst(_kv.x + (rand() - .5) * .6, _kv.y + .5, _kv.z, ['#ffe680', '#ff9a2a', '#ff4a1a'], 1, 1.2, { vy: 2.5, life: .5, g: -1, sz: 1.8, kind: PK.SPARK }); }
     // heavy footfalls: a thud you feel, a puff of dust and a print left on the road in his colour
     if (WL.state === 'walk' || WL.state === 'enter') { WL.stepT = (WL.stepT || 0) - dt;
       if (WL.stepT <= 0) { WL.stepT = WL.rage ? .42 : .55; WL.foot = -(WL.foot || 1); const px = WL.x + WL.foot * .6, pz = WL.z + .25;
@@ -6050,7 +6051,7 @@ function updateWarlord(dt, play) {
   // place him; he swells up as he comes through the gate, and flashes when he's hit
   const grow = WL.state === 'enter' ? .75 + .25 * Math.min(1, WL.st / 1.2) : 1;
   b.g.position.set(WL.x, WL.y, WL.z); b.g.scale.setScalar(WL_S * grow * (WL.def.s || 1));
-  for (const m of b.mats) if (m.emissiveMap) { m.color.setScalar(1 + WL.flash * .9); if (b.ghost) { m.color.r *= 1.25; m.color.g *= .8; m.color.b *= 1.9; } } else m.emissive.copy(m.userData.e0).lerp(WHITE, WL.flash * .22); // (a sculpted warlord has a glow map: his whole skin brightens instead)
+  for (const m of b.mats) if (m.emissiveMap) { m.color.setScalar(1 + WL.flash * .28); if (b.ghost) { m.color.r *= 1.25; m.color.g *= .8; m.color.b *= 1.9; } } else m.emissive.copy(m.userData.e0).lerp(WHITE, WL.flash * .22); // (a sculpted warlord has a glow map: his whole skin brightens instead)
 }
 /* ---------------- the captains ----------------
    Halfway through a world the warlord sends out his captain: a giant brute with a guard. While he stands the castle is shielded.
@@ -6065,7 +6066,7 @@ function buildCaptain(w) { // one of the four figures in the set, hung on the sa
   const B = CAP.built || (CAP.built = []); if (B[w]) return B[w];
   const root = THREE.SkeletonUtils.clone(KK.Skeleton_Warrior.scene); root.position.set(0, 0, 0); root.rotation.set(0, 0, 0); root.scale.setScalar(1);
   root.traverse(o => { if (o.isSkinnedMesh) o.skeleton.pose(); }); root.updateMatrixWorld(true);
-  const m = capArt.mat.clone(); hangArt(root, { geo: capArt.geo, J: { nodes: capArt.J.nodes.filter(n => n.name.startsWith('c' + w + '_')), glow: [] } }, m);
+  const m = capArt.mat.clone(); hangArt(root, { geo: capArt.geo, J: { nodes: capArt.J.nodes.filter(n => n.name.startsWith('c' + w + '_')), glow: [] } }, m); { const h = root.getObjectByName('handslotr'); if (h) for (const o of h.children) if (o.isMesh) o.rotateX(.5); } // (held out to the side: upright, it crossed his face)
   const g = new THREE.Group(); g.add(root); g.visible = false; g.userData.dyn = true; wlGroup.add(g);
   const mixer = new THREE.AnimationMixer(root), acts = {};
   for (const [k, n, alt] of [['walk', 'Walking_A', 'Running_A'], ['strike', 'Throw', 'Use_Item'], ['die', 'Death_A', 'Death_B']]) { const c = clipOf(n) || clipOf(alt); if (!c) continue; const a = acts[k] = mixer.clipAction(c); if (k !== 'walk') { a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; } }
@@ -6099,7 +6100,7 @@ function captainDown(x, z, through) { // he falls, or breaks into your camp: eit
 }
 function captainTick(dt, play) {
   if (play && !CAP.on && !CAP.done && isCaptain(G.level) && G.fortHp <= G.fortMax * CAP_WARD) startCaptain();
-  if (CAP.b && CAP.b.g.visible) { const b = CAP.b; b.mixer.update(dt); CAP.flash = Math.max(0, (CAP.flash || 0) - dt * 5); b.m.color.setScalar(1 + CAP.flash * .9); if (CAP.act && (CAP.actT -= dt) <= 0) { CAP.act.fadeOut(.2); CAP.act = null; if (b.acts.walk) b.acts.walk.setEffectiveWeight(1); } if (CAP.dead) { CAP.dead += dt; if (CAP.dead > 1.8) b.g.position.y -= dt * 1.5; if (CAP.dead > 4) b.g.visible = false; } }
+  if (CAP.b && CAP.b.g.visible) { const b = CAP.b; b.mixer.update(dt); CAP.flash = Math.max(0, (CAP.flash || 0) - dt * 5); b.m.color.setScalar(1 + CAP.flash * .25); if (CAP.act && (CAP.actT -= dt) <= 0) { CAP.act.fadeOut(.2); CAP.act = null; if (b.acts.walk) b.acts.walk.setEffectiveWeight(1); } if (CAP.dead) { CAP.dead += dt; if (CAP.dead > 1.8) b.g.position.y -= dt * 1.5; if (CAP.dead > 4) b.g.visible = false; } }
   if (!CAP.alive) return;
   let j = -1; for (let k = 0; k < beetles.n; k++) if (beetles.tier[k] === F_CAP && beetles.hp[k] > 0) { j = k; break; }
   if (j < 0) { captainDown(CAP.x, CAP.z); return; }
@@ -7306,7 +7307,7 @@ window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') 
 async function perfTest() { // ?perf: speed test 4. First the frame rate (an empty page, then a battle as you play it), then what each part of a frame costs the GPU when it is kept busy
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:6px;right:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;padding:9px 11px;border-radius:12px;background:rgba(8,12,30,.92);color:#fff;font:600 12px/1.42 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(r)), rows = [], gl = renderer.getContext(), px = new Uint8Array(4), med = a => a.sort((x, y) => x - y)[a.length >> 1];
-  const V = 'Speed test 4 (v148' + (LEAN ? ', lean)' : ')'), show = s => { box.textContent = V + ': ' + s + '\n' + rows.join('\n'); };
+  const V = 'Speed test 4 (v149' + (LEAN ? ', lean)' : ')'), show = s => { box.textContent = V + ': ' + s + '\n' + rows.join('\n'); };
   box.textContent = V + ': tap here to start\n(about 40 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); show('loading...'); G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 11; save.v = 3;
   await Promise.race([loadLm('dunes'), wait(8000)]); await wait(800);
@@ -7370,7 +7371,7 @@ const AB = /[?&]ab(=1)?(&|$)/.test(location.search) ? (() => {
   const show = () => {
     if (!X.box) { X.box = document.createElement('div'); X.box.style.cssText = 'position:fixed;left:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;pointer-events:none;padding:7px 9px;border-radius:10px;background:rgba(8,12,30,.88);color:#fff;font:600 11px/1.35 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(X.box); }
     const c = Math.min(...D.map(d => d.t)) / (SLOT - SKIP), f = (a, b) => (b ? a / b : 0).toFixed(1).padStart(5);
-    X.done = c >= 3.9; X.box.textContent = (X.done ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (v148' + (LEAN ? ' lean' : '') + ')\n' + 'off now'.padEnd(16) + ' fps  60% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + pixelRatio + '  ' + ants.n + '/' + beetles.n + '  touches ' + (D[0].n ? D[0].ev / D[0].n : 0).toFixed(1);
+    X.done = c >= 3.9; X.box.textContent = (X.done ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (v149' + (LEAN ? ' lean' : '') + ')\n' + 'off now'.padEnd(16) + ' fps  60% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + pixelRatio + '  ' + ants.n + '/' + beetles.n + '  touches ' + (D[0].n ? D[0].ev / D[0].n : 0).toFixed(1);
   };
   X.frame = (now, dt, raw) => { // stands in for update + render
     if (G.mode !== 'play' || G.paused || G.t < 2.5) { if (X.on) { put(X.m, false); X.on = false; } X.at = 0; return false; }
@@ -7398,7 +7399,7 @@ const AB2 = /[?&]ab=2(&|$)/.test(location.search) ? (() => {
   const show = () => {
     if (!X.box) { X.box = document.createElement('div'); X.box.style.cssText = 'position:fixed;left:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;pointer-events:none;padding:7px 9px;border-radius:10px;background:rgba(8,12,30,.88);color:#fff;font:600 11px/1.35 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(X.box); }
     const c = Math.min(...D.map((d, k) => d.t / (LEN(k) - SKIP))), f = (a, b) => (b ? a / b : 0).toFixed(1).padStart(5);
-    X.box.textContent = (c >= 3.9 ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (real play, v148' + (LEAN ? ' lean' : '') + ')\n' + 'changed'.padEnd(16) + ' fps  60%  30% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + (d.n ? Math.round(100 * d.half / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n');
+    X.box.textContent = (c >= 3.9 ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (real play, v149' + (LEAN ? ' lean' : '') + ')\n' + 'changed'.padEnd(16) + ' fps  60%  30% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + (d.n ? Math.round(100 * d.half / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n');
   };
   X.frame = (now, dt, raw) => {
     if (G.mode !== 'play' || G.paused || G.t < 2.5) { if (X.on) { put(X.m, false); X.on = false; } X.at = 0; return false; }
