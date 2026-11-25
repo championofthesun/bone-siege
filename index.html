@@ -257,7 +257,7 @@ svg.ico.sm{width:18px;height:18px}
 .res-coins{background:linear-gradient(180deg,rgba(40,24,70,.72),rgba(18,12,40,.78));border:2px solid rgba(255,214,90,.7);border-radius:999px;padding:2px 18px 2px 24px;box-shadow:0 6px 18px rgba(8,6,24,.5),inset 0 1px 0 rgba(255,255,255,.18)}
 /* the lose screen: the scene stays readable under a red-edged wash, a purple aura pulses behind the laughing Bone King, a bar
    shows how far you got, and the tip pill points at an upgrade you can afford */
-#game.lostwash canvas{filter:saturate(.55) brightness(.82)}
+#game.lostwash:not(.lean) canvas{filter:saturate(.55) brightness(.82)}
 #result.lose{background:radial-gradient(ellipse 80% 50% at 50% 26%,rgba(40,8,40,0),rgba(90,10,40,.4) 85%),linear-gradient(180deg,rgba(17,10,40,.08),rgba(16,10,40,.32) 38%,rgba(12,8,32,.78) 58%,rgba(9,8,28,.95) 82%)}
 #result.lose .res-rays{display:block;background:repeating-conic-gradient(rgba(150,50,230,.34) 0 9deg,rgba(150,50,230,0) 9deg 22.5deg);animation-duration:40s;animation-direction:reverse}
 #result.lose .res-hero::before{content:'';position:absolute;left:50%;top:55%;width:230px;height:230px;margin:-115px 0 0 -115px;border-radius:50%;background:radial-gradient(circle,rgba(200,90,255,.5),rgba(150,40,220,0) 68%);z-index:-1}
@@ -284,8 +284,8 @@ svg.ico.sm{width:18px;height:18px}
 #moreMenu .links{gap:2px 10px;justify-content:flex-start;padding:0 6px 6px}
 #moreMenu .links .link{font-size:14px;padding:6px 8px;color:#e9d4ff}
 #playBtn{position:relative;overflow:hidden;text-shadow:0 3px 0 #0a2a78,0 0 14px rgba(8,30,110,.55);-webkit-text-stroke:1.2px #0d3a96}
-#playBtn::after{content:'';position:absolute;top:0;bottom:0;width:38%;left:-60%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.38),transparent);animation:playShine 3.4s ease-in-out infinite;pointer-events:none}
-@keyframes playShine{0%,62%{left:-60%}100%{left:130%}}
+#playBtn::after{content:'';position:absolute;top:0;bottom:0;width:38%;left:0;transform:translateX(-160%);background:linear-gradient(100deg,transparent,rgba(255,255,255,.38),transparent);animation:playShine 3.4s ease-in-out infinite;pointer-events:none}
+@keyframes playShine{0%,62%{transform:translateX(-160%)}100%{transform:translateX(345%)}}
 #menu.intro .logo{animation:logoIn .75s cubic-bezier(.2,1.45,.4,1) both}
 #menu.intro .tag,#menu.intro .lvl,#menu.intro .worldname,#menu.intro .trail,#menu.intro .uptoggle,#menu.intro .dock{animation:riseIn .5s ease-out both}
 #menu.intro .tag{animation-delay:.42s}#menu.intro .lvl{animation-delay:.52s}#menu.intro .worldname{animation-delay:.58s}#menu.intro .trail{animation-delay:.64s}#menu.intro .uptoggle{animation-delay:.7s}#menu.intro .dock{animation-delay:.8s}
@@ -832,9 +832,10 @@ const gameEl = $('game'), canvas = $('c');
 const LEAN = !/[?&]full(=|&|$)/.test(location.search) && (/[?&]lean(=|&|$)/.test(location.search) || !!(window.matchMedia && matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) <= 1100));
 const GEOJ = LEAN ? 'geo_lite.json' : 'geo.json'; // (blender/lite.py: about half the triangles)
 const geoFetch = p => { const full = () => fetch(p + 'geo.json').then(r => { if (!r.ok) throw new Error(p + ' ' + r.status); return r.json(); }); return LEAN ? fetch(p + GEOJ).then(r => r.ok ? r.json() : full(), full) : full(); }; // (a copy of the game without the light shapes still runs)
-const DPR = window.devicePixelRatio || 1, MAX_PR = Math.min(DPR, LEAN ? 2.5 : 3), PHONE_PRS = [2.5, 2, 1.75]; // starts at 2x with 4x multisampling; a phone that holds 60 fps climbs towards its screen's own 3x on the menu (see adaptResolution)
+const DPR = window.devicePixelRatio || 1, MAX_PR = Math.min(DPR, 3), PHONE_PRS = [3, 2.5, 2, 1.75]; // starts at 2x with 4x multisampling; a phone that holds 60 fps climbs towards its screen's own 3x on the menu (see adaptResolution)
 let pixelRatio = Math.min(DPR, LEAN ? 2.5 : 2); try { const q = +localStorage.getItem('bs.pr'); if (q > 2 && !LEAN) pixelRatio = Math.min(MAX_PR, q); if (LEAN) { const k = JSON.parse(localStorage.getItem('bs.phone') || 'null'); if (k && Date.now() - k.at < 36e5) pixelRatio = Math.min(MAX_PR, k.pr); } } catch (e) {} // (kept from a battle that ran well at that sharpness: see adaptResolution)
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: DPR < 2, powerPreference: 'high-performance' });
+if (LEAN) canvas.addEventListener('webglcontextrestored', () => location.reload()); // (the phone version keeps no second copies to rebuild from)
 renderer.setPixelRatio(pixelRatio);
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -2651,6 +2652,7 @@ function sceneryShader(m) { // prepMat's leaf, roof, snow and wind, with the set
   };
   m.customProgramCacheKey = () => 'scenery';
 }
+const freeAfter = g => { if (LEAN) for (const a of [...Object.values(g.attributes), g.index]) if (a) a.onUpload(function () { this.array = null; }); return g; }; // (phones: no second copy of a joined shape in memory)
 const FAR_CAST = []; // casters whose shadows fall outside what a battle shows: left out of the shadow redraw while you fight
 function bakeScenery(root) {
   FAR_CAST.length = 0;
@@ -2698,7 +2700,7 @@ function bakeScenery(root) {
     }
     const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); if (uv) geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
     if (b.kk) { geo.setAttribute('aLeaf', new THREE.BufferAttribute(leaf, 4)); geo.setAttribute('aRoof', new THREE.BufferAttribute(roof, 3)); geo.setAttribute('aFx', new THREE.BufferAttribute(fx, 3)); geo.setAttribute('aTint', new THREE.BufferAttribute(tnt, 3)); }
-    geo.setIndex(new THREE.BufferAttribute(idx, 1)); geo.computeBoundingSphere();
+    geo.setIndex(new THREE.BufferAttribute(idx, 1)); geo.computeBoundingSphere(); freeAfter(geo);
     let mat = mats.get(b.key); if (!mat) { mat = b.m.clone(); mat.userData = {}; mat.vertexColors = true; mat.color.set(0xffffff); if (b.kk) sceneryShader(mat); else if (b.pt) painted(mat, ...b.pt); mats.set(b.key, mat); }
     const o = new THREE.Mesh(geo, mat); o.castShadow = b.cast; o.receiveShadow = b.im.receiveShadow; o.matrixAutoUpdate = false; o.userData.dyn = true; if (b.im.userData.cls) o.userData.cls = b.im.userData.cls; if (b.im.userData.sharedMaps) o.userData.sharedMaps = true; root.add(o); if (b.far) FAR_CAST.push(o);
   }
@@ -2782,17 +2784,17 @@ const FUSE = (() => {
         if (emi) { emi[t] = m.emissive.r * E; emi[t + 1] = m.emissive.g * E; emi[t + 2] = m.emissive.b * E; rm[q * 2] = m.roughness; rm[q * 2 + 1] = m.metalness; } si[q * 4] = j; sw[q * 4] = 1; }
       if (g.index) for (let k = 0; k < g.index.count; k++) idx[io++] = vo + g.index.getX(k); else for (let k = 0; k < n; k++) idx[io++] = vo + k; vo += n; });
     const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); if (uv) { geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); geo.setAttribute('uv2', geo.attributes.uv); } if (col) geo.setAttribute('color', new THREE.BufferAttribute(col, cs)); if (emi) { geo.setAttribute('aEmi', new THREE.BufferAttribute(emi, 3)); geo.setAttribute('aRM', new THREE.BufferAttribute(rm, 2)); }
-    geo.setAttribute('skinIndex', new THREE.BufferAttribute(si, 4)); geo.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4)); geo.setIndex(new THREE.BufferAttribute(idx, 1));
+    geo.setAttribute('skinIndex', new THREE.BufferAttribute(si, 4)); geo.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4)); geo.setIndex(new THREE.BufferAttribute(idx, 1)); freeAfter(geo);
     const mat = m0.clone(); mat.skinning = true; mat.userData = {}; if (opt.emi) emitShader(mat); else if (m0.onBeforeCompile !== DEF) { mat.onBeforeCompile = m0.onBeforeCompile; mat.customProgramCacheKey = m0.customProgramCacheKey; }
     if (opt.tint) { mat.color = new THREE.Color(1, 1, 1); mat.vertexColors = true; if (opt.fade) mat.opacity = 1; } else { mat.color = m0.color; } if (opt.emi) mat.emissive = new THREE.Color(0, 0, 0); else if (m0.emissive) mat.emissive = m0.emissive;
     const joints = parts.map(() => { const b = new THREE.Bone(); b.matrixAutoUpdate = false; return b; }), sm = new THREE.SkinnedMesh(geo, mat); sm.frustumCulled = false; sm.matrixAutoUpdate = false; sm.userData.dyn = true; sm.renderOrder = parts[0].renderOrder; sm.castShadow = !!opt.cast; sm.receiveShadow = parts[0].receiveShadow; sm.name = 'fused';
     scene.add(sm); sm.bind(new THREE.Skeleton(joints, joints.map(() => new THREE.Matrix4())), new THREE.Matrix4());
-    for (const o of parts) { if (o.userData.layer0 === undefined) o.userData.layer0 = o.layers.mask; o.layers.mask = 0; }
+    for (const o of parts) { if (o.userData.layer0 === undefined) o.userData.layer0 = o.layers.mask === 8 ? 1 : o.layers.mask; o.layers.mask = 0; }
     const S = { sm, parts, joints, m0, mat, opt, quiet: opt.quiet, dirty: true, sent: false }; sm.skeleton.update = function () { if (!S.dirty) return; S.dirty = false; S.sent = true; THREE.Skeleton.prototype.update.call(this); }; sets.push(S); return S; // (nothing is sent again while its pieces stand still)
   };
   X.drop = S => { if (!S) return; scene.remove(S.sm); S.sm.geometry.dispose(); S.mat.dispose(); if (S.sm.skeleton.boneTexture) S.sm.skeleton.boneTexture.dispose(); for (const o of S.parts) if (o.userData.layer0 !== undefined) { o.layers.mask = o.userData.layer0; delete o.userData.layer0; } const i = sets.indexOf(S); if (i >= 0) sets.splice(i, 1); };
   // every mesh under a root that shares one material (three or more), each family as one
-  X.under = (root, opt = {}) => { const by = new Map(), out = []; root.traverse(o => { if (o.isMesh && !o.isInstancedMesh && !o.isSkinnedMesh && !Array.isArray(o.material) && o.layers.mask && o.geometry.attributes.position && (!opt.only || opt.only(o))) { const k = o.material.uuid + o.renderOrder; if (!by.has(k)) by.set(k, []); by.get(k).push(o); } }); for (const l of by.values()) if (l.length >= 3) out.push(X.rig(l, opt)); return out; };
+  X.under = (root, opt = {}) => { const by = new Map(), out = []; root.traverse(o => { if (o.isMesh && !o.isInstancedMesh && !o.isSkinnedMesh && !Array.isArray(o.material) && o.layers.mask && o.geometry.attributes.position && o.geometry.attributes.position.array && (!opt.only || opt.only(o))) { const k = o.material.uuid + o.renderOrder; if (!by.has(k)) by.set(k, []); by.get(k).push(o); } }); for (const l of by.values()) if (l.length >= 3) out.push(X.rig(l, opt)); return out; };
   X.tick = () => { // the joints follow their pieces; a hidden piece shrinks to nothing
     for (const S of sets) { let any = false, moved = !S.sent; const put = (j, m) => { const a = S.joints[j].matrixWorld.elements, b = m.elements; for (let k = 0; k < 16; k++) if (a[k] !== b[k]) { S.joints[j].matrixWorld.copy(m); moved = true; return; } };
       S.parts.forEach((o, j) => { let p = o, up = null; while (p && p.visible) { up = p; p = p.parent; } const on = !p && up === scene; if (on) { any = true; put(j, o.matrixWorld); } else put(j, ZERO); }); if (moved) S.dirty = true;
@@ -2801,7 +2803,7 @@ const FUSE = (() => {
   // the still, sculpted, normal-mapped pieces of the scenery, joined by texture; birds and anything the healing moves keep to themselves
   X.world = root => {
     root.updateMatrixWorld(true); const by = new Map(), inv = new THREE.Matrix4().copy(root.matrixWorld).invert(), birds = BART.birds && BART.birds.mat;
-    for (const top of root.children) { if (top.userData.cls) continue; (function walk(o) { if (!o.visible) return; const m = o.material;
+    for (const top of root.children) { if (top.userData.cls) continue; (function walk(o) { if (!o.visible || o === CIT.far) return; const m = o.material;
       if (o.isMesh && !o.isInstancedMesh && !o.isSkinnedMesh && o.userData.dyn && !Array.isArray(m) && m.isMeshStandardMaterial && m.map && m.normalMap && m !== birds && !m.transparent && !m.alphaTest && m.onBeforeCompile === DEF && !m.vertexColors && o.geometry.index && o.geometry.attributes.uv && o.geometry.attributes.normal && !o.children.length && !o.renderOrder) {
         const k = [m.map.uuid, m.normalMap.uuid, m.roughness, m.metalness, m.emissive.getHexString() + (m.emissive.getHex() ? m.emissiveIntensity : ''), m.emissiveMap ? m.emissiveMap.uuid : '', m.envMap ? 1 : 0, m.side, m.fog ? 1 : 0, m.flatShading ? 1 : 0, m.normalScale.x, o.castShadow ? 1 : 0, o.receiveShadow ? 1 : 0].join('|'); if (!by.has(k)) by.set(k, []); by.get(k).push(o); return; }
       for (const c of o.children) walk(c); })(top); }
@@ -2810,10 +2812,11 @@ const FUSE = (() => {
       for (const o of list) { const g = o.geometry, P = g.attributes.position, N = g.attributes.normal, U = g.attributes.uv, c = o.material.color; mw.multiplyMatrices(inv, o.matrixWorld); nm.getNormalMatrix(mw);
         for (let k = 0; k < P.count; k++) { const t = vo + k; v.fromBufferAttribute(P, k).applyMatrix4(mw).toArray(pos, t * 3); v.fromBufferAttribute(N, k).applyMatrix3(nm).normalize().toArray(nor, t * 3); uv[t * 2] = U.getX(k); uv[t * 2 + 1] = U.getY(k); if (col) { col[t * 3] = c.r; col[t * 3 + 1] = c.g; col[t * 3 + 2] = c.b; } }
         const flip = mw.determinant() < 0; for (let k = 0; k < g.index.count; k += 3) { const a = g.index.getX(k), b = g.index.getX(k + 1), d = g.index.getX(k + 2); idx[io++] = vo + a; idx[io++] = vo + (flip ? d : b); idx[io++] = vo + (flip ? b : d); } vo += P.count; }
-      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); if (col) geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.setIndex(new THREE.BufferAttribute(idx, 1)); geo.computeBoundingSphere();
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); if (col) geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.setIndex(new THREE.BufferAttribute(idx, 1)); geo.computeBoundingSphere(); freeAfter(geo);
       let mat = m0; if (tint) { mat = m0.clone(); mat.color.set(0xffffff); mat.vertexColors = true; }
       for (const o of list) o.parent.remove(o); // (their shapes belong to the set)
       const one = new THREE.Mesh(geo, mat); one.castShadow = list[0].castShadow; one.receiveShadow = list[0].receiveShadow; one.matrixAutoUpdate = false; one.userData.dyn = one.userData.sharedMaps = true; if (!tint) one.userData.keepMat = true; root.add(one); }
+    if (CIT.far && root !== CIT.far) X.world(CIT.far);
   };
   // plain, untextured pieces of every colour and finish, joined; then whatever else in this world comes in threes
   const alive = o => { let q = o; while (q.parent) q = q.parent; return q === scene; };
@@ -2821,7 +2824,7 @@ const FUSE = (() => {
     for (const S of [...sets]) if (!S.parts.some(alive)) X.drop(S);
     const held = new Set(HEAL.mats.map(q => q.mat)), still = () => G.mode === 'play';
     for (const roots of [[nest, campWall, hoard, fort], [world], [laneWalls, sawGroup]]) { const by = {};
-      for (const root of roots) if (root) root.traverse(o => { const m = o.material; if (!o.isMesh || o.isInstancedMesh || o.isSkinnedMesh || !o.layers.mask || Array.isArray(m) || !m.isMeshStandardMaterial || m.map || m.normalMap || m.transparent || m.alphaTest || m.emissiveMap || m.envMap || m.onBeforeCompile !== DEF || held.has(m) || fortWalls.includes(m) || m === fortStone || o.renderOrder || !o.geometry.attributes.normal) return; let q = o; while (q) { if (q.userData.cls) return; q = q.parent; }
+      for (const root of roots) if (root) root.traverse(o => { const m = o.material; if (!o.isMesh || o.isInstancedMesh || o.isSkinnedMesh || !o.layers.mask || Array.isArray(m) || !m.isMeshStandardMaterial || m.map || m.normalMap || m.transparent || m.alphaTest || m.emissiveMap || m.envMap || m.onBeforeCompile !== DEF || held.has(m) || fortWalls.includes(m) || m === fortStone || o.renderOrder || !o.geometry.attributes.normal || !o.geometry.attributes.position.array) return; let q = o; while (q) { if (q.userData.cls) return; q = q.parent; }
         const k = [m.flatShading ? 1 : 0, m.side, m.fog ? 1 : 0, m.toneMapped ? 1 : 0, o.castShadow ? 1 : 0].join(); (by[k] = by[k] || []).push(o); });
       for (const l of Object.values(by)) if (l.length > 1) X.rig(l, { tint: true, emi: true, cast: l[0].castShadow, quiet: still }); }
     const birds = BART.birds && BART.birds.mat; X.under(world, { only: o => o.material === birds || o.material.isMeshBasicMaterial && o.material.transparent && o.material.map && !o.userData.cls });
@@ -3054,9 +3057,11 @@ function addSkyline(i) {
 // a soft vignette over the battle, tinted per world, to frame the road and push the eye to the middle
 const vigEl = (() => { const d = document.createElement('div'); d.id = 'vignette'; d.style.cssText = 'position:absolute;inset:0;pointer-events:none;transition:background .6s'; canvas.after(d); return d; })(); // right over the 3D view, under the HUD and menus (z-index 1 at the end of the game element shaded those too)
 function applyVignette(i) { const c = ['20,40,10', '70,40,10', '20,40,80', '40,0,20', '16,6,44'][i] || '0,0,0'; if (GHUD && POST.on && !G.lowQ) { const m = c.split(','); POST.mat.uniforms.uVig.value.set(m[0] / 255, m[1] / 255, m[2] / 255, .34); vigEl.style.background = 'none'; return; } vigEl.style.background = `radial-gradient(ellipse 85% 70% at 50% 46%, rgba(${c},0) 58%, rgba(${c},.34) 100%)`; }
+let worldArt = '';
+const artGot = i => ['citadel', 'nature', 'town', 'trees', 'court', 'birds'].map(k => BART[k] ? 1 : 0).join('') + (LMART.lm ? 1 : 0) + (LMART[LM_SETS[i]] ? 1 : 0) + (ROAD[LM_SETS[i]] ? 1 : 0) + (i === 0 && BART.autumn ? 1 : 0); // which sculpted sets a world is built with
 function applyWorld(i, st) {
   st = !WORLDS[i].stages ? 0 : G.sim ? worldSt : st === undefined ? stageOf(G.level || save.level) : st;
-  if (i === worldIdx && st === worldSt) return; worldIdx = i; worldSt = st; STG = WORLDS[i].stages ? WORLDS[i].stages[st] : null; CLS = ''; for (const m of HEAL.mats) m.mat.color.copy(m.from); HEAL.on = false; HEAL.t = 0; HEAL.list.length = HEAL.mats.length = HEAL.cloth.length = HEAL.fx.length = 0; HEALED.value = 0; lmWorld(i); const w = STG ? { ...WORLDS[i], ...STG } : WORLDS[i], HD0 = HEX_DRESS[w.hex || 'meadow'] || HEX_DRESS.meadow, HD = STG && STG.realm ? { ...HD0, realm: { ...HD0.realm, ...STG.realm } } : HD0; if (crowdReady && !G.sim) loadWarlordArt(i); // (its warlord's art, ready before he is needed)
+  const got = G.sim ? worldArt : artGot(i); if (i === worldIdx && st === worldSt && got === worldArt) return; worldArt = got; worldIdx = i; worldSt = st; STG = WORLDS[i].stages ? WORLDS[i].stages[st] : null; CLS = ''; for (const m of HEAL.mats) m.mat.color.copy(m.from); HEAL.on = false; HEAL.t = 0; HEAL.list.length = HEAL.mats.length = HEAL.cloth.length = HEAL.fx.length = 0; HEALED.value = 0; lmWorld(i); const w = STG ? { ...WORLDS[i], ...STG } : WORLDS[i], HD0 = HEX_DRESS[w.hex || 'meadow'] || HEX_DRESS.meadow, HD = STG && STG.realm ? { ...HD0, realm: { ...HD0.realm, ...STG.realm } } : HD0; if (crowdReady && !G.sim) loadWarlordArt(i); // (its warlord's art, ready before he is needed)
   for (const o of [...world.children]) {
     world.remove(o);
     o.traverse(c => {
@@ -4025,16 +4030,16 @@ async function loadArt(dir) { // geo.json, its four textures, and the material t
    first screen; whichever is missing keeps its old shapes. */
 const BART = {};
 async function loadBuildings() { await Promise.all([...['fort', 'citadel', 'camp', 'nature', 'town', 'trees', 'court', 'birds'].map(k => loadSet(BART, k, 'models/bd/' + k + '/')), loadLm('lm'), loadLm(LM_SETS[worldOf(save.level)])]); }
-async function loadSet(into, k, dir) {
+async function loadSet(into, k, dir, go = 0) {
   const size = artSize(), TL = new THREE.TextureLoader();
     try {
       const tex = async (n, srgb) => { const t = await TL.loadAsync(dir + n + '_' + size + '.webp'); if (srgb) t.encoding = THREE.sRGBEncoding; t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy()); return t; };
       const got = Promise.all([geoFetch(dir), tex('color', 1), k === 'autumn' ? null : tex('normal')]);
-      const [J, map, nm] = await Promise.race([got, new Promise((ok, no) => setTimeout(() => no(new Error('timed out')), 45000))]);
+      const [J, map, nm] = await Promise.race([got, new Promise((ok, no) => setTimeout(() => no(new Error('timed out')), 30000))]);
       const A = { geo: {}, mat: new THREE.MeshStandardMaterial({ map, normalMap: nm, roughness: .8, metalness: 0 }) };
       for (const n of J.nodes) { A.geo[n.name] = artGeo(n); A.geo[n.name].computeBoundingSphere(); }
       into[k] = A; if (k !== 'autumn') artStep(); return A;
-    } catch (e) { console.warn('sculpted ' + k + ' missing, using the old one', e); return null; }
+    } catch (e) { if (go < 2) { await new Promise(r => setTimeout(r, 700 + 1500 * go)); return loadSet(into, k, dir, go + 1); } console.warn('sculpted ' + k + ' missing, using the old one', e); return null; }
 }
 /* the sculpted landmarks (blender/bd_lm, bd_meadow, bd_dunes, bd_frost, bd_ember): one set every world shares and one of its
    own. The first world's is fetched with the buildings, the rest quietly after that; a world whose set isn't in yet is built
@@ -4376,8 +4381,10 @@ function buildPaladin() {
   const std2 = mesh(new THREE.PlaneGeometry(.9, 1.5), new THREE.MeshLambertMaterial({ map: royalBanTex, transparent: true, alphaTest: .5, side: THREE.DoubleSide }), .46, 3.65, -.42, horse.body, false); std2.userData.sharedMaps = true; horse.flag = std2;
   }
   paladin.rotation.y = Math.PI; // built facing the camera; he rides away up the road
-  applySkin(); dressRider();
+  applySkin(); dressRider(); joinPaladin();
 }
+let palSets = [];
+function joinPaladin() { if (!FUSE || !horse) return; for (const s of palSets) FUSE.drop(s); paladin.updateMatrixWorld(true); palSets = FUSE.under(paladin, { cast: false, only: o => o !== (horse && horse.flag) }).filter(Boolean); for (const s of palSets) s.sm.castShadow = !s.m0.transparent; }
 function resetPaladin() { G.pal = null; G.rally = 0; paladin.visible = false; }
 function updatePaladin(dt, play) {
   if (G.rally > 0) G.rally -= dt;
@@ -5260,6 +5267,7 @@ function wallX(x, px, z, r) {
   return px < -w.x ? Math.min(x, -w.x - .15 - r) : px > w.x ? Math.max(x, w.x + .15 + r) : clamp(x, -w.x + .15 + r, w.x - .15 - r);
 }
 function setupLevel(n) {
+  if (BACK && !G.sim) BACK.reset(); // (everything back on the live list before anything is rebuilt or joined)
   if (!G.sim) clearToasts(); G.tauntT = -99; MUS.lift = MUS.push = 0; // (the King's taunt timer runs on G.t, which restarts each level, and the music's key change must not carry over)
   gameEl.classList.remove('cine'); G.level = n; if (HEAL.on) worldIdx = -1; /* (a healed land is built again as it was) */ G.cfg = levelCfg(n, n === save.level ? save.fails || 0 : 0); if (G.sim && G.cfgPatch) Object.assign(G.cfg, G.cfgPatch); applyWorld(G.worldOverride != null ? G.worldOverride : worldOf(n)); citPlace(n);
   for (const g of G.gates) { disposeGroup(g.mesh); if (g.mesh.userData.good) { g.mesh.userData.good.dispose(); g.mesh.userData.poor.dispose(); } }
@@ -6749,7 +6757,7 @@ function render() {
   }
   partMeshes.forEach((m, j) => { m.count = pc[j]; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; });
 
-  const drift = G.mode === 'menu' ? Math.sin(performance.now() / 1000 * .35) * 1.4 : 0;
+  const drift = G.mode === 'menu' && !LEAN ? Math.sin(performance.now() / 1000 * .35) * 1.4 : 0;
   const ik = G.introT > 0 ? G.introT / INTRO_T : 0, ike = ik * ik * (3 - 2 * ik); // level intro: start on the castle and its horde, sweep back to the gatehouse
   const ck = Math.max(G.camK * G.camK * (3 - 2 * G.camK), ike); // glide in toward the castle for the win
   if (G.mode === 'menu') { camera.position.set(MCAM.x + drift * .9, MCAM.y, MCAM.z); camera.lookAt(MLOOK); } else { // the menu shows the real thing: looking up at the Bone King with his citadel behind
@@ -6773,6 +6781,9 @@ function render() {
   spriteMat.uniforms.uSoft.value = foeSpriteMat.uniforms.uSoft.value = POST.on && !G.lowQ && POST.msaa ? 1 : 0; // soft, anti-aliased crowd edges only where there is multisampling to resolve them
   trimUploads(); GLOW.draw(); if (FUSE) FUSE.tick();
   if (BACK) BACK.before();
+  if (LEAN && POST.on && !G.lowQ) { // (the same buffers, only a smaller part of them used: nothing is rebuilt)
+    const u = G.introT > 0 ? Math.min(1, G.introT / .5) : 1, k = G.grandT > 0 || G.mode === 'won' || G.cine || G.end || G.look ? .78 : G.introT > 0 ? 1 - .22 * u * u * (3 - 2 * u) : 1, w = POST.rt.width, h = POST.rt.height, kw = Math.round(w * k), kh = Math.round(h * k);
+    POST.rt.viewport.set(0, 0, kw, kh); POST.rt.scissor.set(0, 0, kw, kh); POST.mat.uniforms.uS.value.set(kw / w, kh / h); POST.extract.uniforms.uS.value.copy(POST.mat.uniforms.uS.value); }
   if (POST.on && !G.lowQ) { renderer.setRenderTarget(POST.rt); renderer.render(scene, camera); if (BACK) BACK.after(); POST.run(); }
   else renderer.render(scene, camera);
   if (GHUD) GHUD.draw();
@@ -6880,9 +6891,9 @@ const POST = (() => {
   const qA = small(), qB = small(), eA = small(), eB = small(); // quarter- and eighth-resolution glow buffers
   const VS = 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
   const pass = (uniforms, fs) => new THREE.ShaderMaterial({ uniforms, vertexShader: VS, fragmentShader: fs, depthTest: false, depthWrite: false, blending: THREE.NoBlending, toneMapped: false });
-  const extract = pass({ uMap: { value: rt.texture }, uTexel: { value: new THREE.Vector2() }, uThr: { value: .62 } }, `
-    uniform sampler2D uMap; uniform vec2 uTexel; uniform float uThr; varying vec2 vUv;
-    vec3 pick(vec2 o) { vec3 c = texture2D(uMap, vUv + o * uTexel).rgb; float mx = max(c.r, max(c.g, c.b)), sat = (mx - min(c.r, min(c.g, c.b))) / max(mx, 1e-3);
+  const extract = pass({ uMap: { value: rt.texture }, uTexel: { value: new THREE.Vector2() }, uThr: { value: .62 }, uS: { value: new THREE.Vector2(1, 1) } }, `
+    uniform sampler2D uMap; uniform vec2 uTexel, uS; uniform float uThr; varying vec2 vUv;
+    vec3 pick(vec2 o) { vec3 c = texture2D(uMap, min(vUv * uS + o * uTexel, uS - uTexel)).rgb; float mx = max(c.r, max(c.g, c.b)), sat = (mx - min(c.r, min(c.g, c.b))) / max(mx, 1e-3);
       return c * smoothstep(uThr, uThr + .15, mx) * smoothstep(.4, .8, sat); }
     void main() { gl_FragColor = vec4((pick(vec2(-1.0, -1.0)) + pick(vec2(1.0, -1.0)) + pick(vec2(-1.0, 1.0)) + pick(vec2(1.0, 1.0))) * .25, 1.0); }`);
   const blur = pass({ uMap: { value: null }, uDir: { value: new THREE.Vector2() } }, `
@@ -6893,13 +6904,13 @@ const POST = (() => {
       gl_FragColor = vec4(s, 1.0); }`);
   const copy = pass({ uMap: { value: null } }, 'uniform sampler2D uMap; varying vec2 vUv; void main() { gl_FragColor = texture2D(uMap, vUv); }');
   const mat = pass({ uMap: { value: rt.texture }, uTexel: { value: new THREE.Vector2(.25, .25) }, uSharp: { value: .5 }, uGlowA: { value: qA.texture }, uGlowB: { value: eA.texture }, uGlow: { value: 0 },
-      uShadow: { value: new THREE.Vector3(1, 1, 1) }, uHigh: { value: new THREE.Vector3(1, 1, 1) }, uSat: { value: 1 }, uCon: { value: 1 }, uHaze: { value: 0 }, uVig: { value: new THREE.Vector4(0, 0, 0, 0) } }, `
-    uniform sampler2D uMap, uGlowA, uGlowB; uniform vec2 uTexel; uniform float uSharp, uGlow, uSat, uCon, uHaze; uniform vec3 uShadow, uHigh; uniform vec4 uVig; varying vec2 vUv;
-    void main() {
-      vec3 e = texture2D(uMap, vUv).rgb, col = e;
+      uShadow: { value: new THREE.Vector3(1, 1, 1) }, uHigh: { value: new THREE.Vector3(1, 1, 1) }, uSat: { value: 1 }, uCon: { value: 1 }, uHaze: { value: 0 }, uS: { value: new THREE.Vector2(1, 1) }, uWash: { value: 0 }, uVig: { value: new THREE.Vector4(0, 0, 0, 0) } }, `
+    uniform sampler2D uMap, uGlowA, uGlowB; uniform vec2 uTexel; uniform float uSharp, uGlow, uSat, uCon, uHaze, uWash; uniform vec2 uS; uniform vec3 uShadow, uHigh; uniform vec4 uVig; varying vec2 vUv;
+    void main() { vec2 q = min(vUv * uS, uS - uTexel);
+      vec3 e = texture2D(uMap, q).rgb, col = e;
       if (uSharp > 0.0) {
-        vec3 b = texture2D(uMap, vUv + vec2(0.0, -uTexel.y)).rgb, d = texture2D(uMap, vUv + vec2(-uTexel.x, 0.0)).rgb;
-        vec3 f = texture2D(uMap, vUv + vec2(uTexel.x, 0.0)).rgb, h = texture2D(uMap, vUv + vec2(0.0, uTexel.y)).rgb;
+        vec3 b = texture2D(uMap, q + vec2(0.0, -uTexel.y)).rgb, d = texture2D(uMap, q + vec2(-uTexel.x, 0.0)).rgb;
+        vec3 f = texture2D(uMap, q + vec2(uTexel.x, 0.0)).rgb, h = texture2D(uMap, q + vec2(0.0, uTexel.y)).rgb;
         vec3 mn = min(min(min(b, d), min(f, h)), e), mx = max(max(max(b, d), max(f, h)), e);
         vec3 amp = sqrt(clamp(min(mn, 1.0 - mx) / max(mx, vec3(1e-4)), 0.0, 1.0)); // less sharpening where contrast is already high
         vec3 w = amp * (-1.0 / mix(8.0, 5.0, uSharp));
@@ -6910,6 +6921,7 @@ const POST = (() => {
       float l = dot(col, vec3(.299, .587, .114));
       col *= mix(uShadow, uHigh, smoothstep(.05, .85, l));
       col = mix(vec3(l), col, uSat); col = (col - .5) * uCon + .5;
+      if (uWash > 0.0) col = mix(vec3(dot(col, vec3(.2126, .7152, .0722))), col, .55) * .82;
       if (uVig.a > 0.0) col = mix(col, uVig.rgb, uVig.a * clamp((length((vUv - vec2(.5, .54)) / vec2(.85, .70)) - .58) / .42, 0.0, 1.0));
       if (uHaze > 0.0) { float hz = min(1.0, length((vUv - vec2(.5, .6)) / vec2(.7071, .8485))); vec4 h0 = mix(vec4(.925, .769, .471, 1.0) * .35, vec4(.769, .549, .275, 1.0) * .8, hz) * uHaze; col = col * (1.0 - h0.a) + h0.rgb; }
       gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
@@ -6938,7 +6950,7 @@ const POST = (() => {
 const GHUD = (() => {
   if (!LEAN || /[?&]pagehud/.test(location.search)) return null;
   gameEl.classList.add('glhud'); sandEl.style.display = 'none';
-  const FONT = "'Lilita One',Fredoka,'Arial Black',sans-serif", AW = 2048, CAPQ = 700; let AH = 1600;
+  const FONT = "'Lilita One',Fredoka,'Arial Black',sans-serif", CAPQ = 700; let AW = 1536, AH = 1600, live = false;
   const cv = document.createElement('canvas'), X = cv.getContext('2d'); let tex = null, S = 0, cells = {}, pen = null, icons = null, ready = false, box = null, boxAt = '', sheetOf = '';
   const H = { own: { fortTxt: 1, nestTxt: 1, giantTxt: 1, crowdN: 1, parTxt: 1 }, crowd: { on: false, x: 0, y: 0, pop: 0 }, haze: 0, vis: 0, fl: 0, rdyAt: 0, tipT: 0 };
   H.stub = () => { const c = new Set(); return { textContent: '', style: {}, bump: 0, classList: { contains: k => c.has(k), toggle(k, on) { const v = on === undefined ? !c.has(k) : !!on; if (k === 'bump' || k === 'bump2') H.bumped = true; v ? c.add(k) : c.delete(k); return v; } } }; };
@@ -6949,8 +6961,8 @@ const GHUD = (() => {
   // a piece on the sheet: w x h in page pixels (with room round it), drawn once
   function cell(key, w, h, pad, draw) {
     const pw = Math.ceil((w + pad * 2) * S) + 2, ph = Math.ceil((h + pad * 2) * S) + 2; if (pen.x + pw > AW) { pen.x = 1; pen.y += pen.h + 1; pen.h = 0; } if (pen.y + ph > AH) return cells[key] = null;
-    X.save(); X.beginPath(); X.rect(pen.x, pen.y, pw, ph); X.clip(); X.translate(pen.x + 1, pen.y + 1); X.scale(S, S); X.translate(pad, pad); draw(X); X.restore();
-    const c = cells[key] = { u: (pen.x + 1) / AW, v: (pen.y + 1) / AH, du: (w + pad * 2) * S / AW, dv: (h + pad * 2) * S / AH, w, h, pad }; pen.x += pw + 1; pen.h = Math.max(pen.h, ph); tex.needsUpdate = true; return c;
+    X.save(); X.beginPath(); X.rect(pen.x, pen.y, pw, ph); X.clip(); X.translate(pen.x + 1, pen.y + 1); X.scale(S, S); X.translate(pad, pad); if (!live) { draw(X); X.restore(); } else { X.restore(); const tc = document.createElement('canvas'); tc.width = pw; tc.height = ph; const c2 = tc.getContext('2d'); c2.translate(1, 1); c2.scale(S, S); c2.translate(pad, pad); draw(c2); const gl = renderer.getContext(), st = renderer.state; st.activeTexture(gl.TEXTURE0); st.bindTexture(gl.TEXTURE_2D, renderer.properties.get(tex).__webglTexture); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4); gl.texSubImage2D(gl.TEXTURE_2D, 0, pen.x, pen.y, gl.RGBA, gl.UNSIGNED_BYTE, tc); }
+    const c = cells[key] = { u: (pen.x + 1) / AW, v: (pen.y + 1) / AH, du: (w + pad * 2) * S / AW, dv: (h + pad * 2) * S / AH, w, h, pad }; pen.x += pw + 1; pen.h = Math.max(pen.h, ph); if (!live) tex.needsUpdate = true; return c;
   }
   const rr = (c, x, y, w, h, r) => { r = Math.min(r, h / 2, w / 2); c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); };
   const grad = (c, x0, y0, x1, y1, a, b) => { const g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, a); g.addColorStop(1, b); return g; };
@@ -6966,7 +6978,7 @@ const GHUD = (() => {
   const lays = new Map();
   function lay(st, t) { const k = st + t; let L = lays.get(k); if (L) return L; const d = ST[st]; X.font = d.px + 'px ' + FONT; const m = X.measureText('Hg'), asc = m.fontBoundingBoxAscent || d.px * .93, desc = m.fontBoundingBoxDescent || d.px * .22, xs = []; for (let i = 0; i < t.length; i++) xs.push(X.measureText(t.slice(0, i)).width + i * d.ls); L = { t, xs, w: X.measureText(t).width + t.length * d.ls, asc, desc }; if (lays.size > 300) lays.clear(); lays.set(k, L); return L; }
   function build() {
-    S = Math.max(2, pixelRatio); AH = Math.min(4096, Math.ceil((1500 + Math.max(0, box.fort.w - 360) * 1.6) * S * S / 4)); cv.width = AW; cv.height = AH; X.imageSmoothingQuality = 'high'; cells = {}; lays.clear(); pen = { x: 1, y: 1, h: 0 };
+    S = Math.max(2, pixelRatio); live = false; AW = Math.max(1536, Math.ceil((box.fort.w + 12) * S) + 4); AH = Math.ceil(1300 * S * S / 4) + 64; cv.width = AW; cv.height = AH; X.imageSmoothingQuality = 'high'; cells = {}; lays.clear(); pen = { x: 1, y: 1, h: 0 };
     if (tex) tex.dispose(); tex = new THREE.CanvasTexture(cv); tex.flipY = false; tex.premultiplyAlpha = true; tex.generateMipmaps = false; tex.minFilter = tex.magFilter = THREE.LinearFilter; mat.uniforms.uMap.value = tex;
     cell('white', 4, 4, 0, c => { c.fillStyle = '#fff'; c.fillRect(-2, -2, 8, 8); });
     for (const [k, w, glow] of [['fort', box.fort.w, ''], ['wl', box.fort.w, 'rgba(255,80,60,.55)'], ['nest', box.nest.w, '']]) {
@@ -6986,9 +6998,10 @@ const GHUD = (() => {
       cell('g' + k, 42, 38, 0, c => hero(c, im, 1));
     }
     cell('gglow', 140, 140, 0, c => { const g = c.createRadialGradient(70, 70, 36, 70, 70, 70); g.addColorStop(0, 'rgba(255,198,43,.7)'); g.addColorStop(.26, 'rgba(255,198,43,.62)'); g.addColorStop(.3, 'rgba(255,198,43,.4)'); g.addColorStop(.6, 'rgba(255,198,43,.15)'); g.addColorStop(1, 'rgba(255,198,43,0)'); c.fillStyle = g; c.fillRect(0, 0, 140, 140); });
-    for (const ch of 'Your CampBoneCastleWallof0123456789·ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz’\'-.,') { glyph('label', ch, 1); glyph('label', ch, 0); }
+    for (const ch of new Set('Your CampBoneCastleWallof0123456789·ABCDEFGHIJKLMNOPRSTUVWXYZ-')) { glyph('label', ch, 1); glyph('label', ch, 0); }
     for (const ch of '0123456789') { glyph('num', ch, 0); glyph('par', ch, 0); glyph('pct', ch, 0); } glyph('par', ':', 0); for (const ch of '%SEND!') glyph('pct', ch, 0); glyph('star', '★', 1); glyph('star', '★', 0);
-    for (const ch of '0123456789+−×÷-!?.,\'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz') { glyph('float', ch, 1); glyph('float', ch, 0); }
+    for (const ch of '0123456789+−×÷-!.ABCDEFGHIKLMNOPRSTUWY') { glyph('float', ch, 1); glyph('float', ch, 0); }
+    renderer.initTexture(tex); live = true; cv.width = cv.height = 4; // (its drawing board is let go of)
   }
   // one mesh of little rectangles
   const pos = new Float32Array(CAPQ * 8), uv = new Float32Array(CAPQ * 8), col = new Float32Array(CAPQ * 16), idx = new Uint16Array(CAPQ * 6); for (let i = 0; i < CAPQ; i++) idx.set([i * 4, i * 4 + 1, i * 4 + 2, i * 4, i * 4 + 2, i * 4 + 3], i * 6);
@@ -7034,7 +7047,8 @@ const GHUD = (() => {
     if (!n) return; aP.updateRange.count = n * 8; aU.updateRange.count = n * 8; aC.updateRange.count = n * 16; aP.needsUpdate = aU.needsUpdate = aC.needsUpdate = true; geo.setDrawRange(0, n * 6); mat.uniforms.uSize.value.set(VIEW.w, VIEW.h);
     const ac = renderer.autoClear, sh = renderer.shadowMap.needsUpdate; renderer.autoClear = false; renderer.setRenderTarget(null); renderer.render(scn, cam); renderer.autoClear = ac; renderer.shadowMap.needsUpdate = sh;
   };
-  load.then(() => setTimeout(() => { try { const c = gameEl.classList, o = ['overlay', 'cinema'].filter(k => c.contains(k)); c.remove(...o); measure(); c.add(...o); if (tex) renderer.initTexture(tex); renderer.compile(scn, cam); } catch (e) {} }, 400)); // the sheet is ready before the first battle
+  H.prep = () => { if (!ready) return; try { const c = gameEl.classList, o = ['overlay', 'cinema'].filter(k => c.contains(k)); c.remove(...o); measure(); c.add(...o); renderer.compile(scn, cam); } catch (e) {} };
+  load.then(() => setTimeout(H.prep, 400)); // the sheet is ready before the first battle
   H.cells = () => cells; H.sheet = cv; H.load = load;
   return H;
 })();
@@ -7047,7 +7061,7 @@ const GHUD = (() => {
 const BACK = (() => {
   if (!LEAN || !renderer.capabilities.isWebGL2 || !POST.msaa || /[?&]nokeep/.test(location.search)) return null;
   const MASK = 1 << 3, X = { on: false, bakes: 0, still: [], live: new WeakSet(), n: 0, why: [], t0: 0 };
-  let color = null, depth = null, hold = 0, want = false, since = 0, snap = new Map(); const cm = new Float32Array(32);
+  const lc = new Float32Array(16); let color = null, depth = null, hold = 0, want = false, since = 0, snap = new Map(); const cm = new Float32Array(32);
   const mat = new THREE.ShaderMaterial({ depthFunc: THREE.AlwaysDepth, depthWrite: true, depthTest: true, toneMapped: false, fog: false,
     uniforms: { uCol: { value: null }, uDep: { value: null }, uLive: { value: null }, uKept: { value: null }, uMov: { value: 0 }, uInv: { value: new THREE.Matrix4() }, uSh: { value: new THREE.Matrix4() }, uTexel: { value: 1 / 2048 }, uBias: { value: .002 }, uTint: { value: new THREE.Vector3(.6, .56, .66) }, uT: WIND, uAspect: { value: .56 } },
     vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
@@ -7062,13 +7076,14 @@ const BACK = (() => {
   const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat); quad.frustumCulled = false; quad.renderOrder = -1e6; quad.visible = false; quad.userData.back = true; quad.matrixAutoUpdate = false; scene.add(quad);
   const copyMat = new THREE.ShaderMaterial({ depthTest: false, depthWrite: false, toneMapped: false, uniforms: { uMap: { value: null } }, vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }', fragmentShader: 'uniform sampler2D uMap; varying vec2 vUv; void main() { gl_FragColor = texture2D(uMap, vUv); }' });
   const cq = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), copyMat), cs = new THREE.Scene(), cc = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); cq.frustumCulled = false; cs.add(cq);
+  X.drop = () => { X.half = false; };
   const TINT = [[.66, .69, .71], [.75, .69, .69], [.51, .58, .72], [.78, .69, .72], [.65, .58, .73]]; // how dark each world's sun shadow is, measured
   const seen = o => { for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; };
   function sig(o, e) { // true when it differs from what was kept (and keeps the new one)
     const w = o.matrixWorld.elements, m = o.material; let ch = 0, k = 0; const put = v => { if (!(Math.abs(e[k] - v) < 2e-4)) { e[k] = v; ch = k + 1; } k++; };
     put(w[0]); put(w[1]); put(w[2]); put(w[5]); put(w[6]); put(w[10]); put(w[12]); put(w[13]); put(w[14]);
     put(o.isInstancedMesh ? o.instanceMatrix.version + o.count * .37 : 0); const p = o.geometry.attributes.position; put(p ? p.version || 0 : 0); put(m.color ? m.color.r + m.color.g * 1.3 + m.color.b * 1.7 : 0); put(m.emissive ? (m.emissive.r + m.emissive.g * 1.3 + m.emissive.b * 1.7) * (m.emissiveIntensity === undefined ? 1 : m.emissiveIntensity) : 0); put(m.map ? m.map.offset.x + m.map.offset.y * 1.7 : 0); put(m.transparent ? 2 : 1);
-    if (o.isSkinnedMesh) { const b = o.skeleton.boneMatrices; let t = 0; for (let i = 0; i < b.length; i += 3) t += b[i] * (1 + (i & 15)); put(t); } else put(0);
+    if (o.isSkinnedMesh) { const B = o.skeleton.bones; let t = 0; for (let j = 0; j < B.length; j++) { const b = B[j].matrixWorld.elements; t += (1 + (j & 7) * .13) * (b[0] + b[1] * 1.1 + b[2] * 1.2 + b[4] * 1.3 + b[5] * 1.4 + b[6] * 1.5 + b[8] * 1.6 + b[9] * 1.7 + b[10] * 1.8 + b[12] * 2.1 + b[13] * 2.3 + b[14] * 2.7); } put(t); } else put(0);
     return ch;
   }
   const fit = o => { const m = o.material; return o.isMesh && m && !Array.isArray(m) && !m.isShaderMaterial && !m.transparent && m.opacity >= 1 && m.depthWrite && m.depthTest && !o.userData.back && o.layers.mask === 1 && !o.renderOrder; };
@@ -7076,15 +7091,16 @@ const BACK = (() => {
   X.watch = () => { pool(o => { if (X.live.has(o) || !fit(o)) return; let e = snap.get(o); if (!e) { e = new Float64Array(17).fill(1e9); snap.set(o, e); sig(o, e); e.n = 0; } else if (sig(o, e)) X.live.add(o); else e.n++; }); };
   const put1 = () => { for (const o of X.still) if (o.layers.mask === MASK) o.layers.mask = 1; X.still.length = 0; };
   X.off = () => { if (X.still.length) put1(); quad.visible = false; X.on = false; };
-  X.reset = () => { X.off(); snap = new Map(); X.live = new WeakSet(); hold = 0; want = false; };
+  X.reset = () => { X.half = false; X.off(); snap = new Map(); X.live = new WeakSet(); hold = 0; want = false; };
   function size() { const w = POST.rt.width, h = POST.rt.height; if (color && color.width === w && color.height === h) return; if (color) { color.dispose(); depth.dispose(); } const o = { format: THREE.RGBAFormat, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, generateMipmaps: false, stencilBuffer: false }; mat.uniforms.uAspect.value = w / h; color = new THREE.WebGLRenderTarget(w, h, { ...o, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: false }); depth = new THREE.WebGLRenderTarget(w, h, { ...o, depthBuffer: true }); depth.texture.encoding = THREE.sRGBEncoding; depth.depthTexture = new THREE.DepthTexture(w, h, THREE.UnsignedIntType); depth.depthTexture.minFilter = depth.depthTexture.magFilter = THREE.NearestFilter; }
-  function bake() {
-    X.off(); size(); const list = []; pool(o => { const e = snap.get(o); if (e && e.n >= 6 && !X.live.has(o) && fit(o)) list.push(o); }); if (!list.length) return false;
+  function bake(step) { // step 1: the colours; step 2: the depths (the next frame, so neither is a hitch); without: both at once
+    X.off(); size(); const list = []; if (step === 2) { for (const o of X.list || []) { const e = snap.get(o); if (!e || X.live.has(o) || !fit(o) || !seen(o)) return false; list.push(o); } } else pool(o => { const e = snap.get(o); if (e && e.n >= 4 && !X.live.has(o) && fit(o)) list.push(o); }); if (!list.length) return false;
     for (const o of list) { o.layers.mask = MASK; X.still.push(o); }
     scene.traverse(o => { if (o.isLight) o.layers.enable(3); }); // (lights are picked by layer too)
     const cmask = camera.layers.mask, M = renderer.shadowMap, need = M.needsUpdate, live = sun.shadow.map, k = SHC && SHC.kept(); camera.layers.mask = MASK; M.needsUpdate = false; if (k && live) sun.shadow.map = k; // (the picture holds the still things' shadows only)
     const big = new THREE.WebGLMultisampleRenderTarget(POST.rt.width, POST.rt.height, { format: THREE.RGBAFormat, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: false, depthBuffer: true, stencilBuffer: false }); big.samples = 4; big.texture.encoding = THREE.sRGBEncoding;
-    renderer.setRenderTarget(big); renderer.render(scene, camera); copyMat.uniforms.uMap.value = big.texture; renderer.setRenderTarget(color); renderer.render(cs, cc); big.dispose();
+    if (step !== 2) { renderer.setRenderTarget(big); renderer.render(scene, camera); copyMat.uniforms.uMap.value = big.texture; renderer.setRenderTarget(color); renderer.render(cs, cc); big.dispose(); X.list = list; }
+    if (step === 1) { renderer.setRenderTarget(null); camera.layers.mask = cmask; M.needsUpdate = need; sun.shadow.map = live; cm.set(camera.matrixWorld.elements, 0); cm.set(camera.projectionMatrix.elements, 16); put1(); return true; }
     const bg = scene.background; scene.background = null; renderer.setRenderTarget(depth); renderer.render(scene, camera); scene.background = bg; renderer.setRenderTarget(null);
     camera.layers.mask = cmask; M.needsUpdate = need; sun.shadow.map = live;
     mat.uniforms.uCol.value = color.texture; mat.uniforms.uDep.value = depth.depthTexture; mat.uniforms.uInv.value.copy(camera.matrixWorld).multiply(camera.projectionMatrixInverse); cm.set(camera.matrixWorld.elements, 0); cm.set(camera.projectionMatrix.elements, 16); quad.visible = true; X.on = true; X.bakes++; X.n = list.length; return true;
@@ -7092,12 +7108,13 @@ const BACK = (() => {
   const sameCam = () => { const a = camera.matrixWorld.elements, b = camera.projectionMatrix.elements; for (let i = 0; i < 16; i++) if (Math.abs(cm[i] - a[i]) > 1e-4 || Math.abs(cm[16 + i] - b[i]) > 1e-4) return false; return color && color.width === POST.rt.width && color.height === POST.rt.height; };
   // the shadow map still needs everything that casts, kept or not
   { const sr = renderer.shadowMap.render; renderer.shadowMap.render = function (li, sc, ca) { if (!X.still.length || sc !== scene) return sr.call(renderer.shadowMap, li, sc, ca); const m = ca.layers.mask; ca.layers.mask = m | MASK | 1; try { return sr.call(renderer.shadowMap, li, sc, ca); } finally { ca.layers.mask = m; } }; }
-  X.calm = () => G.mode === 'play' && !(G.introT > 0) && !(G.grandT > 0) && !G.cine && !G.end && !G.look && !G.fin && !G.lowQ && POST.on && !HEAL.on;
+  X.calm = () => (G.mode === 'play' || G.mode === 'menu' || G.mode === 'resultWin' || G.mode === 'resultLose') && !(G.introT > 0) && !(G.grandT > 0) && !G.cine && !G.end && !G.look && !G.fin && !G.lowQ && POST.on && !HEAL.on;
   X.before = () => { // just before the scene is drawn
     if ((G.t || 0) < X.t0) X.reset(); X.t0 = G.t || 0; const calm = X.calm(); // (a new level: watch it afresh)
-    if (!calm) { if (X.on) X.off(); hold = 0; if (G.mode === 'play') { if (!HEAL.on && !G.cine) { scene.updateMatrixWorld(); X.watch(); } } else if (snap.size && G.mode !== 'lost') X.reset(); return; }
+    if (!calm) { if (X.on) X.off(); hold = 0; if (G.mode === 'play') { if (!HEAL.on && !G.cine && (X.k = (X.k || 0) + 1) % 3 === 0) { scene.updateMatrixWorld(); X.watch(); } } else if (snap.size && G.mode !== 'lost' && G.mode !== 'won') X.reset(); return; }
     camera.updateMatrixWorld();
-    if (!X.on) { scene.updateMatrixWorld(); X.watch(); if (++hold < 10) return; if (!bake()) { hold = 0; return; } want = false; since = 0; }
+    if (!X.on) { if (X.half) { X.half = false; if (!sameCam() || !bake(2)) { X.off(); hold = 0; return; } want = false; since = 0; }
+      else { let still = true; const a = camera.matrixWorld.elements; for (let i = 0; i < 16; i++) if (Math.abs(lc[i] - a[i]) > 1e-4) { lc.set(a); still = false; break; } if ((X.k = (X.k || 0) + 1) % 3 === 0) { scene.updateMatrixWorld(); X.watch(); } if (!still) { hold = 0; return; } if (++hold < 12) return; if (bake(1)) X.half = true; else hold = 0; return; } }
     else { since++; if (!sameCam()) { X.off(); hold = 4; return; }
       for (let i = X.still.length - 1; i >= 0; i--) { const o = X.still[i], e = snap.get(o); const ch = sig(o, e); if (ch || !seen(o) || o.layers.mask !== MASK) { if (X.why.length < 40) X.why.push([o.name || o.type, ch, o.material.type, +(G.t || 0).toFixed(1)].join(' ')); X.live.add(o); if (o.layers.mask === MASK) o.layers.mask = 1; X.still.splice(i, 1); want = true; } }
       if (want && since > 12) { if (!bake()) { X.off(); hold = 0; return; } want = false; since = 0; } }
@@ -7175,7 +7192,7 @@ function showMenu() {
   if (G.practice) { if (G.practiceKeep) save = JSON.parse(G.practiceKeep); G.practice = false; G.practiceKeep = null; }
   $('rewDot').classList.toggle('on', rewardsReady()); // back from a boss practice: your real progress returns
   setupLevel(save.level); G.mode = 'menu'; renderUpgrades(); if (crowdReady && save.level >= 4) loadPaladinArt();
-  $('menu').classList.add('on'); $('result').classList.remove('on'); gameEl.classList.add('overlay'); gameEl.classList.remove('lostwash');
+  $('menu').classList.add('on'); $('result').classList.remove('on'); gameEl.classList.add('overlay'); gameEl.classList.remove('lostwash'); POST.mat.uniforms.uWash.value = 0;
 }
 // the banner. One message at a time: the rest wait their turn (a level's opening tips used to overwrite each other), tips wait for
 // the camera flyover to end, and nothing runs its time out behind a story card. o: now = show at once (over whatever is up);
@@ -7272,7 +7289,7 @@ function showResult(won) {
   G.mode = won ? 'resultWin' : 'resultLose'; G.resBusy = false; // a fresh card: its buttons work again
   $('resTitle').textContent = won ? 'VICTORY!' : 'OVERRUN!';
   $('resTitle').style.color = won ? 'var(--gold)' : '#ff9aa9';
-  $('resHero').classList.toggle('lost', !won); gameEl.classList.toggle('lostwash', !won);
+  $('resHero').classList.toggle('lost', !won); gameEl.classList.toggle('lostwash', !won); if (LEAN) { POST.mat.uniforms.uWash.value = won ? 0 : 1; G.pauseDrawn = false; }
   $('resIcoUse').setAttribute('href', won ? '#i-slime' : '#i-king'); $('resIco').setAttribute('viewBox', won ? '0 0 48 44' : '0 0 48 52');
   const st = [...$('resStars').children]; st.forEach(s => s.classList.remove('on')); $('resStars').style.display = won ? '' : 'none';
   if (won) for (let k = 0; k < G.stars; k++) setTimeout(() => { st[k].classList.add('on'); tone(784 * Math.pow(1.26, k), .16, 'triangle', .06, 1.15); buzz(12); }, 450 + k * 280); // stars pop in one by one
@@ -7306,7 +7323,7 @@ function showResult(won) {
 }
 // second chance after a loss: the vat is refilled, the enemies at the gate are wiped, and the battle picks up where it was
 function keepFighting() {
-  G.continued = true; $('result').classList.remove('on'); gameEl.classList.remove('overlay', 'lostwash');
+  G.continued = true; $('result').classList.remove('on'); gameEl.classList.remove('overlay', 'lostwash'); POST.mat.uniforms.uWash.value = 0;
   for (let j = 0; j < beetles.n; j++) { if (j < 50) burst(beetles.x[j], .4, beetles.z[j], FOE_FX, 2); beetles.hp[j] = 0; }
   G.nestHp = G.nestMax; G.waveT = 2.5; G.waveQ = 0; G.mode = 'play'; G.shake = .4;
   if (WL.alive) { hideTelegraphs(); WL.z = Math.min(WL.z, GATE_Z - 9); WL.y = 0; WL.state = 'walk'; WL.st = 0; WL.atkT = 3; wlAct('walk'); } // a warlord who smashed the camp is driven back up the road (he stood frozen behind the cannon, out of reach, and the castle stayed warded)
@@ -7543,7 +7560,11 @@ function adaptResolution(raw) {
   if (statsEl.style.display === 'block') statsEl.textContent = Math.round(1 / avg) + ' fps · ' + pixelRatio.toFixed(2) + '× of ' + DPR.toFixed(1) + ' · sharpen ' + (POST.on && !G.lowQ ? POST.mat.uniforms.uSharp.value.toFixed(2) : 'off') + (G.lowQ ? ' · low' : '') + (LEAN ? ' · phone' : '') + (G.capped ? ' · capped' : '');
   if (frCool > 0) return;
   if (LEAN) { // a phone starts sharp; when a battle can't hold 60 for two stretches running it takes one step down (and remembers it for an hour)
-    if (G.mode !== 'play' || avg < 1 / 54) { frSlow = 0; return; } if (++frSlow < 2) return; frSlow = 0;
+    if (G.mode !== 'play') { // two smooth battles in a row at 2.5x: the rest go at the screen's own sharpness, if it is sharper (changed behind a card, never in a fight)
+      if (G.phOk >= 10) G.phRuns = (G.phRuns || 0) + 1; else if (G.phOk) G.phRuns = 0; G.phOk = 0; frSlow = 0;
+      if (G.phRuns >= 2 && !G.phStep && pixelRatio < MAX_PR && pixelRatio >= 2.5 && gameEl.classList.contains('overlay')) { G.phRuns = 0; pixelRatio = prCap = MAX_PR; renderer.setPixelRatio(pixelRatio); resize(); frCool = 5; if (GHUD) GHUD.prep(); try { localStorage.setItem('bs.phone', JSON.stringify({ pr: pixelRatio, at: Date.now() })); } catch (e) {} }
+      return; }
+    if (avg < 1 / 54) { frSlow = 0; G.phOk = (G.phOk || 0) + (avg < 1 / 57 ? 1 : 0); return; } G.phOk = -9; if (++frSlow < 2) return; frSlow = 0;
     if (avg > 1 / 33 && avg < 1 / 27.5 && sd < .0025 && G.phStep === pixelRatio) return; // (a step down changed nothing and it is a steady 30: that is the phone's own cap)
     const down = PHONE_PRS.find(k => k < pixelRatio - .01); if (!down) { if (avg > 1 / 24 && !G.lowQ) setLowQuality(true); return; }
     G.phStep = down; pixelRatio = prCap = down; renderer.setPixelRatio(down); resize(); frCool = 5; try { localStorage.setItem('bs.phone', JSON.stringify({ pr: down, at: Date.now() })); } catch (e) {} return; }
@@ -7811,7 +7832,7 @@ function dressRider() {
   loadSquire().then(A => { if (!A || !palRig || palRig.userData.squire) return; const r = THREE.SkeletonUtils.clone(KK.Knight.scene); r.position.copy(palRig.position); r.scale.copy(palRig.scale); r.rotation.copy(palRig.rotation);
     r.traverse(o => { if (o.isSkinnedMesh) o.skeleton.pose(); }); const p0 = r.position.clone(), s0 = r.scale.clone(); r.position.set(0, 0, 0); r.scale.setScalar(1); r.updateMatrixWorld(true);
     hangArt(r, A, A.mat); hangArt(r, { geo: palArt.geo, J: { nodes: palArt.J.nodes.filter(n => n.name === 'lance' || n.name === 'shield'), glow: [] } }, palArt.mat); r.position.copy(p0); r.scale.copy(s0); r.userData.sit = palRig.userData.sit; r.userData.squire = 1; r.traverse(o => { if (o.isMesh) o.castShadow = true; });
-    const was = palRig; horse.body.remove(was); horse.body.add(r); palRig = r; palMixer = new THREE.AnimationMixer(r); const c = clipOf('Jump_Idle') || clipOf('Idle_A'); if (c) palMixer.clipAction(c).play(); });
+    const was = palRig; horse.body.remove(was); horse.body.add(r); palRig = r; palMixer = new THREE.AnimationMixer(r); const c = clipOf('Jump_Idle') || clipOf('Idle_A'); if (c) palMixer.clipAction(c).play(); joinPaladin(); });
 }
 /* ---- a look: after each warlord falls, Rowan turns his horse toward the citadel and the crown over its gate. A second and a half; a tap skips it */
 function startLook() {
