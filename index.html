@@ -4656,7 +4656,7 @@ function clearBones() { litter.at.clear(); litter.k = litter.n = 0; litter.m.cou
 
 /* ---------------- audio ---------------- */
 let actx = null, muted = save.sfx === false; const lastSfx = {};
-function audio() { if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (actx && (actx.state === 'suspended' || actx.state === 'interrupted')) actx.resume(); smpDecode(); } /* iOS reports 'interrupted' after a call or Siri: that has to be resumed too, or the game stays silent */
+function audio() { if (!actx) { try { const A = window.AudioContext || window.webkitAudioContext; if (LEAN) try { actx = new A({ sampleRate: 24000 }); } catch (e) {} if (!actx) actx = new A(); cheapAudio(actx); } catch (e) {} } if (actx && (actx.state === 'suspended' || actx.state === 'interrupted')) actx.resume(); smpDecode(); } /* iOS reports 'interrupted' after a call or Siri: that has to be resumed too, or the game stays silent */
 /* recorded sound effects: real CC0 recordings (Kenney and OpenGameArt packs), trimmed to
    the hit and levelled, 22 kHz mono. Most are packed as 4-bit IMA ADPCM ('a'); the bright, tonal ones would hiss in ADPCM so
    they stay 16-bit PCM ('p'). They're unpacked into AudioBuffers once, as soon as there is an audio context. */
@@ -4684,8 +4684,23 @@ function smp(k, vol = 1, vary = .05, delay = 0) {
   const s = actx.createBufferSource(), g = actx.createGain(); s.buffer = b; s.playbackRate.value = 1 + (rand() - .5) * 2 * vary; g.gain.value = vol;
   s.connect(g); g.connect(actx.destination); s.start(actx.currentTime + delay);
 }
+/* phones: with any sound playing, an iPhone wakes the sound code some 375 times a second at top priority, so each wake-up has to
+   be short. Half the sample rate (the recordings are 22 kHz anyway), filters that work out their settings once per block instead
+   of once per sample, and the little notes (two per cannon shot) played from ready-made snippets instead of live oscillators. */
+function cheapAudio(ac) {
+  if (!LEAN || /[?&]livesound/.test(location.search)) return; ac._cheap = true; const mk = ac.createBiquadFilter.bind(ac);
+  ac.createBiquadFilter = () => { const n = mk(); for (const p of ['frequency', 'Q', 'gain', 'detune']) try { n[p].automationRate = 'k-rate'; } catch (e) {} return n; };
+}
+const NOTES = new Map();
+function noteBuf(f, d, type, vol, slide) { // one note, pitch and length rounded; a small change of speed brings it to the exact pitch
+  const st = Math.round(24 * Math.log2(f / 55)), f0 = 55 * Math.pow(2, st / 24), vb = Math.round(Math.log2(vol)), dq = Math.round(d * 100) / 100, key = type[0] + st + '_' + dq + '_' + (slide || 1) + '_' + vb + '_' + actx.sampleRate; let b = NOTES.get(key); if (b) return [b, f / f0];
+  const sr = actx.sampleRate, n = Math.ceil((dq + .02) * sr), x = new Float32Array(n), f1 = slide ? Math.max(40, f0 * slide) : f0, end = .0001 / Math.pow(2, vb), lr = Math.log(f1 / f0), le = Math.log(end); let ph = 0;
+  for (let i = 0; i < n; i++) { const u = Math.min(1, i / sr / dq), e = Math.exp(le * u); x[i] = e * (type === 'sine' ? Math.sin(ph * 6.2831853) : ph < .25 ? ph * 4 : ph < .75 ? 2 - ph * 4 : ph * 4 - 4); ph += f0 * Math.exp(lr * u) / sr; ph -= Math.floor(ph); }
+  b = actx.createBuffer(1, n, sr); b.getChannelData(0).set(x); if (NOTES.size > 400) NOTES.delete(NOTES.keys().next().value); NOTES.set(key, b); return [b, f / f0];
+}
 function tone(f, d, type, vol, slide) {
   if (!actx || muted) return; const t = actx.currentTime;
+  if (actx._cheap && (type === 'sine' || type === 'triangle') && vol > 0 && d < 1.3) { const [b, k] = noteBuf(f, d, type, vol, slide), s = actx.createBufferSource(), g = actx.createGain(); s.buffer = b; s.playbackRate.value = k; g.gain.value = vol; s.connect(g); g.connect(actx.destination); s.start(t); return; }
   const o = actx.createOscillator(), g = actx.createGain(); o.type = type; o.frequency.setValueAtTime(f, t);
   if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, f * slide), t + d);
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
@@ -4723,8 +4738,9 @@ function meleeTick(dt) {
     M.gain = actx.createGain(); M.gain.gain.value = 0; src.connect(M.filt); M.filt.connect(M.gain); M.gain.connect(M.bus); src.start(); M.src = src;
   }
   const t = actx.currentTime, d = M.duck > 0 ? .45 : 1;
+  if (!actx._cheap || t - (M.setAt || 0) > .12 || t < (M.setAt || 0)) { M.setAt = t;
   M.gain.gain.setTargetAtTime(.05 * M.I * d, t, .25);
-  M.filt.frequency.setTargetAtTime(520 + 420 * M.I + (rand() - .5) * 160, t, .4); // the scuffle brightens a little as it grows, and never sits still
+  M.filt.frequency.setTargetAtTime(520 + 420 * M.I + (rand() - .5) * 160, t, .4); } // the scuffle brightens a little as it grows, and never sits still
   if (M.nextGrain < t) M.nextGrain = t;
   while (M.I > .12 && M.nextGrain < t + .1) { // the distant clashes: more of them as the fight grows (up to ~8 a second), each quiet and pitched at random
     const at = M.nextGrain; M.nextGrain += (.5 + rand()) / (2 + 6 * M.I);
@@ -4751,7 +4767,7 @@ function cannonEngine(on, rate) {
   } else if (!want && cEng) {
     const e = cEng; cEng = null; e.g.gain.cancelScheduledValues(t); e.g.gain.setValueAtTime(e.g.gain.value, t); e.g.gain.linearRampToValueAtTime(0, t + .15); e.o.stop(t + .2); e.l.stop(t + .2);
   }
-  if (cEng) cEng.l.frequency.setTargetAtTime(clamp(rate || 9, 3, 14), t, .1);
+  if (cEng) { const r = clamp(rate || 9, 3, 14); if (!actx._cheap || Math.abs(r - (cEng.r || 0)) > .15) { cEng.r = r; cEng.l.frequency.setTargetAtTime(r, t, .1); } }
 }
 function hup() { const f = 290 + rand() * 170; tone(f, .07, 'triangle', .02, 1.55); noise(.05, .012, 'bandpass', 1400 + rand() * 500, 900); }
 // a brass note: three slightly detuned saws through a lowpass that flares open on the attack (a real horn's "blat") and
@@ -4822,23 +4838,38 @@ function musGraph(ac) {
   master.connect(filt); filt.connect(comp); comp.connect(ac.destination);
   return { master, filt, brass, low, send, delay };
 }
+// phones: the same notes and drums, each worked out once and then played from a snippet (see cheapAudio)
+const MBUF = new Map(); let mbufN = 0;
+const volQ = v => Math.pow(2, Math.round(Math.log2(Math.max(v, 1e-4)) * 12) / 12), q2 = v => Math.round(v * 100) / 100;
+function baked(ac, key, dur, fill) { key += '_' + ac.sampleRate; let b = MBUF.get(key); if (b) { MBUF.delete(key); MBUF.set(key, b); return b; } const n = Math.ceil(dur * ac.sampleRate), x = new Float32Array(n); fill(x, ac.sampleRate, n); b = ac.createBuffer(1, n, ac.sampleRate); b.getChannelData(0).set(x); MBUF.set(key, b); mbufN += n; while (mbufN > 8e6 && MBUF.size > 8) { const [k0, b0] = MBUF.entries().next().value; mbufN -= b0.length; MBUF.delete(k0); } return b; }
+function playBaked(ac, dest, t, b) { const s = ac.createBufferSource(); s.buffer = b; s.connect(dest); s.start(t); }
+const blep = (ph, dt) => ph < dt ? (ph /= dt, ph + ph - ph * ph - 1) : ph > 1 - dt ? (ph = (ph - 1) / dt, ph * ph + ph + ph + 1) : 0; // rounds a saw's or square's corner so it doesn't whistle
+const WAVE = { sine: ph => Math.sin(ph * 6.2831853), triangle: ph => ph < .25 ? ph * 4 : ph < .75 ? 2 - ph * 4 : ph * 4 - 4, sawtooth: (ph, dt) => { ph += .5; if (ph >= 1) ph -= 1; return 2 * ph - 1 - blep(ph, dt); }, square: (ph, dt) => { let p2 = ph + .5; if (p2 >= 1) p2 -= 1; return (ph < .5 ? 1 : -1) + blep(ph, dt) - blep(p2, dt); } };
+function hiss(ac, x, sr, dur, vol, type, freq, add) { // noise through one filter, dying away (the filter is the Web Audio one: Q 1 is in dB for a low or high pass)
+  const w = 6.2831853 * freq / sr, c = Math.cos(w), al = Math.sin(w) / (2 * (type === 'bandpass' ? 1 : Math.pow(10, 1 / 20))), a0 = 1 + al, b0 = type === 'bandpass' ? al : type === 'lowpass' ? (1 - c) / 2 : (1 + c) / 2, b1 = type === 'bandpass' ? 0 : type === 'lowpass' ? 1 - c : -(1 + c), b2 = type === 'bandpass' ? -al : b0, z = noiseBuf(ac).getChannelData(0), n = Math.min(x.length, Math.floor((dur + .02) * sr)), l = Math.log(.0001 / vol) / (dur * sr); let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+  for (let i = 0; i < n; i++) { const v = z[i % z.length], y = (b0 * v + b1 * x1 + b2 * x2 + 2 * c * y1 - (1 - al) * y2) / a0; x2 = x1; x1 = v; y2 = y1; y1 = y; x[i] += y * vol * Math.exp(l * Math.min(i, dur * sr)); }
+}
 // a held note: fades in over `a`, holds until `d`, fades out over `rel`
 function mTone(ac, dest, t, f, type, vol, a, d, rel) {
+  if (ac._cheap) { vol = volQ(vol); d = q2(d); rel = Math.max(.01, q2(rel)); return playBaked(ac, dest, t, baked(ac, 'n' + type[0] + type[1] + f.toFixed(1) + '_' + vol.toFixed(5) + '_' + a.toFixed(3) + '_' + d + '_' + rel, d + rel + .01, (x, sr, n) => { const W = WAVE[type], dt = f / sr, A = Math.max(1, a * sr), D = Math.max(A + 1, d * sr), E = D + rel * sr; let ph = 0; for (let i = 0; i < n; i++) { const e = i < A ? i / A : i < D ? 1 - .2 * (i - A) / (D - A) : i < E ? .8 * (1 - (i - D) / (E - D)) : 0; x[i] = W(ph, dt) * e * vol; ph += dt; if (ph >= 1) ph -= 1; } })); }
   const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t);
   g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + a); g.gain.linearRampToValueAtTime(vol * .8, t + d); g.gain.linearRampToValueAtTime(0, t + d + rel);
   o.connect(g); g.connect(dest); o.start(t); o.stop(t + d + rel + .05);
 }
 function mNoise(ac, dest, t, dur, vol, type, freq) {
+  if (ac._cheap) { vol = volQ(vol); return playBaked(ac, dest, t, baked(ac, 'h' + type[0] + freq + '_' + vol.toFixed(5) + '_' + dur, dur + .03, (x, sr) => hiss(ac, x, sr, dur, vol, type, freq))); }
   const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); s.buffer = noiseBuf(ac); f.type = type; f.frequency.value = freq;
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur); s.connect(f); f.connect(g); g.connect(dest); s.start(t); s.stop(t + dur + .02);
 }
 // kettle drum: a pitched thump that drops onto its note
 function mTimp(ac, dest, t, f, vol) {
+  if (ac._cheap) { vol = volQ(vol); return playBaked(ac, dest, t, baked(ac, 't' + f.toFixed(1) + '_' + vol.toFixed(5), .64, (x, sr, n) => { const l = Math.log(.0001 / vol) / (.6 * sr); let ph = 0; for (let i = 0; i < n; i++) { const s = i / sr; x[i] = Math.sin(ph * 6.2831853) * vol * Math.exp(l * Math.min(i, .6 * sr)); ph += f * (s < .05 ? 1.6 * Math.pow(1 / 1.6, s / .05) : 1) / sr; } hiss(ac, x, sr, .08, vol * .35, 'lowpass', 420); })); }
   const o = ac.createOscillator(), g = ac.createGain(); o.frequency.setValueAtTime(f * 1.6, t); o.frequency.exponentialRampToValueAtTime(f, t + .05);
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + .6); o.connect(g); g.connect(dest); o.start(t); o.stop(t + .62);
   mNoise(ac, dest, t, .08, vol * .35, 'lowpass', 420);
 }
 function mSnare(ac, dest, t, vol) {
+  if (ac._cheap) { vol = volQ(vol); return playBaked(ac, dest, t, baked(ac, 's' + vol.toFixed(5), .13, (x, sr, n) => { hiss(ac, x, sr, .1, vol, 'bandpass', 2300); hiss(ac, x, sr, .05, vol * .6, 'highpass', 5200); const l = Math.log(.0001 / (vol * .5)) / (.07 * sr); for (let i = 0; i < n && i < .08 * sr; i++) x[i] += WAVE.triangle((210 * i / sr) % 1) * vol * .5 * Math.exp(l * Math.min(i, .07 * sr)); })); }
   mNoise(ac, dest, t, .1, vol, 'bandpass', 2300); mNoise(ac, dest, t, .05, vol * .6, 'highpass', 5200);
   const o = ac.createOscillator(), g = ac.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(210, t);
   g.gain.setValueAtTime(vol * .5, t); g.gain.exponentialRampToValueAtTime(.0001, t + .07); o.connect(g); g.connect(dest); o.start(t); o.stop(t + .08);
@@ -4992,15 +5023,16 @@ async function voiceProbe(kind) {
 }
 function musicTick() {
   if (!actx || actx.state !== 'running') return;
-  if (!MUS.g) { MUS.g = musGraph(actx); MUS.next = actx.currentTime + .08; }
+  if (!MUS.g) { MUS.g = musGraph(actx); MUS.next = actx.currentTime + .08; MUS.mg = MUS.mf = 0; }
   const now = actx.currentTime, base = SONGS[Math.max(0, worldIdx)], boss = G.mode === 'play' && WL.on && WL.alive; // a warlord on the road: the theme turns dark, quicker and heavier
   const lament = G.mode === 'resultLose'; // after a defeat the world's theme comes back slow, in a minor key, bells only faintly, no drums
   const song = lament ? (base.lament || (base.lament = { ...base, scale: base.scale === 'major' ? 'minor' : 'harm', bpm: Math.round(base.bpm * .6), drums: 0, bells: (base.bells || 1) * .5, root: base.root - 2 }))
     : boss ? (base.boss || (base.boss = { ...base, scale: 'harm', bpm: Math.round(base.bpm * 1.16), drums: (base.drums || 1) * 1.45, bells: (base.bells || 1) * .35, root: base.root - 3 })) : base, sp = 60 / song.bpm / 3, playing = G.mode === "play";
   // full band during a level, quieter and muffled on menus, the fanfare at full voice after a win, silent under the lose stinger
   const quiet = !MUS.on || G.mode === 'lost', hold = now < MUS.holdUntil;
-  MUS.g.master.gain.setTargetAtTime(quiet ? 0.0001 : playing ? .18 + .06 * MUS.int : hold ? .22 : .15, now, quiet ? .06 : .4); // in a battle it starts a little under the sound effects and grows with the build-up
-  MUS.g.filt.frequency.setTargetAtTime(playing || hold ? 9000 : 2400, now, .4);
+  const mg = quiet ? 0.0001 : playing ? .18 + .06 * MUS.int : hold ? .22 : .15, mf = playing || hold ? 9000 : 2400;
+  if (!actx._cheap || Math.abs(mg - (MUS.mg || 0)) > .003 || quiet !== MUS.mq) { MUS.mg = mg; MUS.mq = quiet; MUS.g.master.gain.setTargetAtTime(mg, now, quiet ? .06 : .4); } // in a battle it starts a little under the sound effects and grows with the build-up
+  if (!actx._cheap || mf !== MUS.mf) { MUS.mf = mf; MUS.g.filt.frequency.setTargetAtTime(mf, now, .4); }
   if (!MUS.on) return;
   if (hold || G.mode === 'won') { MUS.next = Math.max(MUS.next, MUS.holdUntil); return; } // the fanfare has the stage
   if (MUS.next < now) MUS.next = now + .05;
@@ -7420,7 +7452,7 @@ window.addEventListener('keyup', e => { keys[e.key] = false; if (e.key === ' ') 
 async function perfTest() { // ?perf: speed test 4. First the frame rate (an empty page, then a battle as you play it), then what each part of a frame costs the GPU when it is kept busy
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:6px;right:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;padding:9px 11px;border-radius:12px;background:rgba(8,12,30,.92);color:#fff;font:600 12px/1.42 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(box);
   const wait = ms => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(r)), rows = [], gl = renderer.getContext(), px = new Uint8Array(4), med = a => a.sort((x, y) => x - y)[a.length >> 1];
-  const V = 'Speed test 4 (v150' + (LEAN ? ', lean)' : ')'), show = s => { box.textContent = V + ': ' + s + '\n' + rows.join('\n'); };
+  const V = 'Speed test 4 (v151' + (LEAN ? ', lean)' : ')'), show = s => { box.textContent = V + ': ' + s + '\n' + rows.join('\n'); };
   box.textContent = V + ': tap here to start\n(about 40 s, with sound)'; await new Promise(r => box.addEventListener('pointerdown', r, { once: true }));
   audio(); show('loading...'); G.perf = true; G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 11; save.v = 3;
   await Promise.race([loadLm('dunes'), wait(8000)]); await wait(800);
@@ -7484,7 +7516,7 @@ const AB = /[?&]ab(=1)?(&|$)/.test(location.search) ? (() => {
   const show = () => {
     if (!X.box) { X.box = document.createElement('div'); X.box.style.cssText = 'position:fixed;left:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;pointer-events:none;padding:7px 9px;border-radius:10px;background:rgba(8,12,30,.88);color:#fff;font:600 11px/1.35 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(X.box); }
     const c = Math.min(...D.map(d => d.t)) / (SLOT - SKIP), f = (a, b) => (b ? a / b : 0).toFixed(1).padStart(5);
-    X.done = c >= 3.9; X.box.textContent = (X.done ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (v150' + (LEAN ? ' lean' : '') + ')\n' + 'off now'.padEnd(16) + ' fps  60% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + pixelRatio + '  ' + ants.n + '/' + beetles.n + '  touches ' + (D[0].n ? D[0].ev / D[0].n : 0).toFixed(1);
+    X.done = c >= 3.9; X.box.textContent = (X.done ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (v151' + (LEAN ? ' lean' : '') + ')\n' + 'off now'.padEnd(16) + ' fps  60% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n') + '\n' + gameEl.clientWidth + 'x' + gameEl.clientHeight + ' @' + pixelRatio + '  ' + ants.n + '/' + beetles.n + '  touches ' + (D[0].n ? D[0].ev / D[0].n : 0).toFixed(1);
   };
   X.frame = (now, dt, raw) => { // stands in for update + render
     if (G.mode !== 'play' || G.paused || G.t < 2.5) { if (X.on) { put(X.m, false); X.on = false; } X.at = 0; return false; }
@@ -7512,7 +7544,7 @@ const AB2 = /[?&]ab=2(&|$)/.test(location.search) ? (() => {
   const show = () => {
     if (!X.box) { X.box = document.createElement('div'); X.box.style.cssText = 'position:fixed;left:6px;top:calc(env(safe-area-inset-top) + 6px);z-index:99;pointer-events:none;padding:7px 9px;border-radius:10px;background:rgba(8,12,30,.88);color:#fff;font:600 11px/1.35 ui-monospace,Menlo,monospace;white-space:pre'; document.body.appendChild(X.box); }
     const c = Math.min(...D.map((d, k) => d.t / (LEN(k) - SKIP))), f = (a, b) => (b ? a / b : 0).toFixed(1).padStart(5);
-    X.box.textContent = (c >= 3.9 ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (real play, v150' + (LEAN ? ' lean' : '') + ')\n' + 'changed'.padEnd(16) + ' fps  60%  30% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + (d.n ? Math.round(100 * d.half / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n');
+    X.box.textContent = (c >= 3.9 ? 'DONE: screenshot this' : 'Keep playing: ' + Math.min(99, Math.floor(c / 4 * 100)) + '%') + '  (real play, v151' + (LEAN ? ' lean' : '') + ')\n' + 'changed'.padEnd(16) + ' fps  60%  30% rules  draw  page\n' + D.map((d, i) => (i === X.m ? '>' : ' ') + N[i].padEnd(15) + (d.t ? 1000 * d.n / d.t : 0).toFixed(0).padStart(4) + (d.n ? Math.round(100 * d.ok / d.n) : 0).toString().padStart(5) + (d.n ? Math.round(100 * d.half / d.n) : 0).toString().padStart(5) + f(d.u, d.n) + ' ' + f(d.r, d.n) + ' ' + f(d.p, d.pn)).join('\n');
   };
   X.frame = (now, dt, raw) => {
     if (G.mode !== 'play' || G.paused || G.t < 2.5) { if (X.on) { put(X.m, false); X.on = false; } X.at = 0; return false; }
