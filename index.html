@@ -297,6 +297,12 @@ svg.ico.sm{width:18px;height:18px}
 #cine::before{top:0}#cine::after{bottom:0}
 #cine .cine-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:2}
 #cine .cine-skip{position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom) + 2.4%);z-index:3;font-family:var(--disp);font-size:14px;letter-spacing:.5px;color:rgba(255,255,255,.6)}
+#cine.dir::before,#cine.dir::after{display:none}#cine.short .cine-skip{display:none}
+#dirT{position:absolute;left:4%;right:4%;bottom:12%;z-index:2;text-align:center;font-family:var(--disp);pointer-events:none;opacity:0;container-type:inline-size}
+#dirT i{display:block;font-style:normal;font-weight:400;font-size:min(5.4cqw,30px);letter-spacing:.06em;text-transform:uppercase;color:#fff;text-shadow:0 2px 0 #1a0a30,0 0 12px rgba(20,0,40,.9);opacity:0}
+#dirT b{display:block;font-weight:400;line-height:1;text-transform:uppercase;color:#ffe27a;-webkit-text-stroke:.06em rgba(22,6,36,.92);paint-order:stroke fill;text-shadow:0 .05em 0 #5a2a08,0 0 .35em rgba(255,190,60,.45);opacity:0}
+#dirT.on{opacity:1}#dirT.on b{animation:dirSlam .42s cubic-bezier(.2,.9,.3,1) both}#dirT.on i{animation:dirRise .4s .16s ease-out both}
+@keyframes dirSlam{0%{opacity:0;transform:scale(2.1)}60%{opacity:1;transform:scale(.96)}100%{opacity:1;transform:none}}@keyframes dirRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 #endHeal{position:absolute;inset:8% 0;overflow:hidden;opacity:0;transition:opacity .35s;background:#0a0818}
 #endHeal.on{opacity:1}
 #endHeal img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0}
@@ -498,7 +504,7 @@ svg.ico.sm{width:18px;height:18px}
   <div id="flash"></div>
   <div id="audBtns"><button id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.2" fill="#fff"/><rect x="14" y="5" width="4" height="14" rx="1.2" fill="#fff"/></svg></button><button id="mute" aria-label="Sound effects on/off"><svg viewBox="0 0 24 24"><use id="muteUse" href="#i-sound"/></svg></button><button id="musBtn" aria-label="Music on/off"><svg viewBox="0 0 24 24"><use id="musUse" href="#i-music"/></svg></button></div>
 
-  <div id="cine"><div id="endHeal"></div><div id="endFade"></div><b id="endCap"></b><div class="cine-flash"></div><span class="cine-skip">Tap to skip</span></div>
+  <div id="cine"><div id="endHeal"></div><div id="endFade"></div><b id="endCap"></b><div id="dirT"><i></i><b></b></div><div class="cine-flash"></div><span class="cine-skip">Tap to skip</span></div>
   <div id="hud">
     <div id="topbar">
       <span class="pill" id="lvlPill">Level 1</span>
@@ -3017,7 +3023,7 @@ function addSkyline(i) {
     if (art) lmMesh('dunes', 'pyramid', sky, zx, 0, zz, { s: 4, ry: -.12, tint: '#a8868c', far: true }); else
     for (let k = 0; k < 6; k++) { const w = 22 - k * 3.4; mesh(new THREE.BoxGeometry(w, 2.6, w), k % 2 ? sand2 : sand, zx, 1.3 + k * 3, zz, sky, false); mesh(new THREE.BoxGeometry(w + .2, .4, w + .2), lip, zx, 2.8 + k * 3, zz, sky, false); }
     if (!art) for (let k = 0; k < 6; k++) mesh(new THREE.BoxGeometry(3.2, 3, 1.8), stair, zx, 1.5 + k * 3, zz + (22 - k * 3.4) / 2 + .8, sky, false); // a stair climbing its face, tier by tier
-    const zy = art ? 24.2 : 21.5; mesh(new THREE.OctahedronGeometry(2.2, 0), B('#ff70f0'), zx, zy, zz, dyn, false); glow('#ff60e0', 12, zx, zy, zz, dyn, .55);
+    const zy = art ? 24.2 : 21.5; mesh(new THREE.OctahedronGeometry(1.7, 0), new THREE.MeshStandardMaterial({ color: C('#e060e8'), emissive: C('#a020c0'), emissiveIntensity: .5, roughness: .25, flatShading: true, fog: false }), zx, zy, zz, dyn, false).scale.set(.8, 1.35, .8); glow('#ff60e0', 8, zx, zy, zz, dyn, .4);
     const cap = dyn.children[dyn.children.length - 2]; worldAnim.push(t => { cap.rotation.y = t * .8; cap.position.y = zy + Math.sin(t * 1.2) * .4; });
   }
   if (i === 2) { // towering ice spires either side, round a frost heart that hangs and turns in the air
@@ -4480,7 +4486,7 @@ function joinPaladin() { if (!FUSE || !horse) return; for (const s of palSets) F
 function resetPaladin() { G.pal = null; G.rally = 0; paladin.visible = false; }
 function updatePaladin(dt, play) {
   if (G.rally > 0) G.rally -= dt;
-  if (G.end || G.look) return; // (the ending and the look back place him themselves)
+  if (G.end || DIR.s) return; // (the scenes place him themselves)
   const P = G.pal; if (!P || !horse) { paladin.visible = false; return; }
   if (WL.state === 'kneel' && P.rear < 0) { P.x += clamp(WL.x - P.x, -1, 1) * dt * 5; if (P.z <= WL.z + 3.4) { lastBlow(); return; } }
   if (palMixer) { palMixer.update(dt); const ul = palRig.userData.ul || (palRig.userData.ul = palRig.getObjectByName('upperlegl')), ur = palRig.userData.ur || (palRig.userData.ur = palRig.getObjectByName('upperlegr')); /* (found once, not searched for every frame) */ const sit = palRig.userData.sit || .55; if (ul) ul.rotation.z += sit; if (ur) ur.rotation.z -= sit; if (palRig.userData.cape) palRig.userData.cape.rotation.x = .95 + Math.sin(P.ph * 1.4) * .14; } // astride the saddle
@@ -5369,7 +5375,7 @@ function setupLevel(n) {
   { const lanes = {}; for (const g of G.gates) if (g.add) { const k = (g.x > 0 ? 'r' : 'l') + (g.big ? 'b' : ''); const L = lanes[k] || (lanes[k] = { grp: 1, x: g.x, z: 0, n: 0 }); L.z += g.z; L.n++; g.grp = L; } for (const L of Object.values(lanes)) L.z /= L.n; } // each +N lane shares one running label, shown halfway up it
   ants.n = 0; beetles.n = 0; P.n = 0; SH.n = 0; D.life.fill(0);
   G.fortMax = G.fortHp = G.cfg.fortHp; G.nestMax = G.nestHp = Math.round(nestHp(save.up.nest) * (1 + .15 * clamp((n === save.level ? save.fails || 0 : 0) - 1, 0, 4))); // (from the second loss on, each one also makes your camp a little sturdier)
-  for (const o of fortDress.children) if (o.userData.veil) o.visible = true; clearEnding(); if (G.look) { for (const g of G.look.gl) scene.remove(g); G.look = null; lookOff(); } G.lookDone = false;
+  for (const o of fortDress.children) if (o.userData.veil) o.visible = true; clearEnding(); dirAbort(); sawGroup.visible = aim.visible = true; G.lookDone = false;
   G.lx = 0; G.charge = 0; G.waveT = n === 1 ? 3.2 : 2.2; G.waveQ = 0; G.waves = 0; G.fired = 0; G.firedSent = 0; G.killsSent = 0; G.firing = false; G.fireT = 0;
   G.shake = 0; G.fortFlash = 0; G.endT = 0; G.t = 0; G.clk = 0; G.squash = 0; G.continued = false; G.kingS = G.cfg.boss ? 9.2 : 8; G.crowdShown = 0;
   for (const f of floats) { f.t = 0; f.el.style.opacity = 0; }
@@ -6056,7 +6062,7 @@ function startWarlord(force) {
     const j = addUnit(beetles, clamp(ox, -LANE + .4, LANE - .4), WL.z + oz, big ? cfg.stagHp * 1.5 : cfg.beetleHp * 2.5, big ? 2.2 : 1, WL.sp, 0, big);
     if (j >= 0) beetles.kind[j] = 0;
   }
-  if (!G.sim && !G.cine) { toastMsg(WL.def.title.toUpperCase(), wlName(), { live: true, name: true }); if (!save.wardTip && WL.def.move !== 'barrage') toastMsg((inHall() ? 'WALL' : 'CASTLE') + ' SHIELDED!', 'Defeat ' + wlName() + ' to break the shield', { ok: () => WL.alive, on: () => { save.wardTip = 1; persist(); } }); kingVoice("roar", .8); tone(70, 1, 'sawtooth', .08, .5); noise(.9, .14, 'lowpass', 700, 120); if (G.level > LAP_LEN && WL.def.move === 'barrage') { const f = popText(['I WORK FOR HIM NOW?!', 'MY OWN THRONE. MY OWN!', 'DEMOTED! ME!', 'HE KEEPS IT POLISHED...'][Math.floor(roadN(G.level) / 50) % 4], 0, 8.4, FORT_Z, '#e070ff'); if (f) f.hold = 1.6; } }
+  if (!G.sim && !G.cine) { if (!DIR.s) toastMsg(WL.def.title.toUpperCase(), wlName(), { live: true, name: true }); if (!save.wardTip && WL.def.move !== 'barrage') toastMsg((inHall() ? 'WALL' : 'CASTLE') + ' SHIELDED!', 'Defeat ' + wlName() + ' to break the shield', { ok: () => WL.alive, on: () => { save.wardTip = 1; persist(); } }); kingVoice("roar", .8); tone(70, 1, 'sawtooth', .08, .5); noise(.9, .14, 'lowpass', 700, 120); if (G.level > LAP_LEN && WL.def.move === 'barrage') { const f = popText(['I WORK FOR HIM NOW?!', 'MY OWN THRONE. MY OWN!', 'DEMOTED! ME!', 'HE KEEPS IT POLISHED...'][Math.floor(roadN(G.level) / 50) % 4], 0, 8.4, FORT_Z, '#e070ff'); if (f) f.hold = 1.6; } }
 }
 function hurtWarlord(d) {
   if (!WL.alive) return; WL.hp -= d; WL.flash = 1;
@@ -6078,10 +6084,11 @@ function slayWarlord() {
   burst(WL.x, 3, WL.z, ['#ffc62b', '#ffd84a'], 40, 6, { vy: 10, life: 1.6, g: 16, sz: 2, kind: PK.COIN });
   splat(WL.x, WL.z, FOE, 4.5); // (the banner says he is slain; a second label sat on top of the castle's damage number)
   burst(0, 3, FORT_Z + .5, ['#e2d6c4', '#b9ad9c', WL.def.col], 40, 9, { vy: 7, life: 1.2, g: 15, sz: 2.2, kind: PK.ROCK }); // and the castle walls crack
-  if (!thenKing && !kingDies) popText('−' + Math.round(G.fortMax * WL_FALL), 0, 4.5, FORT_Z + 1.5, '#ffd23f');
+  const film = !thenKing && !kingDies && !WL.shade && deathScene();
+  if (!thenKing && !kingDies && !film) popText('−' + Math.round(G.fortMax * WL_FALL), 0, 4.5, FORT_Z + 1.5, '#ffd23f');
   if (!G.sim && thenKing) { if (WL.queue[0] === 4) { toastMsg('THE SHADES ARE GONE', 'Now the Bone King himself comes for you', { now: true }); tone(55, 1.4, 'sawtooth', .09, .5); } else tone(220, .5, 'sine', .08, .5); }
   else if (!G.sim && kingDies) { G.kingFell = true; [392, 523, 659, 784, 1046].forEach((f, k) => setTimeout(() => tone(f, .3, 'triangle', .07), k * 120)); }
-  else if (!G.sim) { const L = WALL_SAY[WARLORDS.indexOf(WL.def)]; if (L && !WL.lap) { const f = popText(L.last, WL.x, 5.6, WL.z, '#ffffff'); if (f) f.hold = 1.6; } toastMsg(wlName() + ' SLAIN!', 'The shield is down. Finish the ' + TGT() + '!', { now: true }); [392, 523, 659, 784].forEach((f, k) => setTimeout(() => tone(f, .25, 'triangle', .06), k * 110)); tone(60, .9, 'sine', .3, .3); }
+  else if (!G.sim) { const L = WALL_SAY[WARLORDS.indexOf(WL.def)]; if (L && !WL.lap && !film) { const f = popText(L.last, WL.x, 5.6, WL.z, '#ffffff'); if (f) f.hold = 1.6; } toastMsg(wlName() + ' SLAIN!', 'The shield is down. Finish the ' + TGT() + '!', { now: true }); [392, 523, 659, 784].forEach((f, k) => setTimeout(() => tone(f, .25, 'triangle', .06), k * 110)); tone(60, .9, 'sine', .3, .3); }
 }
 function beginAttack() {
   const m = WL.def.move; WL.state = 'wind'; WL.st = 0; WL.tg = []; wlAct('strike', .15);
@@ -6144,9 +6151,9 @@ function updateWarlord(dt, play) {
       const s = tgStrips[k], fan = WL.tg.length > 1; s.fill.material.opacity = .08 + .14 * (WL.st / WL.windT); s.frame.material.opacity = .55 + .4 * p;
       mk.visible = !fan || k === 1; const f = fan ? .16 : .3; mk.position.set(t.x + Math.sin(t.a) * t.len * f, 2.4 + p * .3, t.z + Math.cos(t.a) * t.len * f); }
     else { RR.fill.scale.setScalar(t.R * Math.min(1, WL.st / WL.windT)); RR.fill.material.opacity = .22; RR.ring.material.opacity = .5 + .4 * p; mk.position.set(t.x, 2 + p * .3, t.z + t.R * .6); } }
-  if (WL.kingDue > 0 && play && (WL.kingDue -= dt) <= 0) { WL.kingDue = 0; startWarlord(WL.queue && WL.queue.length ? WL.queue.shift() : 4); }
+  if (WL.kingDue > 0 && play && (WL.kingDue -= dt) <= 0) { WL.kingDue = 0; const n = WL.queue && WL.queue.length ? WL.queue.shift() : 4; if (!(n === 4 && bossScene(4))) startWarlord(n); }
   if (!WL.on) {
-    if (play && G.cfg.boss && !WL.done && G.fortHp <= G.fortMax * WL_WARD) startWarlord();
+    if (play && G.cfg.boss && !WL.done && G.fortHp <= G.fortMax * WL_WARD && !(G.level !== LAP_LEN && bossScene(worldOf(G.level) % WARLORDS.length))) startWarlord();
     if (!WL.on) return;
   }
   const b = WL.b; b.mixer.update(dt); kingTick(b.fx.king); WL.st += dt; WL.flash = Math.max(0, WL.flash - dt * 5);
@@ -6173,7 +6180,7 @@ function updateWarlord(dt, play) {
     else if (st === 'recover') { if (WL.st > .55) { WL.state = 'walk'; WL.st = 0; wlAct('walk'); } }
     else if (st === 'stun') { if (rand() < .3) burst(WL.x + (rand() - .5), 4.6, WL.z, ['#ffe680', '#ffffff'], 1, 1.5, { vy: 1, life: .5, g: 0, sz: 1.5, kind: PK.SPARK }); if (WL.st > WL.stunT) { WL.state = 'walk'; WL.st = 0; wlAct('walk'); } }
     // your soldiers strike him: each one that reaches him lands its whole strength and falls
-    if (WL.alive) { const rr = (WL_R + .3) ** 2; let hits = 0;
+    if (WL.alive && !DIR.s) { const rr = (WL_R + .3) ** 2; let hits = 0;
       for (let i = 0; i < ants.n; i++) { if (ants.hp[i] <= 0) continue; const dx = ants.x[i] - WL.x, dz = ants.z[i] - WL.z; if (dx * dx + dz * dz > rr) continue;
         if (ants.kind[i]) { explode(ants.x[i], ants.z[i]); ants.hp[i] = 0; continue; }
         hurtWarlord(ants.hp[i]); ants.hp[i] = 0; hits++; if (rand() < .4) burst(ants.x[i], 1 + rand() * 2, ants.z[i], [ALLY_FX, '#ffffff', WL.def.col], 2, 3, { vy: 3, life: .4, g: 8, sz: 1.4, kind: PK.SPARK }); if (!WL.alive) break; }
@@ -6479,12 +6486,12 @@ const cellX = x => clamp(Math.floor((x - GX0) / CELL), 0, GW - 1), cellZ = z => 
 
 /* ---------------- update ---------------- */
 function update(dt) {
-  G.t += dt;
+  G.t += dt; dirFilm(dt); if (DIR.s) dirTick(dt); const FZ = !!(DIR.s && DIR.s.freeze);
   if (G.cine) cineTick(dt);
   if (G.fin) finTick(dt);
   if (G.end) endTick(dt);
-  if (!G.sim) { meleeTick(dt); toastTick(dt); }
-  const play = G.mode === 'play';
+  if (!G.sim) { meleeTick(dt); if (!DIR.s) toastTick(dt); }
+  const play = G.mode === 'play' && !FZ; // (a scene can hold the battle still)
   if (play && !(G.introT > 0) && !(G.grandT > 0)) G.clk = (G.clk || 0) + dt; // the third-star clock runs only once the flyover is over
 
   for (const g of G.gates) {
@@ -6518,7 +6525,7 @@ function update(dt) {
   if (muzzleFlash.visible) { muzzleTip.getWorldPosition(muzzleFlash.position); muzzleFlash.material.opacity = G.flashT * .9; muzzleFlash.scale.setScalar(.9 + (1 - G.flashT) * 1.1); }
   G.gshake = Math.max(0, (G.gshake || 0) - dt * 2.5); launcher.rotation.z = G.lean + Math.sin(G.t * 55) * G.gshake * .05; launcher.position.y = Math.abs(Math.sin(G.t * 40)) * G.gshake * .12; // and the cannon shudders when the Paladin rides out
 
-  if (G.grandT > 0) G.grandT = Math.max(0, G.grandT - dt * (G.firing ? 4 : 1));
+  if (FZ) {} else if (G.grandT > 0) G.grandT = Math.max(0, G.grandT - dt * (G.firing ? 4 : 1));
   else if (G.introT > 0) { G.introT = Math.max(0, G.introT - dt * (G.firing ? 4 : 1)); } // holding to fire skips the intro
   if (play && G.firing && !(G.introT > 0)) {
     G.fireT -= dt; const iv = fireInterval(save.up.rate);
@@ -6527,6 +6534,8 @@ function update(dt) {
   } else G.fireT = 0;
   if (!G.sim) cannonEngine(play && G.firing && !(G.introT > 0), 1 / fireInterval(save.up.rate));
 
+  if (FZ) { updateHoard(dt); updateWarlord(dt, !!DIR.s.wl); }
+  battle: { if (FZ) break battle;
   updateCharges(dt, play); updateHoard(dt); updateSaws(dt, play); updatePaladin(dt, play); updateWarlord(dt, play); updateHazards(dt, play);
   // enemy waves
   const cfg = G.cfg;
@@ -6669,6 +6678,7 @@ function update(dt) {
     }
   }
   kingAttack(dt); foeSpecials(dt, play); compact(ants); compact(beetles); updateShots(dt);
+  }
 
   // particles + decals
   for (let i = 0; i < P.n; i++) {
@@ -6715,9 +6725,9 @@ function update(dt) {
       if (fort.position.y > -3.6 && rand() < dt * 34) burst((rand() - .5) * 11, 1 + rand() * 2, FORT_Z - .5 + rand() * 2, rand() < .6 ? '#e2d6c4' : '#b9ad9c', 2, 5, { vy: 5, life: 1, g: 16, sz: 1.4, kind: PK.ROCK });
       if (fort.position.y > -3.4 && rand() < dt * 2.4) smoke((rand() - .5) * 10, .8, FORT_Z - 1 + rand() * 2, '#a89cb4', 2 + rand() * 1.2, 1.1);
     }
-    if (G.look) lookTick(dt); else if (G.endT <= 0 && !startLook()) showResult(true);
+    if (!DIR.s && G.endT <= 0 && !startLook()) showResult(true);
   } else if (G.mode === 'lost') { G.endT -= dt; if (G.endT <= 0) showResult(false); }
-  if (celebrating && G.boomed && !G.look) { G.fwT -= dt; if (G.fwT <= 0) { firework(); G.fwT = G.mode === 'won' ? .18 + rand() * .2 : .5 + rand() * .5; } }
+  if (celebrating && G.boomed && !DIR.s) { G.fwT -= dt; if (G.fwT <= 0) { firework(); G.fwT = G.mode === 'won' ? .18 + rand() * .2 : .5 + rand() * .5; } }
   if (G.boomed) { // shock rings, flash and flying pieces
     if (G.mode !== 'won') G.winT += dt;
     const bt = G.winT - BOOM_AT;
@@ -6772,10 +6782,11 @@ const HORDE_REST = .66; // the waiting horde stands a little smaller (it reads a
 const popOf = (p, i) => { if (p === beetles && p.pass[i] === 1) { if (p.tier[i] === F_ARCH || p.tier[i] >= F_SHLD) return 1; const u = Math.min(1, p.age[i] * 2.2); return HORDE_REST + (1 - HORDE_REST) * u * (2 - u); } const t = Math.min(1, p.age[i] * 5); return t < 1 ? .35 + .65 * t + Math.sin(t * Math.PI) * .3 : 1; };
 // sprite crowds: units run (a cycle per second or so, each a little out of step), fly out of the cannon in the mid-air pose,
 // and jump for joy once the castle falls
+const nearLens = (p, i) => p === beetles && DIR.s.foeZ !== undefined && p.z[i] > DIR.s.foeZ - (p.big[i] ? 5.5 : 0); // (right by the camera of a scene they would fill the picture)
 function drawSprites(p, sm) {
   const cell = sm.geometry.attributes.aCell.array, party = G.boomed && p === ants;
   for (let i = 0; i < p.n; i++) {
-    const s = p === beetles && p.tier[i] === F_CAP && CAP.b ? .001 : p.s[i] * US * popOf(p, i), air = liftOf(p, i), flying = air > 0.05, t = unitType(p, i); // (the sculpted captain is drawn in place of his brute)
+    const s = p === beetles && p.tier[i] === F_CAP && CAP.b || DIR.s && nearLens(p, i) ? .001 : p.s[i] * US * popOf(p, i), air = liftOf(p, i), flying = air > 0.05, t = unitType(p, i); // (the sculpted captain is drawn in place of his brute)
     const hopK = party ? Math.abs(Math.sin(G.t * 7 + p.ph[i])) : 0;
     let f = p === beetles && p.tier[i] === F_NEC ? p.atk[i] > 0 ? ATK_F : JUMP_F : flying || hopK > .35 || (p === beetles && p.kind[i] && !(p.atk[i] > 0)) ? JUMP_F : p.atk[i] > 0 ? ATK_F : Math.floor(((G.t * (p.big[i] ? 1.1 : 1.55) + p.ph[i] * .16) % 1) * RUN_FRAMES);
     _m.makeScale(s, s, s); _m.setPosition(p.x[i], air + hopK * .55 * s, p.z[i]);
@@ -6812,7 +6823,7 @@ const FOE_WARM = new THREE.Color(.8, .69, .58), FOE_TINT = new THREE.Color(1, 1,
 function drawBlobs() {
   let k = 0;
   for (const p of [ants, beetles]) for (let i = 0; i < p.n; i++) {
-    const s = p.s[i] * US * popOf(p, i) * (p === beetles ? 1.5 : 1) * (crowdReady ? (p === beetles ? .72 : .8) : 1 - hopOf(p, i) * .25);
+    const s = (DIR.s && nearLens(p, i) ? .001 : p.s[i]) * US * popOf(p, i) * (p === beetles ? 1.5 : 1) * (crowdReady ? (p === beetles ? .72 : .8) : 1 - hopOf(p, i) * .25);
     // a soft contact shadow under every unit (the horde's overlap into a dark carpet under it)
     _m.makeScale(s, 1, s * .8); _m.setPosition(p.x[i], 0.025, p.z[i] + s * .06); blobMesh.setMatrixAt(k++, _m);
   }
@@ -6836,12 +6847,13 @@ const _hud = {};
 const setHud = (id, v) => { if (_hud[id] !== v) { _hud[id] = v; if (!(GHUD && GHUD.own[id])) $(id).textContent = v; } };
 const setCss = (id, p, v) => { const k = id + p; if (_hud[k] !== v) { _hud[k] = v; if (!GHUD) $(id).style[p] = v; } };
 function render() {
-  drawPool(ants, antMesh, crownMesh, WHITE); drawPool(beetles, beetleMesh, helmetMesh, STAG_TINT); drawBlobs(); drawDecals(); drawShots(); drawFoeExtras();
+  const an0 = ants.n, bn0 = beetles.n, sn0 = SH.n, en0 = EA.n; if (DIR.s) { if (DIR.s.noAnts) ants.n = SH.n = EA.n = 0; if (DIR.s.noFoes) beetles.n = 0; }
+  drawPool(ants, antMesh, crownMesh, WHITE); drawPool(beetles, beetleMesh, helmetMesh, STAG_TINT); drawBlobs(); drawDecals(); drawShots(); drawFoeExtras(); ants.n = an0; beetles.n = bn0; SH.n = sn0; EA.n = en0;
   const pc = [0, 0, 0, 0, 0, 0];
   for (let i = 0; i < P.n; i++) {
     const pk = P.kind[i], mesh = partMeshes[pk]; if (pc[pk] >= mesh.instanceMatrix.count) continue;
     const lf = P.life[i] / P.max[i], solid = pk === PK.COIN || pk === PK.ROCK || pk === PK.PAPER;
-    const k = P.sz[i] * (solid ? Math.min(1, 4 * lf) : P.g[i] < 18 ? Math.min(1, 3 * lf) : lf);
+    const k = P.sz[i] * (DIR.s ? .5 : 1) * (solid ? Math.min(1, 4 * lf) : P.g[i] < 18 ? Math.min(1, 3 * lf) : lf);
     _v.set(P.x[i], P.y[i], P.z[i]);
     if (pk === PK.DROP) { // stretch along the direction of flight
       _vel.set(P.vx[i], P.vy[i], P.vz[i]); const sp = _vel.length();
@@ -6863,22 +6875,22 @@ function render() {
     const gk = Math.min(1, G.grandT / GRAND_T), ge = gk * gk * (3 - 2 * gk), a = (1 - gk) * .6 - .3;
     camera.position.set(WCAM.x + (Math.sin(a) * 30 - WCAM.x) * ge, WCAM.y + (32 - WCAM.y) * ge + Math.sin(Math.PI * ge) * 9, WCAM.z + (-62 + Math.cos(a) * 28 - WCAM.z) * ge);
     camera.lookAt(_look.set(0, 3 + 3 * ge, WLOOK.z + (citAt()[0] + 6 - WLOOK.z) * ge)); } }
-  if (G.cine) cineCamera(); else if (G.end) endCamera(); else if (G.look) lookCamera(); // the opening cinematic's scripted shots, the ending's, and Rowan's look
-  { const nr = G.cine || G.fin || G.end || G.look ? .4 : 1.5; if (camera.near !== nr) { camera.near = nr; camera.updateProjectionMatrix(); } } // only the scripted close-ups need a near plane this near; the further out it sits, the finer the depth buffer
+  if (DIR.s) dirCamera(); else if (G.cine) cineCamera(); else if (G.end) endCamera(); // the opening cinematic's scripted shots, the ending's, and Rowan's look
+  { const nr = DIR.s || G.cine || G.fin || G.end ? .4 : 1.5; if (camera.near !== nr) { camera.near = nr; camera.updateProjectionMatrix(); } } // only the scripted close-ups need a near plane this near; the further out it sits, the finer the depth buffer
   // the sun's shadow area follows what the camera is looking at: the road in battle, the castle and citadel in the menu and on a win
-  { const fz = G.end ? (G.end.t < 22.35 ? -36 : -14) : G.cine ? -30 : G.mode === 'menu' ? -56 : (G.boomed && (G.mode === 'won' || G.mode === 'resultWin')) ? -16 + (-58 + 16) * ck : -16; const tz = sun.target.position.z + (fz - sun.target.position.z) * .12;
+  { const fz = DIR.s ? (DIR.s.boss || DIR.s.freeze ? -34 : -26) : G.end ? (G.end.t < 22.35 ? -36 : -14) : G.cine ? -30 : G.mode === 'menu' ? -56 : (G.boomed && (G.mode === 'won' || G.mode === 'resultWin')) ? -16 + (-58 + 16) * ck : -16; const tz = sun.target.position.z + (fz - sun.target.position.z) * .12;
     if (Math.abs(tz - sun.target.position.z) > .01) { sun.target.position.z = tz; sun.position.set(9, 26, tz + 22); sun.target.updateMatrixWorld(); G.shadowDirty = G.shadowAll = true; }
     // fit the shadow map to what's on screen (what cascaded shadows do in big engines): in a battle on a phone the view is
     // narrow, so the same 2048 map covers about half the area and its shadows come out about 1.6x sharper
     const fit = G.mode === 'play' && camera.aspect < .72, sW = fit ? 15 : 24, sH = fit ? 25 : 32, scm = sun.shadow.camera;
-    const cf = G.mode !== 'play' || G.introT > 0 || G.grandT > 0 || !!G.cine; if (G.castFar !== cf || G.castN !== FAR_CAST.length) { G.castFar = cf; G.castN = FAR_CAST.length; for (const o of FAR_CAST) o.castShadow = cf; G.shadowDirty = G.shadowAll = true; }
+    const cf = G.mode !== 'play' || G.introT > 0 || G.grandT > 0 || !!G.cine || !!DIR.s; if (G.castFar !== cf || G.castN !== FAR_CAST.length) { G.castFar = cf; G.castN = FAR_CAST.length; for (const o of FAR_CAST) o.castShadow = cf; G.shadowDirty = G.shadowAll = true; }
     if (scm.right !== sW) { scm.left = -sW; scm.right = sW; scm.top = sH; scm.bottom = -sH; scm.updateProjectionMatrix(); G.shadowDirty = G.shadowAll = true; } }
   if ((G.frameN = (G.frameN || 0) + 1) % (G.shEvery || 3) === 0 || (G.mode === 'won' ? G.frameN % 2 === 0 : G.shadowDirty)) { renderer.shadowMap.needsUpdate = true; G.shadowDirty = false; }
   spriteMat.uniforms.uSoft.value = foeSpriteMat.uniforms.uSoft.value = POST.on && !G.lowQ && POST.msaa ? 1 : 0; // soft, anti-aliased crowd edges only where there is multisampling to resolve them
   trimUploads(); GLOW.draw(); if (FUSE) FUSE.tick();
   if (BACK) BACK.before();
   if (LEAN && POST.on && !G.lowQ) { // (the same buffers, only a smaller part of them used: nothing is rebuilt)
-    const u = G.introT > 0 ? Math.min(1, G.introT / .5) : 1, k = G.grandT > 0 || G.mode === 'won' || G.cine || G.end || G.look ? .78 : G.introT > 0 ? 1 - .22 * u * u * (3 - 2 * u) : 1, w = POST.rt.width, h = POST.rt.height, kw = Math.round(w * k), kh = Math.round(h * k);
+    const u = G.introT > 0 ? Math.min(1, G.introT / .5) : 1, k = DIR.s || G.grandT > 0 || G.mode === 'won' || G.cine || G.end ? .78 : G.introT > 0 ? 1 - .22 * u * u * (3 - 2 * u) : 1, w = POST.rt.width, h = POST.rt.height, kw = Math.round(w * k), kh = Math.round(h * k);
     POST.rt.viewport.set(0, 0, kw, kh); POST.rt.scissor.set(0, 0, kw, kh); POST.mat.uniforms.uS.value.set(kw / w, kh / h); POST.extract.uniforms.uS.value.copy(POST.mat.uniforms.uS.value); }
   if (POST.on && !G.lowQ) { renderer.setRenderTarget(POST.rt); renderer.render(scene, camera); if (BACK) BACK.after(); POST.run(); }
   else renderer.render(scene, camera);
@@ -7000,8 +7012,9 @@ const POST = (() => {
       gl_FragColor = vec4(s, 1.0); }`);
   const copy = pass({ uMap: { value: null } }, 'uniform sampler2D uMap; varying vec2 vUv; void main() { gl_FragColor = texture2D(uMap, vUv); }');
   const mat = pass({ uMap: { value: rt.texture }, uTexel: { value: new THREE.Vector2(.25, .25) }, uSharp: { value: .5 }, uGlowA: { value: qA.texture }, uGlowB: { value: eA.texture }, uGlow: { value: 0 },
-      uShadow: { value: new THREE.Vector3(1, 1, 1) }, uHigh: { value: new THREE.Vector3(1, 1, 1) }, uSat: { value: 1 }, uCon: { value: 1 }, uHaze: { value: 0 }, uS: { value: new THREE.Vector2(1, 1) }, uWash: { value: 0 }, uVig: { value: new THREE.Vector4(0, 0, 0, 0) } }, `
-    uniform sampler2D uMap, uGlowA, uGlowB; uniform vec2 uTexel; uniform float uSharp, uGlow, uSat, uCon, uHaze, uWash; uniform vec2 uS; uniform vec3 uShadow, uHigh; uniform vec4 uVig; varying vec2 vUv;
+      uShadow: { value: new THREE.Vector3(1, 1, 1) }, uHigh: { value: new THREE.Vector3(1, 1, 1) }, uSat: { value: 1 }, uCon: { value: 1 }, uHaze: { value: 0 }, uS: { value: new THREE.Vector2(1, 1) }, uWash: { value: 0 }, uVig: { value: new THREE.Vector4(0, 0, 0, 0) },
+      uFilm: { value: 0 }, uBlurT: { value: null }, uFoc: { value: new THREE.Vector4(.5, .5, .5, 1) }, uFocB: { value: 0 }, uGT: { value: new THREE.Color() }, uGB: { value: new THREE.Color() }, uGA: { value: 0 }, uFVig: { value: 0 }, uBars: { value: 0 }, uFade: { value: 0 }, uFlare: { value: new THREE.Vector4(0, 0, 1, 0) }, uFlareC: { value: new THREE.Color() }, uAsp: { value: 1.7 } }, `
+    uniform sampler2D uMap, uGlowA, uGlowB; uniform vec2 uTexel; uniform float uSharp, uGlow, uSat, uCon, uHaze, uWash; uniform vec2 uS; uniform vec3 uShadow, uHigh; uniform vec4 uVig; uniform float uFilm, uFocB, uGA, uFVig, uBars, uFade, uAsp; uniform vec4 uFoc, uFlare; uniform vec3 uGT, uGB, uFlareC; uniform sampler2D uBlurT; varying vec2 vUv;
     void main() { vec2 q = min(vUv * uS, uS - uTexel);
       vec3 e = texture2D(uMap, q).rgb, col = e;
       if (uSharp > 0.0) {
@@ -7014,19 +7027,32 @@ const POST = (() => {
       }
       if (uGlow > 0.0) { vec3 g = (texture2D(uGlowA, vUv).rgb * .9 + texture2D(uGlowB, vUv).rgb * 1.3) * uGlow;
         col = 1.0 - (1.0 - col) * (1.0 - clamp(g, 0.0, 1.0)); } // screen the glow over the image, so it never clips to white
+      if (uFocB > 0.0) { vec2 d = vec2(vUv.x - uFoc.x, (vUv.y - uFoc.y) * uAsp / uFoc.w) / uFoc.z; col = mix(col, texture2D(uBlurT, vUv).rgb, smoothstep(.62, 1.25, length(d)) * uFocB); } // out of focus round the edges of what matters
       float l = dot(col, vec3(.299, .587, .114));
       col *= mix(uShadow, uHigh, smoothstep(.05, .85, l));
       col = mix(vec3(l), col, uSat); col = (col - .5) * uCon + .5;
       if (uWash > 0.0) col = mix(vec3(dot(col, vec3(.2126, .7152, .0722))), col, .55) * .82;
       if (uVig.a > 0.0) col = mix(col, uVig.rgb, uVig.a * clamp((length((vUv - vec2(.5, .54)) / vec2(.85, .70)) - .58) / .42, 0.0, 1.0));
       if (uHaze > 0.0) { float hz = min(1.0, length((vUv - vec2(.5, .6)) / vec2(.7071, .8485))); vec4 h0 = mix(vec4(.925, .769, .471, 1.0) * .35, vec4(.769, .549, .275, 1.0) * .8, hz) * uHaze; col = col * (1.0 - h0.a) + h0.rgb; }
+      if (uFilm > 0.0) { col = clamp(col, 0.0, 1.0); vec3 g = mix(uGB, uGT, vUv.y), sl = mix(col - (1.0 - 2.0 * g) * col * (1.0 - col), col + (2.0 * g - 1.0) * (sqrt(col) - col), step(.5, g)); col = mix(col, sl, uGA * uFilm);
+        if (uFlare.w > 0.0) { float fl = max(0.0, 1.0 - length((vUv - uFlare.xy) * vec2(1.0, uAsp)) / uFlare.z); col = 1.0 - (1.0 - col) * (1.0 - uFlareC * (fl * fl * uFlare.w * uFilm)); }
+        col = mix(col, vec3(.031, .008, .078), uFVig * uFilm * clamp((length(vec2(vUv.x - .5, (vUv.y - .52) * uAsp)) - .45) / (.72 * uAsp - .45), 0.0, 1.0)); }
+      if (uBars > 0.0 && (vUv.y < uBars || vUv.y > 1.0 - uBars)) col = vec3(.02, .016, .047);
+      if (uFade > 0.0) col = mix(col, vec3(.02, .016, .047), uFade);
       gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
     }`);
+  // the picture out of focus: a quarter the size, softened twice
+  const fA = small(), fB = small(), fcopy = pass({ uMap: { value: rt.texture }, uS: { value: new THREE.Vector2(1, 1) }, uTexel: { value: new THREE.Vector2() } }, `
+    uniform sampler2D uMap; uniform vec2 uS, uTexel; varying vec2 vUv; vec3 p(vec2 o) { return texture2D(uMap, min(vUv * uS + o * uTexel, uS - uTexel)).rgb; }
+    void main() { gl_FragColor = vec4((p(vec2(-1.0, -1.0)) + p(vec2(1.0, -1.0)) + p(vec2(-1.0, 1.0)) + p(vec2(1.0, 1.0))) * .25, 1.0); }`);
+  const soften = () => { if (fA.width !== qA.width || fA.height !== qA.height) { fA.setSize(qA.width, qA.height); fB.setSize(qA.width, qA.height); } fcopy.uniforms.uS.value.copy(mat.uniforms.uS.value); fcopy.uniforms.uTexel.value.copy(mat.uniforms.uTexel.value); draw(fcopy, fA);
+    for (const r of [1, 1.9]) { blur.uniforms.uMap.value = fA.texture; blur.uniforms.uDir.value.set(r / fA.width, 0); draw(blur, fB); blur.uniforms.uMap.value = fB.texture; blur.uniforms.uDir.value.set(0, r / fA.height); draw(blur, fA); } mat.uniforms.uBlurT.value = fA.texture; };
   const scene = new THREE.Scene(), quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat); quad.frustumCulled = false; scene.add(quad);
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   const draw = (m, target) => { quad.material = m; renderer.setRenderTarget(target); renderer.render(scene, cam); };
   return { on: !/[?&]nosharp/.test(location.search), msaa, rt, mat, scene, cam, qA, qB, eA, eB, extract, blur, copy,
     run() { // the scene is already drawn into rt
+      if (mat.uniforms.uFocB.value > 0) soften();
       if (mat.uniforms.uGlow.value > 0) {
         draw(extract, qA);
         blur.uniforms.uMap.value = qA.texture; blur.uniforms.uDir.value.set(1 / qA.width, 0); draw(blur, qB);
@@ -7074,7 +7100,7 @@ const GHUD = (() => {
   const lays = new Map();
   function lay(st, t) { const k = st + t; let L = lays.get(k); if (L) return L; const d = ST[st]; X.font = d.px + 'px ' + FONT; const m = X.measureText('Hg'), asc = m.fontBoundingBoxAscent || d.px * .93, desc = m.fontBoundingBoxDescent || d.px * .22, xs = []; for (let i = 0; i < t.length; i++) xs.push(X.measureText(t.slice(0, i)).width + i * d.ls); L = { t, xs, w: X.measureText(t).width + t.length * d.ls, asc, desc }; if (lays.size > 300) lays.clear(); lays.set(k, L); return L; }
   function build() {
-    S = Math.max(2, pixelRatio); live = false; AW = Math.max(1536, Math.ceil((box.fort.w + 12) * S) + 4); AH = Math.ceil(1300 * S * S / 4) + 64; cv.width = AW; cv.height = AH; X.imageSmoothingQuality = 'high'; cells = {}; lays.clear(); pen = { x: 1, y: 1, h: 0 };
+    S = Math.max(2, pixelRatio); live = false; AW = Math.max(1536, Math.ceil((box.fort.w + 12) * S) + 4); AH = Math.ceil(1780 * S * S / 4) + 64; cv.width = AW; cv.height = AH; X.imageSmoothingQuality = 'high'; cells = {}; lays.clear(); pen = { x: 1, y: 1, h: 0 };
     if (tex) tex.dispose(); tex = new THREE.CanvasTexture(cv); tex.flipY = false; tex.premultiplyAlpha = true; tex.generateMipmaps = false; tex.minFilter = tex.magFilter = THREE.LinearFilter; mat.uniforms.uMap.value = tex;
     cell('white', 4, 4, 0, c => { c.fillStyle = '#fff'; c.fillRect(-2, -2, 8, 8); });
     for (const [k, w, glow] of [['fort', box.fort.w, ''], ['wl', box.fort.w, 'rgba(255,80,60,.55)'], ['nest', box.nest.w, '']]) {
@@ -7139,7 +7165,7 @@ const GHUD = (() => {
         text('pct', _hud.giantTxt || '', cx, g.y + 60.5, .5); tf(1, 0, 0); }
       const cr = H.crowd; if (cr.on) { const t = String(_hud.crowdN == null ? '' : _hud.crowdN), L = lay('num', t), w = 2 + 6 + 24 + 4 + L.w + 12 + 2, x = cr.x - 40, y = cr.y - 46, h = box.crowdH; stretch(cells.pcrowd, x, y, w); put(cells.icrowd, x + 8, y + (h - 22) / 2); cr.pop = Math.max(0, cr.pop - dt / .35); if (cr.pop > 0) { const u = back(1 - cr.pop); tf(1.7 - .7 * u, x + 36 + L.w / 2, y + h / 2); } text('num', t, x + 36, y + h / 2, 0, cr.pop > 0 ? [1, .89 + .11 * (1 - cr.pop), .48 + .52 * (1 - cr.pop)] : W1); tf(1, 0, 0); }
     }
-    A = H.fl; for (const f of floats) if (f.t > 0 && f.sx !== undefined) { const el = f.el, gate = el.classList.contains('gate'), bmp = el.classList.contains('bump'); if (f.wasB !== bmp) { if (f.wasB !== undefined) f.pb = 1; f.wasB = bmp; } f.pb = Math.max(0, (f.pb || 0) - dt / .22); const k = f.sk * (gate ? 25 / 34 : 1) * (f.pb > 0 ? 1.35 - .35 * back(1 - f.pb) : 1); tf(k, f.sx, f.sy); text('float', String(el.textContent), f.sx, f.sy - 2, .5, rgb(el.style.color), f.so); } tf(1, 0, 0);
+    A = H.fl; for (const f of floats) if (f.t > 0 && f.sx !== undefined) { const el = f.el, gate = el.classList.contains('gate'), bmp = el.classList.contains('bump'); if (f.wasB !== bmp) { if (f.wasB !== undefined) f.pb = 1; f.wasB = bmp; } f.pb = Math.max(0, (f.pb || 0) - dt / .22); const k = f.sk * (gate ? 25 / 34 : 1) * (f.pb > 0 ? 1.35 - .35 * back(1 - f.pb) : 1); { const s = String(el.textContent), w = lay('float', s).w, kk = Math.min(k, (VIEW.w - 20) / w), hw = w * kk / 2 + 8, fx = clamp(f.sx, Math.min(hw, VIEW.w / 2), Math.max(VIEW.w - hw, VIEW.w / 2)); /* (a long line fits the screen) */ tf(kk, fx, f.sy); text('float', s, fx, f.sy - 2, .5, rgb(el.style.color), f.so); } } tf(1, 0, 0);
     if (!n) return; aP.updateRange.count = n * 8; aU.updateRange.count = n * 8; aC.updateRange.count = n * 16; aP.needsUpdate = aU.needsUpdate = aC.needsUpdate = true; geo.setDrawRange(0, n * 6); mat.uniforms.uSize.value.set(VIEW.w, VIEW.h);
     const ac = renderer.autoClear, sh = renderer.shadowMap.needsUpdate; renderer.autoClear = false; renderer.setRenderTarget(null); renderer.render(scn, cam); renderer.autoClear = ac; renderer.shadowMap.needsUpdate = sh;
   };
@@ -7204,10 +7230,10 @@ const BACK = (() => {
   const sameCam = () => { const a = camera.matrixWorld.elements, b = camera.projectionMatrix.elements; for (let i = 0; i < 16; i++) if (Math.abs(cm[i] - a[i]) > 1e-4 || Math.abs(cm[16 + i] - b[i]) > 1e-4) return false; return color && color.width === POST.rt.width && color.height === POST.rt.height; };
   // the shadow map still needs everything that casts, kept or not
   { const sr = renderer.shadowMap.render; renderer.shadowMap.render = function (li, sc, ca) { if (!X.still.length || sc !== scene) return sr.call(renderer.shadowMap, li, sc, ca); const m = ca.layers.mask; ca.layers.mask = m | MASK | 1; try { return sr.call(renderer.shadowMap, li, sc, ca); } finally { ca.layers.mask = m; } }; }
-  X.calm = () => (G.mode === 'play' || G.mode === 'menu' || G.mode === 'resultWin' || G.mode === 'resultLose') && !(G.introT > 0) && !(G.grandT > 0) && !G.cine && !G.end && !G.look && !G.fin && !G.lowQ && POST.on && !HEAL.on;
+  X.calm = () => (G.mode === 'play' || G.mode === 'menu' || G.mode === 'resultWin' || G.mode === 'resultLose') && !(G.introT > 0) && !(G.grandT > 0) && !DIR.s && !G.cine && !G.end && !G.fin && !G.lowQ && POST.on && !HEAL.on;
   X.before = () => { // just before the scene is drawn
     if ((G.t || 0) < X.t0) X.reset(); X.t0 = G.t || 0; const calm = X.calm(); // (a new level: watch it afresh)
-    if (!calm) { if (X.on) X.off(); hold = 0; if (G.mode === 'play') { if (!HEAL.on && !G.cine && (X.k = (X.k || 0) + 1) % 3 === 0) { scene.updateMatrixWorld(); X.watch(); } } else if (snap.size && G.mode !== 'lost' && G.mode !== 'won') X.reset(); return; }
+    if (!calm) { if (X.on) X.off(); hold = 0; if (G.mode === 'play') { if (!HEAL.on && !DIR.s && !G.cine && (X.k = (X.k || 0) + 1) % 3 === 0) { scene.updateMatrixWorld(); X.watch(); } } else if (snap.size && G.mode !== 'lost' && G.mode !== 'won') X.reset(); return; }
     camera.updateMatrixWorld();
     if (!X.on) { if (X.half) { X.half = false; if (!sameCam() || !bake(2)) { X.off(); hold = 0; return; } want = false; since = 0; }
       else { let still = true; const a = camera.matrixWorld.elements; for (let i = 0; i < 16; i++) if (Math.abs(lc[i] - a[i]) > 1e-4) { lc.set(a); still = false; break; } if ((X.k = (X.k || 0) + 1) % 3 === 0) { scene.updateMatrixWorld(); X.watch(); } if (!still) { hold = 0; return; } if (++hold < 12) return; if (bake(1)) X.half = true; else hold = 0; return; } }
@@ -7350,7 +7376,7 @@ function win() {
 function boom() {
   if (isBoss(G.level)) { healStart(); if (!G.sim) { const [cz, up] = citAt(); citFlash.position.set(0, 18 + up, cz + 4); CITF.t = 0; CITF.k = 1; } }
   for (const o of fortDress.children) if (o.userData.veil) o.visible = false; // the magic in the bone wall goes out
-  holdBlown(); burstHoard(); G.boomed = true; G.boom2 = 0; G.puff = 0; king.visible = false; P.n = 0; G.shake = 1.5; buzz([70, 30, 140]);
+  stageClear(true); holdBlown(); burstHoard(); G.boomed = true; G.boom2 = 0; G.puff = 0; king.visible = false; P.n = 0; G.shake = 1.5; buzz([70, 30, 140]);
   burst(0, 4.2, -40.8, ['#ffd84a', '#ffffff', '#ff7af8', '#ffb040'], 70, 15, { sph: true, life: .95, g: 4, sz: 2.4, kind: PK.SPARK }); // a burst of white-hot sparks (they catch the glow)
   burst(0, 4.5, -41.2, [FOE, FOE_FX, '#ffffff', FOE], 120, 12, { vy: 10, life: 1.5, g: 15, sz: 2, kind: PK.ROCK });   // bone chips and purple shards
   for (let k = 0; k < 3; k++) burst((k - 1) * 3.6, 2.5, FORT_Z - .4, ['#e2d6c4', '#cfc5b6', '#b9ad9c'], 16, 9 + k, { vy: 12, life: 2.4, g: 18, sz: 4.2, kind: PK.ROCK }); // big wall stones tumbling out
@@ -7484,7 +7510,7 @@ $('hatBtn').onclick = () => { const cur = KNIGHT_HATS[save.hat] ? save.hat : 'cr
 // pause: the button by the sound toggles (only during a battle), P or Esc, and automatically when the app goes to the background
 function pauseGame() {
   cannonEngine(false); if (MELEE.gain && actx) MELEE.gain.gain.setTargetAtTime(0, actx.currentTime, .05); // the battle layer hushes with the game
-  if (G.mode !== 'play' || G.paused || G.cine || G.fin) return; // (the intro and the finale replay can't be paused: they're short and skippable, and pausing them left them stuck)
+  if (G.mode !== 'play' || G.paused || G.cine || G.fin || DIR.s) return; // (the intro and the finale replay can't be paused: they're short and skippable, and pausing them left them stuck)
   G.paused = true; G.firing = false; $('pauseSub').textContent = (G.cfg.boss ? 'Boss · ' : 'Level ') + G.level;
   $('pause').classList.add('on'); gameEl.classList.add('overlay'); if (actx && actx.state === 'running') actx.suspend();
 }
@@ -7683,11 +7709,11 @@ function frame(now) {
   requestAnimationFrame(frame);
   const raw = (now - last) / 1000; let dt = Math.min(0.05, raw); last = now; adaptResolution(raw);
   if (LEAN) { const q = raw * 60, n = Math.round(q); if (n >= 1 && n <= 3 && Math.abs(q - n) < .3) dt = n / 60; } // the phone's clock is only good to a millisecond: move by whole sixtieths, so nothing shivers
-  if (LEAN && (G.mode === 'menu' || G.mode === 'resultWin' || G.mode === 'resultLose') && !G.cine && !G.end) { if ((G.halfN = !G.halfN)) { G.halfDt = dt; return; } dt += G.halfDt || 0; } G.halfDt = 0;
+  if (LEAN && (G.mode === 'menu' || G.mode === 'resultWin' || G.mode === 'resultLose') && !G.cine && !G.end && !DIR.s && DIR.fade < .01) { if ((G.halfN = !G.halfN)) { G.halfDt = dt; return; } dt += G.halfDt || 0; } G.halfDt = 0;
   if (keys.ArrowLeft) G.lx = clamp(G.lx - dt * 9, -LANE + .6, LANE - .6);
   if (keys.ArrowRight) G.lx = clamp(G.lx + dt * 9, -LANE + .6, LANE - .6);
   const wt = G.winT; // slow motion on the winning hit and again as the king pops
-  if (!G.paused) { update(dt * (G.mode === "won" ? winSpeed(wt) : 1)); render(); G.pauseDrawn = false; }
+  if (!G.paused) { update(dt * (G.mode === "won" ? winSpeed(wt) : 1) * (DIR.s ? DIR.speed : 1)); render(); G.pauseDrawn = false; }
   else if (!G.pauseDrawn) { render(); G.pauseDrawn = true; } // paused: the scene holds still, so it is drawn once, not every frame
 }
 
@@ -7725,6 +7751,135 @@ window.__CR = {
   },
 };
 
+/* ---------------- the director ----------------
+   Every scene is a list of shots: where the camera goes (along a straight or a curved line), what it looks at, its lens, what is in
+   focus, and the light of the picture (a grade, darker corners, a flare). The bars, the blur, the grade and the fades are drawn in
+   the picture's last pass, only while a scene runs. A scene can freeze the battle, slow time and say a line; a tap skips it. */
+const FGRADE = { // [light above, light below, how much]
+  gold: ['#ff8a4a', '#3a1060', .5], storm: ['#b060ff', '#120630', .5], red: ['#ff6a3a', '#2a0a50', .5], holy: ['#ffd070', '#4a2070', .5], dusk: ['#c070ff', '#1a0838', .45], dark: ['#a030ff', '#08021a', .75], dawn: ['#ffb060', '#1a2a80', .5], ice: ['#9fd8ff', '#1a1458', .5], fire: ['#ff7a2a', '#30083a', .5], last: ['#ffd08a', '#30104a', .55], sand: ['#ff9a3a', '#4a1048', .45]
+};
+const WGRADE = ['red', 'sand', 'ice', 'fire', 'storm'];
+const DIR = { s: null, t: 0, ev: {}, speed: 1, bars: 0, amt: 0, fade: 0, fadeTo: 0, fov0: 0, held: false, q: null };
+const dP = p => typeof p === 'function' ? p() : p;
+function stageClear(on) { for (const g of G.gates) g.mesh.visible = !on; if (laneWalls) laneWalls.visible = !on; sawGroup.visible = aim.visible = !on; } // the boards, the dividers and the saws leave the picture
+function dirTitle(a, b) { const e = $('dirT'); if (!a) { e.classList.remove('on'); return; } e.querySelector('i').textContent = b || ''; const q = e.querySelector('b'); q.textContent = a; q.style.fontSize = 'min(' + Math.min(17, 112 / Math.max(6, a.length > 11 ? Math.max(...a.split(' ').map(w => w.length), Math.ceil(a.length / 2)) : a.length)).toFixed(1) + 'cqw,96px)'; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); }
+function dirStart(s) {
+  if (DIR.s) dirStop(true); Object.assign(DIR, { s, t: 0, ev: {}, speed: 1, fov0: camera.fov, held: G.firing, q: null }); G.firing = false; G.toastKeep = 0;
+  gameEl.classList.add('cinema'); const c = $('cine'); c.classList.add('on', 'dir'); c.classList.toggle('short', s.len < 2.6); endCap(''); dirTitle(); if (!s.keepStage) stageClear(true);
+  s.pal = paladin.visible; if (s.noPal) paladin.visible = false; if (s.fadeIn) DIR.fade = 1; DIR.fadeTo = 0; if (s.start) s.start();
+}
+function dirStop(skipped) {
+  const s = DIR.s; if (!s) return; DIR.s = null; DIR.speed = 1; DIR.fadeTo = 0; gameEl.classList.remove('cinema'); $('cine').classList.remove('on', 'dir', 'short'); endCap(''); dirTitle(); stageClear(false); if (s.noPal) paladin.visible = s.pal;
+  if (camera.fov !== DIR.fov0) { camera.fov = DIR.fov0; camera.updateProjectionMatrix(); } if (s.freeze) G.firing = DIR.held; if (s.done) s.done(skipped);
+}
+function dirAbort() { const s = DIR.s; if (!s) { DIR.fade = DIR.fadeTo = 0; return; } const d = s.done; s.done = null; dirStop(true); if (s.abort) s.abort(); DIR.fade = DIR.bars = DIR.amt = 0; s.done = d; } // the level is set up again under it
+addEventListener('pointerup', () => { DIR.held = false; }, true); addEventListener('pointercancel', () => { DIR.held = false; }, true);
+function dirTick(dt) {
+  const s = DIR.s, real = dt / DIR.speed; DIR.t += real; const t = DIR.t, once = (k, at) => t >= at && !DIR.ev[k] && (DIR.ev[k] = true);
+  if (s.tick) s.tick(t, real, once); if (DIR.s === s && t >= s.len) dirStop(false);
+}
+function dirFilm(dt) { // the bars slide, the light of a scene comes and goes, fades to black
+  const on = DIR.s ? 1 : 0, to = on * .085; if (!on && DIR.bars < .0005 && DIR.amt < .01 && DIR.fade < .004 && !DIR.fadeTo) { if (DIR.live) { DIR.live = false; const u = POST.mat.uniforms; DIR.bars = DIR.amt = DIR.fade = 0; u.uFilm.value = u.uBars.value = u.uFade.value = u.uFocB.value = 0; } return; }
+  const r = dt / (DIR.s ? DIR.speed : 1), k = Math.min(1, r * 8); DIR.live = true; DIR.bars += (to - DIR.bars) * k; DIR.amt += (on - DIR.amt) * (on ? 1 : Math.min(1, r * 6)); DIR.fade += clamp(DIR.fadeTo - DIR.fade, -r * 2.6, r * 3.4);
+  const u = POST.mat.uniforms; u.uBars.value = DIR.bars; u.uFilm.value = DIR.amt; u.uFade.value = DIR.fade; if (!on) u.uFocB.value = 0;
+}
+const _d3 = new THREE.Vector3();
+function dirCamera() {
+  const s = DIR.s, t = DIR.t; let q = s.shots[s.shots.length - 1]; for (const k of s.shots) if (t < k.t[1]) { q = k; break; }
+  const v = clamp((t - q.t[0]) / (q.t[1] - q.t[0]), 0, 1), e = q.ease === 'lin' ? v : q.ease === 'out' ? 1 - (1 - v) * (1 - v) : q.ease === 'in' ? v * v : v * .35 + .65 * v * v * (3 - 2 * v);
+  const mix = P => { const a = dP(P[0]); if (P.length < 2) return a; const b = dP(P[P.length - 1]); if (P.length === 3) { const c = dP(P[1]), n = 1 - e; return [0, 1, 2].map(i => n * n * a[i] + 2 * n * e * c[i] + e * e * b[i]); } return [0, 1, 2].map(i => a[i] + (b[i] - a[i]) * e); };
+  camera.position.set(...mix(q.pos)); camera.lookAt(_look.set(...mix(q.at))); if (q.roll) camera.rotateZ(q.roll);
+  const a = camera.aspect, f0 = q.fov[0] + ((q.fov.length > 1 ? q.fov[1] : q.fov[0]) - q.fov[0]) * e, f = a < .5874 ? Math.atan(Math.tan(f0 * Math.PI / 360) * Math.pow(.5874 / a, .62)) * 360 / Math.PI : a > .72 ? f0 * .86 : f0; // (a taller phone sees a little more, so the sides are not cut)
+  if (Math.abs(camera.fov - f) > .01) { camera.fov = f; camera.updateProjectionMatrix(); }
+  const u = POST.mat.uniforms; u.uAsp.value = 1 / a; if (DIR.q !== q) { DIR.q = q; const g = FGRADE[q.grade] || FGRADE.storm; u.uGT.value.set(g[0]); u.uGB.value.set(g[1]); u.uGA.value = q.gk !== undefined ? q.gk : g[2]; u.uFVig.value = q.vig === undefined ? .62 : q.vig; if (q.foc) u.uFoc.value.set(q.foc[0], 1 - q.foc[1], q.foc[2], q.foc[3] || 1); u.uFocB.value = q.foc && !G.lowQ ? q.blur || 1 : 0; }
+  const fl = q.flare; if (fl) { let x = fl.x, y = 1 - fl.y; if (fl.at) { _d3.set(...dP(fl.at)); camera.updateMatrixWorld(); _d3.project(camera); x = _d3.x * .5 + .5; y = _d3.y * .5 + .5; } u.uFlareC.value.set(fl.c || '#ffce6a'); u.uFlare.value.set(x, y, fl.r || .6, dP(fl.k === undefined ? .45 : fl.k)); } else u.uFlare.value.w = 0;
+}
+// ---- sounds of a scene: a held chord of strings, a rush of air that rises, a hit
+function pad(fs, d, vol, cut = 1300, at = 0) { if (!actx || muted) return; const t = actx.currentTime + .02 + at, fl = actx.createBiquadFilter(), g = actx.createGain(); fl.type = 'lowpass'; fl.frequency.setValueAtTime(cut * .4, t); fl.frequency.linearRampToValueAtTime(cut, t + d * .5); g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(vol, t + Math.min(.9, d * .35)); g.gain.setValueAtTime(vol, t + d * .65); g.gain.linearRampToValueAtTime(.0001, t + d); for (const f of fs) for (const m of [1, 1.006]) { const o = actx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f * m; o.connect(fl); o.start(t); o.stop(t + d + .05); } fl.connect(g); g.connect(actx.destination); }
+function swell(d, vol, f0 = 300, f1 = 3000, at = 0) { if (!actx || muted) return; const t = actx.currentTime + at, s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(); s.buffer = noiseBuf(actx); s.loop = true; f.type = 'bandpass'; f.Q.value = .8; f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + d); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + d * .96); g.gain.linearRampToValueAtTime(.0001, t + d); s.connect(f); f.connect(g); g.connect(actx.destination); s.start(t); s.stop(t + d + .02); }
+function hitBoom(v = 1) { tone(46, 1.2, 'sine', .34 * v, .45); tone(92, .3, 'triangle', .1 * v, .5); noise(.5, .13 * v, 'lowpass', 1500, 110); }
+function shine(v = 1, f = 1046) { [1, 1.26, 1.5, 2].forEach((m, k) => setTimeout(() => tone(f * m, .5, 'triangle', .03 * v), k * 60)); }
+const hold = s => { if (actx) MUS.holdUntil = Math.max(MUS.holdUntil, actx.currentTime + s); }; // the band waits
+// ---- a warlord comes down: he rises, his eyes light, he leaps, he lands, his name
+const worldPt = (o, f = [0, 5, -40]) => { if (!o) return f; o.getWorldPosition(_d3); return [_d3.x, _d3.y, _d3.z]; };
+function bossScene(i) {
+  if (G.sim || G.fin || G.cine || G.end || DIR.s || G.mode !== 'play') return false;
+  const W = WARLORDS[i], king = i === 4, onWall = king ? HOLD.i < 0 && kingRig : HOLD.b && HOLD.i === i, key = 'b' + G.level, seen = save.scenes && save.scenes[key], full = onWall && !seen && !onRoadLv(G.level);
+  if (!onWall && king) return false; resetKingShots(); hideTelegraphs();
+  const H = onWall ? worldPt(king ? kingHead : HOLD.b.fx.head) : [0, 4, FORT_Z + .5], hall = inHall(), LZ = king ? (hall ? -34.1 : FORT_Z + 2.3) : onWall ? FORT_Z + 2.3 : FORT_Z + 3.8, lead = onWall ? 1.1 : 1.5;
+  const EY = H[1] + (king ? 1.42 : 1.5), A = full ? 1.25 : 0, B = full ? 2.1 : 0, L = B + lead, len = L + (full ? 1.5 : .85), gr = WGRADE[i];
+  const head = () => WL.b && WL.on ? worldPt(WL.b.fx.head, H) : H, RXM = RX_MOVES[king ? -1 : i], s = { len, freeze: true, wl: false, noAnts: true, noPal: true, shots: [], boss: true, foeZ: LZ + 4.5 };
+  if (full) s.shots.push({ t: [0, A], pos: king && hall ? [[2.9, EY - 2.6, H[2] + 8.9], [2.1, EY - 2.0, H[2] + 8.2]] : [[2.9, H[1] - 3.1, H[2] + 14.6], [2.2, H[1] - 2.5, H[2] + 12.4]], at: [[0, EY - (king && hall ? .6 : 1.5), H[2]], [0, EY - (king && hall ? .2 : 1.0), H[2]]], fov: king && hall ? [60, 54] : [44, 39], foc: [.5, .4, .62, 1.25], grade: gr, flare: { x: .5, y: .1, r: .7, k: .3, c: W.col } },
+    { t: [A, B], pos: [[1.15, EY - .45, H[2] + 8.4], [.95, EY - .3, H[2] + 7.4]], at: [[-.05, EY - .1, H[2]], [-.05, EY, H[2]]], fov: [29, 27], foc: [.5, .42, .5], grade: gr, vig: .75, ease: 'lin' });
+  s.shots.push({ t: [B, L], pos: [[2.5, .85, LZ + 10.4], [2.2, .75, LZ + 9.4]], at: [() => { const h = head(); return [h[0] * .6, Math.max(2.6, h[1] - .6), Math.min(h[2], LZ + .5)]; }], fov: [50, 46], grade: gr, vig: .6 },
+    { t: [L, len], pos: [[-2.1, .95, LZ + 10.6], [-1.7, 1.15, LZ + 9.4]], at: [() => { const h = head(); return [h[0], h[1] - .55, h[2]]; }], fov: [45, 42], foc: [.5, .42, .7, 1.25], blur: .8, grade: gr, flare: { x: .5, y: .18, r: .7, k: .3, c: W.col } });
+  s.start = () => { hold(len + .2); if (full) { tone(55, 2, 'sawtooth', .05, .8); swell(B, .1, 200, 2600); buzz(40); } };
+  s.tick = (t, dt, once) => {
+    if (full && once('mv', .05) && RXM) { RX.mv = RX.last = RXM[king ? 0 : i === 3 ? 1 : 0]; RX.t = .2; RX.w = 1; RX.once = {}; RX.side = 1; }
+    if (full && once('eyes', A)) { if (king) cineEyes(true); else RX.glowTo = 2; hitBoom(.7); kingVoice('growl', .7); }
+    if (full && !king && t > A && t < B) { RX.glow = 1.6; if (HOLD.b) rxGlow(HOLD.b, 1.6); }
+    if (once('go', B)) { if (king) cineEyes(false); rxReset(); s.wl = true; startWarlord(king ? 4 : i === worldOf(G.level) % WARLORDS.length && !isFinale() ? undefined : i); swell(lead * .9, .08, 2200, 300); if (!WL.on) { dirStop(true); return; } }
+    if (once('land', L)) { hitBoom(1); smoke(0, .4, LZ, '#cbbfae', 4.2, 1.2); for (let k = 0; k < 14; k++) { const a = k / 14 * 6.283; burst(Math.sin(a) * 1.6, .2, LZ + Math.cos(a) * 1.6, ['#e2d6c4', '#b9ad9c', W.col], 3, 5, { vy: 3, life: .9, g: 9, sz: 1.8, kind: PK.ROCK }); } }
+    if (once('name', L + .18)) { dirTitle(wlName(W), W.title); brass(98, .9, .06); brass(147, .9, .05, .02); tone(62, .9, 'sawtooth', .08, .7); kingVoice('roar', .9); }
+  };
+  s.done = skipped => { if (king) cineEyes(false); if (skipped && !WL.on) { rxReset(); startWarlord(king ? 4 : i === worldOf(G.level) % WARLORDS.length && !isFinale() ? undefined : i); } if (WL.on && (WL.state === 'leap' || WL.state === 'enter')) { WL.y = 0; WL.z = LZ; WL.state = 'roar'; WL.st = 0; wlAct('roar'); } save.scenes = save.scenes || {}; if (!G.practice) { save.scenes[key] = 1; persist(); } };
+  dirStart(s); return true;
+}
+// ---- and falls: time slows, he goes down on one knee, says his last words, and goes out as light
+let sceneGlow = null; const glowAt = (x, y, z, sc, op, col = '#ffdf9a') => { if (!sceneGlow) { sceneGlow = halo('#ffdf9a', 5, 0, 0, 0, scene, 0); sceneGlow.userData.dyn = true; } sceneGlow.visible = op > .003; sceneGlow.position.set(x, y, z); sceneGlow.scale.setScalar(sc); sceneGlow.material.opacity = op; sceneGlow.material.color.copy(C(col)); };
+function kneelPose(b, k, look = 0) { poseFig(b, [...POSE.kneel.filter(p => p[0] !== 'head'), ['head', X1, .04 + .3 * k - look], ['spine', X1, .1 * k]]); }
+function deathScene() {
+  if (G.sim || G.fin || G.end || DIR.s || G.mode !== 'play' || !WL.b) return false;
+  const b = WL.b, W = WL.def, L = WALL_SAY[WARLORDS.indexOf(W)], line = L && !WL.lap && L.last, x = WL.x, z = WL.z, h0 = worldPt(b.fx.head, [x, 4, z]), hy = h0[1], A = .95, B = line ? 3.35 : 2.2, len = B + 1.65;
+  const s = { len, freeze: true, wl: false, noAnts: true, noFoes: true, noPal: true, shots: [
+    { t: [0, A], pos: [[x + 3.6, 1.1, z + 7.2], [x + 3.1, 1.25, z + 6.6]], at: [[x, hy - 1.1, z], [x, hy - 1.3, z]], fov: [46, 43], grade: WGRADE[WARLORDS.indexOf(W)], roll: .05 },
+    { t: [A, B], pos: [[x + 2.5, 1.3, z + 9.4], [x + 1.8, 1.6, z + 8.3]], at: [[x + .05, hy * .62, z], [x + .05, hy * .7, z]], fov: [38, 36], foc: [.5, .44, .6, 1.25], grade: 'last', flare: { x: .5, y: .2, r: .8, k: .42, c: '#ffe09a' } },
+    { t: [B, len], pos: [[x + 1.4, 1.0, z + 11.5], [x + .6, 1.9, z + 12.6]], at: [[x, hy * .6, z], [0, 5.6, FORT_Z - 2]], fov: [44, 50], grade: 'last', vig: .55 }] };
+  s.start = () => { DIR.speed = .28; hold(len + .4); b.g.visible = true; b.mixer.stopAllAction(); WL.cur = null; wlAct(b.acts.hit ? 'hit' : 'die', .05); cineFlash(.8, 420); hitBoom(1); kingVoice('no', .7); WL.state = 'over'; resetKingShots(); };
+  s.tick = (t, dt, once) => {
+    if (t < A) b.mixer.update(dt * .5); else if (t < B) { const u = clamp((t - A) / (B - A), 0, 1); kneelPose(b, u, .18 * Math.sin(Math.min(1, u * 1.6) * Math.PI)); }
+    if (once('kneel', A)) { DIR.speed = 1; P.n = 0; pad([130.8, 196, 261.6, 329.6], len - A + .6, .026, 1500); for (const o of b.fx.orbit ? [b.fx.orbit] : []) o.visible = false; WL.y = 0; b.g.position.set(x, 0, z); b.g.rotation.set(0, 0, 0); }
+    if (t > A && t < B) { const u = (t - A) / (B - A); glowAt(x, hy * .5, z - .6, 5 + 3 * u, .22 + .3 * u); if (rand() < dt * (8 + 40 * u)) burst(x + (rand() - .5) * 2.6, .4 + rand() * hy * .9, z + .5 + rand() * .5, ['#ffe6a0', '#ffffff', W.col], 1, .35, { vy: 1.5, life: 1.7, g: -.5, sz: 1, kind: PK.SPARK }); }
+    if (line && once('say', A + .55)) { endCap('“' + line.charAt(0) + line.slice(1).toLowerCase() + '”'); kingVoice('chuckle', .0001); tone(174 * L.k, 1.1, 'sine', .05, .82); }
+    if (once('out', B)) { endCap(''); b.g.visible = false; hitBoom(.6); shine(1.2, 784); cineFlash(.55, 700); buzz([40, 60, 120]); burst(x, hy * .5, z, ['#ffe6a0', '#ffffff', '#ffd23f', W.col], 90, 6, { sph: true, life: 1.8, g: -1.2, sz: 1.5, kind: PK.SPARK }); for (let k = 0; k < 24; k++) burst(x + (rand() - .5) * 1.4, rand() * hy, z, ['#fff6d0', '#ffe27a'], 1, .7, { vy: 5 + rand() * 4, life: 1.8, g: 0, sz: 1.3, kind: PK.SPARK }); }
+    if (t > B) { const u = (t - B) / (len - B); glowAt(x, hy * .5 + u * 5, z - .6, 9 + 8 * u, .9 * Math.max(0, 1 - u * 1.5)); }
+    if (once('crack', B + .75)) { hitBoom(.8); smp('castleHit', .7, 0); for (let k = -1; k < 2; k++) { burst(k * 3.4, 3 + rand() * 1.5, FORT_Z + .5, ['#e2d6c4', '#b9ad9c', '#cfc5b6'], 18, 7, { vy: 5, life: 1.3, g: 15, sz: 2.2, kind: PK.ROCK }); smoke(k * 3.2, 2.2, FORT_Z + .6, '#b4a9c0', 2.4, 1); } for (let k = 0; k < 40; k++) burst((rand() - .5) * 11, .6 + rand() * 5.4, FORT_Z + 1.2, ['#d070ff', '#ffffff', '#8a30d0'], 1, 3, { vy: 2, life: .9, g: 6, sz: 1.6, kind: PK.SPARK }); G.fortFlash = 1; } // his ward breaks, and the walls behind it crack
+  };
+  s.done = () => { DIR.speed = 1; glowAt(0, 0, 0, 1, 0); b.g.visible = false; if (b.fx.orbit) b.fx.orbit.visible = true; b.mixer.stopAllAction(); WL.on = false; WL.state = 'over'; popText('−' + Math.round(G.fortMax * WL_FALL), 0, 4.5, FORT_Z + 1.5, '#ffd23f'); };
+  s.abort = () => { glowAt(0, 0, 0, 1, 0); if (b.fx.orbit) b.fx.orbit.visible = true; };
+  dirStart(s); return true;
+}
+// ---- the palace look: after each warlord Rowan rides up, lifts his head, and the crown shines over the citadel's gate
+const GOLDSKY = ['#46296e', '#b4567f', '#ffb56e'];
+function goldSky(L, k) { // the hour after a victory: the sky, the haze and the sun go gold (and back)
+  if (!L.sky0) { const W = WORLDS[worldIdx], st = (W.stages && W.stages[0]) || {}; L.sky0 = (st.sky || W.sky).slice(); L.fog = scene.fog.color.clone(); L.hemi = hemi.color.clone(); L.hi = hemi.intensity; L.sun = sun.color.clone(); L.si = sun.intensity; }
+  const n = L.sky0.length; paintSky(L.sky0.map((c, j) => '#' + new THREE.Color(c).lerp(new THREE.Color(GOLDSKY[Math.round(j * 2 / Math.max(1, n - 1))]), k).getHexString()));
+  scene.fog.color.copy(L.fog).lerp(wc.copy(C('#d98a86')), k * .8); hemi.color.copy(L.hemi).lerp(wc.copy(C('#ffc0a8')), k * .7); hemi.intensity = L.hi * (1 - .1 * k); sun.color.copy(L.sun).lerp(wc.copy(C('#ffb878')), k * .85); sun.intensity = L.si; G.shadowDirty = true;
+}
+function headTurn(k) { if (!palRig) return; const R = palRig.userData, h = R.hd || (R.hd = palRig.getObjectByName('head')); if (!h) return; if (!R.hq) R.hq = h.quaternion.clone(); h.quaternion.copy(R.hq).multiply(_rxq.setFromEuler(_rxe.set(k, 0, 0))); }
+function startLook() {
+  if (G.lookDone || save.crowned || G.sim || G.practice || G.fin || !isBoss(G.level) || G.level >= LAP_LEN || !palReady() || !palArt || worldIdx >= HALLW || G.worldOverride != null) return false;
+  G.lookDone = true; buildPaladin(); if (!horse) return false; const [cz, up] = citAt(), w = worldOf(G.level), next = WORLDS[w + 1], CR = [0, 10.6 + up, cz + 5.8], gl = [halo('#ffd84a', 7, ...CR, scene, 0), halo('#ffffff', 2.4, CR[0], CR[1], CR[2] + .2, scene, 0)], SKY = {};
+  const T = [1.9, 3.9, 6.4, 8.1]; let gait = 0, shadeT = 0, fl = 0;
+  const put = (x, z, ry) => { paladin.position.set(x, 0, z); paladin.rotation.y = ry; };
+  const s = { len: T[3], keepGold: true, shots: [
+    { t: [0, T[0]], pos: [[-1.75, .42, -20.4], [-1.5, .55, -19.7]], at: [[.35, 1.5, -24], [.35, 2.2, -28]], fov: [52, 50], foc: [.6, .6, .5, 1.25], blur: .85, grade: 'gold', flare: { at: CR, r: .5, k: () => .25 } },
+    { t: [T[0], T[1]], pos: [[-5.25, 3.55, -29.5], [-4.95, 3.85, -29.1]], at: [[.12, 3.85, -25], [.12, 4.15, -25]], fov: [31, 28], foc: [.5, .42, .46], grade: 'gold', flare: { x: .04, y: .28, r: .62, k: () => .12 + .5 * fl, c: '#ffd98a' } },
+    { t: [T[1], T[2]], pos: [[1.0, .8, -10.2], [1.15, 1.1, -8.4], [1.3, 2.1, -7.2]], at: [[.5, 5.8 + up * .3, -60], [.45, 6.9 + up * .5, -60]], fov: [39 - w * .6, 36 - w], grade: 'gold', vig: .55, flare: { at: CR, r: .62, k: () => .15 + .55 * fl } },
+    { t: [T[2], T[3]], pos: [[2.75, .5, -14.6], [3.05, .5, -15.0]], at: [[-.25, 4.1, -26], [-.05, 4.4, -26]], fov: [50, 48], grade: 'gold', flare: { x: .78, y: .32, r: .7, k: .42, c: '#ffb45a' } }] };
+  s.start = () => { paladin.visible = true; paladin.scale.setScalar(1.5); for (const o of paladin.children) if (o.isSprite) o.visible = false; ants.n = 0; P.n = 0; horse.body.rotation.x = 0; hold(T[3] + .4); pad([98, 146.8, 196, 246.9], T[1] + .2, .022, 1100); put(.42, -16.6, Math.PI); for (let k = 0; HEAL.on && HEAL.t < 3.4 && k < 80; k++) healTick(.1); goldSky(SKY, 1); DIR.fade = .6; };
+  s.tick = (t, dt, once) => {
+    if (palMixer) { palMixer.update(dt); const R = palRig.userData, ul = R.ul || (R.ul = palRig.getObjectByName('upperlegl')), ur = R.ur || (R.ur = palRig.getObjectByName('upperlegr')), sit = R.sit || .55; if (ul) ul.rotation.z += sit; if (ur) ur.rotation.z -= sit; if (R.cape) R.cape.rotation.x = .55 + Math.sin(t * 2.2) * .1; }
+    headTurn(0); if (horse.mane) for (let k = 0; k < horse.mane.length; k++) horse.mane[k].rotation.z = Math.sin(t * 3 + k) * .1; if (horse.flag) horse.flag.rotation.y = Math.sin(t * 2.6) * .22;
+    if (t < T[0]) { const u = clamp(t / (T[0] - .25), 0, 1), e = 1 - (1 - u) * (1 - u), z = -16.6 - 8.4 * e, sp = (1 - u); put(.42 - .32 * u, z, Math.PI + .16 * u); gait += dt * (3.5 + 8 * sp); horseGait(u < 1 ? gait : 0, 1); headTurn(.22); if (u < .95 && rand() < dt * 14) burst(.4 + (rand() - .5) * .8, .12, z + .6, ['#c8bcaa', '#e8dcc8'], 1, 1.2, { vy: 1.2, life: .6, g: 3, sz: 1.3, kind: PK.ROCK }); if (u < .9 && rand() < dt * 9) sfx('hoof', 170, () => noise(.05, .06, 'lowpass', 900, 200)); }
+    else if (t < T[1]) { if (once('face', T[0])) { horseGait(0, 1); put(.1, -25, Math.PI + .16); } const u = cineEase(clamp((t - T[0] - .35) / 1.1, 0, 1)); headTurn(.3 - .44 * u); fl = u; if (once('gleam', T[0] + .7)) shine(1, 1318); }
+    else if (t < T[2]) { if (once('crane', T[1])) { put(-1.05, -25, Math.PI - .25); pad([130.8, 196, 261.6, 329.6, 392], T[3] - T[1] + .5, .024, 2400); } headTurn(-.14); { const q = clamp((t - T[1]) / 1.1, 0, 1); fl = q * q * (3 - 2 * q) * (.86 + .14 * Math.sin(t * 2.4)); } horse.body.position.y = Math.sin(t * 2.1) * .02; for (const [o, sc] of [[gl[0], 7], [gl[1], 2.4]]) { o.material.opacity = (o === gl[0] ? .9 : 1) * (.25 + .75 * fl); o.scale.setScalar(sc * (.8 + .7 * fl)); } }
+    else { if (once('rear', T[2])) { put(.1, -25, Math.PI - .75); chargeCall(); } const u = t - T[2], k = u < .5 ? cineEase(u / .5) : u > 1.15 ? Math.max(0, 1 - (u - 1.15) / .4) : 1; horse.body.rotation.x = -.5 * k; horse.body.position.y = .3 * k; for (const L of palLegs) { L.hip.rotation.x = L.front ? -1.1 * k + .25 * k * Math.sin(u * 9 + L.ph) : .28 * k; L.knee.rotation.x = L.front ? 1.2 * k : 0; } if (once('name', T[2] + .42)) { dirTitle(next.name, 'NEXT'); hitBoom(.6); } if (once('black', T[3] - .32)) DIR.fadeTo = 1; }
+  };
+  const tidy = () => { headTurn(0); for (const g of gl) scene.remove(g); goldSky(SKY, 0); paladin.visible = false; paladin.scale.setScalar(PAL_S); paladin.rotation.y = Math.PI; horse.body.rotation.x = horse.body.position.y = 0; horseGait(0, 1); for (const L of palLegs) L.hip.rotation.x = L.knee.rotation.x = 0; for (const o of paladin.children) if (o.isSprite) o.visible = true; };
+  s.done = () => { tidy(); showResult(true); }; s.abort = tidy;
+  dirStart(s); return true;
+}
 /* ---------------- the opening cinematic ----------------
    About seven seconds, on the first launch of each day (tap to skip): thunder over the Bone King's land and a low swoop over
    his horde to his castle; the King rising silently on his walls, eyes blazing (or, once a warlord holds the wall, the citadel's); a cut to your royal cannon firing the
@@ -7784,7 +7939,7 @@ function endCine() {
   $('menu').classList.add('slam'); setTimeout(() => $('menu').classList.remove('slam'), 1000);
   setTimeout(() => { tone(70, .5, 'sine', .22, .5); noise(.3, .1, 'lowpass', 1500, 200); }, 250); // the logo lands
 }
-$('cine').addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); if (G.cine && G.cine.t > .4) endCine(); else if (G.end) { if (G.end.t > .6) finishEnding(); } else if (G.fin && G.fin.t > .4) endFinale(); });
+$('cine').addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); if (DIR.s) { if (DIR.t > .45) dirStop(true); } else if (G.cine && G.cine.t > .4) endCine(); else if (G.end) { if (G.end.t > .6) finishEnding(); } else if (G.fin && G.fin.t > .4) endFinale(); });
 
 /* ---------------- level 50 and the ending ----------------
    Shades of the four warlords, then the Bone King. Beaten, he drops to one knee and SEND lights up: the player strikes the last
@@ -7930,19 +8085,6 @@ function dressRider() {
     hangArt(r, A, A.mat); hangArt(r, { geo: palArt.geo, J: { nodes: palArt.J.nodes.filter(n => n.name === 'lance' || n.name === 'shield'), glow: [] } }, palArt.mat); r.position.copy(p0); r.scale.copy(s0); r.userData.sit = palRig.userData.sit; r.userData.squire = 1; r.traverse(o => { if (o.isMesh) o.castShadow = true; });
     const was = palRig; horse.body.remove(was); horse.body.add(r); palRig = r; palMixer = new THREE.AnimationMixer(r); const c = clipOf('Jump_Idle') || clipOf('Idle_A'); if (c) palMixer.clipAction(c).play(); joinPaladin(); });
 }
-/* ---- a look: after each warlord falls, Rowan turns his horse toward the citadel and the crown over its gate. A second and a half; a tap skips it */
-function startLook() {
-  if (G.lookDone || save.crowned || G.sim || G.practice || G.fin || !isBoss(G.level) || G.level >= LAP_LEN || !palReady() || !palArt || worldIdx >= HALLW || G.worldOverride != null) return false;
-  G.lookDone = true; buildPaladin(); if (!horse) return false; const [cz, up] = citAt(); G.look = { t: 0, gl: [halo('#ffd84a', 7, 0, 10.6 + up, cz + 5.8, scene, 0), halo('#ffffff', 2.4, 0, 10.6 + up, cz + 6, scene, 0)] };
-  paladin.visible = true; paladin.scale.setScalar(1.5); paladin.position.set(.1, 0, -25); paladin.rotation.y = Math.PI + .16; ants.n = 0; horseGait(0, 1); P.n = 0; for (const g of G.gates) g.mesh.visible = false; if (laneWalls) laneWalls.visible = false; sawGroup.visible = aim.visible = false; for (const o of paladin.children) if (o.isSprite) o.visible = false; tone(880, .9, 'triangle', .035, 1.5); return true;
-}
-function lookTick(dt) {
-  const L = G.look; L.t += dt; const k = Math.max(0, Math.sin(clamp((L.t - .25) / 1.2, 0, 1) * Math.PI)); L.gl[0].material.opacity = .75 * k; L.gl[0].scale.setScalar(5 + 4 * k); L.gl[1].material.opacity = k; if (palMixer) palMixer.update(dt); if (horse) horse.body.rotation.x = -.05 * k;
-  if (L.t > 1.75) { for (const g of L.gl) scene.remove(g); G.look = null; lookOff(); showResult(true); }
-}
-function lookOff() { paladin.visible = false; paladin.scale.setScalar(PAL_S); if (horse) horse.body.rotation.x = 0; for (const g of G.gates) g.mesh.visible = true; if (laneWalls) laneWalls.visible = true; sawGroup.visible = aim.visible = true; for (const o of paladin.children) if (o.isSprite) o.visible = true; }
-function lookCamera() { const u = cineEase(clamp(G.look.t / 1.7, 0, 1)); camera.position.set(-2.4 + .7 * u, 5.4 + .3 * u, -11.6 - 1.2 * u); camera.lookAt(_look.set(.6, 6.4 + .4 * u, -60)); }
-addEventListener('pointerdown', () => { if (G.look && G.look.t > .25) G.look.t = Math.max(G.look.t, 1.7); }, true);
 /* ---------------- "Watch finale": the Bone King's last stand, replayed ----------------
    A practice round of level 50 (nothing is kept) with your army firing on its own: the Bone King leaps down from his throne,
    fights for a few seconds and kneels; then the ending, and back to the start screen. Letterboxed like the intro, tap to skip. */
