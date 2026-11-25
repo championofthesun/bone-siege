@@ -293,6 +293,10 @@ svg.ico.sm{width:18px;height:18px}
 #menu.intro .tag{animation-delay:.42s}#menu.intro .lvl{animation-delay:.52s}#menu.intro .worldname{animation-delay:.58s}#menu.intro .trail{animation-delay:.64s}#menu.intro .uptoggle{animation-delay:.7s}#menu.intro .dock{animation-delay:.8s}
 @keyframes logoIn{from{transform:translateY(-46px) scale(.72);opacity:0}}
 /* the opening cinematic: letterbox bars, a white flash layer, a quiet "tap to skip"; the battle HUD hides while it runs */
+#film{position:absolute;inset:0;z-index:30;display:none;background:#05040c;touch-action:none;overflow:hidden}#film.on{display:block}#film.out{opacity:0;transition:opacity .55s ease-out;pointer-events:none}
+#film video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#film span{position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom) + 2.4%);font-family:var(--disp);font-size:14px;letter-spacing:.5px;color:rgba(255,255,255,.85);text-shadow:0 1px 3px #000,0 0 8px #000}#film.out span{display:none}
+#filmCap{position:absolute;left:10px;right:10px;bottom:17%;text-align:center;font-family:var(--disp);font-weight:400;font-size:clamp(21px,6.1vw,44px);text-wrap:balance;line-height:1.15;color:#ffe9b0;-webkit-text-stroke:.2em #1a0f3a;paint-order:stroke fill;text-shadow:0 .1em 0 #1a0f3a,0 0 .7em rgba(26,15,58,.9);opacity:0;transition:opacity .4s}#filmCap.on{opacity:1}
 #cine{position:absolute;inset:0;z-index:15;display:none;pointer-events:auto;touch-action:none}
 #cine.on{display:block}
 #cine::before,#cine::after{content:'';position:absolute;left:0;right:0;height:8%;background:#05040c;z-index:1}
@@ -522,6 +526,7 @@ svg.ico.sm{width:18px;height:18px}
   <div id="audBtns"><button id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.2" fill="#fff"/><rect x="14" y="5" width="4" height="14" rx="1.2" fill="#fff"/></svg></button><button id="mute" aria-label="Sound effects on/off"><svg viewBox="0 0 24 24"><use id="muteUse" href="#i-sound"/></svg></button><button id="musBtn" aria-label="Music on/off"><svg viewBox="0 0 24 24"><use id="musUse" href="#i-music"/></svg></button></div>
 
   <div id="shk"><svg viewBox="0 0 64 26"><path d="M22 3 4 13l18 10zM42 3l18 10-18 10z" fill="#fff"/></svg>SHAKE IT LOOSE<span><b></b></span></div>
+  <div id="film"><b id="filmCap"></b><span>Tap to skip</span></div>
   <div id="cine"><div id="endHeal"></div><div id="endFade"></div><b id="endCap"></b><div id="dirT"><i></i><b></b></div><div class="cine-flash"></div><span class="cine-skip">Tap to skip</span></div>
   <div id="hud">
     <div id="topbar">
@@ -5162,7 +5167,7 @@ function musicTick() {
   const song = lament ? (base.lament || (base.lament = { ...base, scale: base.scale === 'major' ? 'minor' : 'harm', bpm: Math.round(base.bpm * .6), drums: 0, bells: (base.bells || 1) * .5, root: base.root - 2 }))
     : boss ? (base.boss || (base.boss = { ...base, scale: 'harm', bpm: Math.round(base.bpm * 1.16), drums: (base.drums || 1) * 1.45, bells: (base.bells || 1) * .35, root: base.root - 3 })) : base, sp = 60 / song.bpm / 3, playing = G.mode === "play";
   // full band during a level, quieter and muffled on menus, the fanfare at full voice after a win, silent under the lose stinger
-  const quiet = !MUS.on || G.mode === 'lost', hold = now < MUS.holdUntil;
+  const quiet = !MUS.on || FILM.on || G.mode === 'lost', hold = now < MUS.holdUntil;
   const mg = quiet ? 0.0001 : playing ? .18 + .06 * MUS.int : hold ? .22 : .15, mf = playing || hold ? 9000 : 2400;
   if (!actx._cheap || Math.abs(mg - (MUS.mg || 0)) > .003 || quiet !== MUS.mq) { MUS.mg = mg; MUS.mq = quiet; MUS.g.master.gain.setTargetAtTime(mg, now, quiet ? .06 : .4); } // in a battle it starts a little under the sound effects and grows with the build-up
   if (!actx._cheap || mf !== MUS.mf) { MUS.mf = mf; MUS.g.filt.frequency.setTargetAtTime(mf, now, .4); }
@@ -7654,7 +7659,10 @@ $('rwBack').onclick = () => { $('rewards').classList.remove('on'); showMenu(); i
 function applySkin() { if (!horse || !horse.mats) return; const s = SKINS.find(q => q.id === (save.skin || 'snow')) || SKINS[0]; horse.mats.coat.color.copy(C(s.coat)); if (palArt) horse.mats.coat.color.multiplyScalar(s.id === 'gold' ? .62 : .86); /* (the sculpted coat takes the light more brightly than the old one) */ horse.mats.coatD.color.copy(C(s.dark)); horse.mats.spirit.color.copy(C(s.spirit)); }
 function lockSpoilers() { const tro = save.trophies || {}, seen = w => tro[w] || save.level > w * WORLD_LEN + WORLD_LEN; let any = false; document.querySelectorAll('#bossRow [data-w]').forEach(b => { b.hidden = !seen(+b.dataset.w - 1); any = any || !b.hidden; }); $('bossBtn').hidden = !any; if (!any) $('bossRow').hidden = true; $('finaleBtn').hidden = !(tro[4] || save.level > LAP_LEN); }
 $('bossBtn').onclick = () => { $('bossRow').hidden = !$('bossRow').hidden; };
-$('introBtn').onclick = () => { closeMore(); audio(); startCine(true); }; /* replays the opening cinematic */
+$('introBtn').onclick = () => {
+  closeMore(); audio(); if (FILM.v || FILM.bad) { filmOrCine(true); return; }
+  toastMsg('LOADING', 'One moment', { now: true }); Promise.race([filmWarm(), new Promise(r => setTimeout(r, 9000))]).then(() => { clearToasts(); if (G.mode === 'menu' && !FILM.on && !DIR.s) filmOrCine(true); });
+}; /* replays the opening cinematic */
 $('finaleBtn').onclick = () => watchFinale(); /* replays the Bone King's last stand */
 document.querySelectorAll('#bossRow [data-w]').forEach(b => b.onclick = () => practiceBoss(+b.dataset.w));
 $('worldBtn').onclick = () => { const real = worldOf(save.level), next = ((G.worldOverride != null ? G.worldOverride : real) + 1) % WORLDS.length; G.worldOverride = next === real ? null : next; showMenu(); };
@@ -7664,7 +7672,7 @@ $('resetBtn').onclick = e => {
   resetArmed = 0; b.textContent = 'Reset progress'; save = freshSave(save); persist(); showMenu(); };
 // the gear menu: boss practice, previewing worlds, and resetting progress (they were underlined web links under PLAY)
 function closeMore() { $('moreMenu').hidden = true; $('gearBtn').setAttribute('aria-expanded', 'false'); }
-$('gearBtn').onclick = e => { e.stopPropagation(); lockSpoilers(); const open = $('moreMenu').hidden; $('moreMenu').hidden = !open; $('gearBtn').setAttribute('aria-expanded', open ? 'true' : 'false'); };
+$('gearBtn').onclick = e => { e.stopPropagation(); lockSpoilers(); filmWarm(); const open = $('moreMenu').hidden; $('moreMenu').hidden = !open; $('gearBtn').setAttribute('aria-expanded', open ? 'true' : 'false'); };
 document.addEventListener('pointerdown', e => { if (!$('moreMenu').hidden && !e.target.closest('#moreMenu') && !e.target.closest('#gearBtn')) closeMore(); });
 function syncAudioUi() { $('mute').classList.toggle('off', muted); $('muteUse').setAttribute('href', muted ? '#i-muted' : '#i-sound'); $('musBtn').classList.toggle('off', !MUS.on); $('musUse').setAttribute('href', MUS.on ? '#i-music' : '#i-nomusic'); }
 $('mute').onclick = () => { muted = !muted; save.sfx = !muted; persist(); syncAudioUi(); };
@@ -8128,6 +8136,9 @@ function startCine(full) {
   s.done = () => { back(); DIR.fade = 0; showMenu(); save.introDay = today(); save.openSeen = 1; persist(); /* the real save is back; the day is marked so it plays once */ $('menu').classList.add('slam'); setTimeout(() => $('menu').classList.remove('slam'), 1000); setTimeout(() => { tone(70, .5, 'sine', .22, .5); noise(.3, .1, 'lowpass', 1500, 200); }, 250); };
   s.abort = back; dirStart(s);
 }
+$('film').addEventListener('pointerdown', e => e.stopPropagation());
+$('film').addEventListener('click', e => { e.stopPropagation(); if (FILM.on && performance.now() - FILM.t0 > 700) filmEnd(true); });
+addEventListener('keydown', e => { if (FILM.on) { e.stopPropagation(); if (/^(Escape|Enter| )$/.test(e.key) && performance.now() - FILM.t0 > 700) filmEnd(true); } }, true);
 function endCine() { if (DIR.s && DIR.s.cine) dirStop(true); }
 // ---- a new land: the King shouts for its warlord from his battlements, the warlord wakes, and the camera sweeps back to your cannon
 const ROAR = ['', 'Wake up, Sek-Ra!', 'Stop them, Hrimgar!', 'Magmaw! They’re at my door!', 'Guards! Hold the bridge!'];
@@ -8365,14 +8376,56 @@ function prewarm() {
     shown.forEach((o, i) => { o.visible = false; o.material.opacity = ops[i]; }); G.camK = ck; G.mode = m;
   } catch (e) { console.warn('prewarm', e); }
 }
+/* ---------------- the opening film ----------------
+   A painted video (models/film/intro.mp4) for your first launch, and for Watch intro. It is fetched whole while the game loads, so it never
+   stops to buffer; if it isn't here in time, or the phone won't play it, the 3D opening plays instead. The picture ends at 20 s and the last
+   of its music rings on over the menu. */
+const FILM = { on: false, url: null, busy: null, bad: false, v: null, t0: 0, len: 20, caps: [[.9, 3.6, 'The crown commands the dead.'], [12.7, 15.6, 'Take it, and end the war.']] };
+function filmWarm() {
+  if (FILM.busy || FILM.bad) return FILM.busy || Promise.resolve(false);
+  return FILM.busy = fetch('models/film/intro.mp4').then(r => { if (!r.ok) throw 0; return r.blob(); }).then(b => {
+    FILM.url = URL.createObjectURL(new Blob([b], { type: 'video/mp4' })); const v = FILM.v = document.createElement('video');
+    v.playsInline = true; v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.disableRemotePlayback = true; v.preload = 'auto'; v.src = FILM.url; $('film').prepend(v); v.load();
+    v.addEventListener('ended', filmClear); return true;
+  }).catch(() => { FILM.bad = true; return false; });
+}
+function filmPlay(after) { // (call it from a tap: the phone only lets sound start there)
+  const v = FILM.v; if (!v || FILM.bad) { after(); return; }
+  Object.assign(FILM, { on: true, after, t0: performance.now(), t1: performance.now(), seen: 0 }); $('film').className = 'on'; $('menu').classList.remove('on'); G.paused = true; G.pauseDrawn = true;
+  try { v.currentTime = 0; } catch (e) {}
+  try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) {} // (so the phone's silent switch quiets it, as it does the game)
+  v.muted = !MUS.on; v.volume = 1; const p = v.play(); if (p) p.catch(() => { v.muted = true; v.play().catch(() => filmFail()); });
+  clearInterval(FILM.iv); FILM.iv = setInterval(filmTick, 80);
+}
+function filmTick() {
+  if (!FILM.on) return; const v = FILM.v, t = v.currentTime, now = performance.now(); if (t > FILM.seen) { FILM.seen = t; FILM.t1 = now; }
+  if (document.hidden) { FILM.t0 = FILM.t1 = now; return; }
+  if (t < .05 && now - FILM.t0 > 2500) { filmFail(); return; } // it never started
+  if (t > .05 && now - FILM.t1 > 4000) { filmEnd(true); return; } // it stopped for good
+  if (v.paused && !v.ended && now - FILM.t0 > 600) v.play().catch(() => {});
+  const c = FILM.caps.find(c => t > c[0] && t < c[1]), el = $('filmCap'); if (c) el.textContent = c[2];
+  el.classList.toggle('on', !!c);
+  if (t >= FILM.len - .06 || v.ended) filmEnd(false);
+}
+function filmFail() { if (!FILM.on) return; FILM.on = false; clearInterval(FILM.iv); $('film').className = ''; filmClear(); FILM.bad = true; G.paused = false; FILM.after(); }
+function filmEnd(skipped) {
+  if (!FILM.on) return; FILM.on = false; clearInterval(FILM.iv); $('filmCap').classList.remove('on'); G.paused = false; if (skipped) FILM.v.pause(); if (actx && actx.state === 'suspended') actx.resume();
+  if (actx && !skipped) MUS.holdUntil = Math.max(MUS.holdUntil || 0, actx.currentTime + 2); // the menu's own music waits for the last note
+  save.introDay = today(); save.openSeen = 1; save.filmSeen = 1; persist(); showMenu(); $('film').className = 'on out'; setTimeout(() => { $('film').className = ''; if (skipped || !FILM.v || FILM.v.ended) filmClear(); }, skipped ? 300 : 620);
+  $('menu').classList.add('slam'); setTimeout(() => $('menu').classList.remove('slam'), 1000); setTimeout(() => { tone(70, .5, 'sine', .22, .5); noise(.3, .1, 'lowpass', 1500, 200); }, 250);
+}
+function filmClear() { const v = FILM.v; if (!v || FILM.on) return; try { v.pause(); } catch (e) {} try { if (navigator.audioSession) navigator.audioSession.type = 'auto'; } catch (e) {} v.removeAttribute('src'); v.load(); v.remove(); URL.revokeObjectURL(FILM.url); FILM.v = FILM.url = FILM.busy = null; } // (the memory goes back; Watch intro fetches it again, from the cache)
+function filmOrCine(full) { if (FILM.v && (full || !save.filmSeen)) filmPlay(() => startCine(full)); else startCine(full); }
 function boot() {
   setTimeout(lmRest, 4000); if (BART.camp) buildCampArt(); dressFort(); dressTower(); dressHoard(); for (const g of [fort, hoard, nest, launcher, campWall]) bakeStatic(g); if (!/[?&]nobake/.test(location.search)) { fuse(fort, o => o === king || roofs.includes(o) || o === fortDress); fuse(campWall); if (FUSE) { FUSE.under(launcher, { cast: true }); FUSE.under(hoard, { only: o => BART.town && o.material === BART.town.mat }); } } dressGate(Math.max(0, worldIdx)); resize(); syncAudioUi(); applyStyle(save.style);
   if (cineDue() && !save.openSeen) loadPaladinArt();
   if (cineDue()) { // the day's first launch: a "tap to begin" card (the tap also lets the sound play), then the opening cinematic
     setupLevel(save.level); prewarm(); render(); requestAnimationFrame(frame); setTimeout(smpPrep, 400); const l = $('loading');
-    if (!l) { startCine(); return; }
-    l.classList.add('tapgo'); l.innerHTML = '<svg viewBox="0 0 48 52"><use href="#i-king"/></svg><b>BONE SIEGE</b><span>Tap to begin</span>';
-    l.addEventListener('pointerdown', () => { l.remove(); audio(); startCine(); }, { once: true }); return;
+    if (!l) { filmOrCine(); return; }
+    Promise.race([save.filmSeen ? null : filmWarm(), new Promise(r => setTimeout(r, 6000))]).then(() => { // (a slow phone gets a few seconds more for the film)
+      l.classList.add('tapgo'); l.innerHTML = '<svg viewBox="0 0 48 52"><use href="#i-king"/></svg><b>BONE SIEGE</b><span>Tap to begin</span>';
+      l.addEventListener('click', () => { l.remove(); audio(); filmOrCine(); }, { once: true }); // (click, not pointerdown: an iPhone only lets sound start on the finger's way up)
+    }); return;
   }
   showMenu(); prewarm(); render(); requestAnimationFrame(frame); setTimeout(smpPrep, 400); const l = $('loading'); if (l) l.remove(); practiceBoss();
 }
@@ -8386,6 +8439,7 @@ async function practiceBoss(w) {
 const fontsReady = document.fonts && document.fonts.load
   ? Promise.race([Promise.all([document.fonts.load('40px "Lilita One"'), document.fonts.load('600 16px Fredoka')]).catch(() => {}), new Promise(r => setTimeout(r, 1800))])
   : Promise.resolve();
+if (cineDue() && !save.filmSeen) filmWarm(); // (beside the rest of the art)
 fontsReady.then(() => Promise.race([loadModels(), new Promise(r => setTimeout(r, 60000))])).then(boot); // (a slow phone gets a minute; it used to start without its art after 15 seconds)
 })();
 </script>
