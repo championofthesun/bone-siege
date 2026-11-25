@@ -297,6 +297,20 @@ svg.ico.sm{width:18px;height:18px}
 #cine::before{top:0}#cine::after{bottom:0}
 #cine .cine-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:2}
 #cine .cine-skip{position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom) + 2.4%);z-index:3;font-family:var(--disp);font-size:14px;letter-spacing:.5px;color:rgba(255,255,255,.6)}
+#fortBar.two::after{content:'';position:absolute;left:50%;top:3px;bottom:3px;width:3px;margin-left:-1.5px;border-radius:2px;background:#fff;opacity:.9;z-index:2}
+#shk{position:absolute;left:0;right:0;bottom:25.5%;display:none;flex-direction:column;align-items:center;gap:6px;z-index:4;font-family:var(--disp);font-size:23px;color:#fff;text-shadow:0 2px 0 #0a3a6a,0 0 12px #0a3a6a;pointer-events:none}#shk.on{display:flex}#shk svg{width:74px;height:30px;filter:drop-shadow(0 2px 0 #0a3a6a);animation:shkW .5s ease-in-out infinite alternate}#shk span{width:156px;height:16px;border-radius:10px;background:#0e2a5c;box-shadow:0 0 0 3px #fff;overflow:hidden}#shk b{display:block;height:100%;background:#8fe6ff;transform:scaleX(0);transform-origin:0 50%}@keyframes shkW{from{transform:translateX(-9px)}to{transform:translateX(9px)}}
+#boon{gap:12px;background:linear-gradient(180deg,rgba(14,12,40,.8),rgba(14,12,40,.92));justify-content:center}
+.boon-h{font-family:var(--disp);font-size:36px;line-height:1;color:var(--gold);text-shadow:0 3px 0 #5a2a08}.boon-s{font-weight:600;font-size:17px;color:#e8e2ff;margin:-4px 0 6px;text-align:center}
+#boonRow{display:flex;flex-direction:column;gap:17px;width:100%;max-width:440px}
+.boon{position:relative;width:100%;border:0;padding:0;border-radius:20px;background:linear-gradient(180deg,#2d3f8a,#1c2763);box-shadow:0 0 0 3px var(--r),0 5px 0 3px var(--rd),0 14px 26px rgba(0,0,0,.45);color:#fff;text-align:left;display:flex;overflow:hidden;font-family:inherit;cursor:pointer;animation:boonIn .42s cubic-bezier(.2,1.2,.4,1) both;transition:transform .25s,opacity .3s}
+@keyframes boonIn{from{opacity:0;transform:translateY(26px) scale(.94)}to{opacity:1;transform:none}}
+.boon:active{transform:translateY(3px)}.boon.took{animation:none;transform:scale(1.05)}.boon.gone{animation:none;opacity:.18}
+.boon em{width:128px;min-height:118px;flex:none;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--r) 55%,#fff0),transparent 70%),linear-gradient(180deg,#24357c,#141c4e)}.boon em svg{width:66px;height:66px;filter:drop-shadow(0 4px 5px rgba(0,0,0,.45))}.boon em img{width:100%;height:100%;object-fit:cover;display:block}.boon em.art{background:#141c4e}
+.boon div{padding:10px 14px;display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0}.boon i{font-style:normal;font-family:var(--disp);font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--r)}.boon b{font-family:var(--disp);font-weight:400;font-size:23px;line-height:1.05}.boon span{font-weight:500;font-size:17px;line-height:1.25;color:#e6ebff}
+#boonHave,#boonMenu{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:7px;font-weight:600;font-size:16px;color:#d8d2fa;min-height:0}#boonHave{margin-top:8px}#boonMenu{margin-top:9px}#boonMenu:empty,#boonHave:empty{display:none}
+#boonHave em,#boonMenu em,#pauseBoons em{width:36px;height:36px;flex:none;border-radius:11px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#1c2763;box-shadow:0 0 0 2px var(--r)}#boonMenu em{width:30px;height:30px;border-radius:9px}#boonHave em svg,#boonMenu em svg,#pauseBoons em svg{width:64%;height:64%}#boonHave em img,#boonMenu em img,#pauseBoons em img{width:100%;height:100%;object-fit:cover}
+#menu.open #boonMenu{display:none}
+#pauseBoons{display:flex;flex-direction:column;gap:9px;width:100%;max-height:38vh;overflow-y:auto;text-align:left;margin:4px 0 10px}#pauseBoons:empty{display:none}#pauseBoons div{display:flex;gap:11px;align-items:center;font-weight:500;font-size:15px;line-height:1.2;color:#e6ebff;padding:3px}#pauseBoons b{display:block;font-family:var(--disp);font-weight:400;font-size:17px;color:#fff}
 #cine.dir::before,#cine.dir::after{display:none}#cine.short .cine-skip{display:none}
 #dirT{position:absolute;left:4%;right:4%;bottom:12%;z-index:2;text-align:center;font-family:var(--disp);pointer-events:none;opacity:0;container-type:inline-size}
 #dirT i{display:block;font-style:normal;font-weight:400;font-size:20px;font-size:min(5.4cqw,30px);letter-spacing:.06em;text-transform:uppercase;color:#fff;text-shadow:0 2px 0 #1a0a30,0 0 12px rgba(20,0,40,.9);opacity:0}
@@ -505,6 +519,7 @@ svg.ico.sm{width:18px;height:18px}
   <div id="flash"></div>
   <div id="audBtns"><button id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.2" fill="#fff"/><rect x="14" y="5" width="4" height="14" rx="1.2" fill="#fff"/></svg></button><button id="mute" aria-label="Sound effects on/off"><svg viewBox="0 0 24 24"><use id="muteUse" href="#i-sound"/></svg></button><button id="musBtn" aria-label="Music on/off"><svg viewBox="0 0 24 24"><use id="musUse" href="#i-music"/></svg></button></div>
 
+  <div id="shk"><svg viewBox="0 0 64 26"><path d="M22 3 4 13l18 10zM42 3l18 10-18 10z" fill="#fff"/></svg>SHAKE IT LOOSE<span><b></b></span></div>
   <div id="cine"><div id="endHeal"></div><div id="endFade"></div><b id="endCap"></b><div id="dirT"><i></i><b></b></div><div class="cine-flash"></div><span class="cine-skip">Tap to skip</span></div>
   <div id="hud">
     <div id="topbar">
@@ -564,7 +579,7 @@ svg.ico.sm{width:18px;height:18px}
     <div class="tag">Grow your army. Storm the castle.</div>
     <div class="lvl" id="menuLvl">Level 1</div>
     <div class="worldname" id="menuWorld"></div>
-    <div class="trail" id="trail"></div>
+    <div class="trail" id="trail"></div><div id="boonMenu"></div>
     <button class="uptoggle" id="upToggle" aria-expanded="false"><svg viewBox="0 0 24 24"><use href="#i-bolt"/></svg>Upgrades<span id="upReady"></span><i>▾</i></button>
     <div class="grid" id="upgrades"></div>
     <div class="spacer"></div>
@@ -591,7 +606,8 @@ svg.ico.sm{width:18px;height:18px}
     </div>
   </div>
 
-<div class="screen" id="pause"><div class="pause-card"><div class="res-title" style="color:var(--gold)">PAUSED</div><div class="res-sub" id="pauseSub"></div><div class="stack"><button class="btn green big sm" id="resumeBtn">Resume</button><button class="btn violet big sm" id="restartBtn">Restart level</button><button class="link" id="quitBtn">Quit to menu</button></div></div></div>
+<div class="screen" id="pause"><div class="pause-card"><div class="res-title" style="color:var(--gold)">PAUSED</div><div class="res-sub" id="pauseSub"></div><div id="pauseBoons"></div><div class="stack"><button class="btn green big sm" id="resumeBtn">Resume</button><button class="btn violet big sm" id="restartBtn">Restart level</button><button class="link" id="quitBtn">Quit to menu</button></div></div></div>
+  <div class="screen" id="boon"><div class="boon-h">Choose a boon</div><div class="boon-s" id="boonSub"></div><div id="boonRow"></div><div id="boonHave"></div></div>
   <div class="screen" id="map"><div class="map-head"><div class="map-title">The Realm</div><span class="map-ng" id="mapNg"></span></div><div class="map-path" id="mapPath"></div><button class="btn green big sm" id="mapClose">Back</button></div>
   <div class="screen" id="story"><div class="story-card"><svg class="story-emb" viewBox="0 0 48 48"><use id="storyEmb" href="#t-0"/></svg><div class="story-name" id="storyName"></div><div class="story-title" id="storyTitle"></div><p class="story-txt" id="storyTxt"></p><button class="btn green big sm" id="storyGo">Fight!</button></div></div>
   <div class="screen" id="rewards"><div class="map-title">Rewards</div>
@@ -773,7 +789,7 @@ let EFF_K = .6;
 // third-star times: seconds of play after the intro flyover. Measured for v142 by simulation: five players of different hands at
 // each level, with the upgrades that level's coins usually buy, on two seeds; the median winning time x1.45 for human hands, at
 // least 25 s (captains 40, bosses 45). World 1 keeps any kinder time it had. The gates are fixed per level, so levels differ.
-const PAR_T = [25, 45, 65, 50, 50, 25, 30, 60, 45, 50, 25, 30, 30, 40, 50, 50, 35, 40, 30, 60, 50, 45, 30, 25, 40, 25, 30, 35, 40, 60, 25, 35, 35, 40, 60, 25, 40, 25, 45, 60, 40, 30, 35, 40, 60, 25, 45, 40, 40, 140];
+const PAR_T = [25, 45, 65, 50, 50, 25, 30, 60, 45, 60, 25, 30, 30, 40, 50, 50, 35, 40, 30, 80, 50, 45, 30, 25, 40, 25, 30, 35, 40, 60, 25, 35, 35, 40, 60, 25, 40, 25, 45, 75, 40, 30, 35, 40, 60, 25, 45, 40, 40, 185];
 const parOf = n => { const k = onRoadLv(n) ? (isBoss(n) ? 70 : isCaptain(n) ? 60 : 45) : Math.max(PAR_T[(n - 1) % 50], isBoss(n) ? 45 : isCaptain(n) ? 40 : 25); return Math.round((k * 1.35 + 14) / 5) * 5; }; // (PAR_T is the bot's pace; a person's thumb needs about half as long again)
 const WORLD_CURVE = [.86, .9, .94, .98, 1.02, .72, .96, 1, 1.05, 1.1]; // arrive, settle, something new, mix, captain, gold rush, build up, long siege, boss
 let FORT_K = 1.7, HORDE_K = 1.25; // castle toughness and skeleton numbers overall (phase 5: battles were over in ~10 s)
@@ -781,6 +797,7 @@ let BOMB_K = 1, ARCH_K = 1;       // how many bomb skeletons and bone archers ov
 let CHARGE_HITK = 1, CHARGE_HPK = 1.5, LATE_K = .065; // LATE_K: how fast the horde keeps growing past level 20 (levels out at 2.1×) // gatehouse damage and toughness of charging brutes overall
 const chargeHit = () => Math.round(CHARGE_HITK * (10 + eff(G.level))); // about a quarter of a typical gatehouse at that level: miss three and you're done
 // fails = attempts lost on this level since the last win; each one quietly softens it (castle up to 50% weaker, faster on bosses), so there are no walls
+const LV_ADJ = { 8: 1.1, 9: 1.15, 12: 1.08, 18: 1.08, 19: 1.2, 22: 1.08, 23: 1.1, 24: 1.15, 25: 1.08, 27: 1.12, 28: 1.1, 30: .75, 33: 1.1, 34: 1.12, 38: 1.3, 40: 1.22, 41: .88, 42: .94, 43: 1.12, 44: 1.12, 45: .72, 47: 1.12, 48: 1.1, 49: 1.04, 50: .8 }, BOON_GROW = .028; // (by campaigns)
 function levelCfg(n, fails = 0) {
   const e = eff(n);
   const ease = Math.max(isBoss(n) || e > 20 ? .4 : .5, 1 - (isBoss(n) || e > 20 ? .16 : .12) * fails);
@@ -790,7 +807,7 @@ function levelCfg(n, fails = 0) {
   // how many slimes the best route through the gates can make decides how many you'll have, so the castle and the
   // enemy waves scale with it: a weak layout gets a weaker castle instead of becoming a wall
   const par = n < 3 ? best : n < 5 ? 12 : 24, lay = clamp(steer / par, .7, isBoss(n) ? 1.2 : 1.8); // bosses get their bite from the world curve, not the layout
-  const d = WORLD_CURVE[(n - 1) % WORLD_LEN] * (n <= WORLD_LEN ? .85 : 1); // world 1 is gentler while players learn
+  const bg = n < 3 ? 1 : 1 + BOON_GROW * ((n - 1) % WORLD_LEN), adj = onRoadLv(n) ? 1 : LV_ADJ[n] || 1, d = WORLD_CURVE[(n - 1) % WORLD_LEN] * (n <= WORLD_LEN ? .85 : 1) * bg * adj; // world 1 is gentler while players learn
   return {
     fortHp: Math.round(FORT_K * (300 + 140 * (e - 1) + 3.8 * (e - 1) * (e - 1)) * lay * d * ease),
     waveSize: Math.round(late * HORDE_K * (4 + 1.05 * (e - 1)) * Math.sqrt(lay) * d * Math.sqrt(ease)), // smaller waves now: most of the enemy waits as one big horde
@@ -4494,9 +4511,9 @@ function updatePaladin(dt, play) {
   if (palMixer) { palMixer.update(dt); const ul = palRig.userData.ul || (palRig.userData.ul = palRig.getObjectByName('upperlegl')), ur = palRig.userData.ur || (palRig.userData.ur = palRig.getObjectByName('upperlegr')); /* (found once, not searched for every frame) */ const sit = palRig.userData.sit || .55; if (ul) ul.rotation.z += sit; if (ur) ur.rotation.z -= sit; if (palRig.userData.cape) palRig.userData.cape.rotation.x = .95 + Math.sin(P.ph * 1.4) * .14; } // astride the saddle
   P.t += dt;
   if (P.rear < 0) { // the charge
-    P.z -= dt * 7.5; P.ph += dt * 13;
+    P.z -= dt * 7.5; P.ph += dt * 13; if (P2.cl.length || P2.tomb.length) p2Rider(P.x, P.z);
     if (play) for (let j = 0; j < beetles.n; j++) {
-      if (beetles.hp[j] <= 0) continue; const dx = beetles.x[j] - P.x, dz = beetles.z[j] - P.z; if (dx * dx + dz * dz > 2.1) continue;
+      if (beetles.hp[j] <= 0) continue; const dx = beetles.x[j] - P.x, dz = beetles.z[j] - P.z; if (dx * dx + dz * dz > (G.bn.trail ? 6 : 2.1)) continue;
       if (beetles.big[j]) { if (!(beetles.flash[j] > .9)) hurtFoe(j, palHit(save.up.giant) * .5); } else killFoe(j);
       if (rand() < .3) burst(beetles.x[j], .8, beetles.z[j], ['#ffd27a', '#ffffff', FOE_FX], 3, 4, { vy: 5, life: .5, g: 12, sz: 1.4 });
     }
@@ -5367,18 +5384,19 @@ function wallX(x, px, z, r) {
   return px < -w.x ? Math.min(x, -w.x - .15 - r) : px > w.x ? Math.max(x, w.x + .15 + r) : clamp(x, -w.x + .15 + r, w.x - .15 - r);
 }
 function setupLevel(n) {
+  boonsOn(); G.hornT = 0;
   if (BACK && !G.sim) BACK.reset(); // (everything back on the live list before anything is rebuilt or joined)
   if (!G.sim) clearToasts(); G.tauntT = -99; MUS.lift = MUS.push = 0; // (the King's taunt timer runs on G.t, which restarts each level, and the music's key change must not carry over)
   gameEl.classList.remove('cine'); G.level = n; if (HEAL.on) worldIdx = -1; /* (a healed land is built again as it was) */ G.cfg = levelCfg(n, n === save.level ? save.fails || 0 : 0); if (G.sim && G.cfgPatch) Object.assign(G.cfg, G.cfgPatch); applyWorld(G.worldOverride != null ? G.worldOverride : worldOf(n)); citPlace(n);
   for (const g of G.gates) { disposeGroup(g.mesh); if (g.mesh.userData.good) { g.mesh.userData.good.dispose(); g.mesh.userData.poor.dispose(); } }
-  G.gates = G.cfg.gates.map((g, i) => ({ ...g, z: g.z - 2.1, bit: 1 << i, cx: g.x, pulse: 0, ready: true, cool: 0, mesh: makeGateMesh({ ...g, z: g.z - 2.1 }) })); // rows sit a little further up, clear of the gatehouse
+  G.gates = boonGates(G.cfg.gates, n).map((g, i) => ({ ...g, z: g.z - 2.1, bit: 1 << i, cx: g.x, pulse: 0, ready: true, cool: 0, mesh: makeGateMesh({ ...g, z: g.z - 2.1 }) })); // rows sit a little further up, clear of the gatehouse
   if (FUSE && !G.sim) FUSE.gates(G.gates);
   buildLaneWalls(n);
   { const lanes = {}; for (const g of G.gates) if (g.add) { const k = (g.x > 0 ? 'r' : 'l') + (g.big ? 'b' : ''); const L = lanes[k] || (lanes[k] = { grp: 1, x: g.x, z: 0, n: 0 }); L.z += g.z; L.n++; g.grp = L; } for (const L of Object.values(lanes)) L.z /= L.n; } // each +N lane shares one running label, shown halfway up it
   ants.n = 0; beetles.n = 0; P.n = 0; SH.n = 0; D.life.fill(0);
-  G.fortMax = G.fortHp = G.cfg.fortHp; G.nestMax = G.nestHp = Math.round(nestHp(save.up.nest) * (1 + .15 * clamp((n === save.level ? save.fails || 0 : 0) - 1, 0, 4))); // (from the second loss on, each one also makes your camp a little sturdier)
+  G.fortMax = G.fortHp = G.cfg.fortHp; G.nestMax = G.nestHp = Math.round(nestHp(save.up.nest) * (G.bn.mason ? 1.3 : 1) * (1 + .15 * clamp((n === save.level ? save.fails || 0 : 0) - 1, 0, 4))); // (from the second loss on, each one also makes your camp a little sturdier)
   for (const o of fortDress.children) if (o.userData.veil) o.visible = true; clearEnding(); dirAbort(); sawGroup.visible = aim.visible = true; G.lookDone = false;
-  G.lx = 0; G.charge = 0; G.waveT = n === 1 ? 3.2 : 2.2; G.waveQ = 0; G.waves = 0; G.fired = 0; G.firedSent = 0; G.killsSent = 0; G.firing = false; G.fireT = 0;
+  G.lx = 0; G.charge = G.bn.eager ? Math.ceil(sendCharge() * .5) : 0; G.waveT = n === 1 ? 3.2 : 2.2; G.waveQ = 0; G.waves = 0; G.fired = 0; G.firedSent = 0; G.killsSent = 0; G.firing = false; G.fireT = 0;
   G.shake = 0; G.fortFlash = 0; G.endT = 0; G.t = 0; G.clk = 0; G.squash = 0; G.continued = false; G.kingS = G.cfg.boss ? 9.2 : 8; G.crowdShown = 0;
   for (const f of floats) { f.t = 0; f.el.style.opacity = 0; }
   G.shadowDirty = true; if (SHC) SHC.reset(); resetCastle(); towerShow(); G.turT = 1; blasts.forEach(b => { b.visible = false; });
@@ -5390,10 +5408,11 @@ const lvName = n => n > LAP_LEN ? 'Road ' + (n - LAP_LEN) : 'Level ' + n;
 
 /* ---------------- actions ---------------- */
 function launchAnt() {
-  const lx = launcher.position.x, hp = antHp(save.up.tough), be = bombEvery(save.up.bomb);
+  const lx = launcher.position.x, hp = soldHp(), be = bombEvery(save.up.bomb);
   const mz = MUZZLE_Z, i = addUnit(ants, lx + (rand() - .5) * .45, mz, hp, 1, 6.6 + rand() * .6, 0, 0); // shot out of the muzzle (liftOf flies it in a short arc)
   if (i >= 0) ants.fly[i] = 1;
-  G.fired++; G.charge = Math.min(G.charge + 1, sendCharge()); G.recoil = 1; G.flashT = 1;
+  G.fired++; if (G.bn.big && i >= 0 && G.fired % 10 === 0) { ants.s[i] = 1.9; ants.hp[i] = hp * 6; } if (G.bn.side && G.fired % 5 === 0) for (const sx of [-1.7, 1.7]) { const j = addUnit(ants, clamp(lx + sx, -LANE + .4, LANE - .4), mz, hp, 1, 6.6 + rand() * .6, 0, 0); if (j >= 0) ants.fly[j] = 1; }
+  G.charge = Math.min(G.charge + 1, sendCharge()); G.recoil = 1; G.flashT = 1;
   if (be && i >= 0 && G.fired % be === 0) { ants.kind[i] = 1; ants.s[i] = 1.25; }                                        // Bomb Slime
   if (rand() < twinChance(save.up.twin)) { const j = addUnit(ants, lx + (rand() < .5 ? -.35 : .35), mz, hp, 1, 6.6 + rand() * .6, 0, 0); if (j >= 0) ants.fly[j] = 1; } // Twin Shot
   if (!G.sim) {
@@ -5452,7 +5471,7 @@ function sendChampion() { // he bursts out of the gatehouse and wades up the roa
 }
 function sendGiant() { // SEND!: the Champion, or once he's joined you the Paladin rides out (one at a time)
   if (G.mode !== 'play' || G.charge < sendCharge() || G.pal) return;
-  audio(); G.charge = 0; if (!palReady()) return sendChampion(); buildPaladin(); mission("paladin", 1);
+  audio(); G.charge = 0; if (G.bn.horn) G.hornT = 6; if (!palReady()) return sendChampion(); buildPaladin(); mission("paladin", 1);
   G.pal = { x: launcher.position.x, z: GATE_Z - 1.2, t: 0, ph: 0, rear: -1 }; G.gshake = 1;
   G.recoil = 2; G.shake = Math.max(G.shake, 0.35); buzz(30);
   chargeCall(); // the bugle sounds the charge
@@ -5512,8 +5531,9 @@ const SH = { n: 0, x0: new Float32Array(SCAP), y0: new Float32Array(SCAP), z0: n
   t: new Float32Array(SCAP), T: new Float32Array(SCAP), h: new Float32Array(SCAP), kind: new Uint8Array(SCAP), dmg: new Float32Array(SCAP), splash: new Float32Array(SCAP), fort: new Uint8Array(SCAP) };
 const SH_F = ['x0', 'y0', 'z0', 'tx', 'ty', 'tz', 't', 'T', 'h', 'kind', 'dmg', 'splash', 'fort'];
 const shotDmg = () => arsenalMul(save.up.arsenal) * (1 + .1 * (G.level - 1));
-function fireShot(i, s, tx, ty, tz, fort) {
+function fireShot(i, s, tx, ty, tz, fort, two) {
   if (SH.n >= SCAP) return false;
+  if (s.kind === 0 && G.bn.split && !two) fireShot(i, s, tx + (rand() < .5 ? -1.1 : 1.1), ty, tz, fort, 1);
   const k = SH.n++, x0 = ants.x[i], z0 = ants.z[i], d = Math.hypot(tx - x0, tz - z0);
   SH.x0[k] = x0; SH.y0[k] = s.kind === 2 ? .55 : .75; SH.z0[k] = z0; SH.tx[k] = tx; SH.ty[k] = ty; SH.tz[k] = tz;
   SH.t[k] = 0; SH.T[k] = Math.max(.18, d / s.speed); SH.h[k] = d * s.arc; SH.kind[k] = s.kind; SH.dmg[k] = s.dmg * shotDmg(); SH.splash[k] = s.splash; SH.fort[k] = fort ? 1 : 0;
@@ -5533,7 +5553,7 @@ function killFoe(j) {
   meleeKill(); if (beetles.big[j] || rand() < .22) dropBones(beetles.x[j], beetles.z[j], beetles.big[j]);
   if (beetles.big[j]) { G.shake = Math.max(G.shake, .3); smp('bigDie', .5, .04); }
 }
-function hurtFoe(j, d) { beetles.hp[j] -= d; beetles.flash[j] = 1; if (beetles.hp[j] <= 0.001) killFoe(j); }
+function hurtFoe(j, d) { if (G.bn.breaker && beetles.big[j]) d *= 1.3; beetles.hp[j] -= d; beetles.flash[j] = 1; if (beetles.hp[j] <= 0.001) killFoe(j); }
 function landShot(k) {
   const x = SH.tx[k], z = SH.tz[k], kind = SH.kind[k], R = SH.splash[k], dmg = SH.dmg[k];
   if (SH.fort[k]) { // a hit on the castle
@@ -5810,7 +5830,7 @@ const WARLORDS = [
   { name: 'ROWAN', title: 'the Crowned', model: 'Knight', hue: 282, eye: '#b400ff', move: 'none', col: '#c060ff' }, // who holds the walls once the story is told
 ];
 const WL_S = 2.6, WL_R = 1.4;                  // his size, and how close a soldier has to get to strike him
-let WL_HPK = 12, WL_WARD = .4, WL_FALL = .25;  // his health (seconds of your damage rate when he appears; at least a quarter of the castle), the ward line, and the blow his fall deals the castle
+let WL_HPK = 28, WL_WARD = .4, WL_FALL = .25;  // his health (seconds of your damage rate when he appears; at least a quarter of the castle), the ward line, and the blow his fall deals the castle
 const WL = { on: false, alive: false, done: false, ward: false, built: [], b: null, tg: [] };
 const wlGroup = new THREE.Group(); scene.add(wlGroup);
 function rigOn(root, bone, o) { const b = root.getObjectByName(bone); if (!b) return; root.add(o); o.updateMatrixWorld(true); b.attach(o); }
@@ -6022,7 +6042,7 @@ const wardTex = canvasTex(256, 128, (x, w, h) => { x.strokeStyle = 'rgba(230,170
 const ward = mesh(new THREE.PlaneGeometry(12, 6.5), new THREE.MeshBasicMaterial({ map: wardTex, color: C('#c060ff'), transparent: true, opacity: .4, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }), 0, 3.1, FORT_Z + 1.1, scene, false);
 ward.visible = false;
 function resetWarlord() {
-  WL.on = WL.alive = WL.ward = WL.done = false; WL.kingDue = 0; hideTelegraphs(); ward.visible = false; // (kingDue too: quitting just after Magmaw fell brought the Bone King into the next level)
+  WL.on = WL.alive = WL.ward = WL.done = false; WL.kingDue = 0; WL.phase = 0; p2Clear(); hideTelegraphs(); ward.visible = false; // (kingDue too: quitting just after Magmaw fell brought the Bone King into the next level)
   if (WL.b) { WL.b.g.visible = false; WL.b.mixer.stopAllAction(); ghost(WL.b, false); } WL.queue = null; WL.shade = false; G.kneel = false; $('giant').classList.remove('last'); if (HOLD.b) HOLD.b.g.visible = false; if (HOLD.fly) { HOLD.fly.b.g.visible = false; HOLD.fly = null; } WL.b = null; WL.cur = null;
   for (const s of spikes) { s.m.visible = false; s.t = 0; } fireRing.visible = false;
 }
@@ -6046,7 +6066,7 @@ function startWarlord(force) {
   let army = 0; for (let i = 0; i < ants.n; i++) if (ants.hp[i] > 0) army += ants.hp[i]; WL.army = army;
   const soft = (G.level <= WORLD_LEN ? .75 : 1) * Math.max(.55, 1 - .15 * (G.level === save.level ? save.fails || 0 : 0)); // the first one goes easier, and every loss softens him
   WL.max = WL.hp = Math.round(Math.max(G.fortMax * .25, (isFinale() && WL.queue ? WL.dps0 || 0 : G.dps || 0) * WL_HPK * soft) * (shade ? .26 : 1) * (1 + .12 * Math.min(3, WL.lap))); // about WL_HPK seconds of the damage you were doing to the castle
-  WL.born = G.t; WL.died = 0;   WL.x = 0; WL.z = FORT_Z + .2; WL.y = 0; WL.state = 'enter'; WL.st = 0; WL.atkT = 3; WL.flash = 0; WL.rage = false; WL.sp = 1.15 + .12 * Math.min(2, WL.lap); WL.wardPop = 0; WL.kingDue = 0;
+  WL.born = G.t; WL.died = 0;   WL.x = 0; WL.z = FORT_Z + .2; WL.y = 0; WL.state = 'enter'; WL.st = 0; WL.atkT = 3; WL.flash = 0; WL.rage = false; WL.phase = shade ? 0 : 1; WL.n2 = 0; WL.a2 = false; WL.sp = 1.15 + .12 * Math.min(2, WL.lap); WL.wardPop = 0; WL.kingDue = 0;
   if (WL.def.move === 'barrage') { // the Bone King leaps down from his own walls, tougher than any of his warlords
     WL.max = WL.hp = Math.round(WL.max * 1.3); WL.state = 'leap'; WL.z = inHall() ? -44 : FORT_Z - 1; WL.lv = inHall() ? 9 : 3; WL.y = 7; king.visible = false; kingCrown.visible = false; G.kingSink = 0; WL.sp *= .9;
     burst(0, 7, FORT_Z - 1, [WL.def.col, '#ffffff', '#ffc62b'], 40, 7, { vy: 6, life: 1, g: 6, sz: 2.2, kind: PK.SPARK });
@@ -6067,8 +6087,8 @@ function startWarlord(force) {
   if (!G.sim && !G.cine) { if (!DIR.s) toastMsg(WL.def.title.toUpperCase(), wlName(), { live: true, name: true }); if (!save.wardTip && WL.def.move !== 'barrage') toastMsg((inHall() ? 'WALL' : 'CASTLE') + ' SHIELDED!', 'Defeat ' + wlName() + ' to break the shield', { ok: () => WL.alive, on: () => { save.wardTip = 1; persist(); } }); kingVoice("roar", .8); tone(70, 1, 'sawtooth', .08, .5); noise(.9, .14, 'lowpass', 700, 120); if (G.level > LAP_LEN && WL.def.move === 'barrage') { const f = popText(['I WORK FOR HIM NOW?!', 'MY OWN THRONE. MY OWN!', 'DEMOTED! ME!', 'HE KEEPS IT POLISHED...'][Math.floor(roadN(G.level) / 50) % 4], 0, 8.4, FORT_Z, '#e070ff'); if (f) f.hold = 1.6; } }
 }
 function hurtWarlord(d) {
-  if (!WL.alive) return; WL.hp -= d; WL.flash = 1;
-  if (!WL.rage && WL.hp < WL.max * .5) { WL.rage = true; WL.sp *= 1.3; if (!G.sim) { toastMsg('ENRAGED!', wlName() + ' strikes faster', { live: true, ok: () => WL.alive }); tone(80, .7, 'sawtooth', .08, .6); } burst(WL.x, 3, WL.z, [WL.def.col, '#ffffff'], 24, 6, { vy: 6, life: .8, g: 6, sz: 2, kind: PK.SPARK }); }
+  if (!WL.alive) return; if (WL.phase && WL.state === 'recover') d *= 2; if (G.bn.breaker) d *= 1.3; if (G.hornT > 0) d *= 1.35; WL.hp -= d; WL.flash = 1;
+  if (!WL.rage && WL.hp < WL.max * .5) { WL.rage = true; WL.sp *= WL.shade ? 1.3 : 1.15; if (!WL.shade) { WL.hp = Math.max(WL.hp, WL.max * .42); phaseTwo(); } /* (one huge blow can't skip the second half) */ }
   if (WL.hp <= 0) slayWarlord();
 }
 function slayWarlord() {
@@ -6076,7 +6096,7 @@ function slayWarlord() {
   if (kingDies && isFinale()) { kneelKing(); return; }
   if (!G.sim && !G.practice && !WL.shade) { save.trophies = save.trophies || {}; save.trophies[WARLORDS.indexOf(WL.def)] = 1; persist(); }
   if (!kingDies && !WL.shade) mission('warlord', 1); // his emblem turns gold on the realm map
-  WL.hp = 0; WL.alive = false; WL.done = true; WL.died = G.t; WL.state = 'dead'; WL.st = 0; hideTelegraphs(); wlAct('die', .15);
+  p2Clear(); WL.hp = 0; WL.alive = false; WL.done = true; WL.died = G.t; WL.state = 'dead'; WL.st = 0; hideTelegraphs(); wlAct('die', .15);
   if (thenKing) { WL.kingDue = WL.queue[0] === 4 ? 2.4 : 1.2; } // his last warlord falls... and the Bone King climbs onto his walls
   else { WL.ward = false; ward.visible = false; }
   if (kingDies) G.fortHp = 0; // (on the Endless Road his walls fall with him)
@@ -6093,6 +6113,7 @@ function slayWarlord() {
   else if (!G.sim) { const L = WALL_SAY[WARLORDS.indexOf(WL.def)]; if (L && !WL.lap && !film) { const f = popText(L.last, WL.x, 5.6, WL.z, '#ffffff'); if (f) f.hold = 1.6; } toastMsg(wlName() + ' SLAIN!', 'The shield is down. Finish the ' + TGT() + '!', { now: true }); [392, 523, 659, 784].forEach((f, k) => setTimeout(() => tone(f, .25, 'triangle', .06), k * 110)); tone(60, .9, 'sine', .3, .3); }
 }
 function beginAttack() {
+  if (WL.phase === 2 && (WL.n2 = (WL.n2 || 0) + 1) % 2 === 1 && !(p2Who() === 1 && P2.tomb.length) && !(p2Who() === 3 && P2.fis) && p2Who() < 5) return beginAttack2(); WL.a2 = false;
   const m = WL.def.move; WL.state = 'wind'; WL.st = 0; WL.tg = []; wlAct('strike', .15);
   if (m === 'cleave') { WL.windT = 1.05; WL.tg.push({ kind: 's', x: WL.x, z: WL.z + .8, a: 0, w: 4, len: 9 }); }
   else if (m === 'spears') { WL.windT = 1.1; for (const a of [-.26, 0, .26]) WL.tg.push({ kind: 's', x: WL.x, z: WL.z + .8, a, w: 1.2, len: 15 }); }
@@ -6106,6 +6127,7 @@ function beginAttack() {
   sfx('wlwind', 300, () => { tone(140, .6, 'sawtooth', .05, 1.8); noise(.5, .05, 'bandpass', 600, 1400); });
 }
 function strike() {
+  if (WL.a2) return strike2();
   const m = WL.def.move; let lost = 0;
   const kill = test => { for (let i = 0; i < ants.n; i++) { if (ants.hp[i] <= 0 || !test(ants.x[i], ants.z[i])) continue; ants.hp[i] = 0; lost++; if (rand() < .35) burst(ants.x[i], .5, ants.z[i], ALLY_FX, 1, 3); } };
   for (const t of WL.tg) {
@@ -6143,7 +6165,7 @@ function wlFx(b, dt, at, k) { // a warlord's own signs of life, wherever he stan
   if (mv === 'quake' && rand() < .07) burst(X + (rand() - .5) * 3.4 * q, Y + (4.1 + rand() * .7) * q, Z - .4, ['#ffe680', '#ff9a2a', '#ff4a1a'], 1, .8, { vy: 2.2, life: .7, g: -.6, sz: 1.4, kind: PK.SPARK }); // embers rising off him
 }
 function updateWarlord(dt, play) {
-  captainTick(dt, play); holdTick(dt);
+  captainTick(dt, play); holdTick(dt); p2Tick(dt, play);
   // effects keep animating whatever happens
   for (const s of spikes) { if (s.t <= 0) continue; s.t -= dt; const k = s.t > .9 ? (1.1 - s.t) / .2 : s.t < .35 ? s.t / .35 : 1; s.m.scale.y = Math.max(.01, k * 1.2); if (s.t <= 0) s.m.visible = false; }
   if (fireRing.visible) { const u = (fireRing.userData.t += dt) / .45; if (u >= 1) fireRing.visible = false; else { fireRing.scale.setScalar(.3 + u * fireRing.userData.R); fireRing.material.opacity = 1 - u; } }
@@ -6178,8 +6200,8 @@ function updateWarlord(dt, play) {
         burst(WL.x, 1.5, NEST_Z, ['#e2d6c4', '#b9ad9c', WL.def.col], 50, 9, { vy: 8, life: 1.1, g: 16, sz: 2.4, kind: PK.ROCK }); popText('CRUSHED!', WL.x, 4.5, NEST_Z - 1, '#ff4a4a');
       }
     }
-    else if (st === 'wind') { if (WL.st >= WL.windT) { strike(); WL.state = 'recover'; WL.st = 0; } }
-    else if (st === 'recover') { if (WL.st > .55) { WL.state = 'walk'; WL.st = 0; wlAct('walk'); } }
+    else if (st === 'wind') { if (WL.st >= WL.windT) { strike(); WL.state = 'recover'; WL.st = 0; if (WL.phase && !G.sim) popText('OPEN!', WL.x, 7.4, WL.z, '#ffe680'); } }
+    else if (st === 'recover') { if (WL.st > (WL.phase ? P2_OPEN : .55)) { WL.state = 'walk'; WL.st = 0; wlAct('walk'); } }
     else if (st === 'stun') { if (rand() < .3) burst(WL.x + (rand() - .5), 4.6, WL.z, ['#ffe680', '#ffffff'], 1, 1.5, { vy: 1, life: .5, g: 0, sz: 1.5, kind: PK.SPARK }); if (WL.st > WL.stunT) { WL.state = 'walk'; WL.st = 0; wlAct('walk'); } }
     // your soldiers strike him: each one that reaches him lands its whole strength and falls
     if (WL.alive && !DIR.s) { const rr = (WL_R + .3) ** 2; let hits = 0;
@@ -6517,7 +6539,7 @@ function update(dt) {
   for (const b of bubbles) { const k = (G.t * b.sp + b.ph) % 2; b.m.scale.setScalar(k < 1.6 ? .3 + k * .45 : Math.max(.01, 1 - (k - 1.6) * 2.4)); }
 
   // launcher
-  const lx0 = launcher.position.x; launcher.position.x += (G.lx - launcher.position.x) * Math.min(1, dt * 22);
+  const lx0 = launcher.position.x; if (P2.frz > 0) G.lx = launcher.position.x; else launcher.position.x += (G.lx - launcher.position.x) * Math.min(1, dt * 22);
   aim.position.x = launcher.position.x;
   const slide = dt > 0 ? (launcher.position.x - lx0) / dt : 0; G.lean = (G.lean || 0) + (clamp(-slide * .012, -.08, .08) - (G.lean || 0)) * Math.min(1, dt * 10); // it leans a touch into a quick slide
   G.recoil = Math.max(0, G.recoil - dt * 10); const rk = Math.min(1, G.recoil); barrel.position.z = CART.z + rk * .16; barrel.rotation.x = CART.pitch + rk * .06; // the barrel kicks back and up on every shot
@@ -6527,12 +6549,12 @@ function update(dt) {
 
   if (FZ) {} else if (G.grandT > 0) G.grandT = Math.max(0, G.grandT - dt * (G.firing ? 4 : 1));
   else if (G.introT > 0) { G.introT = Math.max(0, G.introT - dt * (G.firing ? 4 : 1)); } // holding to fire skips the intro
-  if (play && G.firing && !(G.introT > 0)) {
-    G.fireT -= dt; const iv = fireInterval(save.up.rate);
+  if (play && G.firing && !(G.introT > 0) && !(P2.frz > 0)) {
+    G.fireT -= dt; const iv = fireInterval(save.up.rate) / (G.bn.fuse && (G.clk || 0) < 10 ? 1.5 : 1);
     while (G.fireT <= 0) { G.fireT += iv; launchAnt(); }
     if (G.fired > 6) G.hintT = 0;
   } else G.fireT = 0;
-  if (!G.sim) cannonEngine(play && G.firing && !(G.introT > 0), 1 / fireInterval(save.up.rate));
+  if (!G.sim) cannonEngine(play && G.firing && !(G.introT > 0) && !(P2.frz > 0), 1 / fireInterval(save.up.rate));
 
   if (FZ) { updateHoard(dt); updateWarlord(dt, !!DIR.s.wl); }
   battle: { if (FZ) break battle;
@@ -6554,11 +6576,11 @@ function update(dt) {
   }
 
   // move player slimes + gates + castle hits
-  const ah = antHp(save.up.tough);
+  const ah = soldHp(), bm0 = (G.bn.burn ? 1.2 : 1) * (G.hornT > 0 ? 1.35 : 1); bnPop = 0; if (G.hornT > 0) G.hornT -= dt;
   for (let i = 0; i < ants.n; i++) {
     if (ants.hp[i] <= 0) continue;
-    const pz = ants.z[i]; let z = pz - (play || pz > -4.2 ? ants.sp[i] * dt * (G.rally > 0 ? 1.4 : 1) : 0); let x = ants.x[i] + Math.sin(ants.ph[i] + G.t * 3) * 0.25 * dt;
-    const r = 0.3 * ants.s[i]; x = wallX(clamp(x, -LANE + r, LANE - r), ants.x[i], z, r); // (G.rally: the Paladin's horn hurries everyone along)
+    const pz = ants.z[i]; let z = pz - (play || pz > -4.2 ? ants.sp[i] * dt * (G.rally > 0 ? 1.4 : 1) * (G.bn.boots ? 1.2 : 1) : 0); let x = ants.x[i] + Math.sin(ants.ph[i] + G.t * 3) * 0.25 * dt;
+    const r = 0.3 * ants.s[i]; x = wallX(clamp(x, -LANE + r, LANE - r), ants.x[i], z, r); if (P2.cl.length || P2.fis || P2.tomb.length) { if (!p2Walk(i, x, pz, z, r, dt, ah)) continue; x = _p2.x; z = _p2.z; } // (G.rally: the Paladin's horn hurries everyone along)
     for (const g of G.gates) {
       if ((ants.pass[i] & g.bit) || !(pz > g.z && z <= g.z) || Math.abs(x - g.cx) > g.w / 2) continue;
       if (sandOff()) { ants.pass[i] |= g.bit; continue; } /* lost in the sandstorm: the gate does nothing */
@@ -6590,11 +6612,11 @@ function update(dt) {
         continue;
       }
       if (g.k < 1) { // red gate: most soldiers who walk through it fall (the Champion shrugs it off)
-        if (!ants.big[i] && rand() > g.k) { ants.hp[i] = 0; g.made = (g.made || 0) - 1; g.pop = (g.pop || 0) + 1; if (!(g.popT > 0)) g.popT = .3; burst(x, .8, g.z, ['#ff2f45', '#ffd0d6', ALLY_FX], 3, 2.6, { vy: 3, life: .5, g: 9, sz: 1.3 }); sfx('badgate', 60, () => smp('redGate', .3, .04)); break; }
+        if (!ants.big[i] && rand() > (G.bn.kind ? (1 + g.k) / 2 : g.k)) { ants.hp[i] = 0; g.made = (g.made || 0) - 1; g.pop = (g.pop || 0) + 1; if (!(g.popT > 0)) g.popT = .3; burst(x, .8, g.z, ['#ff2f45', '#ffd0d6', ALLY_FX], 3, 2.6, { vy: 3, life: .5, g: 9, sz: 1.3 }); sfx('badgate', 60, () => smp('redGate', .3, .04)); break; }
         continue;
       }
       let clones = ants.big[i] ? (g.k - 1) * 3 : g.k - 1;
-      if (rand() < luckyChance(save.up.lucky)) { clones++; burst(x, 1.4, g.z, ['#ffc62b', '#fff3a8'], 3, 2.4, { vy: 4.5, life: .6, g: 7, sz: 1.5 }); } // Lucky Gates
+      if (rand() < luckyChance(save.up.lucky) + (G.bn.dip ? .25 : 0)) { clones++; burst(x, 1.4, g.z, ['#ffc62b', '#fff3a8'], 3, 2.4, { vy: 4.5, life: .6, g: 7, sz: 1.5 }); } // Lucky Gates
       const tr = ants.tier[i], chp = ah * tierHp(tr); // clones keep the weapon
       for (let c = 0; c < clones; c++) { const ci = addUnit(ants, clamp(x + (rand() - .5) * 1.1, -LANE + .3, LANE - .3), g.z - rand() * 0.9, chp, 1, ants.big[i] ? 6.6 + rand() * .6 : ants.sp[i] * (.95 + rand() * .1), ants.pass[i], 0, ants.big[i] ? 0 : tr); if (ci >= 0) ants.flash[ci] = 1; }
       g.pop = (g.pop || 0) + clones; if (!(g.popT > 0)) g.popT = .3; g.made = (g.made || 0) + clones; g.seen = (g.seen || 0) + 1;
@@ -6634,6 +6656,7 @@ function update(dt) {
       if (beetles.tier[j] === F_CAP) { if (play) { G.nestHp -= G.nestMax * .6; popText('SMASHED!', x, 3, NEST_Z - 1, '#ff4a4a'); G.shake = 1.2; } captainDown(x, z, true); beetles.hp[j] = 0; continue; }
       if (play) { G.nestHp -= brute ? chargeHit() : beetles.big[j] ? NEST_HIT_BIG : NEST_HIT; G.shake = Math.min(brute ? 1 : 0.6, G.shake + (brute ? .8 : 0.12 * beetles.s[j])); buzz(brute ? 60 : 15); if (brute) popText('-' + chargeHit(), x, 2.4, NEST_Z, '#ff4a4a'); }
       burst(x, .8, NEST_Z, FOE_FX, 6, 5); splat(x, NEST_Z - .4, FOE, 1.3 * beetles.s[j]);
+      if (G.bn.thorn && play) bnThorn(x, NEST_Z);
       sfx('nest', 110, () => smp('campHit', .25, .08)); // skeletons reaching your gatehouse (your camp is G.nest)
       beetles.hp[j] = 0; continue;
     }
@@ -6665,11 +6688,11 @@ function update(dt) {
             if (ddx * ddx + ddz * ddz < rr * rr) {
               if (ants.kind[i]) { explode(ax, az); ants.hp[i] = 0; break outer; }
               if (beetles.tier[j] === F_BOMB) { foeBomb(j); if (ants.hp[i] <= 0.001) break outer; j = nextB[j]; continue; } // touch a bomb skeleton and it blows
-              const d = Math.min(ants.hp[i], beetles.hp[j]); ants.hp[i] -= d; beetles.hp[j] -= d; meleeHit(); // feeds the battle layer (an occasional clash plays as an accent)
+              const bm = beetles.big[j] && G.bn.breaker ? bm0 * 1.3 : bm0, d = Math.min(ants.hp[i], beetles.hp[j] / bm); ants.hp[i] -= d; beetles.hp[j] -= d * bm; meleeHit(); // feeds the battle layer (an occasional clash plays as an accent)
               ants.flash[i] = 1; beetles.flash[j] = 1;
               if (!G.sim && rand() < .07) burst(ax + ddx * .5, .8, az + ddz * .5, ['#ffffff', '#fff1a8'], 2, 2.6, { vy: 2.6, life: .26, g: 6, sz: 1.25, kind: PK.SPARK }); // steel on bone: sparks flick up all along the front
               if (beetles.hp[j] <= 0.001) killFoe(j);
-              if (ants.hp[i] <= 0.001) { ants.hp[i] = 0; burst(ax, .4, az, ALLY_FX, ants.big[i] ? 16 : 2); if (ants.big[i] || rand() < .35) splat(ax, az, ALLY, ants.big[i] ? 2.8 : .7); break outer; }
+              if (ants.hp[i] <= 0.001) { if (G.bn.wind && !ants.big[i] && rand() < .14) { ants.hp[i] = ah * .7; break outer; } if (G.bn.last && rand() < .4) bnFall(ax, az, ah); ants.hp[i] = 0; burst(ax, .4, az, ALLY_FX, ants.big[i] ? 16 : 2); if (ants.big[i] || rand() < .35) splat(ax, az, ALLY, ants.big[i] ? 2.8 : .7); break outer; }
             }
           }
           j = nextB[j];
@@ -6922,7 +6945,7 @@ function render() {
   }
   const fp = clamp(G.fortHp / G.fortMax, 0, 1), np = clamp(G.nestHp / G.nestMax, 0, 1);
   const capBar = CAP.alive, wlBar = capBar || WL.alive && WL.state !== 'enter'; // while a warlord or his captain fights, the top bar is his
-  if (_hud.wlBar !== wlBar) { _hud.wlBar = wlBar; $('fortBar').classList.toggle('wl', wlBar); }
+  if (_hud.wlBar !== wlBar) { _hud.wlBar = wlBar; $('fortBar').classList.toggle('wl', wlBar); $('fortBar').classList.toggle('two', wlBar && !capBar && !!WL.phase); }
   if (capBar) { setCss('fortFill', 'transform', `scaleX(${clamp(CAP.hp / CAP.max, 0, 1).toFixed(3)})`); setHud('fortTxt', CAP.def.name + ' · ' + Math.max(0, Math.ceil(CAP.hp))); }
   else if (wlBar) { setCss('fortFill', 'transform', `scaleX(${clamp(WL.hp / WL.max, 0, 1).toFixed(3)})`); setHud('fortTxt', wlName() + ' · ' + Math.max(0, Math.ceil(WL.hp))); }
   else { setCss('fortFill', 'transform', `scaleX(${fp.toFixed(3)})`); if (LEAN || G.frameN % 6 === 0) setHud('fortTxt', (inHall() ? 'Wall of Bone · ' : 'Bone Castle · ') + Math.max(0, Math.ceil(G.fortHp))); }
@@ -7155,7 +7178,7 @@ const GHUD = (() => {
     n = 0; A = H.vis; tf(1, 0, 0);
     if (A > 0 && G.cfg) {
       const num = k => parseFloat(String(_hud[k] || 'scaleX(1)').slice(7)), wl = _hud.wlBar;
-      bar(wl ? 'wl' : 'fort', 'fort', 0, num('fortFilltransform'), _hud.fortTxt || ''); bar('nest', 'nest', 0, num('nestFilltransform'), _hud.nestTxt || '');
+      bar(wl ? 'wl' : 'fort', 'fort', 0, num('fortFilltransform'), _hud.fortTxt || ''); if (wl && WL.phase && !CAP.alive) { const b = box.fort, w = cells.white, u = w.u + w.du / 2, v = w.v + w.dv / 2, mx = b.x + b.w / 2; quad(mx - 1.4, b.y + 4, mx + 1.4, b.y + 4, mx + 1.4, b.y + 26, mx - 1.4, b.y + 26, u, v, u, v, W1, .9); } bar('nest', 'nest', 0, num('nestFilltransform'), _hud.nestTxt || '');
       if (G.cfg.par) { const p = box.par, t = _hud.parTxt || '', left = G.cfg.par - (G.clk || 0), a = left <= 0 ? .55 : 1, tw = lay('par', t).w, w = 2 + 8 + lay('star', '★').w + 4 + tw + 10 + 2, tip = $('parPill').classList.contains('tipping'); if (tip) { H.tipT += dt; tf(1 + .09 * (1 - Math.cos(H.tipT * 6.28)), p.x + w / 2, p.y + p.h / 2); }
         stretch(cells.ppar, p.x, p.y, w, a); text('star', '★', p.x + 10, p.y + p.h / 2, 0, PSTAR, a); text('par', t, p.x + 14 + lay('star', '★').w, p.y + p.h / 2, 0, left > 0 && left < 8 ? PHOT : W1, a); tf(1, 0, 0); }
       if (!$('giant').classList.contains('last')) { const g = box.giant, p = clamp(_hud.gp || 0, 0, 100), rd = $('giant').classList.contains('ready'), cx = g.x + 41, cy = g.y + 41, hk = _hud.ch ? 'champ' : 'horse'; if (rd && !H.rdyAt) H.rdyAt = now; if (!rd) H.rdyAt = 0;
@@ -7314,7 +7337,9 @@ function showMenu() {
   if (G.practice) { if (G.practiceKeep) save = JSON.parse(G.practiceKeep); G.practice = false; G.practiceKeep = null; }
   $('rewDot').classList.toggle('on', rewardsReady()); // back from a boss practice: your real progress returns
   setupLevel(save.level); G.mode = 'menu'; renderUpgrades(); if (crowdReady && save.level >= 4) loadPaladinArt();
-  $('menu').classList.add('on'); $('result').classList.remove('on'); gameEl.classList.add('overlay'); gameEl.classList.remove('lostwash'); POST.mat.uniforms.uWash.value = 0;
+  $('menu').classList.add('on'); $('result').classList.remove('on'); $('boon').classList.remove('on'); gameEl.classList.add('overlay'); gameEl.classList.remove('lostwash'); POST.mat.uniforms.uWash.value = 0;
+  { const L = boonList().map(id => BOON_BY[id]).filter(Boolean); $('boonMenu').innerHTML = L.map(b => `<em style="--r:${BOON_CAT[b.c][1]}" title="${b.name}">${boonPic(b)}</em>`).join(''); }
+  if (save.boonDue && save.boonDue.n === save.level - 1) showBoons(() => showMenu()); // (the game was closed before the choice was made)
 }
 // the banner. One message at a time: the rest wait their turn (a level's opening tips used to overwrite each other), tips wait for
 // the camera flyover to end, and nothing runs its time out behind a story card. o: now = show at once (over whatever is up);
@@ -7370,7 +7395,7 @@ function win() {
   const n = G.level, keep = clamp(G.nestHp / G.nestMax, 0, 1);
   G.stars = 1 + (keep >= .5 ? 1 : 0) + ((G.clk || 0) <= G.cfg.par ? 1 : 0); // a star for winning, one for keeping half your gatehouse, one for beating the clock
   if (!G.sim) { save.stars = save.stars || {}; save.stars[n] = Math.max(save.stars[n] || 0, G.stars); }
-  G.reward = Math.round((20 + 8 * eff(n) + 8 * G.stars) * (G.cfg.boss || isGold(n) ? 2 : isCaptain(n) ? 1.5 : 1));
+  G.reward = Math.round((20 + 8 * eff(n) + 8 * G.stars) * (G.bn.grave ? 1.25 : 1) * (G.cfg.boss || isGold(n) ? 2 : isCaptain(n) ? 1.5 : 1));
   if (!G.sim) { mission("win", 1); if (G.stars === 3) mission("stars3", 1); mission("fired", G.fired - (G.firedSent || 0)); mission("kills", (G.kills || 0) - (G.killsSent || 0)); persist(); }
 }
 function boom() {
@@ -7462,8 +7487,8 @@ function collect(mult) {
   const unlock = !hadPal && palReady() && !G.practice; // the first captain has fallen: the Paladin joins you
   persist();
   const after = () => { showMenu(); coinFly(before, gained); if (unlock) setTimeout(() => { if (G.mode === 'menu') showPalUnlock(); else G.palCardDue = true; }, 700); }; // (never over a battle the player already started)
-  const interstitial = G.mode === 'resultWin' && save.level > 3 && save.wins % 2 === 0 && mult === 1;
-  if (interstitial) showAd('Interstitial · plays between levels', 2, after); else after();
+  const interstitial = G.mode === 'resultWin' && save.level > 3 && save.wins % 2 === 0 && mult === 1, due = G.mode === 'resultWin' && boonDue(save.level - 1), go = () => { if (interstitial) showAd('Interstitial · plays between levels', 2, after); else after(); };
+  if (due) { persist(); showBoons(go); } else go();
 }
 // coins fly from the middle of the screen into the wallet, which counts up as they land
 function coinFly(from, gained) {
@@ -7511,7 +7536,7 @@ $('hatBtn').onclick = () => { const cur = KNIGHT_HATS[save.hat] ? save.hat : 'cr
 function pauseGame() {
   cannonEngine(false); if (MELEE.gain && actx) MELEE.gain.gain.setTargetAtTime(0, actx.currentTime, .05); // the battle layer hushes with the game
   if (G.mode !== 'play' || G.paused || G.cine || G.fin || DIR.s) return; // (the intro and the finale replay can't be paused: they're short and skippable, and pausing them left them stuck)
-  G.paused = true; G.firing = false; $('pauseSub').textContent = (G.cfg.boss ? 'Boss · ' : 'Level ') + G.level;
+  G.paused = true; G.firing = false; $('pauseSub').textContent = (G.cfg.boss ? 'Boss · ' : 'Level ') + G.level; $('pauseBoons').innerHTML = boonList().map(id => BOON_BY[id]).filter(Boolean).map(b => `<div style="--r:${BOON_CAT[b.c][1]}"><em>${boonPic(b)}</em><span><b>${b.name}</b>${b.d}</span></div>`).join('');
   $('pause').classList.add('on'); gameEl.classList.add('overlay'); if (actx && actx.state === 'running') actx.suspend();
 }
 function resumeGame() {
@@ -7646,7 +7671,7 @@ canvas.addEventListener('pointerdown', e => {
   try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
 });
 canvas.addEventListener('pointermove', e => {
-  if (!G.firing || e.pointerId !== G.dragId) return; const dx = e.clientX - G.dragX; G.dragX = e.clientX;
+  if (!G.firing || e.pointerId !== G.dragId) return; const dx = e.clientX - G.dragX; G.dragX = e.clientX; if (P2.frz > 0) { P2.shk += Math.abs(dx) / 420; return; } // (shaking the ice off)
   G.lx = clamp(G.lx + dx / (VIEW.w || 390) * 12, -LANE + .6, LANE - .6);
 });
 const stop = e => { if (e.pointerId !== G.dragId) return; G.firing = false; G.dragId = null; };
@@ -7712,6 +7737,7 @@ function frame(now) {
   if (LEAN && (G.mode === 'menu' || G.mode === 'resultWin' || G.mode === 'resultLose') && !G.cine && !G.end && !DIR.s && DIR.fade < .01) { if ((G.halfN = !G.halfN)) { G.halfDt = dt; return; } dt += G.halfDt || 0; } G.halfDt = 0;
   if (keys.ArrowLeft) G.lx = clamp(G.lx - dt * 9, -LANE + .6, LANE - .6);
   if (keys.ArrowRight) G.lx = clamp(G.lx + dt * 9, -LANE + .6, LANE - .6);
+  if (P2.frz > 0 && (keys.ArrowLeft || keys.ArrowRight)) P2.shk += dt * .7;
   const wt = G.winT; // slow motion on the winning hit and again as the king pops
   if (!G.paused) { update(dt * (G.mode === "won" ? winSpeed(wt) : 1) * (DIR.s ? DIR.speed : 1)); render(); G.pauseDrawn = false; }
   else if (!G.pauseDrawn) { render(); G.pauseDrawn = true; } // paused: the scene holds still, so it is drawn once, not every frame
@@ -7721,6 +7747,7 @@ function frame(now) {
 window.__CR = {
   G, ants, beetles, get save() { return save; }, musicProbe, winProbe, start: startPlay, menu: showMenu,
   step(sec, opts = {}) { const n = Math.round(sec * 60); for (let i = 0; i < n; i++) { if (opts.aim) G.lx = opts.aim(G); if (opts.fire !== undefined) G.firing = opts.fire; if (opts.giant) sendGiant(); update(1 / 60); } render(); return { mode: G.mode, ants: ants.n, beetles: beetles.n, fort: Math.ceil(G.fortHp), nest: Math.ceil(G.nestHp), t: +G.t.toFixed(1) }; },
+  boonAfter(C) { const sv = { boons: { w: boonWorld(C.lv), list: C.boons } }; if (C.lv < 2) return; boonTake(sv, C.lv, null); const ids = boonOffer(sv, C.lv, Math.random); boonTake(sv, C.lv, ids[(Math.random() * ids.length) | 0]); C.boons = sv.boons.list; },
   UPG, upCost, freshSave, levelCfg, coinFly, TIERS, get world() { return world; }, get KK() { return KK; },
   dumpAtlas() { const w = ATLAS_W, h = ATLAS_H, px = new Uint8Array(w * h * 4); renderer.readRenderTargetPixels(crowdAtlas, 0, 0, w, h, px); const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const x = cv.getContext('2d'), im = x.createImageData(w, h); for (let y = 0; y < h; y++) im.data.set(px.subarray((h - 1 - y) * w * 4, (h - y) * w * 4), y * w * 4); x.putImageData(im, 0, 0); return cv; }, /* debug: the baked crowd sprite sheet */
   setPR(k) { pixelRatio = prCap = k; renderer.setPixelRatio(k); resize(); }, setLowQ(on) { setLowQuality(on); },
@@ -7730,7 +7757,7 @@ window.__CR = {
   // opts.arm = how much the bot values a weapon gate (as if it were a ×N gate); opts.add = soldiers a +N gate is worth one ×2 for
   sim(level, up, skill = .7, maxT = 150, fails = 0, opts = {}) {
     const keep = save, wo = G.worldOverride, mu = muted; muted = true; G.sim = true;
-    save = { ...freshSave(), level, fails, up: { ...freshSave().up, ...up } }; G.worldOverride = worldIdx;
+    save = { ...freshSave(), level, fails, up: { ...freshSave().up, ...up }, boons: opts.boons ? { w: boonWorld(level), list: opts.boons } : undefined }; G.worldOverride = worldIdx;
     G.cfgPatch = opts.cfg; setupLevel(level); G.cfgPatch = null; G.mode = 'play'; let tgt = 0, rt = 0; const dt = 1 / 30;
     while (G.mode === 'play' && G.t < maxT) {
       rt -= dt;
@@ -7741,6 +7768,7 @@ window.__CR = {
         if (opts.react) { let bj = -1; for (let j = 0; j < beetles.n; j++) if (beetles.hp[j] > 0 && beetles.pass[j] === 2 && (bj < 0 || beetles.z[j] > beetles.z[bj])) bj = j; if (bj >= 0 && Math.random() < opts.react) tgt = beetles.x[bj] * .9; } // opts.react = chance it swings onto a charging brute
         if (saws.length && Math.random() < skill) for (const s of saws) { const sx = Math.sin((G.t + .5) * s.spd + s.ph) * s.range; if (Math.abs(tgt - sx) < 1.7) tgt = sx + (tgt < sx ? -1.9 : 1.9); } // a player who's paying attention steers round the saw
       }
+      if (P2.fis && skill > .3) tgt = P2.fis.gap; else if (WL.alive && WL.state === 'wind' && WL.a2 && p2Who() === 2 && Math.random() < dt * 3 * skill) tgt = WL.fx2 > 0 ? -2.4 : 2.4;
       G.lx = clamp(opts.aimFn ? opts.aimFn(G) : tgt, -LANE + .6, LANE - .6); G.firing = true; // opts.aimFn: a scripted aim (e.g. a mindless sweep) instead of the bot's
       if (G.charge >= sendCharge()) sendGiant();
       update(dt);
@@ -7881,6 +7909,165 @@ function startLook() {
   s.done = () => { tidy(); showResult(true); }; s.abort = tidy;
   dirStart(s); return true;
 }
+/* ---------------- the second phase ----------------
+   At half health a warlord changes the fight, each in his own way: Grimbald throws cleavers that stand in the road, Sek-Ra raises
+   tombs that pour out the dead, Hrimgar freezes the cannon, Magmaw splits the road with one safe crossing, and the Bone King
+   turns soldiers with the crown's light. He goes on striking as before, every other time. After any strike his weapon is stuck for a moment:
+   he is open, and every blow counts double. */
+const P2N = [['Cleaver storm', 'Steer around the cleavers, or chop them down'], ['The tombs open', 'Break the tombs to stop the dead'], ['Deep freeze', 'Slide out of his aim, or shake the ice off'], ['The ground splits', 'Aim for the safe crossing'], ['The crown calls', 'Keep your soldiers out of the light']];
+const P2 = { cl: [], tomb: [], fis: null, frz: 0, shk: 0, beam: 0, bx: 0, bz: 0, g: null, v: {} };
+const P2_OPEN = 1.4, P2_SLOT = [[-2.7, -24.2], [2.7, -24.2], [0, -24.4], [-2.7, -18.2], [2.7, -18.2], [0, -10.2]], P2_FZ = [-24.2, -10];
+const p2Who = () => WARLORDS.indexOf(WL.def);
+function p2Group() { if (!P2.g) { P2.g = new THREE.Group(); P2.g.userData.dyn = true; scene.add(P2.g); } return P2.g; }
+const p2Mark = o => { o.traverse(q => { q.userData.dyn = true; q.renderOrder = q.renderOrder || .01; }); return o; }; // (never part of the kept picture on phones)
+function p2Clear() { // everything he put on the road goes
+  for (const c of P2.cl) c.on = false; for (const t of P2.tomb) t.on = false; P2.cl.length = P2.tomb.length = 0; P2.fis = null; P2.beam = 0; WL.a2 = false; WL.n2 = 0; p2Thaw(true);
+  for (const k in P2.v) { const v = P2.v[k]; for (const o of Array.isArray(v) ? v : [v]) if (o.g) o.g.visible = false; }
+}
+// ---- what it looks like (made the first time each is needed)
+function p2Cleaver(k) {
+  const L = P2.v.cl || (P2.v.cl = []); if (L[k]) return L[k]; let src = null; const b = WL.b; if (b) b.g.traverse(o => { if (!src && o.isMesh && !o.isSkinnedMesh && o.parent && o.parent.name === 'handslotr' && o.geometry.attributes.position.count > 300) src = o; });
+  const g = new THREE.Group(), q = new THREE.Group(); g.add(q);
+  if (src) { const m = src.material.clone(); m.emissive = C('#8a94b0'); m.emissiveIntensity = .14; m.emissiveMap = null; const o = new THREE.Mesh(src.geometry, m); o.scale.setScalar(1.6); o.rotation.z = Math.PI; o.position.set(.68, 2.45, 0); q.add(o); }
+  else { mesh(new THREE.BoxGeometry(1.5, 1.7, .16), std('#8d93a6', .35, { metalness: .5 }), 0, .7, 0, q, false); mesh(new THREE.CylinderGeometry(.11, .13, 1.5, 8), std('#6a4226', .8), .4, 2.2, 0, q, false); }
+  const t = P2.v.crat || (P2.v.crat = canvasTex(128, 128, (x, w) => { const r = x.createRadialGradient(64, 64, 4, 64, 64, 62); r.addColorStop(0, 'rgba(20,10,20,.85)'); r.addColorStop(.45, 'rgba(30,16,26,.55)'); r.addColorStop(1, 'rgba(30,16,26,0)'); x.fillStyle = r; x.fillRect(0, 0, w, w); x.strokeStyle = 'rgba(15,8,14,.9)'; x.lineWidth = 3; for (let k2 = 0; k2 < 9; k2++) { let a = k2 * .7, px = 64, py = 64; x.beginPath(); x.moveTo(px, py); for (let j = 0; j < 4; j++) { a += Math.sin(k2 * 9 + j * 3) * .4; px += Math.cos(a) * 14; py += Math.sin(a) * 14; x.lineTo(px, py); } x.stroke(); } }));
+  const d = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 3.6), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })); d.rotation.x = -Math.PI / 2; d.position.y = .05; d.renderOrder = -.5; g.add(d);
+  const st = std('#a89c8c', .9); for (let j = 0; j < 7; j++) { const a = j * .9; mesh(new THREE.DodecahedronGeometry(.1 + .08 * (j % 3), 0), st, Math.cos(a) * (.75 + .25 * (j % 2)), .08, Math.sin(a) * (.55 + .2 * (j % 2)), g, false).rotation.set(j, j, j); }
+  g.visible = false; p2Group().add(p2Mark(g)); return (L[k] = { g, q, d });
+}
+function p2Tomb(k) {
+  const L = P2.v.tomb || (P2.v.tomb = []); if (L[k]) return L[k]; const g = new THREE.Group(), q = new THREE.Group(); g.add(q);
+  if (LMART.dunes) lmMesh('dunes', 'tomb', q, 0, 0, 0, { s: .68 }); else { mesh(new THREE.BoxGeometry(2.4, 2, 1.6), std('#c9913f', .9), 0, 1, 0, q, false); mesh(new THREE.PlaneGeometry(1.2, 1.5), new THREE.MeshBasicMaterial({ color: C('#8a30d0') }), 0, .8, .82, q, false); }
+  const s = mesh(new THREE.SphereGeometry(1, 20, 10), std('#c9913f', 1), 0, 0, .2, g, false); s.scale.set(1.85, .3, 1.3); const h = halo('#c050ff', 3.2, 0, 1.1, .9, g, .5); g.rotation.y = k ? -.22 : .22; g.visible = false; p2Group().add(p2Mark(g)); return (L[k] = { g, q, h });
+}
+function p2Ice() {
+  if (P2.v.ice) return P2.v.ice; const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: C('#9fdcff'), emissive: C('#2a7cc0'), emissiveIntensity: .35, roughness: .12, transparent: true, opacity: .6, flatShading: true, depthWrite: false }), m2 = m.clone(); m2.opacity = .94; m2.depthWrite = true;
+  const b = new THREE.Mesh(new THREE.DodecahedronGeometry(1.55, 0), m); b.scale.set(1.02, .95, 1.5); b.position.set(0, 1.1, -.15); g.add(b); for (let k = 0; k < 16; k++) { const a = k / 16 * 6.283, c = new THREE.Mesh(new THREE.ConeGeometry(.22 + .1 * (k % 3), .9 + .5 * ((k * 5) % 4) / 3, 5), m2); c.position.set(Math.cos(a) * 1.65, .35, -.15 + Math.sin(a) * 2.1); c.rotation.set(Math.sin(a) * .55, k, -Math.cos(a) * .55); g.add(c); }
+  halo('#8fe6ff', 6, 0, 1.4, -.4, g, .4); g.visible = false; p2Group().add(p2Mark(g)); return (P2.v.ice = { g });
+}
+function p2Lava() {
+  if (P2.v.lava) return P2.v.lava; const t = canvasTex(512, 96, (x, w) => { const jag = (o, a) => { x.beginPath(); for (let i = 0; i <= 32; i++) { const px = i * 16, y = 48 + o * (26 + 8 * Math.sin(i * 2.3) + 6 * Math.sin(i * 5.1)); i ? x.lineTo(px, y) : x.moveTo(px, y); } for (let i = 32; i >= 0; i--) x.lineTo(i * 16, 48 - o * (26 + 8 * Math.sin(i * 1.9 + 1) + 6 * Math.sin(i * 4.3))); x.closePath(); x.fillStyle = a; x.fill(); }; jag(1.4, 'rgba(60,14,6,.7)'); jag(1.15, '#3a0c06'); jag(.96, '#e8460c'); jag(.66, '#ff8a22'); jag(.34, '#ffd45a'); });
+  const g = new THREE.Group(), L = []; for (const z of P2_FZ) for (const s of [-1, 1]) { const tx = t.clone(); tx.needsUpdate = true; tx.wrapS = THREE.RepeatWrapping; const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1.9), new THREE.MeshBasicMaterial({ map: tx, transparent: true, depthWrite: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })); m.rotation.x = -Math.PI / 2; m.position.set(0, .06, z); m.renderOrder = -.5; g.add(m); const h = halo('#ff6a1a', 3.4, 0, .5, z, g, .5); L.push({ m, tx, s, z, h }); }
+  g.visible = false; p2Group().add(p2Mark(g)); return (P2.v.lava = { g, L });
+}
+function p2Beam() {
+  if (P2.v.beam) return P2.v.beam; const t = canvasTex(64, 8, (x, w, h) => { const q = x.createLinearGradient(0, 0, w, 0); q.addColorStop(0, 'rgba(200,80,255,0)'); q.addColorStop(.5, 'rgba(235,180,255,.95)'); q.addColorStop(1, 'rgba(200,80,255,0)'); x.fillStyle = q; x.fillRect(0, 0, w, h); }), g = new THREE.Group();
+  const L = [2.2, .8].map(w => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, 1), new THREE.MeshBasicMaterial({ map: t, color: C('#c060ff'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false })); g.add(m); return m; }); const h = halo('#d060ff', 6, 0, 0, 0, g, .4); g.visible = false; p2Group().add(p2Mark(g)); return (P2.v.beam = { g, L, h });
+}
+// ---- he changes: a short scene, then the new attack
+function phaseTwo() {
+  WL.phase = 2; WL.n2 = 0; WL.a2 = false; WL.atkT = Math.min(WL.atkT, 1.6); const i = p2Who(), N = P2N[i]; if (G.sim || !N) return;
+  burst(WL.x, 3, WL.z, [WL.def.col, '#ffffff'], 24, 6, { vy: 6, life: .8, g: 6, sz: 2, kind: PK.SPARK }); const key = 'p' + G.level, seen = save.scenes && save.scenes[key];
+  toastMsg(N[0].toUpperCase(), N[1], { live: true, ok: () => WL.alive });
+  if (seen || G.fin || DIR.s || G.mode !== 'play' || G.lowQ) { kingVoice('roar', .85); hitBoom(.5); return; }
+  hideTelegraphs(); if (WL.state !== 'stun') { WL.state = 'roar'; WL.st = .4; } wlAct('roar'); const b = WL.b, x = WL.x, z = WL.z, gr = WGRADE[i];
+  const head = () => worldPt(b.fx.head, [x, 4, z]);
+  dirStart({ len: 1.9, freeze: true, wl: false, noAnts: true, noPal: true, boss: true, foeZ: z + 3, shots: [{ t: [0, 1.9], pos: [[x + 3.2, 1.0, z + 11.2], [x + 2.5, 1.3, z + 8.6]], at: [() => { const h = head(); return [h[0], h[1] - .5, h[2]]; }], fov: [44, 38], foc: [.5, .4, .65, 1.25], grade: gr, vig: .72, flare: { x: .5, y: .16, r: .8, k: .4, c: WL.def.col } }],
+    start: () => { hold(2); swell(.55, .1, 180, 2600); if (b.fx.orbit) b.fx.orbit.visible = false; }, tick: (t, dt, once) => { b.mixer.update(dt); if (once('r', .45)) { rxGlow(b, 1.8); cineFlash(.35, 300); hitBoom(.9); kingVoice('roar', 1); buzz([60, 30, 120]); dirTitle(N[0], wlName()); burst(x, 3, z + .6, [WL.def.col, '#ffffff'], 40, 7, { sph: true, life: 1, g: 1, sz: 1.6, kind: PK.SPARK }); } },
+    done: () => { if (b.fx.orbit) b.fx.orbit.visible = true; rxGlow(b, .35); save.scenes = save.scenes || {}; if (!G.practice) { save.scenes[key] = 1; persist(); } }, abort: () => { if (b.fx.orbit) b.fx.orbit.visible = true; rxGlow(b, 0); } });
+}
+function beginAttack2() {
+  const i = p2Who(); WL.a2 = true; WL.state = 'wind'; WL.st = 0; WL.tg = []; wlAct(i === 1 ? 'roar' : 'strike', .15);
+  if (i === 0) { WL.windT = 1.15; const open = P2_SLOT.filter(s => s[1] > WL.z + 3.5 && !P2.cl.some(c => Math.abs(c.x - s[0]) < 1.6 && Math.abs(c.z - s[1]) < 3)); open.sort((a, b) => Math.abs(a[0] - G.lx) - Math.abs(b[0] - G.lx) + (rand() - .5) * 2.4); for (let k = 0; k < Math.min(2, open.length); k++) WL.tg.push({ kind: 'r', x: open[k][0], z: open[k][1], R: 1.35, ri: k }); }
+  else if (i === 1) WL.windT = 1;
+  else if (i === 2) { WL.windT = 1.25; const x = launcher.position.x, len = Math.max(4, CANNON_Z - WL.z - .8); WL.tg.push({ kind: 's', x: WL.x, z: WL.z + .8, a: Math.atan2(x - WL.x, len), w: 2, len: Math.hypot(len, x - WL.x) }); WL.fx2 = x; }
+  else if (i === 3) { WL.windT = 1.2; P2.fis = { t: 0, on: false, gap: [-2.6, 0, 2.6][(rand() * 3) | 0], dir: rand() < .5 ? -1 : 1 }; }
+  else { WL.windT = 1.25; let fz = 0, n = 0, mx = 0; for (let k = 0; k < ants.n; k++) if (ants.hp[k] > 0 && ants.z[k] > WL.z + 4 && ants.z[k] < CANNON_Z - 2.5) { fz += ants.z[k]; mx += ants.x[k]; n++; } WL.tg.push({ kind: 'r', x: n ? clamp(mx / n, -LANE + 2, LANE - 2) : 0, z: n ? clamp(fz / n, WL.z + 5, CANNON_Z - 4) : WL.z + 9, R: 2.3, ri: 0, violet: 1 }); }
+  for (let k = 0; k < WL.tg.length; k++) { const t = WL.tg[k]; if (t.kind === 's') { const s = tgStrips[k]; for (const o of [s.fill, s.frame]) { o.position.set(t.x, .06, t.z); o.rotation.y = t.a; o.scale.set(t.w, 1, t.len); o.visible = true; } s.mark.visible = true; } else { const R = tgRings[t.ri || 0]; R.ring.position.set(t.x, .06, t.z); R.fill.position.set(t.x, .05, t.z); R.ring.scale.setScalar(t.R); R.ring.visible = R.fill.visible = R.mark.visible = true; } }
+  sfx('wlwind', 300, () => { tone(140, .6, 'sawtooth', .05, 1.8); noise(.5, .05, 'bandpass', 600, 1400); });
+}
+function strike2() {
+  const i = p2Who(); let lost = 0; const fall = (a, cols) => { ants.hp[a] = 0; lost++; if (rand() < .4) burst(ants.x[a], .5, ants.z[a], cols, 2, 2.4, { vy: 3, life: .5, g: 7, sz: 1.3, kind: PK.SPARK }); };
+  if (i === 0) for (const t of WL.tg) { for (let a = 0; a < ants.n; a++) if (ants.hp[a] > 0 && (ants.x[a] - t.x) ** 2 + (ants.z[a] - t.z) ** 2 < t.R * t.R) fall(a, ALLY_FX); if (P2.cl.length >= 4) P2.cl.shift().on = false; P2.cl.push({ on: true, x: t.x, z: t.z, w: 2.1, hp: antHp(save.up.tough) * (10 + .5 * Math.min(140, ants.n)), t: 9, dt: .22, v: null, tilt: (rand() < .5 ? -1 : 1) * (.1 + rand() * .08) }); burst(t.x, .4, t.z, ['#e2d6c4', '#b9ad9c', '#8f8577'], 22, 6, { vy: 6, life: .9, g: 13, sz: 1.8, kind: PK.ROCK }); smoke(t.x, .5, t.z, '#cbbfae', 2.4, .9); }
+  else if (i === 1) { P2.tomb = [0, 1].map(k => ({ on: true, x: k ? 3.05 : -3.05, z: -24.6, hp: WL.max * .07, max: WL.max * .07, t: 16, sp: .9 + k * .8, up: 0 })); for (const t of P2.tomb) { burst(t.x, .4, t.z, ['#e8c890', '#d6aa6a', '#fff0c0'], 30, 6, { vy: 6, life: 1, g: 9, sz: 1.6, kind: PK.ROCK }); for (let a = 0; a < ants.n; a++) if (ants.hp[a] > 0 && (ants.x[a] - t.x) ** 2 + (ants.z[a] - t.z) ** 2 < 1.6) fall(a, ['#e8c890']); } }
+  else if (i === 2) { const t = WL.tg[0]; if (t) for (let k = 0; k < 14; k++) { const u = k / 13 * t.len; burst(t.x + Math.sin(t.a) * u, .5, t.z + Math.cos(t.a) * u, ['#dff8ff', '#8fe6ff', '#ffffff'], 3, 2.4, { vy: 3, life: .7, g: 5, sz: 1.5, kind: PK.SPARK }); } noise(.6, .09, 'highpass', 3200, 1200); if (Math.abs(launcher.position.x - WL.fx2) < 1.25) p2Freeze(); else if (!G.sim) popText('MISSED!', launcher.position.x, 3, CANNON_Z - 1, '#bfefff'); }
+  else if (i === 3) { if (P2.fis) { P2.fis.on = true; P2.fis.t = 8.5; for (const z of P2_FZ) for (let x = -4.6; x < 4.7; x += .8) burst(x, .3, z, ['#ffe680', '#ff9a2a', '#ff4a1a'], 4, 3, { vy: 5, life: .8, g: 9, sz: 1.6, kind: PK.SPARK }); } }
+  else { const t = WL.tg[0]; if (t) { let n = 0; for (let a = 0; a < ants.n && n < 26; a++) { if (ants.hp[a] <= 0 || ants.big[a] || (ants.x[a] - t.x) ** 2 + (ants.z[a] - t.z) ** 2 > t.R * t.R) continue; const ax = ants.x[a], az = ants.z[a]; fall(a, ['#e070ff', '#ffffff', '#b040ff']); n++; const j = addUnit(beetles, ax, az, G.cfg.beetleHp, 1, G.cfg.beetleSpeed * .7, 1, 0); if (j >= 0) beetles.kind[j] = 0; } P2.beam = .5; P2.bx = t.x; P2.bz = t.z; burst(t.x, .6, t.z, ['#e070ff', '#ffffff', '#8a30d0'], 34, 5, { sph: true, vy: 3, life: .9, g: 1, sz: 1.5, kind: PK.SPARK }); tone(620, .8, 'sine', .08, .4); if (lost > 3 && !G.sim) popText('TURNED!', t.x, 2.8, t.z, '#e070ff'); } }
+  G.shake = Math.max(G.shake, .5); buzz(40); hideTelegraphs(); for (const t of WL.tg) t.done = 1; WL.tg = []; if (lost > 3 && i !== 4) popText('−' + lost, WL.x, 3.4, WL.z + 3, WL.def.col); sfx('wlhit', 200, () => smp('wlSmash', .55, .04)); WL.a2 = false;
+}
+// ---- the cannon in ice
+function p2Freeze() { P2.frz = 3; P2.shk = 0; G.lx = launcher.position.x; if (G.sim) return; const v = p2Ice(); v.g.visible = true; v.g.position.set(launcher.position.x, 0, CANNON_Z); burst(launcher.position.x, 1.2, CANNON_Z, ['#dff8ff', '#8fe6ff', '#ffffff'], 40, 5, { sph: true, life: .9, g: 4, sz: 1.6, kind: PK.SPARK }); tone(1760, .5, 'triangle', .06, .5); noise(.4, .1, 'highpass', 2800, 900); buzz([50, 30, 80]); $('shk').classList.add('on'); p2ShkBar(0); }
+let shkShown = -1; const p2ShkBar = k => { const q = Math.round(k * 20); if (q !== shkShown) { shkShown = q; $('shk').querySelector('b').style.transform = 'scaleX(' + (q / 20) + ')'; } };
+function p2Thaw(quiet) { if (!(P2.frz > 0) && quiet) { P2.frz = 0; $('shk').classList.remove('on'); return; } P2.frz = 0; $('shk').classList.remove('on'); const v = P2.v.ice; if (v) v.g.visible = false; if (quiet || G.sim) return; burst(launcher.position.x, 1.2, CANNON_Z, ['#dff8ff', '#8fe6ff', '#ffffff', '#4ab0f0'], 46, 7, { vy: 7, life: 1, g: 14, sz: 2, kind: PK.ROCK }); noise(.35, .12, 'highpass', 2400, 900); tone(1760, .3, 'triangle', .05, .6); buzz(40); }
+// ---- what a soldier meets on the way: returns false when he falls to it, and leaves where he goes in _p2
+const _p2 = { x: 0, z: 0 };
+function p2Walk(i, x, pz, z, r, dt, ah) {
+  _p2.x = x; _p2.z = z; const heavy = ants.big[i] || ants.s[i] > 1.6;
+  for (const c of P2.cl) { if (!c.on || Math.abs(x - c.x) > c.w / 2 + r || z > c.z + .5 || pz < c.z - .4) continue; if (heavy) { p2Chop(c); continue; } _p2.z = Math.max(z, Math.min(pz, c.z + .5)); _p2.x = clamp(x + (x < c.x ? -1 : 1) * dt * 1.7, -LANE + r, LANE - r); c.hp -= ah * dt * 1.5; ants.atk[i] = Math.max(ants.atk[i], .12); if (!G.sim && rand() < dt * 2) burst(x, .7, c.z + .4, ['#ffffff', '#fff1a8'], 2, 2.4, { vy: 2.4, life: .25, g: 6, sz: 1.1, kind: PK.SPARK }); if (c.hp <= 0) p2Chop(c); }
+  for (const t of P2.tomb) { if (!t.on || t.up < .6) continue; const dx = x - t.x, dz = z - t.z; if (dx * dx + dz * dz > 1.9) continue; t.hp -= ants.hp[i] * (ants.kind[i] ? 3 : 1); if (ants.kind[i]) explode(x, z); if (!G.sim && rand() < .4) burst(x, 1, z, ['#e8c890', '#ffffff'], 2, 3, { vy: 3, life: .4, g: 8, sz: 1.3, kind: PK.ROCK }); ants.hp[i] = 0; if (t.hp <= 0) p2Break(t); return false; }
+  const F = P2.fis; if (F && F.on && !heavy) for (const z0 of P2_FZ) if (pz > z0 && z <= z0 && z0 > WL.z + 1 && Math.abs(x - F.gap) > 1.45 && rand() < .62) { ants.hp[i] = 0; if (!G.sim && rand() < .5) burst(x, .4, z0, ['#ffe680', '#ff9a2a', '#ff4a1a'], 3, 2, { vy: 4, life: .6, g: 6, sz: 1.4, kind: PK.SPARK }); return false; }
+  return true;
+}
+function p2Chop(c) { c.on = false; if (G.sim) return; burst(c.x, 1.2, c.z, ['#c8ccd8', '#8d93a6', '#6a4226', '#ffffff'], 26, 6, { vy: 6, life: .9, g: 14, sz: 1.8, kind: PK.ROCK }); sfx('chop', 120, () => { noise(.2, .1, 'bandpass', 1800, 600); tone(220, .2, 'triangle', .06, .6); }); }
+function p2Break(t) { t.on = false; if (G.sim) return; burst(t.x, 1.2, t.z, ['#c9913f', '#e8c890', '#8a5a20', '#d070ff'], 40, 7, { vy: 7, life: 1.1, g: 14, sz: 2.2, kind: PK.ROCK }); smoke(t.x, .8, t.z, '#d6aa6a', 2.8, 1); popText('BROKEN!', t.x, 3, t.z, '#ffe08a'); sfx('tombd', 150, () => smp('castleHit', .6, 0)); buzz(30); }
+const p2Rider = (x, z) => { for (const c of P2.cl) if (c.on && Math.abs(c.x - x) < 1.9 && Math.abs(c.z - z) < 1.2) p2Chop(c); for (const t of P2.tomb) if (t.on && t.up >= .6 && Math.abs(t.x - x) < 2.1 && Math.abs(t.z - z) < 1.4) { t.hp -= palHit(save.up.giant); if (t.hp <= 0) p2Break(t); } };
+function p2Tick(dt, play) {
+  const on = WL.on && WL.alive; if (!on && (P2.cl.length || P2.tomb.length || P2.fis || P2.frz > 0 || P2.beam > 0)) { p2Clear(); return; }
+  if (P2.frz > 0) { P2.frz -= dt; if (G.sim) P2.shk += dt / 1.4; else p2ShkBar(Math.min(1, P2.shk)); if (P2.frz <= 0 || P2.shk >= 1) p2Thaw(); }
+  for (const c of P2.cl) { if (!c.on) continue; c.t -= dt; c.dt = Math.max(0, c.dt - dt); if (c.t <= 0 || c.z < WL.z + 1) c.on = false; } for (let k = P2.cl.length - 1; k >= 0; k--) if (!P2.cl[k].on) P2.cl.splice(k, 1);
+  for (const t of P2.tomb) { if (!t.on) continue; t.up = Math.min(1, t.up + dt * 1.6); if ((t.t -= dt) <= 0 || WL.z > t.z - 1) { t.on = false; continue; } if (play && (t.sp -= dt) <= 0) { t.sp = 2.3; for (let k = 0; k < 4; k++) { const j = addUnit(beetles, clamp(t.x + (rand() - .5) * 1.6, -LANE + .4, LANE - .4), t.z + 1.3 + rand() * .5, G.cfg.beetleHp * 1.2, 1, G.cfg.beetleSpeed * .7, 1, 0); if (j >= 0) beetles.kind[j] = 0; } if (!G.sim) burst(t.x, .6, t.z + 1.1, ['#d070ff', '#e8c890', '#ffffff'], 8, 2.6, { vy: 3, life: .6, g: 6, sz: 1.3, kind: PK.SPARK }); } } for (let k = P2.tomb.length - 1; k >= 0; k--) if (!P2.tomb[k].on) P2.tomb.splice(k, 1);
+  const F = P2.fis; if (F && F.on) { F.t -= dt; F.gap += F.dir * dt * .75; if (Math.abs(F.gap) > 3) { F.gap = 3 * Math.sign(F.gap); F.dir = -F.dir; } if (F.t <= 0) P2.fis = null; }
+  if (P2.beam > 0) P2.beam -= dt; if (WL.state === 'recover' && WL.phase && !G.sim && rand() < dt * 26) burst(WL.x + (rand() - .5) * 2.4, 3.4 + rand() * 1.4, WL.z + .5, ['#ffe680', '#ffffff'], 1, .8, { vy: 1, life: .5, g: 0, sz: 1.2, kind: PK.SPARK });
+  if (G.sim) return; // ---- and what is seen
+  const L = P2.v.cl; if (P2.cl.length || L) { for (let k = 0; k < 4; k++) { const c = P2.cl[k], v = c ? p2Cleaver(k) : L && L[k]; if (!v) continue; v.g.visible = !!c; if (c) { const u = c.dt / .22, e = Math.min(1, c.t / .6); v.g.position.set(c.x, 0, c.z); v.q.position.set(-1.5 * u, 6.5 * u - 2.4 * (1 - e), -5 * u); v.q.rotation.set(-.15 - 2 * u, c.tilt * .5, c.tilt); v.d.material.opacity = u > 0 ? 0 : e; } } }
+  const TT = P2.v.tomb; if (P2.tomb.length || TT) for (let k = 0; k < 2; k++) { const t = P2.tomb.find(q => (q.x > 0 ? 1 : 0) === k), v = t ? p2Tomb(k) : TT && TT[k]; if (!v) continue; v.g.visible = !!t; if (t) { const u = 1 - (1 - t.up) ** 2, hurt = 1 - clamp(t.hp / t.max, 0, 1); v.g.position.set(t.x + (hurt > .5 ? Math.sin(G.t * 40) * .02 : 0), 0, t.z); v.q.position.y = -2.4 * (1 - u); v.h.material.opacity = .25 + .3 * u + .12 * Math.sin(G.t * 5); } }
+  if (P2.frz > 0 && P2.v.ice) { P2.v.ice.g.position.x = launcher.position.x; P2.v.ice.g.rotation.y = Math.sin(G.t * 44) * .015 * Math.min(1, P2.shk * 2); }
+  const lv = F ? p2Lava() : P2.v.lava; if (lv) { lv.g.visible = !!F; if (F) { const k = F.on ? Math.min(1, F.t / .6) : .45 + .25 * Math.sin(G.t * 14); for (const q of lv.L) { const x0 = q.s < 0 ? -4.9 : F.gap + 1.35, x1 = q.s < 0 ? F.gap - 1.35 : 4.9, w = x1 - x0; q.m.visible = w > .25 && q.z > WL.z + 1; q.h.visible = q.m.visible && F.on; if (!q.m.visible) continue; q.m.scale.x = w; q.m.position.x = (x0 + x1) / 2; q.tx.repeat.set(w / 10, 1); q.tx.offset.set((x0 + 5) / 10 + Math.sin(G.t * .7) * .01, 0); q.m.material.opacity = k; q.h.position.x = q.m.position.x; q.h.scale.set(w * .9, 3, 1); q.h.material.opacity = .34 * k; if (F.on && rand() < dt * 10 * w) burst(x0 + rand() * w, .2, q.z + (rand() - .5) * .9, ['#ffe680', '#ff9a2a', '#ff4a1a'], 1, .6, { vy: 2.2, life: .7, g: 0, sz: 1.2, kind: PK.SPARK }); } } }
+  const tb = WL.state === 'wind' && WL.a2 && WL.tg[0] && WL.tg[0].violet ? WL.tg[0] : null, bm = tb || P2.beam > 0 ? p2Beam() : P2.v.beam; if (bm) { const vis = !!(tb || P2.beam > 0) && on; bm.g.visible = vis; if (vis) { const x = tb ? tb.x : P2.bx, z = tb ? tb.z : P2.bz, h = worldPt(WL.b.fx.head, [WL.x, 4, WL.z]), k = tb ? .25 + .5 * (WL.st / WL.windT) : P2.beam * 2, a = _v.set(h[0], h[1] + 1.6, h[2] + .5), b = _kv.set(x, .1, z), d = _d3.copy(b).sub(a), len = d.length(); d.normalize(); for (const m of bm.L) { m.position.copy(a).add(b).multiplyScalar(.5); m.quaternion.setFromUnitVectors(_up, d); m.scale.set(tb ? .4 + .6 * k : 1.1, len, 1); m.material.opacity = (m === bm.L[0] ? .22 : .42) * Math.min(1, k * 1.4); } bm.h.position.set(x, .6, z); bm.h.material.opacity = .35 * k; } }
+}
+/* ---------------- boons ----------------
+   After every win (from level 2) you choose one of three; it stays with you until that world's boss falls, and a lost battle doesn't
+   take it away. G.bn holds the ones in force in this battle, by id. */
+const BOON_CAT = { gate: ['Gates', '#ffd84a', '#8a6210'], army: ['Army', '#7fe0a0', '#1c6a3c'], cannon: ['Cannon', '#ff9a5a', '#8a3a12'], send: ['Rowan', '#7fc0ff', '#1e4a8c'], camp: ['Camp', '#d9a6ff', '#5a2a8c'] };
+const BOONS = [
+  { id: 'gold', c: 'gate', name: 'Golden Gates', d: '+N gates give half as much again', ico: 'i-coin' },
+  { id: 'kind', c: 'gate', name: 'Kind Red', d: 'Red gates take half as many soldiers', ico: 'i-shield', from: 4 },
+  { id: 'dip', c: 'gate', name: 'Double Dip', d: 'One soldier in four is copied once more at × gates', ico: 'i-twin' },
+  { id: 'lane', c: 'gate', name: 'Lucky Lane', d: 'One × gate in each battle is a step higher', ico: 'i-star', from: 3 },
+  { id: 'last', c: 'army', name: 'Last Stand', d: 'Soldiers burst when they fall and hurt whoever is near', ico: 'i-bomb' },
+  { id: 'split', c: 'army', name: 'Split Arrows', d: 'Every archer shoots two arrows', ico: 'i-bow', from: 5 },
+  { id: 'wind', c: 'army', name: 'Second Wind', d: 'One soldier in seven gets back up', ico: 'i-crown' },
+  { id: 'boots', c: 'army', name: 'Heavy Boots', d: 'Soldiers march 20% faster', ico: 'i-bolt' },
+  { id: 'steel', c: 'army', name: 'Thick Steel', d: 'Soldiers are 20% tougher', ico: 'i-drop' },
+  { id: 'big', c: 'cannon', name: 'Big Shot', d: 'Every tenth soldier comes out a giant', ico: 'i-crown' },
+  { id: 'fuse', c: 'cannon', name: 'Quick Fuse', d: 'Fires half as fast again for the first 10 seconds', ico: 'i-bolt' },
+  { id: 'side', c: 'cannon', name: 'Side Shot', d: 'Every fifth shot sends one soldier more each side', ico: 'i-twin' },
+  { id: 'burn', c: 'army', name: 'Burning Blades', d: 'Soldiers hit skeletons 20% harder', ico: 'i-bolt' },
+  { id: 'eager', c: 'send', name: 'Eager Rider', d: 'SEND starts each battle half full', ico: 'i-horse' },
+  { id: 'horn', c: 'send', name: 'War Horn', d: 'After SEND your army hits 35% harder for 6 seconds', ico: 'i-horse' },
+  { id: 'trail', c: 'send', name: 'Wide Charge', d: 'Rowan tramples a path twice as wide', ico: 'i-horse', pal: 1 },
+  { id: 'thorn', c: 'camp', name: 'Thorns', d: 'A skeleton that reaches you takes two more with it', ico: 'i-tower' },
+  { id: 'mason', c: 'camp', name: 'Masons', d: 'Your camp is 30% sturdier', ico: 'i-shield' },
+  { id: 'grave', c: 'camp', name: 'Grave Robbers', d: '25% more coins', ico: 'i-coin' },
+  { id: 'breaker', c: 'camp', name: 'Bone Breaker', d: '30% more damage to brutes, captains and bosses', ico: 'i-bomb' },
+];
+const BOON_BY = Object.fromEntries(BOONS.map(b => [b.id, b])), BOON_ART = /*BOON_ART*/{}/*END*/, boonWorld = n => Math.floor((n - 1) / WORLD_LEN);
+const boonList = () => save.boons && save.boons.w === boonWorld(save.level) ? save.boons.list : [];
+function boonsOn() { G.bn = {}; for (const id of boonList()) G.bn[id] = 1; } // (at the start of every battle)
+function boonOffer(sv, n, rnd) { // three to choose from after winning level n: never one you have, and no two of a kind if it can be helped
+  const have = sv.boons && sv.boons.w === boonWorld(n + 1) ? sv.boons.list : [], pool = BOONS.filter(b => !have.includes(b.id) && !(b.from && n + 1 < b.from) && !(b.pal && n < CAP_AT)); const out = [];
+  while (out.length < 3 && pool.length) { let c = pool.filter(b => !out.some(o => o.c === b.c)); if (!c.length) c = pool; const b = c[Math.floor(rnd() * c.length)]; out.push(b); pool.splice(pool.indexOf(b), 1); } return out.map(b => b.id);
+}
+function boonTake(sv, n, id) { const w = boonWorld(n + 1); if (!sv.boons || sv.boons.w !== w) sv.boons = { w, list: [] }; if (id && !sv.boons.list.includes(id)) sv.boons.list.push(id); }
+const boonArt = b => BOON_ART[b.id] ? `<img src="models/boon/${b.id}.webp" alt="">` : `<svg viewBox="0 0 24 24"><use href="#${b.ico}"/></svg>`;
+const BOON_VB = { 'i-crown': '0 0 40 24', 'i-horse': '0 0 48 44' };
+const boonPic = b => BOON_ART[b.id] ? boonArt(b) : `<svg viewBox="${BOON_VB[b.ico] || '0 0 24 24'}"><use href="#${b.ico}"/></svg>`;
+function boonDue(n) { // won level n: what is on offer is kept, so closing the game doesn't lose or change it
+  if (G.practice || n < 2 || n >= LAP_LEN && false) return false; boonTake(save, n, null); const ids = boonOffer(save, n, mulberry(n * 7919 + (save.wins || 0) * 31 + 5)); if (ids.length < 2) return false; save.boonDue = { n, ids }; return true;
+}
+function showBoons(then) {
+  const q = save.boonDue; if (!q) { then && then(); return; } const w = worldOf(q.n + 1), road = onRoadLv(q.n + 1), boss = road ? null : wlName(WARLORDS[w]);
+  $('boonSub').textContent = boss ? 'It lasts until ' + (w === HALLW ? 'the Bone King' : boss.charAt(0) + boss.slice(1).toLowerCase().replace(/-([a-z])/, (m, c) => '-' + c.toUpperCase())) + ' falls' : 'It lasts ten levels'; $('boonRow').innerHTML = ''; let done = false;
+  q.ids.map(id => BOON_BY[id]).forEach((b, k) => { const c = BOON_CAT[b.c], el = document.createElement('button'); el.className = 'boon'; el.style.setProperty('--r', c[1]); el.style.setProperty('--rd', c[2]); el.style.animationDelay = (.08 + k * .09) + 's'; el.innerHTML = `<em class="${BOON_ART[b.id] ? 'art' : ''}">${boonPic(b)}</em><div><i>${b.c === 'send' && !palReady() ? 'Champion' : c[0]}</i><b>${b.name}</b><span>${b.c === 'send' && !palReady() ? b.d.replace('Rowan', 'the Champion') : b.d}</span></div>`;
+    el.onclick = () => { if (done) return; done = true; boonTake(save, q.n, b.id); save.boonDue = null; persist(); audio(); el.classList.add('took'); for (const o of $('boonRow').children) if (o !== el) o.classList.add('gone'); [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => tone(f, .2, 'triangle', .05), i * 70)); buzz(30); setTimeout(() => { $('boon').classList.remove('on'); then && then(); }, 620); }; $('boonRow').appendChild(el); });
+  const have = boonHeld(q.n); $('boonHave').innerHTML = have.length ? 'Yours ' + have.map(b => `<em style="--r:${BOON_CAT[b.c][1]}">${boonPic(b)}</em>`).join('') : ''; $('result').classList.remove('on'); $('boon').classList.add('on'); gameEl.classList.add('overlay'); shine(.8, 784);
+}
+const boonHeld = n => (save.boons && save.boons.w === boonWorld(n + 1) ? save.boons.list : []).map(id => BOON_BY[id]).filter(Boolean);
+// ---- what some of them do
+let bnPop = 0; G.bn = {}; const soldHp = () => antHp(save.up.tough) * (G.bn.steel ? 1.2 : 1);
+function boonGates(list, n) { if (!G.bn.gold && !G.bn.lane) return list; const out = list.map(g => ({ ...g })); if (G.bn.gold) for (const g of out) if (g.add) g.add = Math.round(g.add * 1.5); if (G.bn.lane) { const q = out.filter(g => g.k >= 2 && !g.add && !g.jack && !g.ice && !g.shift && g.arm == null); if (q.length) { const g = q[Math.floor(mulberry(n * 31 + 7)() * q.length)]; g.k0 = g.k0 || g.k; g.k++; } } return out; }
+function bnFall(x, z, ah) { if (bnPop > 14) return; bnPop++; const cx = cellX(x), cz = cellZ(z); for (let zz = Math.max(0, cz - 1); zz <= Math.min(GH - 1, cz + 1); zz++) for (let xx = Math.max(0, cx - 1); xx <= Math.min(GW - 1, cx + 1); xx++) for (let j = head[zz * GW + xx]; j >= 0; j = nextB[j]) { if (beetles.hp[j] <= 0) continue; const dx = beetles.x[j] - x, dz = beetles.z[j] - z; if (dx * dx + dz * dz < 1.3) hurtFoe(j, ah * .8); } if (!G.sim) burst(x, .6, z, ['#fff3b0', '#ffb040', '#ff7a2a'], 5, 3.4, { sph: true, vy: 1, life: .35, g: 3, sz: 1.4, kind: PK.SPARK }); } // (the melee's own grid)
+function bnThorn(x, z) { let n = 2; for (let j = 0; j < beetles.n && n > 0; j++) { if (beetles.hp[j] <= 0 || beetles.big[j] || beetles.tier[j] >= F_BOMB) continue; const dx = beetles.x[j] - x, dz = beetles.z[j] - z; if (dx * dx + dz * dz < 5) { killFoe(j); n--; } } if (!G.sim) burst(x, .8, z, ['#b8ff9a', '#ffffff', '#4a9a3a'], 8, 3, { vy: 3, life: .4, g: 8, sz: 1.3, kind: PK.SPARK }); }
 /* ---------------- the opening ----------------
    The crown, whoever wears it, his army on the march, Rowan, your cannon, the charge, and the logo slamming down. About fifteen
    seconds the first time, seven after that, once a day. It is the real game under the director's camera, so it always matches the
@@ -7983,6 +8170,7 @@ const X1 = [1, 0, 0], Y1 = [0, 1, 0], Z1 = [0, 0, 1], POSE = {
 function ghost(b, on) { if (!b) return; b.ghost = on; if (on && !b.aura) b.aura = halo('#b050ff', 4.2, 0, 1.2, .2, b.g, .55); if (b.aura) b.aura.visible = on; for (const m of b.mats) { m.transparent = on; m.opacity = on ? .84 : 1; m.needsUpdate = true; if (!on && m.emissiveMap) m.color.setScalar(1); } }
 // ---- the King's last moments
 function kneelKing() {
+  p2Clear();
   WL.hp = 0; WL.alive = false; WL.done = true; hideTelegraphs(); resetKingShots(); resetCharges();
   if (G.sim) { WL.ward = false; ward.visible = false; G.fortHp = 0; return; }
   G.waveQ = 0; G.waveT = G.chT = 99; WL.state = 'kneel'; WL.st = 0; WL.y = 0; WL.z = Math.max(WL.z, FORT_Z + 1.5); /* (never mid-leap) */ WL.b.mixer.stopAllAction(); WL.cur = null; G.kneel = true; G.firing = false; loadEndArt(); loadPaladinArt();
