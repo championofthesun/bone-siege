@@ -468,6 +468,10 @@ svg.ico.sm{width:18px;height:18px}
 .paper #result.win .res-rays{background:repeating-conic-gradient(rgba(255,244,214,.3) 0 9deg,rgba(255,244,214,0) 9deg 22.5deg)}
 .paper .res-sub{text-shadow:0 2px 0 #4a2c14,0 0 8px rgba(40,20,5,.8)!important}
 .paper .res-hint{background:linear-gradient(170deg,#fffaea,#f1e0b8);border-color:#8a5a2a;color:#4a2c14}
+.paper #dirT b{display:inline-block;padding:.1em .55em .16em;color:#7a1f14;-webkit-text-stroke:0;text-shadow:none;background:var(--grain),linear-gradient(180deg,#fffaea,#efdcb2);background-blend-mode:multiply,normal;border-top:.06em solid #6b4426;border-bottom:.06em solid #6b4426;clip-path:polygon(0 0,100% 0,95% 50%,100% 100%,0 100%,5% 50%)}
+.paper #dirT{filter:drop-shadow(0 4px 0 rgba(74,44,20,.4))}
+.paper #dirT i{margin-top:6px;color:#fffaea;-webkit-text-stroke:4px #4a2c14;paint-order:stroke fill;text-shadow:0 3px 0 #4a2c14}
+.paper #endCap{color:#fffaea;-webkit-text-stroke:4px #4a2c14;paint-order:stroke fill;text-shadow:0 3px 0 #4a2c14}
 .paper #result{background:linear-gradient(180deg,rgba(80,48,18,.22),rgba(70,40,14,.6) 39%,rgba(45,25,8,.95) 86%)!important}
 #game.lean #parPill.miss{filter:none}
 #game.glhud #fortBar,#game.glhud #nestBar,#game.glhud #crowd,#game.glhud #floats,#game.glhud #parPill{visibility:hidden} /* drawn inside the picture instead: see GHUD */
@@ -5572,7 +5576,7 @@ const PA_BTINT = { gold: '#ffcf45', blue: '#8fb8ff', red: '#ff9484', purple: '#d
 const PA_BOARD = { gold: [.189, .811, .322, .716], blue: [.188, .812, .325, .715], red: [.189, .812, .327, .716], purple: [.189, .813, .327, .715] }; // each sign's empty board: x from, x to, y from, y to (y up from the foot)
 const PAGE_W = 2048, PAGE_H = 3065;
 const PA_GB_A = { idle: [1.0383, 732], wind: [.7242, 794], roar: [1.2185, 714], daze: [1.0653, 704] }; // Grimbald's poses: width / height, and height in pixels at one shared scale
-const PA_DIM_A = { cleaver_t: .8516, cannon: .9125, puff: 1.0987, star: 1.0802, sign_gold: 1.3559, sign_blue: 1.3559, sign_red: 1.3559, sign_purple: 1.3531, oak: .9746, pines: .8649, bush: 1.3714, cottage: 1.1532, knight: .7901, skullrock: 1.2632, crownrock: 1.0909, lamp: .4555, bannerp: .5833, bannerb: .6034, fence: 1.8551, torch: .4097, castle: 1.5366, camp: 3.4115, back: 4.2227, hoard: 2.1955 }; // width / height of each card
+const PA_DIM_A = { cleaver_t: .8516, cannon: .9125, puff: 1.0987, star: 1.0802, sign_gold: 1.3559, sign_blue: 1.3559, sign_red: 1.3559, sign_purple: 1.3531, oak: .9746, pines: .8649, bush: 1.3714, cottage: 1.1532, knight: .7901, skullrock: 1.2632, crownrock: 1.0909, lamp: .4555, bannerp: .3918, bannerb: .6034, fence: 1.8551, torch: .4097, castle: 1.5202, camp: 3.4115, back: 4.2227, hoard: 2.1955 }; // width / height of each card
 const PB_DIM = { statue: .6146, skullrock: 1.0756, crownskull: .8438, crystals: .9167, cottage: 1.219, barricade: 1.113, fence: 1.2973, torch: .4688, bannerp: .6172, bannerb: .651, bush: 1.0696, rockpile: 1.4328 };
 const PA_CP = { walk: [.8735, 601], swing: [.6973, 631], hit: [1.0265, 567], down: [1.1417, 515] }; // The Carver's poses: width / height, height in pixels
 const PB_GB = { idle: [.9363, 487], walk: [.8911, 496], wind: [.6147, 558], smash: [.7537, 475], roar: [1.1279, 477], daze: [1.0995, 422] };
@@ -5622,7 +5626,7 @@ function paWard(on) { /* the ward in the paper round: a sheet of purple vellum w
 }
 function paReset() { // each round: gates lettered on signs, the castle and camp wall stood back up, the horde's bones left their own colour
   for (const g of G.gates) (PAPER === 'b' ? pbGate : paGate)(g.mesh, g); if (PAPER === 'a' && !PA.img.gold) paPre().then(() => { if (PA.on) for (const g of G.gates) paGate(g.mesh, g); }); /* the signs letter themselves as soon as their pictures are in */ PA.shredded = false; PA.cpShred = false; PS.done = false; if (PAPER === 'a' && isBoss(G.level)) { ['shred', 'turn', 'pop', 'st1'].forEach(psLoad); psFont(); ['story_bg', 'st1_back', 'st1_sekra', 'st1_front'].forEach(paTex); } if (PA.shreds) { for (const q of PA.shreds) PA.g.remove(q.s); PA.shreds = null; } for (const p of PB.castle) p.rotation.set(0, 0, 0); for (const c of PB.camp) c.rotation.set(0, 0, 0); FOE_TINT.setRGB(1, 1, 1);
-  if (PA.castle) PA.castle.rotation.x = -.22; if (PA.castle2) PA.castle2.rotation.x = -.22; PA.torn = false; for (const c of [PA.castle, PA.castle2]) if (c) { c.visible = true; if (c.userData.sh) c.userData.sh.visible = true; } if (PA.castleF) { PA.castleF.visible = false; PA.castleF.rotation.x = -.22; } if (PA.hoard) PA.hoard.visible = PA.hoard.userData.sh.visible = false; PA.popped = false; for (const c of PA.camp || []) c.rotation.x = -.32; PA.rec = 0; PA.fired = G.fired;
+  if (PA.castle) PA.castle.rotation.x = -.22; if (PA.castle2) PA.castle2.rotation.x = -.22; PA.torn = false; for (const c of [PA.castle, PA.castle2]) if (c) { c.visible = true; if (c.userData.sh) c.userData.sh.visible = true; } if (PA.castleF) { PA.castleF.visible = true; PA.castleF.rotation.x = -.22; } if (PA.hoard) PA.hoard.visible = PA.hoard.userData.sh.visible = false; PA.popped = false; for (const c of PA.camp || []) c.rotation.x = -.32; PA.rec = 0; PA.fired = G.fired;
 }
 const _paV = new THREE.Vector3();
 function paTick(dt) { // the paper pieces that move
@@ -5688,11 +5692,8 @@ function paBuild() {
     const sp = new THREE.Mesh(new THREE.PlaneGeometry(96, 44).translate(0, 22, 0), new THREE.MeshBasicMaterial({ map: sky, toneMapped: false, fog: false })); sp.position.set(0, -.05, -79); sp.rotation.x = -.06; g.add(sp); }
   paCard('back', 12.5, 0, -75, { lean: .12, bare: true }); // the mountains at the far page's top edge
   PA.hoard = paCard('hoard', 6, 0, -61.5, { lean: .14 }); PA.hoard.visible = PA.hoard.userData.sh.visible = false; // the Bone King's treasure on the plaza: it pops up when the castle falls
-  PA.castleF = paCard('castle', 10.2, 0, FORT_Z - 4.3, { lean: .22, bare: true }); PA.castleF.visible = false; // the whole castle as one piece of card, for the fall
-  { const CS = .517, H0 = 10.2; PA.castle = paCard('castle', H0 * CS, 0, FORT_Z - 4.3, { lean: .22, v: [0, CS] }); // the gate wall and tower feet, in front of Grimbald: he looks out over his wall
-    const up = PA.castle2 = paCard('castle', H0 * (1 - CS), 0, 0, { lean: .22, v: [CS, 1], bare: true }); PA.castle.updateMatrixWorld(true); // the roofs and the banner, behind him
-    const E = new THREE.Vector3(0, H0 * CS, 0).applyMatrix4(PA.castle.matrixWorld), cam0 = CAM_TALL, dE = E.clone().sub(cam0), k = (dE.length() + 2.6) / dE.length();
-    up.position.copy(cam0).addScaledVector(dE, k); up.scale.set(k, k, k); }
+  PA.castleF = PA.castle; // the whole castle as one piece of card, for the fall
+  { PA.castle = paCard('castle', 10.2, 0, FORT_Z - 4.3, { lean: .22 }); PA.castle2 = null; } /* one card: Grimbald stands behind it, and it holds together from any camera */
   PA.camp = [paCard('camp', 4.1, -6.9, -3.7, { lean: .32, u: [0, .47] }), paCard('camp', 4.1, 6.9, -3.7, { lean: .32, u: [.53, 1] })]; // the camp wall's two halves either side of the cannon, where the 3D wall stood
   for (const [n, h, x, z, o] of [
     ['pines', 5.6, -12.5, -44], ['oak', 4.4, -10.5, -33], ['bannerp', 4.2, -7.6, -30, { bare: true }], ['bush', 2.2, -13, -28], ['knight', 4, -9.4, -25],
@@ -8547,7 +8548,7 @@ function stageClear(on) { for (const g of G.gates) g.mesh.visible = !on; if (lan
 function dirTitle(a, b) { const e = $('dirT'); if (!a) { e.classList.remove('on'); return; } e.querySelector('i').textContent = b || ''; const q = e.querySelector('b'); q.textContent = a; q.style.fontSize = '9vw'; q.style.fontSize = 'min(' + Math.min(17, 112 / Math.max(6, a.length > 11 ? Math.max(...a.split(' ').map(w => w.length), Math.ceil(a.length / 2)) : a.length)).toFixed(1) + 'cqw,96px)'; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); }
 // ---- painted clips over a scene (models/cut): s.clips = [[t0, t1, 'vNN', from, rate]]; shown only once the video really plays
 const CUT = { boss: [['v01', 'v02'], ['v03', 'v04'], ['v05', 'v06'], ['v07', 'v08'], ['v09', 'v10']] }, CUT_LEN = { v20: 8, v21: 8, v22: 8, v23: 8, v26: 6.17, v44: 6.17 };
-const CLIPV = {}, CLIP = { seg: null, v: null, ok: !/[?&](noclip|perf)/.test(location.search) };
+const CLIPV = {}, CLIP = { seg: null, v: null, ok: false }; /* v198: no painted clips any more (the scenes play in-engine) */
 function clipEl(k) {
   let v = CLIPV[k]; if (v) return v; v = CLIPV[k] = document.createElement('video'); v.muted = v.defaultMuted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.setAttribute('muted', ''); v.preload = 'auto'; v.disableRemotePlayback = true;
   v.addEventListener('playing', () => { if (CLIP.v === v) $('clip').classList.add('on'); }); v.src = 'models/cut/' + k + '.mp4'; v.load(); return v;
@@ -8610,6 +8611,7 @@ const hold = s => { if (actx) MUS.holdUntil = Math.max(MUS.holdUntil, actx.curre
 // ---- a warlord comes down: he rises, his eyes light, he leaps, he lands, his name
 const worldPt = (o, f = [0, 5, -40]) => { if (!o) return f; o.getWorldPosition(_d3); return [_d3.x, _d3.y, _d3.z]; };
 function bossScene(i) {
+  return false; /* v198: no scene for the warlord's leap in his boss fight (only a world's arrival and a warlord's death get scenes) */
   if (G.sim || G.fin || G.cine || G.end || DIR.s || G.mode !== 'play') return false;
   const W = WARLORDS[i], king = i === 4, onWall = king ? HOLD.i < 0 && kingRig : HOLD.b && HOLD.i === i, key = 'b' + G.level, seen = save.scenes && save.scenes[key], full = onWall && !seen && !onRoadLv(G.level);
   if (!onWall && king) return false; resetKingShots(); hideTelegraphs();
@@ -8914,7 +8916,7 @@ function arrival() {
   if (onW && (far || n === 1 || n === LAP_LEN + 1)) { const H = worldPt(HOLD.b.fx.head), E = H[1] + 1.45, i = HOLD.i; shots.push({ t: [t0, t0 + 1.1], pos: [[1.3, E - .5, H[2] + 9.2], [1.1, E - .4, H[2] + 8.4]], at: [[0, E - .1, H[2]], [0, E, H[2]]], fov: [30, 28], foc: [.5, .43, .5], grade: gr, vig: .85 }, { t: [t0 + 1.1, t0 + 2.9], pos: [[2.7, H[1] - 2.6, H[2] + 13.4], [2.1, H[1] - 2.9, H[2] + 15.4]], at: [[0, E - 1.2, H[2]], [0, E - 1.4, H[2]]], fov: [42, 44], foc: [.5, .4, .7, 1.25], blur: .8, grade: gr, flare: { x: .5, y: .1, r: .7, k: .3, c: WARLORDS[i].col } });
     at(t0, () => { if (HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = false; rxGlow(HOLD.b, -.85); HOLD.b.mixer.timeScale = .2; swell(.75, .09, 220, 2600); }); at(t0 + .7, () => { rxGlow(HOLD.b, 1.8); hitBoom(.8); kingVoice('growl', .8); buzz(40); }); at(t0 + 1.1, () => { if (HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = true; HOLD.b.mixer.timeScale = 1; rxGlow(HOLD.b, .4); const M = RX_MOVES[i]; if (M) { RX.mv = RX.last = M[i === 3 ? 1 : 0]; RX.t = .05; RX.w = 1; RX.once = {}; RX.side = 1; } kingVoice('roar', .85); dirTitle(wlName(WARLORDS[i]), n === LAP_LEN + 1 ? 'Now on the wall' : WARLORDS[i].title); if (n === LAP_LEN + 1) endCap(''); }); at(t0 + 2.75, () => { dirTitle(); rxGlow(HOLD.b, 0); }); cl.push([t0, t0 + 2.9, i === ROWAN ? 'v28' : (CUT.boss[i] || [])[0], 0, i === ROWAN ? 0 : 1.1]); t0 += 2.9; }
   const L = 2.5, name = n === 3 ? null : n === 46 ? ['The Throne Room', 'You are inside'] : road ? [WORLDS[worldIdx].name, 'The Endless Road'] : [WORLDS[worldIdx].name, 'World ' + (w + 1)];
-  shots.push({ t: [t0, t0 + L], raw: true, pos: hallIn ? [[2.6, 8.4, -30], [1.5, 12, -18], () => [CAM.x, CAM.y, CAM.z]] : n === 3 || w === HALLW ? [[3, 6, -24], [1, 12, -12], () => [CAM.x, CAM.y, CAM.z]] : [[16, 15 + up, cz + 36], [7, 25, -32], () => [CAM.x, CAM.y, CAM.z]], at: [hallIn ? [0, 5, -46] : n === 3 || w === HALLW ? [0, 4.6, -42] : [0, 9 + up, cz], () => [LOOK.x, LOOK.y, LOOK.z]], fov: [46, () => 0], grade: gr, gk: .3, vig: .45 });
+  shots.push({ t: [t0, t0 + L], raw: true, pos: PA.on && PAPER === 'a' ? [[0, 12, -25], [0, 18, -9], () => [CAM.x, CAM.y, CAM.z]] : hallIn ? [[2.6, 8.4, -30], [1.5, 12, -18], () => [CAM.x, CAM.y, CAM.z]] : n === 3 || w === HALLW ? [[3, 6, -24], [1, 12, -12], () => [CAM.x, CAM.y, CAM.z]] : [[16, 15 + up, cz + 36], [7, 25, -32], () => [CAM.x, CAM.y, CAM.z]], at: [PA.on && PAPER === 'a' ? [0, 5, -47] : hallIn ? [0, 5, -46] : n === 3 || w === HALLW ? [0, 4.6, -42] : [0, 9 + up, cz], () => [LOOK.x, LOOK.y, LOOK.z]], fov: [46, () => 0], grade: gr, gk: .3, vig: .45 });
   at(t0 + .12, () => { if (name) { dirTitle(name[0], name[1]); brass(196, .5, .05); brass(294, .9, .05, .14); } swell(L * .8, .05, 1800, 260); }); at(t0 + L * .62, () => dirTitle()); at(t0 + L * .7, () => { for (const g of G.gates) { g.mesh.visible = true; g.pulse = 1; } if (laneWalls) laneWalls.visible = true; sawGroup.visible = true; tone(660, .08, 'triangle', .04, 1.4); });
   const s = { len: t0 + L, clips: cl.filter(c => c[2]), freeze: true, noAnts: false, shots, fadeIn: true, start: () => { hold(s.len * .8); if (far) { king.visible = kingCrown.visible = true; } },
     tick: t => { if (far && t < 2.3) { king.position.z = kz + 39.75; G.kingSink = KPOS.y - ky; } for (const e of ev) if (!e[2] && t >= e[0]) { e[2] = 1; e[1](); } } };
@@ -9133,7 +9135,7 @@ function prewarm() {
    A painted video (models/film/intro.mp4) for your first launch, and for Watch intro. It is fetched whole while the game loads, so it never
    stops to buffer; if it isn't here in time, or the phone won't play it, the 3D opening plays instead. The picture ends at 20 s and the last
    of its music rings on over the menu. */
-const FILM = { on: false, url: null, busy: null, bad: false, v: null, t0: 0, len: 20, caps: [] };
+const FILM = { on: false, url: null, busy: null, bad: true, v: null, t0: 0, len: 20, caps: [] }; /* v198: the painted opening film is retired (the opening plays in-engine until its storybook version) */
 function filmWarm() {
   if (FILM.busy || FILM.bad) return FILM.busy || Promise.resolve(false);
   return FILM.busy = fetch('models/film/intro.mp4').then(r => { if (!r.ok) throw 0; return r.blob(); }).then(b => {
