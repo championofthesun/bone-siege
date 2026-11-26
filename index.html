@@ -441,6 +441,33 @@ svg.ico.sm{width:18px;height:18px}
 .paper #hud .bar{background:#f7edd4!important;border-color:#6b4426!important;box-shadow:0 3px 0 rgba(90,55,20,.35),inset 0 2px 5px rgba(90,55,20,.22)!important}
 .paper #hud .bar span{text-shadow:-1.5px -1.5px 0 #4a2c14,1.5px -1.5px 0 #4a2c14,-1.5px 1.5px 0 #4a2c14,1.5px 1.5px 0 #4a2c14,0 3px 0 #4a2c14!important}
 .paper .res-coins{background:linear-gradient(180deg,#fffaea,#efdcb2)!important;border-color:#8a5a2a!important;box-shadow:0 6px 16px rgba(60,30,8,.45)!important;color:#c98a12!important;text-shadow:0 3px 0 #6b4426!important}
+/* v197 the paper kit: in the paper round the battle's buttons, badges, banners, numbers and cards are parchment and ink */
+.paper{--grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .4 0 0 0 0 .25 0 0 0 .32 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.paper #audBtns button{background:linear-gradient(170deg,#fffaea,#f1e0b8);border:2px solid #6b4426;box-shadow:0 3px 0 rgba(90,55,20,.35)}
+.paper #audBtns svg{filter:brightness(.2) sepia(1) saturate(2.4)}
+.paper .badge{background:radial-gradient(circle at 40% 30%,#fffaea,#ecd7a8)!important;border-color:#6b4426!important;box-shadow:0 3px 0 rgba(90,55,20,.35)!important}
+.paper .bar i{filter:saturate(.6) brightness(1.04)} .paper .bar i::after{display:none}
+.paper #giant{border-color:#6b4426!important;background:conic-gradient(#e3a536 calc(var(--p,0)*1%),#e9dcc0 0)!important;box-shadow:0 4px 0 rgba(90,55,20,.4)!important}
+.paper #giant .in{background:radial-gradient(circle at 35% 25%,#93b9e6,#4570b0)!important;box-shadow:0 0 0 2px #6b4426}
+.paper .float{-webkit-text-stroke:6px #fffaea;text-shadow:2px 2px 0 #4a2c14,-2px 2px 0 #4a2c14,2px -2px 0 #4a2c14,-2px -2px 0 #4a2c14,0 5px 0 rgba(74,44,20,.45)}
+.paper .float.gate{-webkit-text-stroke:5px #fffaea;text-shadow:2px 2px 0 #4a2c14,-2px 2px 0 #4a2c14,2px -2px 0 #4a2c14,-2px -2px 0 #4a2c14,0 4px 0 rgba(74,44,20,.4)}
+.paper #toast{filter:drop-shadow(0 4px 0 rgba(74,44,20,.35))}
+.paper #toast small{color:#fffaea;-webkit-text-stroke:5px #4a2c14;paint-order:stroke fill;text-shadow:0 3px 0 #4a2c14}
+.paper #toast:not(.tip) b{display:inline-block;margin-top:6px;padding:5px 38px 8px;color:#7a1f14;-webkit-text-stroke:0;text-shadow:none;background:var(--grain),linear-gradient(180deg,#fffaea,#efdcb2);background-blend-mode:multiply,normal;border-top:3px solid #6b4426;border-bottom:3px solid #6b4426;clip-path:polygon(0 0,100% 0,93% 50%,100% 100%,0 100%,7% 50%)}
+.paper #toast b:empty{display:none}
+.paper #toast.tip small{-webkit-text-stroke-color:#4a2c14;text-shadow:0 4px 0 #4a2c14}
+.paper #toast.tip b{-webkit-text-stroke-color:#4a2c14;text-shadow:0 3px 0 #4a2c14}
+.paper .btn.big{color:#fffaea!important;border:3px solid #fffaea!important;box-shadow:0 0 0 2.5px #6b4426,0 7px 0 2.5px #6b4426,0 12px 18px rgba(40,20,5,.35)!important;text-shadow:-2px -2px 0 #4a2c14,2px -2px 0 #4a2c14,-2px 2px 0 #4a2c14,2px 2px 0 #4a2c14,0 3px 0 #4a2c14!important;background:var(--grain),linear-gradient(180deg,#86b4e6,#4d7ec2)!important;background-blend-mode:multiply,normal!important}
+.paper .btn.big.violet{background:var(--grain),linear-gradient(180deg,#b897de,#7d5ab8)!important;background-blend-mode:multiply,normal!important}
+.paper .btn.big:active{transform:translateY(4px);box-shadow:0 0 0 2.5px #6b4426,0 3px 0 2.5px #6b4426!important}
+.paper #story{background:rgba(46,28,12,.62)}
+.paper .story-card{background:var(--grain),linear-gradient(180deg,#fffaea,#f3e4c2);background-blend-mode:multiply,normal;border:3px solid #6b4426;box-shadow:0 7px 0 -1px #efe2c4,0 7px 0 1.5px #6b4426,0 14px 0 -1px #e6d5b2,0 14px 0 1.5px #6b4426,0 22px 30px rgba(30,15,5,.45)}
+.paper .story-name,.paper .story-card.art .story-name{color:#9a2a1a;text-shadow:0 0 0 #fffaea,2px 2px 0 #fffaea,-2px 2px 0 #fffaea,2px -2px 0 #fffaea,-2px -2px 0 #fffaea,0 4px 0 rgba(74,44,20,.4)}.paper .story-title{color:#6b4426}.paper .story-txt{color:#3a2414}.paper .story-emb{filter:none}
+.paper .story-card.pa .story-art{object-fit:contain;object-position:50% 85%;background:url(models/paper/a/story_bg.webp) center/cover;border-bottom:0}
+.paper .res-title{-webkit-text-stroke-color:#4a2c14!important;text-shadow:0 6px 0 #4a2c14,0 10px 16px rgba(30,15,5,.4)!important}
+.paper #result.win .res-rays{background:repeating-conic-gradient(rgba(255,244,214,.3) 0 9deg,rgba(255,244,214,0) 9deg 22.5deg)}
+.paper .res-sub{text-shadow:0 2px 0 #4a2c14,0 0 8px rgba(40,20,5,.8)!important}
+.paper .res-hint{background:linear-gradient(170deg,#fffaea,#f1e0b8);border-color:#8a5a2a;color:#4a2c14}
 .paper #result{background:linear-gradient(180deg,rgba(80,48,18,.22),rgba(70,40,14,.6) 39%,rgba(45,25,8,.95) 86%)!important}
 #game.lean #parPill.miss{filter:none}
 #game.glhud #fortBar,#game.glhud #nestBar,#game.glhud #crowd,#game.glhud #floats,#game.glhud #parPill{visibility:hidden} /* drawn inside the picture instead: see GHUD */
@@ -5580,6 +5607,19 @@ function paGate(grp, g) { // the gate as a painted signpost standing on the page
   Object.assign(p.material, { map: tex, transparent: false, alphaTest: .5, depthWrite: true }); p.material.needsUpdate = true; p.position.set(0, 0, 0); p.rotation.set(-.38, 0, 0); p.renderOrder = 0; p.userData.pa = true;
   if (grp.userData.bar) grp.userData.bar.position.set(0, B[2] * H + .2, .04); // a +N gate's recharge bar sits along the foot of the board
 }
+function paGrain(c, w, h, n = 260) { c.save(); c.globalCompositeOperation = 'source-atop'; for (let i = 0; i < n; i++) { c.fillStyle = Math.random() < .55 ? 'rgba(70,40,15,.14)' : 'rgba(255,250,235,.18)'; c.fillRect(Math.random() * w, Math.random() * h, 1.3, 1.3); } c.restore(); } /* paper grain on a drawn piece */
+function paWard(on) { /* the ward in the paper round: a sheet of purple vellum with inked hexes, held up across the gate */
+  const m = ward.material;
+  if (on) { if (!PA.wardT) PA.wardT = canvasTex(512, 256, (x, w, h) => {
+      x.fillStyle = 'rgba(214,190,240,.62)'; x.fillRect(0, 0, w, h);
+      for (let i = 0; i < 3000; i++) { x.fillStyle = `rgba(${Math.random() < .5 ? '120,80,170' : '255,255,255'},${.05 + Math.random() * .07})`; x.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
+      x.strokeStyle = 'rgba(96,52,150,.8)'; x.lineWidth = 3; const r = 26, dx = r * 1.732;
+      for (let row = 0; row < h / (r * 1.5) + 1; row++) for (let c = -1; c < w / dx + 1; c++) { const cx = c * dx + (row % 2 ? dx / 2 : 0), cy = 18 + row * r * 1.5; x.beginPath(); for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; x.lineTo(cx + Math.cos(a) * r * .86, cy + Math.sin(a) * r * .86); } x.closePath(); x.stroke(); }
+      x.globalCompositeOperation = 'destination-out'; for (const top of [true, false]) { x.beginPath(); x.moveTo(0, top ? 0 : h); for (let s = 0; s <= w; s += 8) x.lineTo(s, (top ? 10 : h - 10) + (Math.random() - .5) * 9); x.lineTo(w, top ? 0 : h); x.closePath(); x.fill(); } x.globalCompositeOperation = 'source-over'; }); /* torn top and bottom edges */
+    Object.assign(m, { map: PA.wardT, blending: THREE.NormalBlending, opacity: .88 }); m.color.set('#ffffff'); }
+  else { Object.assign(m, { map: wardTex, blending: THREE.AdditiveBlending, opacity: .4 }); m.color.set('#c060ff'); ward.rotation.z = 0; }
+  m.needsUpdate = true;
+}
 function paReset() { // each round: gates lettered on signs, the castle and camp wall stood back up, the horde's bones left their own colour
   for (const g of G.gates) (PAPER === 'b' ? pbGate : paGate)(g.mesh, g); if (PAPER === 'a' && !PA.img.gold) paPre().then(() => { if (PA.on) for (const g of G.gates) paGate(g.mesh, g); }); /* the signs letter themselves as soon as their pictures are in */ PA.shredded = false; PA.cpShred = false; PS.done = false; if (PAPER === 'a' && isBoss(G.level)) { ['shred', 'turn', 'pop', 'st1'].forEach(psLoad); psFont(); ['story_bg', 'st1_back', 'st1_sekra', 'st1_front'].forEach(paTex); } if (PA.shreds) { for (const q of PA.shreds) PA.g.remove(q.s); PA.shreds = null; } for (const p of PB.castle) p.rotation.set(0, 0, 0); for (const c of PB.camp) c.rotation.set(0, 0, 0); FOE_TINT.setRGB(1, 1, 1);
   if (PA.castle) PA.castle.rotation.x = -.22; if (PA.castle2) PA.castle2.rotation.x = -.22; PA.torn = false; for (const c of [PA.castle, PA.castle2]) if (c) { c.visible = true; if (c.userData.sh) c.userData.sh.visible = true; } if (PA.castleF) { PA.castleF.visible = false; PA.castleF.rotation.x = -.22; } if (PA.hoard) PA.hoard.visible = PA.hoard.userData.sh.visible = false; PA.popped = false; for (const c of PA.camp || []) c.rotation.x = -.32; PA.rec = 0; PA.fired = G.fired;
@@ -5593,7 +5633,7 @@ function paTick(dt) { // the paper pieces that move
   // Grimbald, a puppet with four poses
   const fight = !!(WL.on && WL.b), b = fight ? WL.b : HOLD.i >= 0 ? HOLD.b : null, gb = PA.gb; if (gb) { const on = !!(b && b.g.visible) && !PA.shredded; gb.g.visible = on; // fighting on the road, or watching from his gate
     if (on) { const st = fight ? WL.state : HOLD.act ? (HOLD.k === 'strike' ? 'wind' : 'stun') : 'idle', pose = PAPER === 'b' ? PB_POSE(st) : st === 'wind' || st === 'smash' ? 'wind' : st === 'roar' ? 'roar' : st === 'stun' || st === 'kneel' || st === 'recover' || st === 'dead' ? 'daze' : 'idle';
-      for (const k in gb.m) gb.m[k].visible = k === pose; b.g.getWorldPosition(_paV); gb.g.position.copy(_paV); if (!fight && PAPER === 'a') gb.g.position.y += 2.1; /* on his gate he stands a step up, looking over the wall */ if (fight && st === 'dead' && PAPER === 'a' && WL.st > .8) { gb.g.updateMatrixWorld(true); paShred(gb); PA.shredded = true; }
+      for (const k in gb.m) gb.m[k].visible = k === pose; b.g.getWorldPosition(_paV); gb.g.position.copy(_paV); if (!fight && PAPER === 'a') { gb.g.position.y += 1.62; gb.g.position.z -= 1.2; } /* on his gate he stands a step up, looking over the wall: clear behind the leaning wall card (it was cutting his legs) */ if (fight && st === 'dead' && PAPER === 'a' && WL.st > .8) { gb.g.updateMatrixWorld(true); paShred(gb); PA.shredded = true; }
       const grow = fight ? b.g.scale.x / (WL_S * ((WL.def && WL.def.s) || 1)) : 1; gb.g.scale.set(1, 1 + (st === 'idle' ? Math.sin((G.t || 0) * 2.2) * .018 : 0), 1).multiplyScalar(grow || 1); // (he breathes)
       const walk = st === 'walk' || st === 'enter' || st === 'leap', tt = G.t || 0;
       gb.g.rotation.z = walk ? Math.sin(tt * 9) * .07 : st === 'roar' ? Math.sin(tt * 30) * .02 : 0; gb.g.position.y += walk ? Math.abs(Math.sin(tt * 9)) * .25 : 0;
@@ -5696,7 +5736,7 @@ function paInk() { // an ink blot with a few drops round it (white, tinted where
 }
 function paFx(on) { // the paper round's effects and its parchment HUD (and back)
   decalMesh.material.map = on ? (PA.ink || (PA.ink = paInk())) : splatTex; decalMesh.material.opacity = on ? .4 : .8; decalMesh.material.needsUpdate = true;
-  gameEl.classList.toggle('paper', on); HUDP = on ? HUDP_PAPER : HUDP_NAVY; if (GHUD) GHUD.rebuild();
+  gameEl.classList.toggle('paper', on); HUDP = on ? HUDP_PAPER : HUDP_NAVY; if (GHUD) GHUD.rebuild(); paWard(on && PAPER === 'a');
 }
 function paperScene(on) { // the storybook level in place of the 3D land, castle and camp wall (and back again)
   if (on && !PA.g) { if (PAPER === 'b') pbBuild(); else paBuild(); paExtras(); } if (!PA.g || on === PA.on) return; PA.on = on; PA.g.visible = on; PA.can.visible = on;
@@ -6788,7 +6828,7 @@ function updateWarlord(dt, play) {
   // effects keep animating whatever happens
   for (const s of spikes) { if (s.t <= 0) continue; s.t -= dt; const k = s.t > .9 ? (1.1 - s.t) / .2 : s.t < .35 ? s.t / .35 : 1; s.m.scale.y = Math.max(.01, k * 1.2); if (s.t <= 0) s.m.visible = false; }
   if (fireRing.visible) { const u = (fireRing.userData.t += dt) / .45; if (u >= 1) fireRing.visible = false; else { fireRing.scale.setScalar(.3 + u * fireRing.userData.R); fireRing.material.opacity = 1 - u; } }
-  if (ward.visible) { ward.material.opacity = .28 + .14 * Math.sin(G.t * 5); wardTex.offset.y = (G.t * .08) % 1; }
+  if (ward.visible) { const pw = PA.on && PAPER === 'a'; ward.material.opacity = pw ? .84 + .07 * Math.sin(G.t * 2.4) : .28 + .14 * Math.sin(G.t * 5); if (!pw) wardTex.offset.y = (G.t * .08) % 1; ward.rotation.z = pw ? Math.sin(G.t * 1.3) * .012 : 0; }
   for (let k = 0; k < WL.tg.length; k++) { const t = WL.tg[k], p = .5 + .5 * Math.abs(Math.sin(WL.st * 12)), RR = tgRings[t.ri || 0], mk = t.kind === 's' ? tgStrips[k].mark : RR.mark;
     if (t.kind === 's') { // a light fill and a pulsing edge; one "!" near the warlord's end (over his volley of three, just the middle one), clear of the gates
       const s = tgStrips[k], fan = WL.tg.length > 1; s.fill.material.opacity = .08 + .14 * (WL.st / WL.windT); s.frame.material.opacity = .55 + .4 * p;
@@ -7411,7 +7451,7 @@ const floats = [];
 function popText(txt, x, y, z, col, owner) {
   if (owner && owner.f && owner.f.owner === owner && owner.f.t > .15) { const f = owner.f; f.el.textContent = txt; f.t = .7; f.y = y; { const b = f.el.classList.contains('bump'); f.el.classList.toggle('bump', !b); f.el.classList.toggle('bump2', b); } /* restart the bump by swapping twin animations (no forced layout) */ return f; }
   let f = floats.find(q => q.t <= 0); if (!f) { if (floats.length >= 5) return; const el = GHUD ? GHUD.stub() : document.createElement('div'); if (!GHUD) { el.className = 'float'; $('floats').appendChild(el); } f = { el }; floats.push(f); }
-  f.el.textContent = txt; f.el.style.color = col; f.el.classList.toggle('gate', !!owner); f.x = x; f.y = y; f.z = z; f.t = .7; f.hold = 0; f.owner = owner || null; if (owner) owner.f = f; return f;
+  f.el.textContent = txt; f.el.style.color = PA.on && PAPER === 'a' && /^#fff(fff)?$/i.test(col || '') ? '#8a2a1a' : col; f.el.classList.toggle('gate', !!owner); f.x = x; f.y = y; f.z = z; f.t = .7; f.hold = 0; f.owner = owner || null; if (owner) owner.f = f; return f;
 }
 const STAG_TINT = new THREE.Color(.78, .62, .7), WHITE = new THREE.Color(1, 1, 1);
 const hopOf = (p, i) => Math.abs(Math.sin(G.t * (p.big[i] ? 5.5 : 9) + p.ph[i]));
@@ -7762,7 +7802,7 @@ const GHUD = (() => {
     label: { px: 16, ls: .6, back: (c, t) => { if (HUDP.ink) { c.lineJoin = 'round'; c.lineWidth = 4.5; c.strokeStyle = c.fillStyle = HUDP.ink; c.strokeText(t, 0, 0); c.fillText(t, 0, 2); } else { c.fillStyle = 'rgba(8,14,40,.55)'; c.fillText(t, 0, 2); } }, pad: 4 },
     num: { px: 20, ls: .5, pad: 2 }, par: { px: 15, ls: .4, pad: 2 }, pct: { px: 13, ls: .5, pad: 2 },
     star: { px: 15, ls: .4, pad: 2, back: (c, t) => { c.strokeStyle = '#6a4300'; c.lineWidth = 1; c.strokeText(t, 0, 0); }, over: 1 },
-    float: { px: 34, ls: .5, pad: 9, back: (c, t) => { c.lineJoin = 'round'; c.lineWidth = 6; c.fillStyle = c.strokeStyle = 'rgba(8,14,40,1)'; c.globalAlpha = .4; c.strokeText(t, 0, 4); c.globalAlpha = 1; c.strokeStyle = '#fff'; c.strokeText(t, 0, 0); } }
+    float: { px: 34, ls: .5, pad: 10, back: (c, t) => { c.lineJoin = 'round'; if (HUDP.k) { c.lineWidth = 11; c.strokeStyle = 'rgba(74,44,20,.4)'; c.strokeText(t, 0, 4); c.strokeStyle = '#4a2c14'; c.strokeText(t, 0, 0); c.lineWidth = 6.5; c.strokeStyle = '#fffaea'; c.strokeText(t, 0, 0); return; } c.lineWidth = 6; c.fillStyle = c.strokeStyle = 'rgba(8,14,40,1)'; c.globalAlpha = .4; c.strokeText(t, 0, 4); c.globalAlpha = 1; c.strokeStyle = '#fff'; c.strokeText(t, 0, 0); } }
   };
   const glyph = (st, ch, back) => { const k = st + (back ? '<' : '>') + ch; if (cells[k] !== undefined) return cells[k]; const d = ST[st]; X.font = d.px + 'px ' + FONT; const w = Math.max(1, X.measureText(ch).width), asc = d.px, h = d.px * 1.3;
     return cell(k, w, h, d.pad, c => { c.font = d.px + 'px ' + FONT; c.textBaseline = 'alphabetic'; c.translate(0, asc); if (back) d.back(c, ch); else { c.fillStyle = '#fff'; c.fillText(ch, 0, 0); } }); };
@@ -7774,18 +7814,18 @@ const GHUD = (() => {
     cell('white', 4, 4, 0, c => { c.fillStyle = '#fff'; c.fillRect(-2, -2, 8, 8); });
     for (const [k, w, glow] of [['fort', box.fort.w, ''], ['wl', box.fort.w, 'rgba(255,80,60,.55)'], ['nest', box.nest.w, '']]) {
       cell('tr' + k, w, 30, 6, c => { c.fillStyle = HUDP.sh; rr(c, 0, 4, w, 30, 15); c.fill(); if (glow) { c.fillStyle = glow; rr(c, -2, -2, w + 4, 34, 17); c.fill(); } c.globalCompositeOperation = 'destination-out'; c.fillStyle = '#000'; rr(c, 0, 0, w, 30, 15); c.fill(); c.globalCompositeOperation = 'source-over'; c.fillStyle = HUDP.track; rr(c, .5, .5, w - 1, 29, 14.5); c.fill(); c.fillStyle = HUDP.trackIn; rr(c, 3, 3, w - 6, 2, 1); c.fill(); });
-      const col = k === 'fort' ? ['#e8a7ff', '#8c2fdb'] : k === 'wl' ? ['#ffb07a', '#d0202a'] : ['#b0ecff', '#276eea'];
-      cell('fi' + k, w - 6, 24, 1, c => { c.fillStyle = grad(c, 0, 0, 0, 24, ...col); rr(c, 0, 0, w - 6, 24, 12); c.fill(); });
+      const col = HUDP.k ? (k === 'fort' ? ['#b48ad9', '#7e54b4'] : k === 'wl' ? ['#e8896a', '#bc4630'] : ['#8db6e6', '#4c7cbf']) : k === 'fort' ? ['#e8a7ff', '#8c2fdb'] : k === 'wl' ? ['#ffb07a', '#d0202a'] : ['#b0ecff', '#276eea'];
+      cell('fi' + k, w - 6, 24, 1, c => { c.fillStyle = grad(c, 0, 0, 0, 24, ...col); rr(c, 0, 0, w - 6, 24, 12); c.fill(); if (HUDP.k) paGrain(c, w - 6, 24, w * 2); });
     }
     for (const [k, w] of [['fort', box.fort.w], ['nest', box.nest.w]]) cell('fr' + k, w, 30, 1, c => { c.strokeStyle = HUDP.frame; c.lineWidth = 3; rr(c, 1.5, 1.5, w - 3, 27, 13.5); c.stroke(); });
-    cell('hi', 24, 6, 1, c => { c.fillStyle = '#fff'; rr(c, 0, 0, 24, 6, 3); c.fill(); });
+    cell('hi', 24, 6, 1, c => { if (HUDP.k) return; c.fillStyle = '#fff'; rr(c, 0, 0, 24, 6, 3); c.fill(); });
     const pill = (k, w, h, b0, b1, edge, shA) => cell(k, w, h, 5, c => { c.fillStyle = 'rgba(6,10,30,' + shA + ')'; rr(c, 0, 3, w, h, 99); c.fill(); c.fillStyle = grad(c, 0, 0, w * .35, h, b0, b1); rr(c, .5, .5, w - 1, h - 1, 99); c.fill(); c.strokeStyle = edge; c.lineWidth = 2; rr(c, 1, 1, w - 2, h - 2, 99); c.stroke(); });
     pill('pcrowd', 80, box.crowdH, ...HUDP.pc); pill('ppar', 72, box.par.h, ...HUDP.pp);
     cell('icrowd', 24, 22, 1, c => { if (icons.crowd) c.drawImage(icons.crowd, 0, 0, 24, 22); });
-    cell('gbase', 82, 82, 6, c => { c.fillStyle = 'rgba(87,162,255,.2)'; c.beginPath(); c.arc(41, 41, 44, 0, 7); c.fill(); c.fillStyle = '#141b3e'; c.beginPath(); c.arc(41, 44, 41, 0, 7); c.fill(); c.globalCompositeOperation = 'destination-out'; c.beginPath(); c.arc(41, 41, 40.5, 0, 7); c.fill(); c.globalCompositeOperation = 'source-over'; c.fillStyle = 'rgba(10,18,44,.6)'; c.beginPath(); c.arc(41, 41, 39, 0, 7); c.fill(); });
+    cell('gbase', 82, 82, 6, c => { if (HUDP.k) { c.fillStyle = 'rgba(90,55,20,.4)'; c.beginPath(); c.arc(41, 45, 41, 0, 7); c.fill(); c.fillStyle = '#6b4426'; c.beginPath(); c.arc(41, 41, 41, 0, 7); c.fill(); c.fillStyle = '#e9dcc0'; c.beginPath(); c.arc(41, 41, 38.5, 0, 7); c.fill(); paGrain(c, 82, 82, 160); return; } c.fillStyle = 'rgba(87,162,255,.2)'; c.beginPath(); c.arc(41, 41, 44, 0, 7); c.fill(); c.fillStyle = '#141b3e'; c.beginPath(); c.arc(41, 44, 41, 0, 7); c.fill(); c.globalCompositeOperation = 'destination-out'; c.beginPath(); c.arc(41, 41, 40.5, 0, 7); c.fill(); c.globalCompositeOperation = 'source-over'; c.fillStyle = 'rgba(10,18,44,.6)'; c.beginPath(); c.arc(41, 41, 39, 0, 7); c.fill(); });
     const hero = (c, im, a) => { c.globalAlpha = a; if (im) { const k = Math.min(42 / im.width, 38 / im.height); c.drawImage(im, (42 - im.width * k) / 2, (38 - im.height * k) / 2, im.width * k, im.height * k); } c.globalAlpha = 1; };
     for (const [k, im] of [['horse', icons.horse], ['champ', icons.champ]]) {
-      cell('gtop' + k, 82, 82, 1, c => { c.strokeStyle = '#ffe7a8'; c.lineWidth = 3; c.beginPath(); c.arc(41, 41, 39.5, 0, 7); c.stroke(); const g = c.createRadialGradient(31.1, 21.2, 0, 31.1, 21.2, 70); g.addColorStop(0, '#428afa'); g.addColorStop(1, '#152352'); c.fillStyle = g; c.beginPath(); c.arc(41, 41, 33, 0, 7); c.fill(); c.translate(20, 14); hero(c, im, .3); });
+      cell('gtop' + k, 82, 82, 1, c => { if (HUDP.k) { c.fillStyle = '#6b4426'; c.beginPath(); c.arc(41, 41, 32.5, 0, 7); c.fill(); const g = c.createRadialGradient(31, 22, 0, 31, 22, 66); g.addColorStop(0, '#93b9e6'); g.addColorStop(1, '#4570b0'); c.fillStyle = g; c.beginPath(); c.arc(41, 41, 30.5, 0, 7); c.fill(); paGrain(c, 82, 82, 140); c.translate(20, 14); hero(c, im, .3); return; } c.strokeStyle = '#ffe7a8'; c.lineWidth = 3; c.beginPath(); c.arc(41, 41, 39.5, 0, 7); c.stroke(); const g = c.createRadialGradient(31.1, 21.2, 0, 31.1, 21.2, 70); g.addColorStop(0, '#428afa'); g.addColorStop(1, '#152352'); c.fillStyle = g; c.beginPath(); c.arc(41, 41, 33, 0, 7); c.fill(); c.translate(20, 14); hero(c, im, .3); });
       cell('g' + k, 42, 38, 0, c => hero(c, im, 1));
     }
     cell('gglow', 140, 140, 0, c => { const g = c.createRadialGradient(70, 70, 36, 70, 70, 70); g.addColorStop(0, 'rgba(255,198,43,.7)'); g.addColorStop(.26, 'rgba(255,198,43,.62)'); g.addColorStop(.3, 'rgba(255,198,43,.4)'); g.addColorStop(.6, 'rgba(255,198,43,.15)'); g.addColorStop(1, 'rgba(255,198,43,0)'); c.fillStyle = g; c.fillRect(0, 0, 140, 140); });
@@ -7829,7 +7869,7 @@ const GHUD = (() => {
         stretch(cells.ppar, p.x, p.y, w, a); text('star', '★', p.x + 10, p.y + p.h / 2, 0, PSTAR, a); text('par', t, p.x + 14 + lay('star', '★').w, p.y + p.h / 2, 0, left > 0 && left < 8 ? (HUDP.hot || PHOT) : HUDP.txt, a); tf(1, 0, 0); }
       if (!$('giant').classList.contains('last')) { const g = box.giant, p = clamp(_hud.gp || 0, 0, 100), rd = $('giant').classList.contains('ready'), cx = g.x + 41, cy = g.y + 41, hk = _hud.ch ? 'champ' : 'horse'; if (rd && !H.rdyAt) H.rdyAt = now; if (!rd) H.rdyAt = 0;
         if (rd) { const s = now - H.rdyAt; tf(1 + .05 * (1 - Math.cos(s * Math.PI / .6)), cx, cy); put(cells.gglow, cx - 70, cy - 70, .95); }
-        put(cells.gbase, g.x, g.y); const N = Math.ceil(p / 100 * 48); { const w = cells.white, u = w.u + w.du / 2, v = w.v + w.dv / 2; for (let i = 0; i < N; i++) { const a0 = i / 48 * 6.28319, a1 = Math.min((i + 1) / 48, p / 100) * 6.28319, s0 = Math.sin(a0), c0 = -Math.cos(a0), s1 = Math.sin(a1), c1 = -Math.cos(a1); quad(cx + s0 * 31.5, cy + c0 * 31.5, cx + s0 * 39.5, cy + c0 * 39.5, cx + s1 * 39.5, cy + c1 * 39.5, cx + s1 * 31.5, cy + c1 * 31.5, u, v, u, v, GOLD, 1); } }
+        put(cells.gbase, g.x, g.y); const N = Math.ceil(p / 100 * 48); { const w = cells.white, u = w.u + w.du / 2, v = w.v + w.dv / 2; for (let i = 0; i < N; i++) { const a0 = i / 48 * 6.28319, a1 = Math.min((i + 1) / 48, p / 100) * 6.28319, s0 = Math.sin(a0), c0 = -Math.cos(a0), s1 = Math.sin(a1), c1 = -Math.cos(a1); quad(cx + s0 * 31.5, cy + c0 * 31.5, cx + s0 * 39.5, cy + c0 * 39.5, cx + s1 * 39.5, cy + c1 * 39.5, cx + s1 * 31.5, cy + c1 * 31.5, u, v, u, v, HUDP.k ? rgb('#e3a536') : GOLD, 1); } }
         put(cells['gtop' + hk], g.x, g.y); const f = p / 100, c = cells['g' + hk]; if (rd) { const s = Math.min(1, (now - H.rdyAt) / .35), k0 = K, b = .3 + .7 * back(s); const ox = K; tf(ox * b, cx, cy); put(c, g.x + 20, g.y + 14); tf(ox, cx, cy); } else if (f > 0) put(c, g.x + 20, g.y + 14, 1, W1, 0, 1, 1 - f, 1);
         text('pct', _hud.giantTxt || '', cx, g.y + 60.5, .5); tf(1, 0, 0); }
       const cr = H.crowd; if (cr.on) { const t = String(_hud.crowdN == null ? '' : _hud.crowdN), L = lay('num', t), w = 2 + 6 + 24 + 4 + L.w + 12 + 2, x = cr.x - 40, y = cr.y - 46, h = box.crowdH; stretch(cells.pcrowd, x, y, w); put(cells.icrowd, x + 8, y + (h - 22) / 2); cr.pop = Math.max(0, cr.pop - dt / .35); if (cr.pop > 0) { const u = back(1 - cr.pop); tf(1.7 - .7 * u, x + 36 + L.w / 2, y + h / 2); } text('num', t, x + 36, y + h / 2, 0, cr.pop > 0 && !HUDP.ink ? [1, .89 + .11 * (1 - cr.pop), .48 + .52 * (1 - cr.pop)] : HUDP.txt); tf(1, 0, 0); }
@@ -8276,7 +8316,7 @@ $('mapBtn').onclick = () => { renderMap(); $('menu').classList.remove('on'); $('
 $('mapClose').onclick = () => { $('map').classList.remove('on'); $('menu').classList.add('on'); };
 // the painting on the story card; the drawn emblem stays until it is here
 const STORY_ART = ['s_grimbald', 's_sekra', 's_hrimgar', 's_magmaw', 's_king'];
-function storyPic(k) { const im = $('storyArt'), c = im.parentNode; c.classList.remove('art'); im.onload = () => c.classList.add('art'); im.onerror = () => c.classList.remove('art'); im.src = 'models/art/' + k + '.webp'; if (im.complete && im.naturalWidth) c.classList.add('art'); }
+function storyPic(k) { const im = $('storyArt'), c = im.parentNode; c.classList.remove('art'); im.onload = () => c.classList.add('art'); im.onerror = () => c.classList.remove('art'); const pa = PA.on && PAPER === 'a' && k === 's_grimbald'; c.classList.toggle('pa', pa); im.src = pa ? 'models/paper/a/gb_roar.webp' : 'models/art/' + k + '.webp'; if (im.complete && im.naturalWidth) c.classList.add('art'); }
 function storyWarm() { const n = save.level; if (n === 1 && !save.openSeen) artWarm('s_crown'); if (isBoss(n)) artWarm(onRoadLv(n) && worldOf(n) === HALLW ? 's_demoted' : STORY_ART[worldOf(n) % WORLDS.length]); if (n === CAP_AT) artWarm('s_rowan'); }
 // before a boss level, his story card (once per level); the battle waits behind it
 function maybeStory() {
