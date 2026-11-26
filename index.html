@@ -100,9 +100,17 @@ svg.ico.sm{width:18px;height:18px}
 .uptoggle svg{width:22px;height:22px}.uptoggle i{font-style:normal;font-size:14px;opacity:.85;transition:transform .2s}
 .uptoggle span{min-width:24px;height:24px;border-radius:12px;background:var(--gold);color:var(--navy);font-size:15px;display:grid;place-items:center;padding:0 7px;animation:rpulse 1.4s ease-in-out infinite}.uptoggle span:empty{display:none}
 @keyframes rpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
-#menu:not(.open) #upgrades{display:none}#menu.open .uptoggle i{transform:rotate(180deg)}
-#menu.many .logo{max-width:232px}
-#menu.many .tag{display:none}
+#upSheet{position:absolute;inset:0;z-index:9;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(6,8,24,.62);pointer-events:auto}
+#upSheet[hidden]{display:none}
+#upSheet .sheet-card{width:100%;max-width:460px;margin:0 auto;max-height:84%;display:flex;flex-direction:column;background:linear-gradient(180deg,#2c2262,#171236);border:2px solid #e4bf69;border-bottom:0;border-radius:22px 22px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.45);padding:12px 14px calc(env(safe-area-inset-bottom) + 16px);animation:sheetUp .22s cubic-bezier(.2,.9,.3,1)}
+@keyframes sheetUp{from{transform:translateY(30%);opacity:.3}}
+.sheet-head{display:flex;align-items:center;gap:10px;padding:0 2px 12px}
+.sheet-head b{flex:1;font-family:var(--disp);font-weight:400;font-size:25px;letter-spacing:.6px;color:#ffe9a8}
+.sheet-x{width:44px;height:44px;flex:none;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(10,18,44,.6);display:grid;place-items:center;padding:0;cursor:pointer}
+.sheet-x svg{width:18px;height:18px}
+#upSheet .grid{margin-top:0;max-width:none;overflow-y:auto;overscroll-behavior:contain;padding:2px 2px 6px}
+#audBtns button{position:relative}#audBtns button::after,#gearBtn::after{content:"";position:absolute;inset:-5px;border-radius:50%} /* 48px to the finger, 38 to the eye */
+#quitBtn{margin-top:8px;padding:12px 26px;font-size:16px;color:rgba(255,255,255,.82);text-decoration:none}
 .dock{position:sticky;bottom:0;width:100%;display:flex;flex-direction:column;align-items:center;padding:30px 0 calc(env(safe-area-inset-bottom) + 14px);background:linear-gradient(rgba(9,15,38,0),rgba(9,15,38,.9) 30%,rgba(9,15,38,.97))} /* the upgrade list fades out under PLAY instead of showing through it */
 .btn{pointer-events:auto;border:0;border-radius:14px;font-family:var(--disp);letter-spacing:.6px;cursor:pointer;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.22);
   background:linear-gradient(#ffd451,#ffa01a);box-shadow:0 4px 0 #b8650a;padding:8px 12px;font-size:17px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
@@ -315,7 +323,7 @@ svg.ico.sm{width:18px;height:18px}
 .boon div{padding:10px 14px;display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0}.boon i{font-style:normal;font-family:var(--disp);font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--r)}.boon b{font-family:var(--disp);font-weight:400;font-size:23px;line-height:1.05}.boon span{font-weight:500;font-size:17px;line-height:1.25;color:#e6ebff}
 #boonHave,#boonMenu{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:7px;font-weight:600;font-size:16px;color:#d8d2fa;min-height:0}#boonHave{margin-top:8px}#boonMenu{margin-top:9px}#boonMenu:empty,#boonHave:empty{display:none}
 #boonHave em,#boonMenu em,#pauseBoons em{width:36px;height:36px;flex:none;border-radius:11px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#1c2763;box-shadow:0 0 0 2px var(--r)}#boonMenu em{width:30px;height:30px;border-radius:9px}#boonHave em svg,#boonMenu em svg,#pauseBoons em svg{width:64%;height:64%}#boonHave em img,#boonMenu em img,#pauseBoons em img{width:100%;height:100%;object-fit:cover}
-#menu.open #boonMenu{display:none}
+
 #pauseBoons{padding-right:8px;display:flex;flex-direction:column;gap:9px;width:100%;max-height:38vh;overflow-y:auto;text-align:left;margin:4px 0 10px}#pauseBoons:empty{display:none}#pauseBoons div{display:flex;gap:11px;align-items:center;font-weight:500;font-size:15px;line-height:1.2;color:#e6ebff;padding:3px}#pauseBoons b{display:block;font-family:var(--disp);font-weight:400;font-size:17px;color:#fff}
 #cine.dir::before,#cine.dir::after{display:none}#cine.short .cine-skip{display:none}
 #dirT{position:absolute;left:4%;right:4%;bottom:12%;z-index:2;text-align:center;font-family:var(--disp);pointer-events:none;opacity:0;container-type:inline-size}
@@ -587,8 +595,8 @@ svg.ico.sm{width:18px;height:18px}
     <div class="lvl" id="menuLvl">Level 1</div>
     <div class="worldname" id="menuWorld"></div>
     <div class="trail" id="trail"></div><div id="boonMenu"></div>
-    <button class="uptoggle" id="upToggle" aria-expanded="false"><svg viewBox="0 0 24 24"><use href="#i-bolt"/></svg>Upgrades<span id="upReady"></span><i>▾</i></button>
-    <div class="grid" id="upgrades"></div>
+    <button class="uptoggle" id="upToggle" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24"><use href="#i-bolt"/></svg>Upgrades<span id="upReady"></span></button>
+    <div id="upSheet" role="dialog" aria-label="Upgrades" hidden><div class="sheet-card"><div class="sheet-head"><b>Upgrades</b><span class="pill"><svg class="ico sm"><use href="#i-coin"/></svg><span id="upCoinN">0</span></span><button class="sheet-x" id="upClose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg></button></div><div class="grid" id="upgrades"></div></div></div>
     <div class="spacer"></div>
     <div class="dock"><div class="menu-pills"><button class="pill-btn" id="mapBtn">🗺️ Map</button><button class="pill-btn" id="rewardsBtn">🎁 Rewards<i id="rewDot"></i></button></div><button class="btn green big" id="playBtn">PLAY</button>
     <div id="artMsg" style="font-size:11px;opacity:.75;color:#fff;text-align:center;min-height:13px"></div></div>
@@ -7398,13 +7406,13 @@ window.addEventListener('resize', resize);
 /* ---------------- screens + flow ---------------- */
 const COIN = '<svg class="ico sm"><use href="#i-coin"/></svg>';
 function renderUpgrades() {
-  const box = $('upgrades'); box.innerHTML = ''; let shown = 0, teased = false;
+  const box = $('upgrades'); box.innerHTML = ''; let shown = 0, teased = false, lockRow = null;
   for (const u of UPG) {
     const l = save.up[u.id] || 0, row = document.createElement('div');
     if (u.unlock && save.level < u.unlock) { // show only the next locked upgrade, as something to look forward to
       if (teased) continue; teased = true; row.className = 'up locked';
       row.innerHTML = `<em><svg viewBox="0 0 24 24"><use href="#i-lock"/></svg></em><div class="m"><b>${u.name}</b><span>Unlocks at Level ${u.unlock}</span></div>`;
-      box.appendChild(row); continue;
+      lockRow = row; continue;
     }
     shown++;
     const maxed = !!u.max && l >= u.max, cost = upCost(u, l), fresh = u.unlock && l === 0;
@@ -7414,7 +7422,8 @@ function renderUpgrades() {
     b.onclick = () => { if (maxed || save.coins < cost) return; audio(); save.coins -= cost; save.up[u.id] = l + 1; persist(); smp('buy', 1.00, .03); towerShow(); renderUpgrades(); };
     row.appendChild(b); box.appendChild(row);
   }
-  $('menu').classList.toggle('many', shown > 4 && $('menu').classList.contains('open'));
+  if (lockRow) box.appendChild(lockRow);
+  setHud('upCoinN', save.coins);
   const ready = UPG.filter(u => { const l = save.up[u.id] || 0; return !(u.unlock && save.level < u.unlock) && !(u.max && l >= u.max) && save.coins >= upCost(u, l); }).length;
   $('upReady').textContent = ready ? ready : '';
   $('menuLvl').textContent = lvName(save.level);
@@ -7434,7 +7443,7 @@ function renderUpgrades() {
 function showMenu() {
   storyWarm();
   if (!G.menuIntroDone) { G.menuIntroDone = true; $('menu').classList.add('intro'); setTimeout(() => $('menu').classList.remove('intro'), 1500); } // the first open of a session: the logo drops in, the rest rises after it
-  closeMore(); if (G.palCardDue) { G.palCardDue = false; setTimeout(showPalUnlock, 700); } // the Paladin card held back while a battle ran
+  closeMore(); openUp(false); if (G.palCardDue) { G.palCardDue = false; setTimeout(showPalUnlock, 700); } // the Paladin card held back while a battle ran
   if (G.practice) { if (G.practiceKeep) save = JSON.parse(G.practiceKeep); G.practice = false; G.practiceKeep = null; }
   $('rewDot').classList.toggle('on', rewardsReady()); // back from a boss practice: your real progress returns
   setupLevel(save.level); G.mode = 'menu'; renderUpgrades(); if (crowdReady && save.level >= 4) loadPaladinArt();
@@ -7618,7 +7627,11 @@ function showAd(label, secs, done) {
 }
 
 $('playBtn').onclick = startPlay;
-$('upToggle').onclick = () => { const m = $('menu'), open = !m.classList.contains('open'); m.classList.toggle('open', open); $('upToggle').setAttribute('aria-expanded', open); audio(); smp('tap', .45, .03, 0, open ? 1.08 : .94); renderUpgrades(); };
+function openUp(on) { $('upSheet').hidden = !on; $('upToggle').setAttribute('aria-expanded', on); if (on) renderUpgrades(); } // the upgrades sheet
+$('upToggle').onclick = () => { audio(); smp('tap', .45, .03, 0, 1.08); openUp(true); };
+$('upClose').onclick = () => { smp('tap', .45, .03, 0, .94); openUp(false); };
+$('upSheet').addEventListener('click', e => { if (e.target === e.currentTarget) { smp('tap', .45, .03, 0, .94); openUp(false); } }); // a tap above the sheet closes it
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('upSheet').hidden) openUp(false); });
 // each result button works once per result card: during the ad countdown the card stays underneath with the button focused,
 // so Enter or Space pressed it again (paying twice and skipping a level)
 const resOnce = fn => () => { if (G.resBusy) return; G.resBusy = true; if (document.activeElement) document.activeElement.blur(); fn(); };
