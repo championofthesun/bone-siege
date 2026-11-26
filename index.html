@@ -436,6 +436,12 @@ svg.ico.sm{width:18px;height:18px}
 #game.lean #giant{box-shadow:0 3px 0 #141b3e,0 0 0 3px rgba(87,162,255,.2)}
 #game.lean #giant .h0{filter:none;opacity:.3}
 #game.lean .pill{box-shadow:0 3px 0 rgba(4,5,20,.3)}
+/* the paper round: parchment and ink */
+.paper #hud .pill,.paper #crowd{background:linear-gradient(170deg,#fffaea,#f1e0b8)!important;color:#4a2c14!important;border-color:#8a5a2a!important;box-shadow:0 3px 0 rgba(90,55,20,.35)!important;text-shadow:none!important}
+.paper #hud .bar{background:#f7edd4!important;border-color:#6b4426!important;box-shadow:0 3px 0 rgba(90,55,20,.35),inset 0 2px 5px rgba(90,55,20,.22)!important}
+.paper #hud .bar span{text-shadow:-1.5px -1.5px 0 #4a2c14,1.5px -1.5px 0 #4a2c14,-1.5px 1.5px 0 #4a2c14,1.5px 1.5px 0 #4a2c14,0 3px 0 #4a2c14!important}
+.paper .res-coins{background:linear-gradient(180deg,#fffaea,#efdcb2)!important;border-color:#8a5a2a!important;box-shadow:0 6px 16px rgba(60,30,8,.45)!important;color:#c98a12!important;text-shadow:0 3px 0 #6b4426!important}
+.paper #result{background:linear-gradient(180deg,rgba(80,48,18,.22),rgba(70,40,14,.6) 39%,rgba(45,25,8,.95) 86%)!important}
 #game.lean #parPill.miss{filter:none}
 #game.glhud #fortBar,#game.glhud #nestBar,#game.glhud #crowd,#game.glhud #floats,#game.glhud #parPill{visibility:hidden} /* drawn inside the picture instead: see GHUD */
 #game.glhud #giant:not(.last){opacity:0;animation:none;box-shadow:none;background:none}
@@ -704,7 +710,7 @@ function loadSave() {
   return freshSave();
 }
 let save = loadSave();
-const PAPER = (location.search.match(/[?&]paper=([ab])/) || [])[1] || ''; // a paper look under test (a: pop-up storybook, b: papercraft)
+const PAPER_FLAG = (location.search.match(/[?&]paper=([ab])/) || [])[1] || '', PAPER = PAPER_FLAG || (/[?&]paper=(0|off)/.test(location.search) ? '' : 'a'); // a paper look under test (a: pop-up storybook, b: papercraft)
 function persist() { if (typeof G !== 'undefined' && (G.sim || G.practice)) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} } // simulations never touch the real save
 
 const fireInterval = l => Math.max(0.05, 0.15 * Math.pow(0.9, l));
@@ -4858,7 +4864,7 @@ const D = { k: 0, x: new Float32Array(DCAP), z: new Float32Array(DCAP), s: new F
 for (let i = 0; i < DCAP; i++) D.col.push(new THREE.Color());
 function splat(x, z, color, size) {
   const i = D.k; D.k = (D.k + 1) % DCAP;
-  D.x[i] = x; D.z[i] = z; D.s[i] = size; D.r[i] = rand() * 6.28; D.life[i] = 2.6 + rand() * .8; D.col[i].set(color).convertSRGBToLinear();
+  D.x[i] = x; D.z[i] = z; D.s[i] = PA.on && PAPER === 'a' ? size * .7 : size; D.r[i] = rand() * 6.28; D.life[i] = 2.6 + rand() * .8; D.col[i].set(PA.on && PAPER === 'a' ? '#5a4868' : color).convertSRGBToLinear();
 }
 // fallen skeletons stay where they drop for the rest of the battle (crossed bones and a skull), so the line where the two
 // armies met shows on the road as a drift of bones. Set once per bone, so they cost nothing per frame.
@@ -5541,6 +5547,7 @@ const PAGE_W = 2048, PAGE_H = 3065;
 const PA_GB_A = { idle: [1.0383, 732], wind: [.7242, 794], roar: [1.2185, 714], daze: [1.0653, 704] }; // Grimbald's poses: width / height, and height in pixels at one shared scale
 const PA_DIM_A = { cleaver_t: .8516, cannon: .9125, puff: 1.0987, star: 1.0802, sign_gold: 1.3559, sign_blue: 1.3559, sign_red: 1.3559, sign_purple: 1.3531, oak: .9746, pines: .8649, bush: 1.3714, cottage: 1.1532, knight: .7901, skullrock: 1.2632, crownrock: 1.0909, lamp: .4555, bannerp: .5833, bannerb: .6034, fence: 1.8551, torch: .4097, castle: 1.5366, camp: 3.4115, back: 4.2227 }; // width / height of each card
 const PB_DIM = { statue: .6146, skullrock: 1.0756, crownskull: .8438, crystals: .9167, cottage: 1.219, barricade: 1.113, fence: 1.2973, torch: .4688, bannerp: .6172, bannerb: .651, bush: 1.0696, rockpile: 1.4328 };
+const PA_CP = { walk: [.8735, 601], swing: [.6973, 631], hit: [1.0265, 567], down: [1.1417, 515] }; // The Carver's poses: width / height, height in pixels
 const PB_GB = { idle: [.9363, 487], walk: [.8911, 496], wind: [.6147, 558], smash: [.7537, 475], roar: [1.1279, 477], daze: [1.0995, 422] };
 const PA_DIM = PAPER === 'b' ? PB_DIM : PA_DIM_A, PA_GB = PAPER === 'b' ? PB_GB : PA_GB_A;
 const PA = { g: null, on: false, was: null, tex: {}, img: {}, uTok: 0, rec: 0, fired: 0 };
@@ -5574,7 +5581,7 @@ function paGate(grp, g) { // the gate as a painted signpost standing on the page
   if (grp.userData.bar) grp.userData.bar.position.set(0, B[2] * H + .2, .04); // a +N gate's recharge bar sits along the foot of the board
 }
 function paReset() { // each round: gates lettered on signs, the castle and camp wall stood back up, the horde's bones left their own colour
-  for (const g of G.gates) (PAPER === 'b' ? pbGate : paGate)(g.mesh, g); PA.shredded = false; PS.done = false; if (PAPER === 'a' && isBoss(G.level)) { ['shred', 'turn', 'pop', 'st1'].forEach(psLoad); psFont(); ['story_bg', 'st1_back', 'st1_sekra', 'st1_front'].forEach(paTex); } if (PA.shreds) { for (const q of PA.shreds) PA.g.remove(q.s); PA.shreds = null; } for (const p of PB.castle) p.rotation.set(0, 0, 0); for (const c of PB.camp) c.rotation.set(0, 0, 0); FOE_TINT.setRGB(1, 1, 1);
+  for (const g of G.gates) (PAPER === 'b' ? pbGate : paGate)(g.mesh, g); if (PAPER === 'a' && !PA.img.gold) paPre().then(() => { if (PA.on) for (const g of G.gates) paGate(g.mesh, g); }); /* the signs letter themselves as soon as their pictures are in */ PA.shredded = false; PA.cpShred = false; PS.done = false; if (PAPER === 'a' && isBoss(G.level)) { ['shred', 'turn', 'pop', 'st1'].forEach(psLoad); psFont(); ['story_bg', 'st1_back', 'st1_sekra', 'st1_front'].forEach(paTex); } if (PA.shreds) { for (const q of PA.shreds) PA.g.remove(q.s); PA.shreds = null; } for (const p of PB.castle) p.rotation.set(0, 0, 0); for (const c of PB.camp) c.rotation.set(0, 0, 0); FOE_TINT.setRGB(1, 1, 1);
   if (PA.castle) PA.castle.rotation.x = -.22; for (const c of PA.camp || []) c.rotation.x = -.32; PA.rec = 0; PA.fired = G.fired;
 }
 const _paV = new THREE.Vector3();
@@ -5586,13 +5593,18 @@ function paTick(dt) { // the paper pieces that move
   // Grimbald, a puppet with four poses
   const fight = !!(WL.on && WL.b), b = fight ? WL.b : HOLD.i >= 0 ? HOLD.b : null, gb = PA.gb; if (gb) { const on = !!(b && b.g.visible) && !PA.shredded; gb.g.visible = on; // fighting on the road, or watching from his gate
     if (on) { const st = fight ? WL.state : HOLD.act ? (HOLD.k === 'strike' ? 'wind' : 'stun') : 'idle', pose = PAPER === 'b' ? PB_POSE(st) : st === 'wind' || st === 'smash' ? 'wind' : st === 'roar' ? 'roar' : st === 'stun' || st === 'kneel' || st === 'recover' || st === 'dead' ? 'daze' : 'idle';
-      for (const k in gb.m) gb.m[k].visible = k === pose; b.g.getWorldPosition(_paV); gb.g.position.copy(_paV); if (fight && st === 'dead' && PAPER === 'a' && WL.st > .8) { gb.g.updateMatrixWorld(true); paShred(gb); }
+      for (const k in gb.m) gb.m[k].visible = k === pose; b.g.getWorldPosition(_paV); gb.g.position.copy(_paV); if (fight && st === 'dead' && PAPER === 'a' && WL.st > .8) { gb.g.updateMatrixWorld(true); paShred(gb); PA.shredded = true; }
       const grow = fight ? b.g.scale.x / (WL_S * ((WL.def && WL.def.s) || 1)) : 1; gb.g.scale.set(1, 1 + (st === 'idle' ? Math.sin((G.t || 0) * 2.2) * .018 : 0), 1).multiplyScalar(grow || 1); // (he breathes)
       const walk = st === 'walk' || st === 'enter' || st === 'leap', tt = G.t || 0;
       gb.g.rotation.z = walk ? Math.sin(tt * 9) * .07 : st === 'roar' ? Math.sin(tt * 30) * .02 : 0; gb.g.position.y += walk ? Math.abs(Math.sin(tt * 9)) * .25 : 0;
       gb.g.rotation.x = st === 'smash' ? .32 * Math.min(1, WL.st / .12) : st === 'dead' && fight && PAPER === 'b' ? -(Math.min(1, WL.st / .8) ** 2) * (Math.PI / 2 - .28) : 0; // the smash lunges; the dead fall over flat
       const f = 1 + Math.max(0, WL.flash || 0) * .9; for (const k in gb.m) gb.m[k].material.color.setScalar(f); } }
   // a win folds the castle down flat, like a pop-up page closing; a loss folds the camp wall over
+  if (PA.cp) { const cp = PA.cp, b = CAP.b, on = !!(b && b.g.visible && CAP.on) && !PA.cpShred; cp.g.visible = on; // The Carver follows his fight
+    if (on) { const pose = CAP.dead ? 'down' : CAP.act ? 'swing' : (CAP.flash || 0) > .45 ? 'hit' : 'walk', tt = G.t || 0, walk = pose === 'walk'; for (const k in cp.m) cp.m[k].visible = k === pose;
+      b.g.getWorldPosition(_paV); cp.g.position.copy(_paV); cp.g.position.y = walk ? Math.abs(Math.sin(tt * 8)) * .2 : 0; cp.g.rotation.z = walk ? Math.sin(tt * 8) * .06 : 0;
+      const f = 1 + (CAP.flash || 0) * .8; for (const k in cp.m) cp.m[k].material.color.setScalar(f);
+      if (CAP.dead > .9) { paShred(cp, 'down'); PA.cpShred = true; } } }
   paShredTick(dt);
   if (PAPER === 'b') { const won = G.boomed && (G.mode === 'won' || G.mode === 'resultWin'), ft = won ? G.winT - BOOM_AT : -1; // the castle's pieces fold flat one after another; a loss tips the camp wall over
     PB.castle.forEach((p, i) => { const k = ft > 0 ? Math.min(1, Math.max(0, (ft - i * .14) / .8)) : 0, e = k * k; p.rotation.x = p.userData.fold[0] * e * (Math.PI / 2 - .04); p.rotation.z = -p.userData.fold[1] * e * .55; });
@@ -5637,6 +5649,11 @@ const paKeep = o => o === king || o.userData.holder || WL.built.some(b => b && b
 function paHide() { world.visible = campWall.visible = hoard.visible = nest.visible = false; for (const o of fort.children) if (o.visible && !paKeep(o)) o.visible = false;
   for (const b of WL.built) if (b && b.g) for (const c of b.g.children) if (c.visible) { c.visible = false; c.userData.paHid = true; } // the warlord's 3D (the paper puppet stands in for him)
   for (const c of launcher.children) if (c !== PA.can && c.visible && !c.isSprite) { c.visible = false; c.userData.paHid = true; } // the cannon model
+  if (PAPER === 'a') { if (CAP.b) for (const c of CAP.b.g.children) if (c.visible) { c.visible = false; c.userData.paHid = true; }
+    litter.m.visible = false;
+    for (const ks of kingShots) if (ks.on && ks.who === 0) { // a thrown cleaver: a spinning paper cut-out
+      if (!ks.pa) { ks.pa = new THREE.Sprite(new THREE.SpriteMaterial({ map: paTex('cleaver_t'), alphaTest: .4, depthWrite: false, toneMapped: false })); ks.pa.scale.set(2.1 * PA_DIM.cleaver_t, 2.1, 1); ks.thrown.add(ks.pa); }
+      for (const c of ks.thrown.children) if (c !== ks.pa && c.visible) { c.visible = false; c.userData.paHid = true; } ks.pa.visible = true; ks.pa.material.rotation -= .22; ks.glow.visible = false; } }
   if (PAPER === 'a') for (const c of P2.v.cl || []) if (c && c.q) { // Grimbald's thrown cleavers: a painted cut-out stands in for the 3D one
     if (!c.pa) { const h = 3.3, w = h * PA_DIM.cleaver_t; c.pa = new THREE.Mesh(new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('cleaver_t'), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false })); c.pa.rotation.x = -.3; c.pa.position.y = -.15; c.q.add(c.pa); }
     c.pa.visible = true; for (const o of c.q.children) if (o !== c.pa && o.visible) { o.visible = false; o.userData.paHid = true; } }
@@ -5651,6 +5668,18 @@ function paExtras() { // the cannon card (on the real cannon, so it slides and l
   for (const k in PA_GB) { const h = 6.6 * PA_GB[k][1] / PA_GB.idle[1], w = h * PA_GB[k][0], m = gb.m[k] = new THREE.Mesh(new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('gb_' + k), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }));
     m.rotation.x = -.28; m.visible = false; gb.g.add(m); }
   const sh = new THREE.Mesh(new THREE.PlaneGeometry(6, 2.2), PA.sh); sh.rotation.x = -Math.PI / 2; sh.position.set(0, .03, -.6); sh.renderOrder = 1; gb.g.add(sh);
+  if (PAPER === 'a') { const cp = PA.cp = { g: new THREE.Group(), m: {} }; PA.g.add(cp.g); cp.g.visible = false; // The Carver
+    for (const k in PA_CP) { const h = 5.2 * PA_CP[k][1] / PA_CP.walk[1], w = h * PA_CP[k][0], m = cp.m[k] = new THREE.Mesh(new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('cp_' + k), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }));
+      m.rotation.x = -.28; m.visible = false; cp.g.add(m); }
+    const s2 = new THREE.Mesh(new THREE.PlaneGeometry(4, 1.6), PA.sh); s2.rotation.x = -Math.PI / 2; s2.position.set(0, .03, -.4); s2.renderOrder = 1; cp.g.add(s2); }
+}
+function paInk() { // an ink blot with a few drops round it (white, tinted where it falls)
+  return canvasTex(128, 128, x => { x.fillStyle = '#fff'; x.beginPath(); for (let k = 0; k < 14; k++) { const a = k / 14 * 6.283, r = 30 + Math.random() * 16; x.lineTo(64 + Math.cos(a) * r, 64 + Math.sin(a) * r); } x.closePath(); x.fill();
+    for (let k = 0; k < 9; k++) { const a = Math.random() * 6.283, d = 44 + Math.random() * 16, r = 2 + Math.random() * 5; x.beginPath(); x.arc(64 + Math.cos(a) * d, 64 + Math.sin(a) * d, r, 0, 7); x.fill(); } });
+}
+function paFx(on) { // the paper round's effects and its parchment HUD (and back)
+  decalMesh.material.map = on ? (PA.ink || (PA.ink = paInk())) : splatTex; decalMesh.material.opacity = on ? .4 : .8; decalMesh.material.needsUpdate = true;
+  gameEl.classList.toggle('paper', on); HUDP = on ? HUDP_PAPER : HUDP_NAVY; if (GHUD) GHUD.rebuild();
 }
 function paperScene(on) { // the storybook level in place of the 3D land, castle and camp wall (and back again)
   if (on && !PA.g) { if (PAPER === 'b') pbBuild(); else paBuild(); paExtras(); } if (!PA.g || on === PA.on) return; PA.on = on; PA.g.visible = on; PA.can.visible = on;
@@ -5658,9 +5687,9 @@ function paperScene(on) { // the storybook level in place of the 3D land, castle
   for (const [m, e] of [[spriteMat, '#0c1a3e'], [foeSpriteMat, '#2a0a30']]) { m.uniforms.uEdge.value.set(on ? (PAPER === 'b' ? '#8d8a96' : '#3a2010') : e); m.uniforms.uOut.value = on ? (PAPER === 'b' ? 1 : 1.2) : 1.3; m.uniforms.uDoll.value = on ? 1 : 0; m.uniforms.uQuad.value.set(BAKE_W * UNIT_K, BAKE_H * UNIT_K).multiplyScalar(on ? 1.45 : 1); } // a thin brown cut line round each doll's paper edge; the dolls drawn bigger (looks only)
   for (const p of puffs) { p.s.material.map = on ? (PAPER === 'b' ? PB.puff : paTex('puff')) : smokeTex; p.s.material.needsUpdate = true; } // paper smoke
   Object.assign(muzzleFlash.material, on ? { map: PAPER === 'b' ? PB.star : paTex('star'), blending: THREE.NormalBlending } : { map: glowTex, blending: THREE.AdditiveBlending }); muzzleFlash.material.color.set(on ? '#ffffff' : '#ffc860'); muzzleFlash.material.needsUpdate = true;
-  if (on) PA.ft = FOE_TINT.clone(); else if (PA.ft) FOE_TINT.copy(PA.ft);
+  if (on) PA.ft = FOE_TINT.clone(); else if (PA.ft) FOE_TINT.copy(PA.ft); paFx(on && PAPER === 'a');
   if (on) { PA.was = { bg: scene.background, far: scene.fog.far, near: scene.fog.near, wc: WCAM.clone(), wl: WLOOK.clone() }; if (PAPER === 'a') { WCAM.set(0, 17, -21); WLOOK.set(0, 2.2, -44.5); }; scene.background = C(PAPER === 'b' ? '#8cc6f2' : '#3b2414'); scene.fog.near = 900; scene.fog.far = 1000; paHide(); }
-  else { scene.background = PA.was.bg; WCAM.copy(PA.was.wc); WLOOK.copy(PA.was.wl); scene.fog.near = PA.was.near; scene.fog.far = PA.was.far; PA.was = null; world.visible = campWall.visible = hoard.visible = nest.visible = true; for (const o of fort.children) if (!paKeep(o)) o.visible = true; for (const b of WL.built) if (b && b.g) for (const c of b.g.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } for (const c of launcher.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } PA.gb.g.visible = false; for (const c of P2.v.cl || []) if (c && c.q) for (const o of c.q.children) { if (o === c.pa) o.visible = false; else if (o.userData.paHid) { o.visible = true; o.userData.paHid = false; } } }
+  else { scene.background = PA.was.bg; WCAM.copy(PA.was.wc); WLOOK.copy(PA.was.wl); scene.fog.near = PA.was.near; scene.fog.far = PA.was.far; PA.was = null; world.visible = campWall.visible = hoard.visible = nest.visible = true; for (const o of fort.children) if (!paKeep(o)) o.visible = true; for (const b of WL.built) if (b && b.g) for (const c of b.g.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } for (const c of launcher.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } PA.gb.g.visible = false; if (PA.cp) PA.cp.g.visible = false; if (CAP.b) for (const c of CAP.b.g.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } litter.m.visible = true; for (const ks of kingShots) { if (ks.pa) ks.pa.visible = false; for (const c of ks.thrown.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } } for (const c of P2.v.cl || []) if (c && c.q) for (const o of c.q.children) { if (o === c.pa) o.visible = false; else if (o.userData.paHid) { o.visible = true; o.userData.paHid = false; } } }
 }
 // ---- look B under test (?paper=b): a papercraft diorama. The land, road, walls, castle, camp wall, trees, rocks, river, hills, gates
 //      and cannon are real folded-paper models (matte card, flat-shaded so every fold shows, each sheet with its own grain); the army,
@@ -5814,9 +5843,9 @@ function psSnd(k, vol = 1) {
   if (!actx || muted || !PSND[k] || !PSND[k].buf) return null;
   const s = actx.createBufferSource(), g = actx.createGain(); s.buffer = PSND[k].buf; g.gain.value = vol; s.connect(g); g.connect(actx.destination); s.start(); return s;
 }
-function paShred(gb) { // he tears into strips of paper that the wind lifts away
-  const m = gb.m.daze; gb.g.updateMatrixWorld(true); const M = m.matrixWorld, w = m.geometry.parameters.width, h = m.geometry.parameters.height, N = 9, R = 4;
-  const q0 = new THREE.Quaternion(), s0 = new THREE.Vector3(), p0 = new THREE.Vector3(); M.decompose(p0, q0, s0); PA.shreds = [];
+function paShred(gb, pose = 'daze') { // he tears into strips of paper that the wind lifts away
+  const m = gb.m[pose]; gb.g.updateMatrixWorld(true); const M = m.matrixWorld, w = m.geometry.parameters.width, h = m.geometry.parameters.height, N = 9, R = 4;
+  const q0 = new THREE.Quaternion(), s0 = new THREE.Vector3(), p0 = new THREE.Vector3(); M.decompose(p0, q0, s0); PA.shreds = PA.shreds || [];
   for (let i = 0; i < N; i++) for (let j = 0; j < R; j++) {
     const sw = w / N, sh = h / R, g2 = new THREE.PlaneGeometry(sw, sh), uv = g2.attributes.uv; for (let k = 0; k < uv.count; k++) uv.setXY(k, (i + uv.getX(k)) / N, (j + uv.getY(k)) / R);
     const mat = m.material.clone(); Object.assign(mat, { transparent: true, alphaTest: .02, depthWrite: false }); mat.color.setScalar(1);
@@ -5824,7 +5853,7 @@ function paShred(gb) { // he tears into strips of paper that the wind lifts away
     const cx = (i + .5) / N - .5, cy = (j + .5) / R;
     PA.shreds.push({ s, d: Math.abs(cx) * .35 + (1 - cy) * .25 + Math.random() * .1, v: new THREE.Vector3(cx * 6 + (Math.random() - .5) * 2.4, 1.6 + cy * 2 + Math.random() * 2, 1 + Math.random() * 1.6), r: new THREE.Vector3((Math.random() - .5) * 7, (Math.random() - .5) * 9, (Math.random() - .5) * 6), t: 0 });
   }
-  gb.g.visible = false; PA.shredded = true; psLoad('shred').then(() => psSnd('shred', .75)); tone(330, .3, 'triangle', .05, .4);
+  gb.g.visible = false; psLoad('shred').then(() => psSnd('shred', .75)); tone(330, .3, 'triangle', .05, .4);
   burst(p0.x, p0.y + h * .5, p0.z, ['#fffaf0', '#f3e7cc', '#e8d9b8'], 34, 4, { vy: 4, life: 2, g: -1, sz: 1.6, kind: PK.PAPER });
 }
 function paShredTick(dt) {
@@ -5952,7 +5981,7 @@ function psTick(dt) {
 function psRender() { renderer.setRenderTarget(null); renderer.setScissorTest(false); const s = renderer.getSize(new THREE.Vector2()); renderer.setViewport(0, 0, s.x, s.y); renderer.render(PS.scene, PS.cam); }
 function psEnd() {
   if (!PS.on) return; window.removeEventListener('pointerdown', PS.tap); if (PS.src) try { PS.src.stop(); } catch (e) {}
-  PS.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map && !Object.values(PA.tex).includes(o.material.map)) o.material.map.dispose(); o.material.dispose(); } }); 
+  PS.scene.traverse(o => { try { if (o.geometry) o.geometry.dispose(); for (const m of [].concat(o.material || [])) { if (m.map && m.map.isTexture && !Object.values(PA.tex).includes(m.map)) m.map.dispose(); if (m.dispose) m.dispose(); } } catch (e) {} }); /* (the hardcover's boxes carry several materials each) */ 
   Object.assign(PS, { on: false, ready: false, done: true, motes: null, scene: null, cam: null, layers: null, up: null, src: null, t0: null, full: false, shown: 0, nch: -1, dn: false, lay: null, tc: null, tt: null });
 }
 function setupLevel(n) {
@@ -5976,7 +6005,7 @@ function setupLevel(n) {
   clearBones(); spawnHorde(G.cfg.horde); G.kingT = 4; G.casts = 0; resetKingShots(); resetCharges(); resetHoard(); resetSaws(); resetPaladin(); resetWarlord(); resetCaptain(); setHolder(holderOf(n)); resetHazards(); G.kills = 0; G.dps = 0; G.fortPrev = null; G.surged = false; G.rage = false; rageGlow.visible = false;
   if (FUSE && !G.sim) FUSE.level();
   $('lvlPill').textContent = lvName(n);
-  paperScene(!!PAPER && !!G.practice); if (PA.on) paReset(); // only the test round; your real game afterwards is the usual one
+  paperScene(!G.sim && !G.cine && !G.menuSetup && (PAPER === 'b' ? !!G.practice : PAPER === 'a' && (!!(G.practice && PAPER_FLAG) || G.level <= WORLD_LEN))); if (PA.on) paReset(); // only the test round; your real game afterwards is the usual one
 }
 const lvName = n => n > LAP_LEN ? 'Road ' + (n - LAP_LEN) : 'Level ' + n;
 
@@ -7319,7 +7348,7 @@ function update(dt) {
       if (fort.position.y > -3.6 && rand() < dt * 34) burst((rand() - .5) * 11, 1 + rand() * 2, FORT_Z - .5 + rand() * 2, rand() < .6 ? '#e2d6c4' : '#b9ad9c', 2, 5, { vy: 5, life: 1, g: 16, sz: 1.4, kind: PK.ROCK });
       if (fort.position.y > -3.4 && rand() < dt * 2.4) smoke((rand() - .5) * 10, .8, FORT_Z - 1 + rand() * 2, '#a89cb4', 2 + rand() * 1.2, 1.1);
     }
-    if (!DIR.s && G.endT <= 0 && !paStory() && !startLook()) showResult(true);
+    if (!DIR.s && G.endT <= 0 && !paStory() && (PA.on || !startLook())) showResult(true);
   } else if (G.mode === 'lost') { G.endT -= dt; if (G.endT <= 0) showResult(false); }
   if (celebrating && G.boomed && !DIR.s) { G.fwT -= dt; if (G.fwT <= 0) { firework(); G.fwT = G.mode === 'won' ? .18 + rand() * .2 : .5 + rand() * .5; } }
   if (G.boomed) { // shock rings, flash and flying pieces
@@ -7689,6 +7718,9 @@ const POST = (() => {
    ring or a floating number made that frame miss its slot (about thirteen a second in a fight). Here the parts that change are
    drawn with the scene, as native games do: one sheet of pre-drawn pieces and letters, one draw, and nothing on the page is
    touched while you fight. The page's own bars stay where they are (invisible, still tappable) and say where everything goes. */
+const HUDP_NAVY = { k: 0, sh: 'rgba(8,14,40,.38)', track: 'rgba(12,19,47,.86)', trackIn: 'rgba(9,12,34,.6)', frame: '#f8e3a4', ink: null, hot: null, pc: ['#1d3972', '#1c1e48', '#ffe6ae', .35], pp: ['rgba(23,43,91,.94)', 'rgba(17,24,59,.88)', '#edc969', .3], txt: [1, 1, 1] };
+const HUDP_PAPER = { k: 1, sh: 'rgba(90,55,20,.35)', track: 'rgba(247,237,212,.97)', trackIn: 'rgba(120,80,40,.22)', frame: '#6b4426', ink: '#4a2c14', hot: [.75, .2, .12], pc: ['#fffaea', '#f1e0b8', '#8a5a2a', .3], pp: ['#fffaea', '#f1e0b8', '#8a5a2a', .3], txt: [.29, .17, .08] };
+let HUDP = HUDP_NAVY; // the drawn HUD's colours: night blue and gold, or parchment and ink in the paper round
 const GHUD = (() => {
   if (!LEAN || /[?&]pagehud/.test(location.search)) return null;
   gameEl.classList.add('glhud'); sandEl.style.display = 'none';
@@ -7710,7 +7742,7 @@ const GHUD = (() => {
   const grad = (c, x0, y0, x1, y1, a, b) => { const g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, a); g.addColorStop(1, b); return g; };
   // letter styles: [size, spacing, how a letter's back (outline, shadow) and front are drawn]
   const ST = {
-    label: { px: 16, ls: .6, back: (c, t) => { c.fillStyle = 'rgba(8,14,40,.55)'; c.fillText(t, 0, 2); }, pad: 3 },
+    label: { px: 16, ls: .6, back: (c, t) => { if (HUDP.ink) { c.lineJoin = 'round'; c.lineWidth = 4.5; c.strokeStyle = c.fillStyle = HUDP.ink; c.strokeText(t, 0, 0); c.fillText(t, 0, 2); } else { c.fillStyle = 'rgba(8,14,40,.55)'; c.fillText(t, 0, 2); } }, pad: 4 },
     num: { px: 20, ls: .5, pad: 2 }, par: { px: 15, ls: .4, pad: 2 }, pct: { px: 13, ls: .5, pad: 2 },
     star: { px: 15, ls: .4, pad: 2, back: (c, t) => { c.strokeStyle = '#6a4300'; c.lineWidth = 1; c.strokeText(t, 0, 0); }, over: 1 },
     float: { px: 34, ls: .5, pad: 9, back: (c, t) => { c.lineJoin = 'round'; c.lineWidth = 6; c.fillStyle = c.strokeStyle = 'rgba(8,14,40,1)'; c.globalAlpha = .4; c.strokeText(t, 0, 4); c.globalAlpha = 1; c.strokeStyle = '#fff'; c.strokeText(t, 0, 0); } }
@@ -7724,14 +7756,14 @@ const GHUD = (() => {
     if (tex) tex.dispose(); tex = new THREE.CanvasTexture(cv); tex.flipY = false; tex.premultiplyAlpha = true; tex.generateMipmaps = false; tex.minFilter = tex.magFilter = THREE.LinearFilter; mat.uniforms.uMap.value = tex;
     cell('white', 4, 4, 0, c => { c.fillStyle = '#fff'; c.fillRect(-2, -2, 8, 8); });
     for (const [k, w, glow] of [['fort', box.fort.w, ''], ['wl', box.fort.w, 'rgba(255,80,60,.55)'], ['nest', box.nest.w, '']]) {
-      cell('tr' + k, w, 30, 6, c => { c.fillStyle = 'rgba(8,14,40,.38)'; rr(c, 0, 4, w, 30, 15); c.fill(); if (glow) { c.fillStyle = glow; rr(c, -2, -2, w + 4, 34, 17); c.fill(); } c.globalCompositeOperation = 'destination-out'; c.fillStyle = '#000'; rr(c, 0, 0, w, 30, 15); c.fill(); c.globalCompositeOperation = 'source-over'; c.fillStyle = 'rgba(12,19,47,.86)'; rr(c, .5, .5, w - 1, 29, 14.5); c.fill(); c.fillStyle = 'rgba(9,12,34,.6)'; rr(c, 3, 3, w - 6, 2, 1); c.fill(); });
+      cell('tr' + k, w, 30, 6, c => { c.fillStyle = HUDP.sh; rr(c, 0, 4, w, 30, 15); c.fill(); if (glow) { c.fillStyle = glow; rr(c, -2, -2, w + 4, 34, 17); c.fill(); } c.globalCompositeOperation = 'destination-out'; c.fillStyle = '#000'; rr(c, 0, 0, w, 30, 15); c.fill(); c.globalCompositeOperation = 'source-over'; c.fillStyle = HUDP.track; rr(c, .5, .5, w - 1, 29, 14.5); c.fill(); c.fillStyle = HUDP.trackIn; rr(c, 3, 3, w - 6, 2, 1); c.fill(); });
       const col = k === 'fort' ? ['#e8a7ff', '#8c2fdb'] : k === 'wl' ? ['#ffb07a', '#d0202a'] : ['#b0ecff', '#276eea'];
       cell('fi' + k, w - 6, 24, 1, c => { c.fillStyle = grad(c, 0, 0, 0, 24, ...col); rr(c, 0, 0, w - 6, 24, 12); c.fill(); });
     }
-    for (const [k, w] of [['fort', box.fort.w], ['nest', box.nest.w]]) cell('fr' + k, w, 30, 1, c => { c.strokeStyle = '#f8e3a4'; c.lineWidth = 3; rr(c, 1.5, 1.5, w - 3, 27, 13.5); c.stroke(); });
+    for (const [k, w] of [['fort', box.fort.w], ['nest', box.nest.w]]) cell('fr' + k, w, 30, 1, c => { c.strokeStyle = HUDP.frame; c.lineWidth = 3; rr(c, 1.5, 1.5, w - 3, 27, 13.5); c.stroke(); });
     cell('hi', 24, 6, 1, c => { c.fillStyle = '#fff'; rr(c, 0, 0, 24, 6, 3); c.fill(); });
     const pill = (k, w, h, b0, b1, edge, shA) => cell(k, w, h, 5, c => { c.fillStyle = 'rgba(6,10,30,' + shA + ')'; rr(c, 0, 3, w, h, 99); c.fill(); c.fillStyle = grad(c, 0, 0, w * .35, h, b0, b1); rr(c, .5, .5, w - 1, h - 1, 99); c.fill(); c.strokeStyle = edge; c.lineWidth = 2; rr(c, 1, 1, w - 2, h - 2, 99); c.stroke(); });
-    pill('pcrowd', 80, box.crowdH, '#1d3972', '#1c1e48', '#ffe6ae', .35); pill('ppar', 72, box.par.h, 'rgba(23,43,91,.94)', 'rgba(17,24,59,.88)', '#edc969', .3);
+    pill('pcrowd', 80, box.crowdH, ...HUDP.pc); pill('ppar', 72, box.par.h, ...HUDP.pp);
     cell('icrowd', 24, 22, 1, c => { if (icons.crowd) c.drawImage(icons.crowd, 0, 0, 24, 22); });
     cell('gbase', 82, 82, 6, c => { c.fillStyle = 'rgba(87,162,255,.2)'; c.beginPath(); c.arc(41, 41, 44, 0, 7); c.fill(); c.fillStyle = '#141b3e'; c.beginPath(); c.arc(41, 44, 41, 0, 7); c.fill(); c.globalCompositeOperation = 'destination-out'; c.beginPath(); c.arc(41, 41, 40.5, 0, 7); c.fill(); c.globalCompositeOperation = 'source-over'; c.fillStyle = 'rgba(10,18,44,.6)'; c.beginPath(); c.arc(41, 41, 39, 0, 7); c.fill(); });
     const hero = (c, im, a) => { c.globalAlpha = a; if (im) { const k = Math.min(42 / im.width, 38 / im.height); c.drawImage(im, (42 - im.width * k) / 2, (38 - im.height * k) / 2, im.width * k, im.height * k); } c.globalAlpha = 1; };
@@ -7765,7 +7797,7 @@ const GHUD = (() => {
   function text(st, t, x, cy, al = 0, tint = W1, a = 1) { if (!t) return 0; const d = ST[st], L = lay(st, t), X0 = x - (L.w - d.ls) * al, top = cy + (L.asc - L.desc) / 2 - d.px; if (d.back && !d.over) for (let i = 0; i < t.length; i++) if (t[i] !== ' ') put(glyph(st, t[i], 1), X0 + L.xs[i], top, a); for (let i = 0; i < t.length; i++) if (t[i] !== ' ') put(glyph(st, t[i], 0), X0 + L.xs[i], top, a, tint); if (d.over) for (let i = 0; i < t.length; i++) put(glyph(st, t[i], 1), X0 + L.xs[i], top, a); return L.w; }
   const cols = {}; const rgb = s => cols[s] || (cols[s] = (() => { const c = document.createElement('canvas').getContext('2d'); c.fillStyle = s || '#fff'; const m = c.fillStyle; return [1, 3, 5].map(i => parseInt(m.slice(i, i + 2), 16) / 255); })());
   const GOLD = rgb('#f7c95b'), PSTAR = rgb('#ffd23f'), PHOT = rgb('#ffd9a0');
-  function measure() { const key = VIEW.w + 'x' + VIEW.h + '@' + pixelRatio; if (box && boxAt === key) return true; const g = gameEl.getBoundingClientRect(), r = id => { const q = $(id).getBoundingClientRect(); return { x: q.left - g.left, y: q.top - g.top, w: $(id).offsetWidth, h: $(id).offsetHeight }; }; const fort = r('fortBar'); if (!fort.w) return false; const gi = $('giant'); box = { fort, nest: r('nestBar'), par: r('parPill'), giant: { x: gi.offsetLeft, y: gi.offsetTop, w: gi.offsetWidth }, crowdH: $('crowd').offsetHeight || 34 }; box.par.x = $('parPill').offsetLeft; box.par.y = $('parPill').offsetTop; boxAt = key; const sk = [box.fort.w, box.nest.w, box.par.h, box.crowdH, Math.max(2, pixelRatio)].join(); if (sk !== sheetOf) { sheetOf = sk; build(); } return true; } // (only a new width or sharpness needs a new sheet, not Chrome's toolbar sliding away)
+  function measure() { const key = VIEW.w + 'x' + VIEW.h + '@' + pixelRatio; if (box && boxAt === key) return true; const g = gameEl.getBoundingClientRect(), r = id => { const q = $(id).getBoundingClientRect(); return { x: q.left - g.left, y: q.top - g.top, w: $(id).offsetWidth, h: $(id).offsetHeight }; }; const fort = r('fortBar'); if (!fort.w) return false; const gi = $('giant'); box = { fort, nest: r('nestBar'), par: r('parPill'), giant: { x: gi.offsetLeft, y: gi.offsetTop, w: gi.offsetWidth }, crowdH: $('crowd').offsetHeight || 34 }; box.par.x = $('parPill').offsetLeft; box.par.y = $('parPill').offsetTop; boxAt = key; const sk = [box.fort.w, box.nest.w, box.par.h, box.crowdH, Math.max(2, pixelRatio), HUDP.k].join(); if (sk !== sheetOf) { sheetOf = sk; build(); } return true; } // (only a new width or sharpness needs a new sheet, not Chrome's toolbar sliding away)
   const back = t => { const s = 1.70158 + 1; return 1 + s * Math.pow(t - 1, 3) + 1.70158 * Math.pow(t - 1, 2); }; // an overshoot, like the page's own pops
   function bar(k, b, fill, f, label, ft = W1) { const w = box[b].w, x = box[b].x, y = box[b].y, f2 = clamp(f, 0, 1); put(cells['tr' + k], x, y); if (f2 > 0) { const c = cells['fi' + k], p = c.pad / (c.w + c.pad * 2); put(c, x + 3, y + 3, 1, W1, 0, p + (1 - 2 * p) * f2 + (f2 >= 1 ? p : 0)); const hw = (w - 22) * f2; if (hw > 6) stretch(cells.hi, x + 3 + 8 * f2, y + 6, hw, .38); } put(cells['fr' + b], x, y, 1, ft); text('label', label, x + 3 + 10 + (w - 16) / 2, y + 15, .5); }
   let lastT = 0;
@@ -7777,13 +7809,13 @@ const GHUD = (() => {
       const num = k => parseFloat(String(_hud[k] || 'scaleX(1)').slice(7)), wl = _hud.wlBar;
       bar(wl ? 'wl' : 'fort', 'fort', 0, num('fortFilltransform'), _hud.fortTxt || ''); if (wl && WL.phase && !CAP.alive) { const b = box.fort, w = cells.white, u = w.u + w.du / 2, v = w.v + w.dv / 2, mx = b.x + b.w / 2; quad(mx - 1.4, b.y + 4, mx + 1.4, b.y + 4, mx + 1.4, b.y + 26, mx - 1.4, b.y + 26, u, v, u, v, W1, .9); } bar('nest', 'nest', 0, num('nestFilltransform'), _hud.nestTxt || '', _hud.low ? (q => [1, q, q])(.3 + .35 * (.5 + .5 * Math.sin(now * 12.6))) : W1);
       if (G.cfg.par) { const p = box.par, t = _hud.parTxt || '', left = G.cfg.par - (G.clk || 0), a = left <= 0 ? .55 : 1, tw = lay('par', t).w, w = 2 + 8 + lay('star', '★').w + 4 + tw + 10 + 2, tip = $('parPill').classList.contains('tipping'); if (tip) { H.tipT += dt; tf(1 + .09 * (1 - Math.cos(H.tipT * 6.28)), p.x + w / 2, p.y + p.h / 2); }
-        stretch(cells.ppar, p.x, p.y, w, a); text('star', '★', p.x + 10, p.y + p.h / 2, 0, PSTAR, a); text('par', t, p.x + 14 + lay('star', '★').w, p.y + p.h / 2, 0, left > 0 && left < 8 ? PHOT : W1, a); tf(1, 0, 0); }
+        stretch(cells.ppar, p.x, p.y, w, a); text('star', '★', p.x + 10, p.y + p.h / 2, 0, PSTAR, a); text('par', t, p.x + 14 + lay('star', '★').w, p.y + p.h / 2, 0, left > 0 && left < 8 ? (HUDP.hot || PHOT) : HUDP.txt, a); tf(1, 0, 0); }
       if (!$('giant').classList.contains('last')) { const g = box.giant, p = clamp(_hud.gp || 0, 0, 100), rd = $('giant').classList.contains('ready'), cx = g.x + 41, cy = g.y + 41, hk = _hud.ch ? 'champ' : 'horse'; if (rd && !H.rdyAt) H.rdyAt = now; if (!rd) H.rdyAt = 0;
         if (rd) { const s = now - H.rdyAt; tf(1 + .05 * (1 - Math.cos(s * Math.PI / .6)), cx, cy); put(cells.gglow, cx - 70, cy - 70, .95); }
         put(cells.gbase, g.x, g.y); const N = Math.ceil(p / 100 * 48); { const w = cells.white, u = w.u + w.du / 2, v = w.v + w.dv / 2; for (let i = 0; i < N; i++) { const a0 = i / 48 * 6.28319, a1 = Math.min((i + 1) / 48, p / 100) * 6.28319, s0 = Math.sin(a0), c0 = -Math.cos(a0), s1 = Math.sin(a1), c1 = -Math.cos(a1); quad(cx + s0 * 31.5, cy + c0 * 31.5, cx + s0 * 39.5, cy + c0 * 39.5, cx + s1 * 39.5, cy + c1 * 39.5, cx + s1 * 31.5, cy + c1 * 31.5, u, v, u, v, GOLD, 1); } }
         put(cells['gtop' + hk], g.x, g.y); const f = p / 100, c = cells['g' + hk]; if (rd) { const s = Math.min(1, (now - H.rdyAt) / .35), k0 = K, b = .3 + .7 * back(s); const ox = K; tf(ox * b, cx, cy); put(c, g.x + 20, g.y + 14); tf(ox, cx, cy); } else if (f > 0) put(c, g.x + 20, g.y + 14, 1, W1, 0, 1, 1 - f, 1);
         text('pct', _hud.giantTxt || '', cx, g.y + 60.5, .5); tf(1, 0, 0); }
-      const cr = H.crowd; if (cr.on) { const t = String(_hud.crowdN == null ? '' : _hud.crowdN), L = lay('num', t), w = 2 + 6 + 24 + 4 + L.w + 12 + 2, x = cr.x - 40, y = cr.y - 46, h = box.crowdH; stretch(cells.pcrowd, x, y, w); put(cells.icrowd, x + 8, y + (h - 22) / 2); cr.pop = Math.max(0, cr.pop - dt / .35); if (cr.pop > 0) { const u = back(1 - cr.pop); tf(1.7 - .7 * u, x + 36 + L.w / 2, y + h / 2); } text('num', t, x + 36, y + h / 2, 0, cr.pop > 0 ? [1, .89 + .11 * (1 - cr.pop), .48 + .52 * (1 - cr.pop)] : W1); tf(1, 0, 0); }
+      const cr = H.crowd; if (cr.on) { const t = String(_hud.crowdN == null ? '' : _hud.crowdN), L = lay('num', t), w = 2 + 6 + 24 + 4 + L.w + 12 + 2, x = cr.x - 40, y = cr.y - 46, h = box.crowdH; stretch(cells.pcrowd, x, y, w); put(cells.icrowd, x + 8, y + (h - 22) / 2); cr.pop = Math.max(0, cr.pop - dt / .35); if (cr.pop > 0) { const u = back(1 - cr.pop); tf(1.7 - .7 * u, x + 36 + L.w / 2, y + h / 2); } text('num', t, x + 36, y + h / 2, 0, cr.pop > 0 && !HUDP.ink ? [1, .89 + .11 * (1 - cr.pop), .48 + .52 * (1 - cr.pop)] : HUDP.txt); tf(1, 0, 0); }
     }
     A = H.fl; for (const f of floats) if (f.t > 0 && f.sx !== undefined) { const el = f.el, gate = el.classList.contains('gate'), bmp = el.classList.contains('bump'); if (f.wasB !== bmp) { if (f.wasB !== undefined) f.pb = 1; f.wasB = bmp; } f.pb = Math.max(0, (f.pb || 0) - dt / .22); const k = f.sk * (gate ? 25 / 34 : 1) * (f.pb > 0 ? 1.35 - .35 * back(1 - f.pb) : 1); { const s = String(el.textContent), w = lay('float', s).w, kk = Math.min(k, (VIEW.w - 20) / w), hw = w * kk / 2 + 8, fx = clamp(f.sx, Math.min(hw, VIEW.w / 2), Math.max(VIEW.w - hw, VIEW.w / 2)); /* (a long line fits the screen) */ tf(kk, fx, f.sy); text('float', s, fx, f.sy - 2, .5, rgb(el.style.color), f.so); } } tf(1, 0, 0);
     if (!n) return; aP.updateRange.count = n * 8; aU.updateRange.count = n * 8; aC.updateRange.count = n * 16; aP.needsUpdate = aU.needsUpdate = aC.needsUpdate = true; geo.setDrawRange(0, n * 6); mat.uniforms.uSize.value.set(VIEW.w, VIEW.h);
@@ -7791,7 +7823,7 @@ const GHUD = (() => {
   };
   H.prep = () => { if (!ready) return; try { const c = gameEl.classList, o = ['overlay', 'cinema'].filter(k => c.contains(k)); c.remove(...o); measure(); c.add(...o); renderer.compile(scn, cam); } catch (e) {} };
   load.then(() => setTimeout(H.prep, 400)); // the sheet is ready before the first battle
-  H.cells = () => cells; H.sheet = cv; H.load = load;
+  H.cells = () => cells; H.sheet = cv; H.load = load; H.rebuild = () => { boxAt = ''; }; // (a new look: the sheet is drawn again)
   return H;
 })();
 /* ---- the kept backdrop (phones) ----
@@ -7964,7 +7996,7 @@ function showMenu() {
   closeMore(); openUp(false); if (G.palCardDue) { G.palCardDue = false; setTimeout(showPalUnlock, 700); } // the Paladin card held back while a battle ran
   if (G.practice) { if (G.practiceKeep) save = JSON.parse(G.practiceKeep); G.practice = false; G.practiceKeep = null; }
   $('rewDot').classList.toggle('on', rewardsReady()); // back from a boss practice: your real progress returns
-  setupLevel(save.level); G.mode = 'menu'; renderUpgrades(); menuArt(G.worldOverride != null ? G.worldOverride : worldOf(save.level)); if (crowdReady && save.level >= 4) loadPaladinArt();
+  G.menuSetup = true; setupLevel(save.level); G.menuSetup = false; G.mode = 'menu'; renderUpgrades(); menuArt(G.worldOverride != null ? G.worldOverride : worldOf(save.level)); if (crowdReady && save.level >= 4) loadPaladinArt();
   $('menu').classList.add('on'); $('result').classList.remove('on'); $('boon').classList.remove('on'); gameEl.classList.add('overlay'); gameEl.classList.remove('lostwash'); POST.mat.uniforms.uWash.value = 0;
   { const L = boonList().map(id => BOON_BY[id]).filter(Boolean); $('boonMenu').innerHTML = L.map(b => `<em style="--r:${BOON_CAT[b.c][1]}" title="${b.name}">${boonPic(b)}</em>`).join(''); }
   if (save.boonDue && save.boonDue.n === save.level - 1) showBoons(() => showMenu()); // (the game was closed before the choice was made)
@@ -8046,7 +8078,8 @@ function boom() {
 }
 function firework() {
   const c = CONFETTI[rand() * 5 | 0];
-  burst((rand() - .5) * 14, 6 + rand() * 6, -34 + rand() * 16, [c, c, '#ffffff'], 30, 8, { sph: true, life: 1.1, g: 5, sz: 1.9 });
+  if (PA.on && PAPER === 'a') burst((rand() - .5) * 14, 6 + rand() * 6, -34 + rand() * 16, [c, c, '#ffffff'], 24, 6, { sph: true, life: 2.2, g: 2.4, sz: 1.9, kind: PK.PAPER }); // paper confetti
+  else burst((rand() - .5) * 14, 6 + rand() * 6, -34 + rand() * 16, [c, c, '#ffffff'], 30, 8, { sph: true, life: 1.1, g: 5, sz: 1.9 });
   sfx('fw', 90, () => smp('firework', .40, .1));
 }
 function lose() {
@@ -8760,7 +8793,7 @@ function bnThorn(x, z) { let n = 2; for (let j = 0; j < beetles.n && n > 0; j++)
    The crown, whoever wears it, his army on the march, Rowan, your cannon, the charge, and the logo slamming down. About fifteen
    seconds the first time, seven after that, once a day. It is the real game under the director's camera, so it always matches the
    art; it runs as a practice round and showMenu() puts the real save back. */
-const cineDue = () => save.introDay !== today() && !PAPER && !new URLSearchParams(location.search).has('boss') && !/nointro|[?&]perf/.test(location.search);
+const cineDue = () => save.introDay !== today() && !PAPER_FLAG && !new URLSearchParams(location.search).has('boss') && !/nointro|[?&]perf/.test(location.search);
 const cineEase = u => u * u * (3 - 2 * u);
 let cineEye0 = null; const KING_SINK = 6.2;
 function cineEyes(on) { // the eyes blaze magenta: emissive, so the bloom catches them (a brighter base colour alone just clamps)
@@ -9091,7 +9124,8 @@ function boot() {
     }); return;
   }
   showMenu(); prewarm(); render(); requestAnimationFrame(frame); setTimeout(smpPrep, 400); const l = $('loading'); if (l) l.remove(); practiceBoss();
-  if (PAPER && !G.practice && !/[?&]boss=/.test(location.search)) { G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = 2; save.fails = 0; (PAPER === 'a' ? paPre() : Promise.resolve()).then(() => startPlay()); } // the paper test: level 2, as a practice round
+  if (PAPER_FLAG && !G.practice && !/[?&]boss=/.test(location.search)) { G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = +(location.search.match(/[?&]lv=(\d+)/) || [])[1] || 2; save.fails = 0; (PAPER === 'a' ? paPre() : Promise.resolve()).then(() => startPlay()); }
+  if (PAPER === 'a' && !PAPER_FLAG && save.level <= WORLD_LEN) { paPre(); setTimeout(() => { if (!PA.g) { paBuild(); paExtras(); } }, 1200); } // World 1 is paper: its pieces are in hand before the first battle // the paper test: level 2, as a practice round
 }
 // boss practice: Boss fights on the menu (or ?boss=1..4 in the address) drops straight into that world's warlord fight. Nothing is
 // saved: the real save comes back when you return to the menu
