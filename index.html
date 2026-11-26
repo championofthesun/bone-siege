@@ -164,6 +164,25 @@ svg.ico.sm{width:18px;height:18px}
 .rw-bar{margin-top:5px;height:8px;border-radius:999px;background:rgba(0,0,0,.4);overflow:hidden}
 .rw-bar i{display:block;height:100%;background:linear-gradient(90deg,#ffb04a,#ffe27a)}
 .rw-m.done{opacity:.55}
+.rw-c{width:14px;height:14px;vertical-align:-2px}
+.rw-m .btn:not(:disabled),#rwChestBtn:not(:disabled){animation:rwReady .9s ease-in-out infinite alternate}@keyframes rwReady{to{box-shadow:0 6px 0 #3d1a8c,0 0 16px rgba(190,140,255,.95)}}
+#chestFx{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:rgba(6,5,20,.8);pointer-events:auto;overflow:hidden}
+#chestFx[hidden]{display:none}
+#rwWallet{z-index:7} /* the wallet stays lit above the chest, so its count can be watched */
+.cf-chest{position:relative;width:170px;height:170px;border-radius:32px;overflow:hidden;border:3px solid #ffd65a;box-shadow:0 0 30px rgba(255,200,80,.55);font-size:120px;line-height:170px;text-align:center;animation:cfShake .6s ease-in-out}
+.cf-chest img{width:100%;height:100%;object-fit:cover;display:block}
+.cf-rays{position:absolute;left:50%;top:50%;width:560px;height:560px;margin:-300px 0 0 -280px;border-radius:50%;pointer-events:none;background:repeating-conic-gradient(rgba(255,214,90,.38) 0 10deg,rgba(255,214,90,0) 10deg 24deg);-webkit-mask:radial-gradient(circle,#000 22%,transparent 68%);mask:radial-gradient(circle,#000 22%,transparent 68%);opacity:0;transform:scale(.4)}
+#chestFx.open .cf-rays{opacity:1;transform:scale(1);transition:opacity .25s,transform .5s cubic-bezier(.2,1.4,.4,1);animation:cfSpin 10s linear infinite}
+#chestFx.open .cf-chest{scale:1.08;animation:cfPop .45s cubic-bezier(.2,1.6,.4,1)}
+#chestFx.open::after{content:'';position:absolute;inset:0;background:#fff;pointer-events:none;animation:cfFlash .4s ease-out forwards}
+#cfN{position:relative;font-family:var(--disp);font-weight:400;font-size:48px;color:var(--gold);text-shadow:0 4px 0 #7a4300;display:flex;align-items:center;gap:8px;opacity:0}
+#cfN svg{width:40px;height:40px}
+#chestFx.open #cfN{opacity:1;animation:pop .45s .08s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes cfShake{0%,100%{rotate:0deg}15%{rotate:-8deg}30%{rotate:8deg}45%{rotate:-7deg}60%{rotate:6deg}75%{rotate:-4deg}90%{rotate:3deg}}
+@keyframes cfPop{0%{scale:1}45%{scale:1.28}100%{scale:1.08}}
+@keyframes cfSpin{to{rotate:360deg}}
+@keyframes cfFlash{from{opacity:.8}to{opacity:0}}
+@media (prefers-reduced-motion:reduce){#chestFx *,#chestFx::after{animation:none!important}}
 .rw-swatch{width:34px;height:34px;border-radius:50%;border:2px solid #fff;flex:none}
 /* the realm map: the four worlds as a path up to the Bone King, each with its warlord's emblem, gold once he is beaten */
 #map{background:radial-gradient(ellipse at 50% 0%,#3a2a6a,#120f2a 70%);overflow-y:auto;gap:10px}
@@ -628,11 +647,12 @@ svg.ico.sm{width:18px;height:18px}
   <div class="screen" id="boon"><div class="boon-h">Choose a boon</div><div class="boon-s" id="boonSub"></div><div id="boonRow"></div><div id="boonHave"></div></div>
   <div class="screen" id="map"><div class="map-head"><div class="map-title">The Realm</div><span class="map-ng" id="mapNg"></span></div><div class="map-path" id="mapPath"></div><button class="btn green big sm" id="mapClose">Back</button></div>
   <div class="screen" id="story"><div class="story-card"><img class="story-art" id="storyArt" alt="" draggable="false"><svg class="story-emb" viewBox="0 0 48 48"><use id="storyEmb" href="#t-0"/></svg><div class="story-name" id="storyName"></div><div class="story-title" id="storyTitle"></div><p class="story-txt" id="storyTxt"></p><button class="btn green big sm" id="storyGo">Fight!</button></div></div>
-  <div class="screen" id="rewards"><div class="map-title">Rewards</div>
+  <div class="screen" id="rewards"><span class="pill wallet" id="rwWallet"><svg class="ico sm"><use href="#i-coin"/></svg><span id="rwCoinN">0</span></span><div class="map-title">Rewards</div>
     <div class="rw-sec"><div class="rw-chest" id="rwChest"><div class="rw-box" id="rwBox"></div><div><b>Daily chest</b><span id="rwChestTxt"></span></div><button class="btn violet sm" id="rwChestBtn">Open</button></div></div>
     <div class="rw-sec"><div class="rw-head">Today's missions</div><div id="rwMissions"></div></div>
     <div class="rw-sec"><div class="rw-head">The Stable</div><div class="rw-stable" id="rwStable"></div></div>
     <button class="btn green big sm" id="rwBack">Back</button>
+    <div id="chestFx" hidden><div class="cf-rays"></div><div class="cf-chest" id="cfChest"></div><b id="cfN"></b></div>
   </div>
   <div id="ad"><div class="box"><div>Ad placeholder</div><div id="adLabel" style="opacity:.7;font-size:14px;margin-top:6px"></div><div class="n" id="adN">3</div></div></div>
 </div>
@@ -7747,23 +7767,44 @@ function daily() {
 }
 function mission(id, n) { if (G.sim || G.practice) return; const d = daily(), m = d.ms.find(q => q.id === id); if (m && !m.claimed) m.prog = Math.min(m.goal, m.prog + n); }
 const missionPay = () => 40 + 6 * save.level, chestPay = () => 60 + 10 * save.level;
+const untilTomorrow = () => { const n = new Date(), m = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1), s = Math.max(60, (m - n) / 1000), h = Math.floor(s / 3600), mm = Math.floor(s % 3600 / 60); return h ? h + 'h ' + mm + 'm' : mm + 'm'; };
+const RW = { fly: 0 };
+// coins from a spot on the Rewards screen into its wallet, which counts up as each one lands
+function rwFly(r, gained, before) {
+  const sc = $('rewards'), box = sc.getBoundingClientRect(), w = $('rwCoinN').getBoundingClientRect(), n = Math.min(12, 4 + Math.round(gained / 40));
+  const fx = r.left - box.left + r.width / 2 - 14, fy = r.top - box.top + sc.scrollTop + r.height / 2 - 14, tx = w.left - box.left - 6, ty = w.top - box.top + sc.scrollTop - 4; let landed = 0; RW.fly++; $('rwCoinN').textContent = before;
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement('div'); c.className = 'flycoin'; c.innerHTML = '<svg viewBox="0 0 24 24"><use href="#i-coin"/></svg>';
+    c.style.transform = `translate(${fx + (rand() - .5) * 80}px,${fy + (rand() - .5) * 60}px) scale(1.3)`; sc.appendChild(c);
+    setTimeout(() => { c.style.transform = `translate(${tx}px,${ty}px) scale(.7)`; }, 40 + i * 55);
+    setTimeout(() => { c.remove(); landed++; const done = landed >= n; if (done) RW.fly--; $('rwCoinN').textContent = done ? save.coins : before + Math.round(gained * landed / n); const p = $('rwWallet'); p.classList.remove('bump'); void p.offsetWidth; p.classList.add('bump'); tone(1100 + landed * 40, .05, 'triangle', .08); }, 40 + i * 55 + 560);
+  }
+}
 function rewardsReady() { const d = daily(); return !d.chest || d.ms.some(m => !m.claimed && m.prog >= m.goal); }
 let rwGained = 0, rwBefore = 0;
 function renderRewards() {
-  const d = daily(); $('rwBox').innerHTML = art('r_chest', '🎁'); $('rwBox').className = 'rw-box' + (artNo.r_chest ? '' : ' pic') + (d.chest ? ' done' : ''); $('rwChestTxt').textContent = d.chest ? 'Come back tomorrow' : chestPay() + ' coins inside'; $('rwChestBtn').disabled = d.chest; $('rwChestBtn').textContent = d.chest ? 'Opened' : 'Open';
-  $('rwMissions').innerHTML = d.ms.map((m, k) => `<div class="rw-m ${m.claimed ? 'done' : ''}"><div><b>${MISSIONS[m.id].txt(m.goal)}</b><span>${m.prog} / ${m.goal} · ${missionPay()} coins</span><div class="rw-bar"><i style="width:${Math.round(100 * m.prog / m.goal)}%"></i></div></div><button class="btn violet sm" data-m="${k}" ${m.claimed || m.prog < m.goal ? 'disabled' : ''}>${m.claimed ? 'Done' : 'Claim'}</button></div>`).join('');
+  const d = daily(); $('rwBox').innerHTML = art('r_chest', '🎁'); $('rwBox').className = 'rw-box' + (artNo.r_chest ? '' : ' pic') + (d.chest ? ' done' : ''); $('rwChestTxt').textContent = d.chest ? 'New chest in ' + untilTomorrow() : chestPay() + ' coins inside'; if (!RW.fly) $('rwCoinN').textContent = save.coins; $('rwChestBtn').disabled = d.chest; $('rwChestBtn').textContent = d.chest ? 'Opened' : 'Open';
+  $('rwMissions').innerHTML = d.ms.map((m, k) => `<div class="rw-m ${m.claimed ? 'done' : ''}"><div><b>${MISSIONS[m.id].txt(m.goal)}</b><span>${m.prog} / ${m.goal} · <svg class="rw-c"><use href="#i-coin"/></svg> ${missionPay()}</span><div class="rw-bar"><i style="width:${Math.round(100 * m.prog / m.goal)}%"></i></div></div><button class="btn violet sm" data-m="${k}" ${m.claimed || m.prog < m.goal ? 'disabled' : ''}>${m.claimed ? 'Done' : 'Claim'}</button></div>`).join('');
   const own = save.skins || ['snow'], cur = save.skin || 'snow';
   $('rwStable').innerHTML = !palReady() ? '<div class="rw-skin"><div class="rw-swatch" style="background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" style="width:22px;height:22px"><use href="#i-lock"/></svg></div><div><b>The Paladin</b><span>Beat Level ' + CAP_AT + ' to unlock him and his stable</span></div></div>' : SKINS.map(s => `<div class="rw-skin"><div class="rw-pic" style="box-shadow:0 0 10px ${s.spirit};background:radial-gradient(circle at 35% 30%,${s.coat},${s.dark})">${art('h_' + s.id, '')}</div><div><b>${s.name}</b><span>${own.includes(s.id) ? (cur === s.id ? 'Riding now' : 'In your stable') : s.cost + ' coins'}</span></div><button class="btn ${own.includes(s.id) ? 'green' : 'violet'} sm" data-s="${s.id}" ${cur === s.id || (!own.includes(s.id) && save.coins < s.cost) ? 'disabled' : ''}>${cur === s.id ? 'Riding' : own.includes(s.id) ? 'Ride' : 'Buy'}</button></div>`).join('');
   $('rewDot').classList.toggle('on', rewardsReady());
 }
-function payOut(n) { save.coins += n; rwGained += n; persist(); smp('reward', .23, .02); }
-$('rwChestBtn').onclick = () => { const d = daily(); if (d.chest) return; d.chest = true; payOut(chestPay()); renderRewards(); };
-$('rwMissions').onclick = e => { const b = e.target.closest('[data-m]'); if (!b) return; const m = daily().ms[+b.dataset.m]; if (m.claimed || m.prog < m.goal) return; m.claimed = true; payOut(missionPay()); renderRewards(); };
+function payOut(n, quiet) { save.coins += n; rwGained += n; persist(); if (!quiet) smp('reward', .23, .02); }
+$('rwChestBtn').onclick = () => { // the chest opens on screen: it shakes, bursts open and its coins fly into the wallet
+  const d = daily(); if (d.chest) return; d.chest = true; const pay = chestPay(), before = save.coins, fx = $('chestFx'), ch = $('cfChest'); audio();
+  ch.innerHTML = $('rwBox').innerHTML; $('cfN').innerHTML = '+' + pay + ' ' + COIN; fx.className = ''; fx.hidden = false; payOut(pay, true); RW.fly++; renderRewards(); $('rwCoinN').textContent = before;
+  smp('chest', .21, 0, .26); buzz(15);
+  const close = () => { fx.hidden = true; fx.className = ''; };
+  setTimeout(() => { RW.fly--; fx.classList.add('open'); smp('reward', .23, .02); buzz(30); rwFly(ch.getBoundingClientRect(), pay, before); }, 620);
+  fx.onclick = () => { if (fx.classList.contains('open')) close(); }; setTimeout(close, 2700);
+};
+setInterval(() => { if (!$('rewards').classList.contains('on')) return; if (save.daily && save.daily.day !== today()) renderRewards(); else if (daily().chest) $('rwChestTxt').textContent = 'New chest in ' + untilTomorrow(); }, 20000); // (the opened chest counts down; a new day brings a new chest)
+$('rwMissions').onclick = e => { const b = e.target.closest('[data-m]'); if (!b) return; const m = daily().ms[+b.dataset.m]; if (m.claimed || m.prog < m.goal) return; m.claimed = true; const r = b.getBoundingClientRect(), before = save.coins, pay = missionPay(); payOut(pay); renderRewards(); rwFly(r, pay, before); };
 $('rwStable').onclick = e => { const b = e.target.closest('[data-s]'); if (!b) return; const s = SKINS.find(q => q.id === b.dataset.s); save.skins = save.skins || ['snow'];
   if (!save.skins.includes(s.id)) { if (save.coins < s.cost) return; save.coins -= s.cost; save.skins.push(s.id); }
   save.skin = s.id; persist(); applySkin(); renderRewards(); };
 $('rewardsBtn').onclick = () => { rwGained = 0; rwBefore = save.coins; renderRewards(); $('menu').classList.remove('on'); $('rewards').classList.add('on'); };
-$('rwBack').onclick = () => { $('rewards').classList.remove('on'); showMenu(); if (rwGained) coinFly(rwBefore, rwGained); };
+$('rwBack').onclick = () => { $('rewards').classList.remove('on'); $('chestFx').hidden = true; showMenu(); };
 // the Paladin's coat: recolours his warhorse (coat, legs and the spirit-flame mane)
 function applySkin() { if (!horse || !horse.mats) return; const s = SKINS.find(q => q.id === (save.skin || 'snow')) || SKINS[0]; horse.mats.coat.color.copy(C(s.coat)); if (palArt) horse.mats.coat.color.multiplyScalar(s.id === 'gold' ? .62 : .86); /* (the sculpted coat takes the light more brightly than the old one) */ horse.mats.coatD.color.copy(C(s.dark)); horse.mats.spirit.color.copy(C(s.spirit)); }
 function lockSpoilers() { const tro = save.trophies || {}, seen = w => tro[w] || save.level > w * WORLD_LEN + WORLD_LEN; let any = false; document.querySelectorAll('#bossRow [data-w]').forEach(b => { b.hidden = !seen(+b.dataset.w - 1); any = any || !b.hidden; }); $('bossBtn').hidden = !any; if (!any) $('bossRow').hidden = true; $('finaleBtn').hidden = !(tro[4] || save.level > LAP_LEN); }
@@ -8510,7 +8551,7 @@ function prewarm() {
    A painted video (models/film/intro.mp4) for your first launch, and for Watch intro. It is fetched whole while the game loads, so it never
    stops to buffer; if it isn't here in time, or the phone won't play it, the 3D opening plays instead. The picture ends at 20 s and the last
    of its music rings on over the menu. */
-const FILM = { on: false, url: null, busy: null, bad: false, v: null, t0: 0, len: 20, caps: [[.9, 3.6, 'The crown commands the dead.'], [12.7, 15.6, 'Take it, and end the war.']] };
+const FILM = { on: false, url: null, busy: null, bad: false, v: null, t0: 0, len: 20, caps: [] };
 function filmWarm() {
   if (FILM.busy || FILM.bad) return FILM.busy || Promise.resolve(false);
   return FILM.busy = fetch('models/film/intro.mp4').then(r => { if (!r.ok) throw 0; return r.blob(); }).then(b => {
