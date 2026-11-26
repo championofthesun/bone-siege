@@ -195,15 +195,28 @@ svg.ico.sm{width:18px;height:18px}
 @media (prefers-reduced-motion:reduce){#chestFx *,#chestFx::after{animation:none!important}}
 .rw-swatch{width:34px;height:34px;border-radius:50%;border:2px solid #fff;flex:none}
 /* the realm map: the four worlds as a path up to the Bone King, each with its warlord's emblem, gold once he is beaten */
-#map{background:radial-gradient(ellipse at 50% 0%,#3a2a6a,#120f2a 70%);overflow-y:auto;gap:10px}
-#map .map-head{margin-top:auto} #map .map-path{margin-bottom:auto} /* the title and the world list are centred together, and Back stays at the bottom like PLAY (on tall screens it all bunched at the top; centring the list alone left the title stranded) */
+#map{background:#16102e;overflow:hidden;gap:10px;isolation:isolate}
+.map-stage{position:absolute;inset:0;container-type:size;overflow:hidden;z-index:-1}
+#map .map-head{position:relative} /* the title and the world list are centred together, and Back stays at the bottom like PLAY (on tall screens it all bunched at the top; centring the list alone left the title stranded) */
 #rewards>.map-title{margin-top:auto} #rewards>.rw-sec:last-of-type{margin-bottom:auto} /* the same on Rewards */
 #map #mapClose{flex:none}
 .map-head{display:flex;flex-direction:column;align-items:center;margin-top:4px}
+.map-art{position:absolute;left:50%;top:53%;width:max(100cqw,56.25cqh);aspect-ratio:9/16;translate:-50% -50%}
+.map-art img{position:absolute;inset:0;width:100%;height:100%;display:block}
+#map::before,#map::after{content:'';position:absolute;left:0;right:0;z-index:-1;pointer-events:none}
+#map::before{top:0;height:16%;background:linear-gradient(rgba(14,8,34,.75),rgba(14,8,34,0))}
+#map::after{bottom:0;height:20%;background:linear-gradient(rgba(10,8,28,0),rgba(10,8,28,.8))}
+.map-pins{position:absolute;inset:0}
+.mpin{position:absolute;translate:-50% 0;display:flex;align-items:center;gap:6px;white-space:nowrap;padding:5px 12px 5px 8px;border-radius:999px;background:linear-gradient(180deg,rgba(32,22,74,.92),rgba(16,11,40,.92));border:2px solid var(--wc);box-shadow:0 3px 0 rgba(0,0,0,.35),0 0 12px color-mix(in srgb,var(--wc) 45%,transparent);font-family:var(--disp);font-size:15px;color:#fff;letter-spacing:.3px}
+.mpin i{font-style:normal;font-family:Fredoka,system-ui,sans-serif;font-weight:700;font-size:12px;color:#ffe9a8;display:flex;align-items:center;gap:3px}
+.mpin svg{width:16px;height:16px}
+.mpin.locked{filter:saturate(.35) brightness(.8);opacity:.85}
+.mpin.here{border-color:#ffd65a;box-shadow:0 3px 0 rgba(0,0,0,.35),0 0 18px rgba(255,214,90,.8)}
+.mhere{position:absolute;translate:-50% -100%;width:34px;height:42px;filter:drop-shadow(0 3px 3px rgba(0,0,0,.5));animation:mBob .9s ease-in-out infinite alternate;pointer-events:none}
+@keyframes mBob{to{translate:-50% calc(-100% - 8px)}}
+@media (prefers-reduced-motion:reduce){.mhere{animation:none}}
 .map-title{font-family:var(--disp);font-size:40px;color:var(--gold);text-shadow:0 4px 0 #7a4300}
 .map-ng{font-size:13px;font-weight:700;color:#e9d4ff;min-height:16px}
-.map-path{display:flex;flex-direction:column;gap:10px;width:min(360px,92vw);position:relative;padding:4px 0 8px}
-.map-path::before{content:'';position:absolute;left:38px;top:20px;bottom:20px;border-left:4px dashed rgba(255,214,90,.35)}
 .mcard{position:relative;display:flex;align-items:center;gap:12px;padding:10px 14px 10px 10px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.04));border:2px solid var(--wc,#888);box-shadow:0 4px 0 rgba(0,0,0,.35)}
 .mcard .emb{flex:none;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:#241a44;border:2.5px solid var(--wc);background:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--wc) 42%,#1a1238),#140e2c 78%);border:2.5px solid color-mix(in srgb,var(--wc) 70%,#fff);box-shadow:inset 0 2px 0 rgba(255,255,255,.18)}
 .mcard .emb svg{width:38px;height:38px;filter:drop-shadow(0 2px 0 rgba(0,0,0,.35))}
@@ -656,7 +669,7 @@ svg.ico.sm{width:18px;height:18px}
 
 <div class="screen" id="pause"><div class="pause-card"><div class="res-title" style="color:var(--gold)">PAUSED</div><div class="res-sub" id="pauseSub"></div><div id="pauseBoons"></div><div class="stack"><button class="btn green big sm" id="resumeBtn">Resume</button><button class="btn violet big sm" id="restartBtn">Restart level</button><button class="link" id="quitBtn">Quit to menu</button></div></div></div>
   <div class="screen" id="boon"><div class="boon-h">Choose a boon</div><div class="boon-s" id="boonSub"></div><div id="boonRow"></div><div id="boonHave"></div></div>
-  <div class="screen" id="map"><div class="map-head"><div class="map-title">The Realm</div><span class="map-ng" id="mapNg"></span></div><div class="map-path" id="mapPath"></div><button class="btn green big sm" id="mapClose">Back</button></div>
+  <div class="screen" id="map"><div class="map-stage"><div class="map-art"><img src="models/menu/map.webp" alt="" draggable="false"><div class="map-pins" id="mapPath"></div></div></div><div class="map-head"><div class="map-title">The Realm</div><span class="map-ng" id="mapNg"></span></div><div class="spacer"></div><button class="btn green big sm" id="mapClose">Back</button></div>
   <div class="screen" id="story"><div class="story-card"><img class="story-art" id="storyArt" alt="" draggable="false"><svg class="story-emb" viewBox="0 0 48 48"><use id="storyEmb" href="#t-0"/></svg><div class="story-name" id="storyName"></div><div class="story-title" id="storyTitle"></div><p class="story-txt" id="storyTxt"></p><button class="btn green big sm" id="storyGo">Fight!</button></div></div>
   <div class="screen" id="rewards"><span class="pill wallet" id="rwWallet"><svg class="ico sm"><use href="#i-coin"/></svg><span id="rwCoinN">0</span></span><div class="map-title">Rewards</div>
     <div class="rw-sec"><div class="rw-chest" id="rwChest"><div class="rw-box" id="rwBox"></div><div><b>Daily chest</b><span id="rwChestTxt"></span></div><button class="btn violet sm" id="rwChestBtn">Open</button></div></div>
@@ -7754,19 +7767,19 @@ const STORY_ROAD = [ // on the Endless Road they serve Rowan
   'He made the crown. He serves whoever wears it.',
   'He had a throne once. Now he guards a bridge.',
 ];
+const MAP_AT = [[.47, .80], [.42, .54], [.54, .38], [.48, .205], [.73, .07]], MAP_PIN = [[.7, .79], [.45, .585], [.52, .425], [.5, .25], [.64, .115]]; // gates, and the plaque under each
 function renderMap() {
   const lap = Math.floor((save.level - 1) / (WORLD_LEN * WORLDS.length)), inLap = lap > 0 ? 999 : (save.level - 1) % (WORLD_LEN * WORLDS.length) + 1, tro = { ...(save.trophies || {}) };
   for (let w = 0; w < 5; w++) if (lap > 0 || inLap > (w + 1) * WORLD_LEN) tro[w] = 1; // progress made before trophies existed still counts
-  const rows = [];
-  const ICO = { star: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>', lock: '<svg viewBox="0 0 24 24" style="opacity:.75"><use href="#i-lock"/></svg>', crown: '<svg viewBox="0 0 40 24" style="width:30px"><use href="#i-crown"/></svg>' }; // drawn, not emoji, so every phone shows the same thing
-  const card = (cls, wc, emb, name, sub, tag) => `<div class="mcard ${cls}" style="--wc:${wc}"><div class="emb e${emb}"><svg viewBox="0 0 48 ${emb === 4 ? 52 : 48}"><use href="#t-${emb}"/></svg></div><div><b>${name}</b><span>${sub}</span></div><i>${tag}</i></div>`;
-  if (lap > 0) rows.push(`<div class="mcard here" style="--wc:#d070ff"><div class="emb e4"><svg viewBox="0 0 48 52"><use href="#t-5"/></svg></div><div><b>The Endless Road</b><span>${WORLDS[worldOf(save.level)].name} · Rowan</span></div><i>${roadN(save.level)}</i></div>`);
-  for (let w = WORLDS.length - 1; w >= 0; w--) {
-    const a = w * WORLD_LEN + 1, b = a + WORLD_LEN - 1, cls = (tro[w] ? 'won' : '') + (inLap >= a && inLap <= b ? ' here' : inLap < a && !tro[w] ? ' locked' : '');
-    const wn = ['Grimbald', 'Sek-Ra', 'Hrimgar', 'Magmaw', 'The Bone King'][w];
-    rows.push(card(cls, WORLD_COL[w], w, WORLDS[w].name, 'Levels ' + a + '–' + b + ' · ' + wn, tro[w] ? ICO.star : inLap >= a && inLap <= b ? (inLap - a + 1) + '/' + WORLD_LEN : ICO.lock));
+  const star = '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>', lock = '<svg viewBox="0 0 24 24" style="opacity:.8"><use href="#i-lock"/></svg>', out = [];
+  const hereW = lap > 0 ? worldOf(save.level) : Math.min(4, Math.floor((inLap - 1) / WORLD_LEN));
+  for (let w = 0; w < WORLDS.length; w++) {
+    const a = w * WORLD_LEN + 1, b = a + WORLD_LEN - 1, here = lap > 0 ? w === hereW : inLap >= a && inLap <= b, locked = !here && !tro[w] && inLap < a;
+    const tag = tro[w] && !here ? star : here ? (lap > 0 ? roadN(save.level) : (inLap - a + 1) + '/' + WORLD_LEN) : lock;
+    out.push(`<div class="mpin${here ? ' here' : ''}${locked ? ' locked' : ''}" style="--wc:${WORLD_COL[w]};left:${MAP_PIN[w][0] * 100}%;top:${MAP_PIN[w][1] * 100}%">${WORLDS[w].name}<i>${tag}</i></div>`);
   }
-  $('mapPath').innerHTML = rows.join(''); $('mapNg').textContent = '';
+  const h = MAP_AT[hereW]; out.push(`<svg class="mhere" viewBox="0 0 34 42" style="left:${h[0] * 100}%;top:${(h[1] - .03) * 100}%"><path d="M17 41 4 22a15 15 0 1 1 26 0z" fill="#ffd65a" stroke="#7a4300" stroke-width="2.5"/><circle cx="17" cy="15" r="7" fill="#2f6ee0" stroke="#fff" stroke-width="2.5"/></svg>`);
+  $('mapPath').innerHTML = out.join(''); $('mapNg').textContent = lap > 0 ? 'The Endless Road · ' + roadN(save.level) : 'World ' + (hereW + 1) + ' of 5 · ' + WORLDS[hereW].name;
 }
 $('mapBtn').onclick = () => { renderMap(); $('menu').classList.remove('on'); $('map').classList.add('on'); };
 $('mapClose').onclick = () => { $('map').classList.remove('on'); $('menu').classList.add('on'); };
