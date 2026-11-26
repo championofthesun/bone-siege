@@ -314,7 +314,7 @@ svg.ico.sm{width:18px;height:18px}
 #cine .cine-skip{position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom) + 2.4%);z-index:3;font-family:var(--disp);font-size:14px;letter-spacing:.5px;color:rgba(255,255,255,.6)}
 #fortBar.two::after{content:'';position:absolute;left:50%;top:3px;bottom:3px;width:3px;margin-left:-1.5px;border-radius:2px;background:#fff;opacity:.9;z-index:2}
 #shk{position:absolute;left:0;right:0;bottom:25.5%;display:none;flex-direction:column;align-items:center;gap:6px;z-index:4;font-family:var(--disp);font-size:23px;color:#fff;text-shadow:0 2px 0 #0a3a6a,0 0 12px #0a3a6a;pointer-events:none}#shk.on{display:flex}#shk svg{width:74px;height:30px;filter:drop-shadow(0 2px 0 #0a3a6a);animation:shkW .5s ease-in-out infinite alternate}#shk span{width:156px;height:16px;border-radius:10px;background:#0e2a5c;box-shadow:0 0 0 3px #fff;overflow:hidden}#shk b{display:block;height:100%;background:#8fe6ff;transform:scaleX(0);transform-origin:0 50%}@keyframes shkW{from{transform:translateX(-9px)}to{transform:translateX(9px)}}
-#boon{gap:12px;background:linear-gradient(180deg,rgba(14,12,40,.8),rgba(14,12,40,.92));justify-content:center}
+#boon{gap:12px;background:linear-gradient(180deg,rgba(14,12,40,.9),rgba(14,12,40,.96));justify-content:center;z-index:8}
 .boon-h{font-family:var(--disp);font-size:36px;line-height:1;color:var(--gold);text-shadow:0 3px 0 #5a2a08}.boon-s{font-weight:600;font-size:17px;color:#e8e2ff;margin:-4px 0 6px;text-align:center}
 #boonRow{display:flex;flex-direction:column;gap:17px;width:100%;max-width:440px}
 .boon{position:relative;width:100%;border:0;padding:0;border-radius:20px;background:linear-gradient(180deg,#2d3f8a,#1c2763);box-shadow:0 0 0 3px var(--r),0 5px 0 3px var(--rd),0 14px 26px rgba(0,0,0,.45);color:#fff;text-align:left;display:flex;overflow:hidden;font-family:inherit;cursor:pointer;animation:boonIn .42s cubic-bezier(.2,1.2,.4,1) both;transition:transform .25s,opacity .3s}
@@ -7598,7 +7598,9 @@ function collect(mult) {
   if (G.mode === 'resultWin') { save.level++; save.wins = (save.wins || 0) + 1; save.fails = 0; }
   const unlock = !hadPal && palReady() && !G.practice; // the first captain has fallen: the Paladin joins you
   persist();
-  const after = () => { showMenu(); coinFly(before, gained); if (unlock) setTimeout(() => { if (G.mode === 'menu') showPalUnlock(); else G.palCardDue = true; }, 700); }; // (never over a battle the player already started)
+  const retry = G.mode === 'resultLose' && mult === 1;
+  const after = () => { showMenu(); coinFly(before, gained); if (retry) setTimeout(() => { if (G.mode === 'menu' && $('upSheet').hidden && $('menu').classList.contains('on')) openUp(true); }, 1300); // Upgrade & retry: the sheet opens as the last coin lands
+    if (unlock) setTimeout(() => { if (G.mode === 'menu') showPalUnlock(); else G.palCardDue = true; }, 700); }; // (never over a battle the player already started)
   const interstitial = G.mode === 'resultWin' && save.level > 3 && save.wins % 2 === 0 && mult === 1, due = G.mode === 'resultWin' && boonDue(save.level - 1), go = () => { if (interstitial) showAd('Interstitial · plays between levels', 2, after); else after(); };
   if (due) { persist(); showBoons(go); } else go();
 }
