@@ -4844,7 +4844,7 @@ for (let i = 0; i < PCAP; i++) P.col.push(new THREE.Color());
 // o.kind picks the look; without it, slow floaty bursts are sparks and everything else is goo droplets
 function burst(x, y, z, color, n, speed = 4, o) {
   if (PA.on && color === FOE_FX) color = '#f3f3f1';
-  if (PA.on && o && o.kind === PK.ROCK) color = PAPER === 'b' ? ['#e9dcbc', '#d8453a', '#cdb994', '#ffffff'] : ['#ffffff', '#fdfaf2', '#f3ecdc']; // in the storybook the rubble is scraps of paper
+  if (PA.on && o && o.kind === PK.ROCK) color = PAPER === 'b' ? ['#e9dcbc', '#d8453a', '#cdb994', '#ffffff'] : ['#ffffff', '#fdfaf2', '#f3ecdc']; if (PA.on && PAPER === 'a' && o && o.kind === PK.ROCK) o = Object.assign({}, o, { kind: PK.PAPER, sz: (o.sz || 2) * .8 }); /* flat scraps, not stones */ // in the storybook the rubble is scraps of paper
   if (G.lowQ && n > 1) n = Math.ceil(n * .5);
   const kind = o && o.kind != null ? o.kind : o && o.g < 10 ? PK.SPARK : PK.ROCK; // hits throw bouncing chips (bone, armour) rather than goo
   if (P.n > 650) n = Math.min(n, 1);
@@ -5582,7 +5582,7 @@ function paGate(grp, g) { // the gate as a painted signpost standing on the page
 }
 function paReset() { // each round: gates lettered on signs, the castle and camp wall stood back up, the horde's bones left their own colour
   for (const g of G.gates) (PAPER === 'b' ? pbGate : paGate)(g.mesh, g); if (PAPER === 'a' && !PA.img.gold) paPre().then(() => { if (PA.on) for (const g of G.gates) paGate(g.mesh, g); }); /* the signs letter themselves as soon as their pictures are in */ PA.shredded = false; PA.cpShred = false; PS.done = false; if (PAPER === 'a' && isBoss(G.level)) { ['shred', 'turn', 'pop', 'st1'].forEach(psLoad); psFont(); ['story_bg', 'st1_back', 'st1_sekra', 'st1_front'].forEach(paTex); } if (PA.shreds) { for (const q of PA.shreds) PA.g.remove(q.s); PA.shreds = null; } for (const p of PB.castle) p.rotation.set(0, 0, 0); for (const c of PB.camp) c.rotation.set(0, 0, 0); FOE_TINT.setRGB(1, 1, 1);
-  if (PA.castle) PA.castle.rotation.x = -.22; if (PA.castle2) PA.castle2.rotation.x = -.22; for (const c of PA.camp || []) c.rotation.x = -.32; PA.rec = 0; PA.fired = G.fired;
+  if (PA.castle) PA.castle.rotation.x = -.22; if (PA.castle2) PA.castle2.rotation.x = -.22; PA.torn = false; for (const c of [PA.castle, PA.castle2]) if (c) { c.visible = true; if (c.userData.sh) c.userData.sh.visible = true; } for (const c of PA.camp || []) c.rotation.x = -.32; PA.rec = 0; PA.fired = G.fired;
 }
 const _paV = new THREE.Vector3();
 function paTick(dt) { // the paper pieces that move
@@ -5609,8 +5609,9 @@ function paTick(dt) { // the paper pieces that move
   if (PAPER === 'b') { const won = G.boomed && (G.mode === 'won' || G.mode === 'resultWin'), ft = won ? G.winT - BOOM_AT : -1; // the castle's pieces fold flat one after another; a loss tips the camp wall over
     PB.castle.forEach((p, i) => { const k = ft > 0 ? Math.min(1, Math.max(0, (ft - i * .14) / .8)) : 0, e = k * k; p.rotation.x = p.userData.fold[0] * e * (Math.PI / 2 - .04); p.rotation.z = -p.userData.fold[1] * e * .55; });
     const lt = G.mode === 'lost' || G.mode === 'resultLose' ? (PA.lostT = (PA.lostT || 0) + dt) : (PA.lostT = 0), k = Math.min(1, lt / .9); for (const c of PB.camp) c.rotation.x = k * k * (Math.PI / 2); }
-  if (PA.castle) { const won = G.boomed && (G.mode === 'won' || G.mode === 'resultWin'), ft = won ? G.winT - BOOM_AT : -1, k = ft > 0 ? Math.min(1, ft / 1.1) : 0;
-    PA.castle.rotation.x = -.22 - k * k * (Math.PI / 2 - .22) + (ft > 1.1 ? Math.sin((ft - 1.1) * 16) * Math.exp(-(ft - 1.1) * 6) * .06 : 0); if (PA.castle2) { const k2 = ft > 0 ? Math.min(1, ft / .45) : 0; PA.castle2.rotation.x = -.22 - k2 * k2 * (Math.PI / 2 - .1); } /* the roofs topple first */ }
+  if (PA.castle) { const won = G.boomed && (G.mode === 'won' || G.mode === 'resultWin'), ft = won ? G.winT - BOOM_AT : -1, sh = ft > 0 && ft < .3 ? Math.sin(ft * 70) * .03 : 0;
+    PA.castle.rotation.x = -.22 + sh; if (PA.castle2) PA.castle2.rotation.x = -.22 + sh; // it shudders as the blast hits...
+    if (ft > .3 && !PA.torn) { PA.torn = true; paTear(PA.castle, 13, 5); if (PA.castle2) paTear(PA.castle2, 13, 4); } } // ...then tears into scraps of paper on the wind
   if (PA.camp) { const lt = G.mode === 'lost' || G.mode === 'resultLose' ? (PA.lostT = (PA.lostT || 0) + dt) : (PA.lostT = 0), k = Math.min(1, lt / .9); for (const c of PA.camp) c.rotation.x = -.32 + k * k * (Math.PI / 2 + .3); } // tipped over toward the reader
 }
 function paTex(n) { if (PA.tex[n]) return PA.tex[n]; const t = PA.tex[n] = new THREE.TextureLoader().load('models/paper/' + (PAPER || 'a') + '/' + n + '.webp'); t.encoding = THREE.sRGBEncoding; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); return t; }
@@ -5619,7 +5620,7 @@ function paCard(n, h, x, z, o = {}) { // a cut-out h tall standing on the page a
   if (o.u || o.v) { const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, u[0] + uv.getX(i) * (u[1] - u[0]), v[0] + uv.getY(i) * (v[1] - v[0])); } // just part of the picture
   const c = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: paTex(n), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }));
   c.position.set(x, o.y || 0, z); c.rotation.set(-(o.lean === undefined ? .3 : o.lean), o.ry || 0, 0); /* leaning back, like a pop-up page facing the reader's raised eye */ if (o.flip) c.scale.x = -1; PA.g.add(c);
-  if (!o.bare) { const s = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.05, Math.max(1.2, h * .32)), PA.sh); s.rotation.x = -Math.PI / 2; s.position.set(x, (o.y || 0) + .02, z - h * .1); s.renderOrder = 1; PA.g.add(s); } // its soft shadow on the paper
+  if (!o.bare) { const s = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.05, Math.max(1.2, h * .32)), PA.sh); s.rotation.x = -Math.PI / 2; s.position.set(x, (o.y || 0) + .02, z - h * .1); s.renderOrder = 1; PA.g.add(s); c.userData.sh = s; } // its soft shadow on the paper
   return c;
 }
 function paBuild() {
@@ -5858,6 +5859,19 @@ function paShred(gb, pose = 'daze') { // he tears into strips of paper that the 
   }
   gb.g.visible = false; psLoad('shred').then(() => psSnd('shred', .75)); tone(330, .3, 'triangle', .05, .4);
   burst(p0.x, p0.y + h * .5, p0.z, ['#fffaf0', '#f3e7cc', '#e8d9b8'], 34, 4, { vy: 4, life: 2, g: -1, sz: 1.6, kind: PK.PAPER });
+}
+function paTear(m, N, R) { // a card rips into strips of paper that the wind carries off, back and up
+  m.updateMatrixWorld(true); const M = m.matrixWorld, g = m.geometry, w = g.parameters.width, h = g.parameters.height, uv = g.attributes.uv; let u0 = 1, u1 = 0, v0 = 1, v1 = 0;
+  for (let i = 0; i < uv.count; i++) { u0 = Math.min(u0, uv.getX(i)); u1 = Math.max(u1, uv.getX(i)); v0 = Math.min(v0, uv.getY(i)); v1 = Math.max(v1, uv.getY(i)); }
+  const q0 = new THREE.Quaternion(), s0 = new THREE.Vector3(), p0 = new THREE.Vector3(); M.decompose(p0, q0, s0); PA.shreds = PA.shreds || [];
+  for (let i = 0; i < N; i++) for (let j = 0; j < R; j++) {
+    const sw = w / N, sh = h / R, g2 = new THREE.PlaneGeometry(sw, sh), a = g2.attributes.uv; for (let k = 0; k < a.count; k++) a.setXY(k, u0 + (i + a.getX(k)) / N * (u1 - u0), v0 + (j + a.getY(k)) / R * (v1 - v0));
+    const mat = m.material.clone(); Object.assign(mat, { transparent: true, alphaTest: .02, depthWrite: false });
+    const s = new THREE.Mesh(g2, mat); s.position.set(-w / 2 + sw * (i + .5), sh * (j + .5), 0).applyMatrix4(M); s.quaternion.copy(q0); s.scale.copy(s0); s.renderOrder = 3; PA.g.add(s);
+    const cx = (i + .5) / N - .5, cy = (j + .5) / R;
+    PA.shreds.push({ s, d: Math.random() * .25 + (1 - cy) * .12, v: new THREE.Vector3(cx * 7 + (Math.random() - .5) * 3, 2 + cy * 3 + Math.random() * 2.5, -1.5 - Math.random() * 2.5), r: new THREE.Vector3((Math.random() - .5) * 7, (Math.random() - .5) * 9, (Math.random() - .5) * 6), t: 0 });
+  }
+  m.visible = false; if (m.userData.sh) m.userData.sh.visible = false; psLoad('shred').then(() => psSnd('shred', .6));
 }
 function paShredTick(dt) {
   if (!PA.shreds) return; let alive = 0;
@@ -8083,7 +8097,7 @@ function firework() {
   const c = CONFETTI[rand() * 5 | 0];
   if (PA.on && PAPER === 'a') burst((rand() - .5) * 14, 6 + rand() * 6, -34 + rand() * 16, [c, c, '#ffffff'], 24, 6, { sph: true, life: 2.2, g: 2.4, sz: 1.9, kind: PK.PAPER }); // paper confetti
   else burst((rand() - .5) * 14, 6 + rand() * 6, -34 + rand() * 16, [c, c, '#ffffff'], 30, 8, { sph: true, life: 1.1, g: 5, sz: 1.9 });
-  sfx('fw', 90, () => smp('firework', .40, .1));
+  if (!(PA.on && PAPER === 'a')) sfx('fw', 90, () => smp('firework', .40, .1)); // (paper confetti makes no pop)
 }
 function lose() {
   clearToasts(); G.smashed = WL.state === 'smash' && WL.alive; G.mode = 'lost'; G.endT = 1.3; G.firing = false; G.shake = 0.6; buzz(80);
