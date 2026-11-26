@@ -2554,11 +2554,36 @@ function cursedCrystals(spots) { // purple crystals breaking through the ground 
     if (i % 2 === 0) halo('#b04bff', 1.65, 0, 1, 0, g, .3);
   });
 }
+// each warlord's own gate (blender/bd_fortw): the Citadel's front is the Bone King's; in the four worlds before it his warlord's
+// gate stands in its place on the same footprint, so the palace front no longer follows you down the road. Until a world's
+// gate is in, the old front stands (tinted, as before).
+const FORT_TH = ['meadow', 'dunes', 'frost', 'ember'], FORT_FIRE = ['#ffb24a', '#ffc84a', '#8ff0ff', '#ff7a1a'];
+const gateName = () => { const d = WARLORDS[HOLD.i]; if (!d || HOLD.i === ROWAN || !FORT_TH[worldIdx] || !BART['fort_' + FORT_TH[worldIdx]]) return 'Bone Castle · '; const n = d.name.charAt(0) + d.name.slice(1).toLowerCase(); return n + '’s Gate · '; };
+function fortTheme(i) {
+  const A = BART.fort, k = FORT_TH[i], T = k && BART['fort_' + k], on = !!(T && A && A.glowM); if (!A || !A.glowM) return false;
+  const under = o => { for (let p = o; p; p = p.parent) if (p === fortDress) return true; return false; };
+  fort.traverse(o => { if (under(o)) return; if (o.isMesh && !roofs.includes(o) && (o.material === A.mat || o.material === A.stone || o.material === A.glowM)) o.visible = !on; else if (o.isSprite && o.material.color.getHexString() === 'e070ff') o.visible = !on; });
+  for (const r of roofs) { r.geometry = (on ? T : A).geo.roof; r.material = on ? T.mat : A.mat; }
+  for (const [fl, fh] of castleFlames) { fl.material.color.copy(C(on ? FORT_FIRE[i] : '#e88cff')); fh.material.color.copy(C(on ? FORT_FIRE[i] : '#d060ff')); }
+  if (!on) return false;
+  const glow = T.glowM || (T.glowM = new THREE.MeshBasicMaterial({ color: C(FORT_FIRE[i]), toneMapped: false })), add = (g, m, x, y, z, p, sh) => bdMesh(g, m, x, y, z, p, sh);
+  for (const n of ['wall', 'trim']) bdHalf(T, n).forEach(g => add(g, T.mat, 0, 0, 0, fortDress)); bdHalf(T, 'glow').forEach(g => add(g, glow, 0, 0, 0, fortDress, false));
+  const big = paneGeo(.25, .48), mid = paneGeo(.18, .36), small = paneGeo(.17, .28), slit = new THREE.PlaneGeometry(.19, .56);
+  for (const sx of [-1, 1]) {
+    const tw = new THREE.Group(); tw.position.set(sx * 4.9, 0, 2.2); fortDress.add(tw); add(T.geo.tower, T.mat, 0, 0, 0, tw);
+    add(big, glow, 0, 2.62, 1.20, tw, false); add(small, glow, 0, 1.34, 1.24, tw, false);
+    for (const a of [-.95, .95]) add(mid, glow, Math.sin(a) * 1.2, 2.4, Math.cos(a) * 1.2, tw, false).rotation.y = a;
+    add(T.geo.roof, T.mat, sx * 1.95, 3.72, 3.02, fortDress).scale.setScalar(.31); add(slit, glow, sx * 1.95, 2.32, 3.42, fortDress, false);
+    add(T.geo.brazier, T.mat, sx * 2.25, 0, 3.75, fortDress); halo(FORT_FIRE[i], .8, sx * .21, 2.42, 3.82, fortDress, .6);
+  }
+  return true;
+}
 // what each warlord has hung on the gate (sculpted as one half, in his world's own set)
 const fortDress = new THREE.Group();
 function dressGate(i) {
+  if (typeof FUSE !== 'undefined' && FUSE) { const inD = o => { for (let p = o; p; p = p.parent) if (p === fortDress) return true; return false; }; for (const S of [...FUSE.sets]) if (S.parts.some(p => roofs.includes(p) || inD(p))) FUSE.drop(S); } // (the joined copies of the old gate and roofs go; the next level joins the new ones)
   if (fortDress.parent !== fort) fort.add(fortDress); for (const o of [...fortDress.children]) fortDress.remove(o);
-  const A = LMART[LM_SETS[i]];
+  const th = fortTheme(i), A = LMART[LM_SETS[i]];
   if (i === HALLW && A) {
     if (worldSt > 0) { // a wall of bone and magic across the foot of his steps
       bdHalf(A, 'barrier').forEach(g => bdMesh(g, A.mat, 0, 0, 2.35, fortDress));
@@ -2567,7 +2592,7 @@ function dressGate(i) {
     }
     bdHalf(A, 'gtrim').forEach(g => bdMesh(g, A.mat, 0, 0, 0, fortDress)); for (const q of [-1, 1]) { halo('#e060ff', 1.2, q * .47, 3.26, 4.62, fortDress, .95); halo('#c050ff', 2.6, q * .47, 3.26, 4.5, fortDress, .4); } return;
   }
-  if (A && A.geo.gtrim) bdHalf(A, 'gtrim').forEach(g => bdMesh(g, A.mat, 0, 0, 0, fortDress));
+  if (!th && A && A.geo.gtrim) bdHalf(A, 'gtrim').forEach(g => bdMesh(g, A.mat, 0, 0, 0, fortDress)); // (his own gate carries his marks)
   if (A && i === 3) { halo('#ff8a2a', 2.6, 0, 3.75, 3.3, fortDress, .75); halo('#ffd060', 1.1, 0, 3.7, 3.4, fortDress, .8); for (const q of [-1, 1]) { halo('#ff7a1a', 1.7, q * 2.86, .35, 3.95, fortDress, .7); for (const [a, z, w] of [[-.4, 1.6, 1.3], [.45, 1.9, 1.4], [.1, 3.1, .9]]) halo('#ff6a1a', w, q * (4.9 + Math.sin(a) * 1.5), z, 2.2 + Math.cos(a) * 1.5, fortDress, .42); } } // Magmaw's fires
 }
 // every world gets its own arrangement, so the same pieces never sit in the same spots twice
@@ -4085,12 +4110,12 @@ async function loadRoad(k) { // k's own stones, and the relief they share; witho
     if (!ROAD.nm) ROAD.nm = get('normal'); const [c, n] = await Promise.all([get(k, 1), ROAD.nm]); ROAD[k] = { map: c, normalMap: n };
   } catch (e) { console.warn('road ' + k, e); }
 }
-function loadLm(k) { return lmWait[k] || (lmWait[k] = (async () => { const [A] = await Promise.all([loadLm0(k), k === 'meadow' ? loadAutumn() : 0, LM_SETS.includes(k) ? Promise.race([loadRoad(k), new Promise(r => setTimeout(r, 9000))]) : 0]); return A; })()); }
+function loadLm(k) { return lmWait[k] || (lmWait[k] = (async () => { const [A] = await Promise.all([loadLm0(k), FORT_TH.includes(k) ? loadSet(BART, 'fort_' + k, 'models/bd/fort_' + k + '/').then(T => { if (T && worldIdx === FORT_TH.indexOf(k) && !G.sim) dressGate(worldIdx); }) : 0, k === 'meadow' ? loadAutumn() : 0, LM_SETS.includes(k) ? Promise.race([loadRoad(k), new Promise(r => setTimeout(r, 9000))]) : 0]); return A; })()); }
 function loadAutumn() { return Promise.race([BART.autumn || loadSet(BART, 'autumn', 'models/bd/autumn/').then(autumnModels), new Promise(r => setTimeout(r, 12000))]); } // the Meadow's turning trees; without them the green ones are tinted
 function loadLm0(k) { return (loadSet(LMART, k, 'models/lm/' + k + '/').then(A => { if (!A) lmWait[k] = null; return A; })); }
 function lmWorld(i) { // called as a world is about to be built
   if (i !== 0 && BART.autumn) BART.autumn.mat.map.dispose();
-  LM_SETS.forEach((k, j) => { const A = LMART[k]; if (A && j !== i) { A.mat.map.dispose(); A.mat.normalMap.dispose(); } if (ROAD[k] && j !== i) ROAD[k].map.dispose(); });
+  LM_SETS.forEach((k, j) => { const A = LMART[k], T = BART['fort_' + k]; if (A && j !== i) { A.mat.map.dispose(); A.mat.normalMap.dispose(); } if (T && j !== i) { T.mat.map.dispose(); T.mat.normalMap.dispose(); } if (ROAD[k] && j !== i) ROAD[k].map.dispose(); });
   if (LMART[LM_SETS[i]] && !G.sim) setTimeout(lmRest, 6000);
   if (!LMART[LM_SETS[i]] && !G.sim) loadLm(LM_SETS[i]).then(A => { if (A && worldIdx === i && G.mode === 'menu') { worldIdx = -1; applyWorld(i); } });
 }
@@ -4110,7 +4135,7 @@ const bdHalf = (A, n) => [seamed(A.geo[n]), A.geo[n + '@'] || (A.geo[n + '@'] = 
 const paneGeo = (w, h) => { const p = new THREE.Shape(); p.moveTo(-w, 0); p.lineTo(w, 0); p.lineTo(w, h); p.quadraticCurveTo(w * .9, h + w * .9, 0, h + w * 1.35); p.quadraticCurveTo(-w * .9, h + w * .9, -w, h); return new THREE.ShapeGeometry(p, 5); };
 function dressFort() { // his castle: the old walls, towers and trimmings go, the sculpted ones take their places
   const A = BART.fort; if (!A) return;
-  const glow = new THREE.MeshBasicMaterial({ color: C('#e070ff'), toneMapped: false }), solid = o => o.isMesh && !o.material.transparent;
+  const glow = A.glowM = new THREE.MeshBasicMaterial({ color: C('#e070ff'), toneMapped: false }), solid = o => o.isMesh && !o.material.transparent;
   for (const o of [...fort.children]) {
     if (o === king || roofs.includes(o) || o.isSprite || (o.isMesh && o.material.blending === THREE.AdditiveBlending)) continue;
     const fire = castleFlames.find(([fl]) => fl.parent === o);
@@ -4224,11 +4249,11 @@ function hangArt(root, A, mat) { // strip a KayKit rig and hang a sculpted chara
   return parts;
 }
 /* ---- who holds the wall ----
-   The King himself for the first two levels of all; after that each world's warlord, from his first level to his fight, when he
+   Each world's warlord, from his first level to his fight, when he
    leaps down (the same figure: HOLD.b is the WL build, stood behind the wall until WL takes him). Beaten on an ordinary level he
-   is blown off the wall, away towards his next castle. */
+   falls back off the wall to his next gate (the Bone King himself is met at his palace). */
 const HOLD = { i: -1, b: null, fly: null, t: 0, act: null }, WALL_S = [3.2, 3.2, 3.2, 3.2, 1, 3.5], WALL_Y = [.5, .55, 1.0, .75, 0, .9], CITF = { t: 9, k: 1 };
-const ROWAN = 5, holderOf = n => { if (n > LAP_LEN && G.worldOverride == null) return ROWAN; const w = G.worldOverride != null ? G.worldOverride : n <= 2 ? -1 : worldOf(n); return w === HALLW ? -1 : w; }; // (the Citadel is the King's own; after the ending, whoever wears the crown now)
+const ROWAN = 5, holderOf = n => { if (n > LAP_LEN && G.worldOverride == null) return ROWAN; const w = G.worldOverride != null ? G.worldOverride : worldOf(n); return w === HALLW ? -1 : w; }; // (the Citadel is the King's own; after the ending, whoever wears the crown now)
 function knightFig(...arts) { // a sculpted knight on foot, standing in the rig's rest pose
   const root = THREE.SkeletonUtils.clone(KK.Knight.scene); root.traverse(o => { if (o.isSkinnedMesh) o.skeleton.pose(); }); root.position.set(0, 0, 0); root.rotation.set(0, 0, 0); root.scale.setScalar(1); root.updateMatrixWorld(true);
   const hy = new THREE.Vector3().setFromMatrixPosition(root.getObjectByName('head').matrixWorld).y, P = {}; for (const A of arts) Object.assign(P, hangArt(root, A, A.mat)); for (const n of ['lance', 'shield']) if (P[n]) P[n].visible = false;
@@ -4282,6 +4307,11 @@ function holdTick(dt) {
   rxUndo(); b.mixer.update(dt); wlFx(b, dt, F ? b.g.position : _v.set(0, b.g.position.y, FORT_Z + (inHall() ? KPOS.z : KING_Z)), b.g.scale.x);
   if (HOLD.act && (HOLD.t -= dt) <= 0) { HOLD.act.fadeOut(.2); HOLD.act = null; if (b.acts.idle) b.acts.idle.setEffectiveWeight(1); }
   for (const m of b.mats) if (m.emissiveMap) m.color.setScalar(1 + G.fortFlash * .25 + G.puff * .9);
+  if (F && F.ran) { // a leap back off the wall, turning away as he goes, and down out of sight behind it
+    F.t += dt; F.v.y -= 24 * dt; b.g.position.addScaledVector(F.v, dt); b.g.rotation.y = F.ry + Math.PI * Math.min(1, F.t / .3);
+    if (F.t > .8) { b.g.visible = false; HOLD.fly = null; HOLD.b = null; }
+    return;
+  }
   if (F) { // off he goes, end over end, over the bridge and away
     F.t += dt; F.v.y -= 10 * dt; b.g.position.addScaledVector(F.v, dt); b.g.rotation.x -= dt * 9; b.g.rotation.z += dt * 3; b.g.scale.setScalar(WALL_S[HOLD.i] * Math.max(.25, 1 - F.t * .3));
     if (rand() < .6) smoke(b.g.position.x, b.g.position.y + 1, b.g.position.z, '#6a5a78', 1.6, .6);
@@ -4292,8 +4322,14 @@ function holdTick(dt) {
   const i = HOLD.i, pf = G.puff * (.2 + Math.sin(G.t * 60) * .04), ws = WALL_S[i] * (inHall() ? .7 : 1) * (G.cfg && G.cfg.boss ? 1.12 : 1);
   b.g.position.y = (inHall() ? 2.42 : WALL_Y[i]) + G.puff * 1.6; b.g.scale.setScalar(ws * (1 + pf));
 }
+function holdRetreat() { // beaten on an ordinary level he doesn't wait to be blown up: off the back of his wall and away up the road to his next gate
+  const b = HOLD.b; if (!b || G.sim || HOLD.fly || b === WL.b || isFinale()) return; rxReset(); b.g.getWorldPosition(_v); wlGroup.add(b.g); b.g.position.copy(_v); b.mixer.stopAllAction();
+  const a = b.acts.walk || b.acts.run || b.acts.idle; if (a) a.reset().play(); smoke(_v.x, _v.y + .5, _v.z, '#8a7a6a', 1.4, .5);
+  HOLD.fly = { b, t: 0, ran: true, ry: b.g.rotation.y, v: new THREE.Vector3((rand() - .5) * 2.4, 8.5, -11) };
+  toastMsg(wlName(WARLORDS[HOLD.i]) + ' FALLS BACK', HOLD.i === ROWAN ? 'To his next wall' : 'To his next gate', { now: true });
+}
 function holdBlown() { // his castle goes up and takes him with it
-  const b = HOLD.b; if (!b || G.sim) return; rxReset(); b.g.getWorldPosition(_v); wlGroup.add(b.g); b.g.position.copy(_v); b.g.position.y += 1.5; b.mixer.stopAllAction(); const a = b.acts.flinch || b.acts.hit; if (a) a.reset().play();
+  const b = HOLD.b; if (!b || G.sim || HOLD.fly) return; rxReset(); b.g.getWorldPosition(_v); wlGroup.add(b.g); b.g.position.copy(_v); b.g.position.y += 1.5; b.mixer.stopAllAction(); const a = b.acts.flinch || b.acts.hit; if (a) a.reset().play();
   HOLD.fly = { b, t: 0, v: new THREE.Vector3((rand() < .5 ? -1 : 1) * (3 + rand() * 3), 15, -27) };
 }
 /* ---- how he takes it: whoever holds the wall answers your attack in his own way ----
@@ -7012,7 +7048,7 @@ function render() {
   if (_hud.wlBar !== wlBar) { _hud.wlBar = wlBar; $('fortBar').classList.toggle('wl', wlBar); $('fortBar').classList.toggle('two', wlBar && !capBar && !!WL.phase); }
   if (capBar) { setCss('fortFill', 'transform', `scaleX(${clamp(CAP.hp / CAP.max, 0, 1).toFixed(3)})`); setHud('fortTxt', CAP.def.name + ' · ' + Math.max(0, Math.ceil(CAP.hp))); }
   else if (wlBar) { setCss('fortFill', 'transform', `scaleX(${clamp(WL.hp / WL.max, 0, 1).toFixed(3)})`); setHud('fortTxt', wlName() + ' · ' + Math.max(0, Math.ceil(WL.hp))); }
-  else { setCss('fortFill', 'transform', `scaleX(${fp.toFixed(3)})`); if (LEAN || G.frameN % 6 === 0) setHud('fortTxt', (inHall() ? 'Wall of Bone · ' : 'Bone Castle · ') + Math.max(0, Math.ceil(G.fortHp))); }
+  else { setCss('fortFill', 'transform', `scaleX(${fp.toFixed(3)})`); if (LEAN || G.frameN % 6 === 0) setHud('fortTxt', (inHall() ? 'Wall of Bone · ' : gateName()) + Math.max(0, Math.ceil(G.fortHp))); }
   setCss('nestFill', 'transform', `scaleX(${np.toFixed(3)})`); setHud('nestTxt', (LINE.on ? 'Your Line · ' : 'Your Camp · ') + Math.max(0, Math.ceil(G.nestHp)));
   const gc = sendCharge(), pct = Math.round(100 * G.charge / gc);
   const gEl = $('giant'); if (_hud.gp !== pct) { _hud.gp = pct; if (!GHUD || gEl.classList.contains('last')) gEl.style.setProperty('--p', pct); } gEl.classList.toggle('ready', pct >= 100 && G.mode === 'play'); { const ch = !palReady(); if (_hud.ch !== ch) { _hud.ch = ch; gEl.classList.toggle('champ', ch); for (const u of gEl.querySelectorAll('.hu')) u.setAttribute('href', ch ? '#i-champ' : '#i-horse'); gEl.setAttribute('aria-label', ch ? 'Send the Champion' : 'Send the Paladin'); } }
@@ -7438,7 +7474,7 @@ function startPlay() {
   if (G.worldOverride != null) toastMsg('PREVIEW', WORLDS[worldIdx].name, { name: true, fly: true });
   else if (!film && (save.level - 1) % (save.level > LAP_LEN ? 5 : WORLD_LEN) === 0) toastMsg(save.level > LAP_LEN ? 'THE ENDLESS ROAD' : 'WORLD ' + (Math.floor((save.level - 1) / WORLD_LEN) + 1), WORLDS[worldIdx].name, { name: true, fly: true });
   if (G.cfg.boss && !$('story').classList.contains('on')) { const wd = WARLORDS[worldOf(save.level) % WARLORDS.length]; toastMsg('BOSS LEVEL', wlName(wd, Math.floor((save.level - 1) / LAP_LEN)) + (worldOf(save.level) === HALLW ? ' is waiting' : ' has nowhere left to run'), { snd: 1 }); } // (his story card says it the first time)
-  if (!film && !G.practice && G.worldOverride == null && save.level <= LAP_LEN) { const w = worldOf(save.level), k = (save.level - 1) % WORLD_LEN; if (save.level === 3) toastMsg('NOW ON THE WALL', 'GRIMBALD', { name: true }); else if (k === 0 && w) toastMsg('THE BONE KING', ['', 'WAKE UP, SEK-RA!', 'STOP THEM, HRIMGAR!', 'MAGMAW, THEY\'RE AT MY DOOR!', 'GUARDS! HOLD THE BRIDGE!'][w], { fly: true }); else if (save.level === 46) toastMsg('YOU ARE INSIDE', 'THE THRONE ROOM', { name: true }); }
+  if (!film && !G.practice && G.worldOverride == null && save.level <= LAP_LEN) { const w = worldOf(save.level), k = (save.level - 1) % WORLD_LEN; if (save.level === 1) toastMsg(WARLORDS[0].title.toUpperCase(), 'GRIMBALD', { name: true }); else if (k === 0 && w) toastMsg('THE BONE KING', ['', 'WAKE UP, SEK-RA!', 'STOP THEM, HRIMGAR!', 'MAGMAW, THEY\'RE AT MY DOOR!', 'GUARDS! HOLD THE BRIDGE!'][w], { fly: true }); else if (save.level === 46) toastMsg('YOU ARE INSIDE', 'THE THRONE ROOM', { name: true }); }
   if (!film && !G.practice && G.worldOverride == null && save.level === LAP_LEN + 1) toastMsg('NOW ON THE WALL', 'ROWAN', { name: true });
   if (G.cfg.feat && TWISTS[G.cfg.feat]) { const f = G.cfg.feat; save.featTold = save.featTold || {}; if (save.level > LAP_LEN || !save.featTold[f]) toastMsg(TWISTS[f][0], TWISTS[f][1], { snd: 1, on: () => { save.featTold[f] = 1; persist(); } }); } // the world's new thing the first time; on the Endless Road, this level's twist
   if (isGold(save.level)) toastMsg('GOLD RUSH', 'Double coins on this level', { snd: 1 });
@@ -7453,10 +7489,11 @@ function win() {
   G.mode = 'won'; G.endT = 2.9; G.winT = 0; G.firing = false; G.shake = 0.5; buzz(40); gameEl.classList.add('cine');
   for (let j = 0; j < beetles.n; j++) { if (j < 60) { burst(beetles.x[j], .4, beetles.z[j], FOE_FX, 3); splat(beetles.x[j], beetles.z[j], FOE, .9); } beetles.hp[j] = 0; }
   tone(180, BOOM_AT + .15, 'sawtooth', .03, 5); // rising whine while the king swells
-  const cries = wallSay().cry, cry = isFinale() ? ['THIS CANNOT BE!', 'no'] : G.level === 1 ? ['LUCK!', 'scoff'] : G.level === 2 ? ['GRIMBALD! DEAL WITH THEM!', 'roar'] : cries[(G.level - 1) % cries.length]; // a different last word on every level
+  const cries = wallSay().cry, cry = isFinale() ? ['THIS CANNOT BE!', 'no'] : G.level === 1 ? ['LUCK!', 'scoff'] : cries[(G.level - 1) % cries.length]; // a different last word on every level
   const onWall = HOLD.b || king.visible || isFinale(); victoryFanfare(); if (onWall) kingVoice(cry[1], .82); holdAct('flinch'); // his cry, and the band strikes up
   hideTelegraphs(); resetKingShots(); resetCharges(); // no warning marks or landing rings left on the road while his castle falls
   if (onWall) { const f = kingSays(cry[0], HOLD.i < 0 ? '#ff5ad0' : wallSay().col); if (f && G.level < 3) f.hold = 1; }
+  holdRetreat();
   const n = G.level, keep = clamp(G.nestHp / G.nestMax, 0, 1);
   G.stars = 1 + (keep >= .5 ? 1 : 0) + ((G.clk || 0) <= G.cfg.par ? 1 : 0); // a star for winning, one for keeping half your gatehouse, one for beating the clock
   if (!G.sim) { save.stars = save.stars || {}; save.stars[n] = Math.max(save.stars[n] || 0, G.stars); }
@@ -8199,15 +8236,15 @@ function endCine() { if (DIR.s && DIR.s.cine) dirStop(true); }
 const ROAR = ['', 'Wake up, Sek-Ra!', 'Stop them, Hrimgar!', 'Magmaw! They’re at my door!', 'Guards! Hold the bridge!'];
 function arrival() {
   const n = G.level, k = (n - 1) % WORLD_LEN, w = worldOf(n), road = onRoadLv(n), key = 'a' + n; save.scenes = save.scenes || {};
-  if (G.sim || G.practice || G.fin || G.worldOverride != null || G.paused || G.lowQ || save.scenes[key]) return false; if (!(n === 3 || n === 46 || n === LAP_LEN + 1 || (!road && k === 0) || (road && k % 5 === 0))) return false;
+  if (G.sim || G.practice || G.fin || G.worldOverride != null || G.paused || G.lowQ || save.scenes[key]) return false; if (!(n === 46 || n === LAP_LEN + 1 || (!road && k === 0) || (road && k % 5 === 0))) return false;
   const [cz, up] = citAt(), shots = [], ev = [], hallIn = inHall(), far = !road && k === 0 && w > 0 && w < HALLW && kingRig, onW = HOLD.b && HOLD.b.fx.head; let t0 = 0; const at = (t, f) => ev.push([t, f]);
   king.updateMatrixWorld(true); const kz = cz + 4.6, ky = 9.4 + up, gr = road ? 'storm' : WGRADE[w];
   if (far) { const KH = ky + 2.9, KE = KH + 1.4; shots.push({ t: [0, 2.3], pos: [[3.6, KE - 4.2, kz + 17], [2.2, KE - 2.6, kz + 12.6]], at: [[0, KE - 1.2, kz], [0, KE - .6, kz]], fov: [42, 37], foc: [.5, .45, .75, 1.2], blur: .8, grade: 'storm', vig: .75 });
     at(.35, () => { endCap('“' + ROAR[w] + '”'); kingVoice('roar', .95, 4); hitBoom(.5); buzz(50); }); at(.1, () => { king.visible = kingCrown.visible = true; }); at(2.2, () => endCap('')); at(2.3, () => { king.visible = kingCrown.visible = false; king.position.z = KPOS.z; G.kingSink = 0; }); t0 = 2.3; }
   else if (HOLD.i < 0 && !road && k === 0 && w === HALLW && kingRig) { const H = worldPt(kingHead), E = H[1] + 1.42; shots.push({ t: [0, 2.3], pos: [[2.6, E + 1.0, H[2] + 12], [1.5, E + .7, H[2] + 9.2]], at: [[0, E - .6, H[2]], [0, E - .2, H[2]]], fov: [40, 36], foc: [.5, .42, .7, 1.2], blur: .8, grade: 'storm', vig: .75 }); at(.35, () => { endCap('“' + ROAR[w] + '”'); kingVoice('roar', .95); hitBoom(.5); }); at(2.2, () => endCap('')); t0 = 2.3; }
   if (n === 46 && kingRig) { const H = worldPt(kingHead), E = H[1] + 1.42; shots.push({ t: [0, 2.2], pos: [[.9, 3.9, 3.4], [0, 3.7, -2.5], [0, 2.9, -11]], at: [[0, 2.0, -18], [0, 4.2, -42]], fov: [54, 44], grade: 'dusk', vig: .75 }, { t: [2.2, 4.1], pos: [[2.4, E - 1.6, H[2] + 8.6], [1.5, E - 1.1, H[2] + 7.8]], at: [[0, E - .2, H[2]], [0, E, H[2]]], fov: [46, 41], foc: [.5, .42, .6, 1.2], grade: 'storm', vig: .8 }); at(0, () => { pad([98, 116.5, 146.8], 4.4, .028, 900); }); at(2.35, () => { endCap('“Out of my hall!”'); cineEyes(true); kingVoice('roar', .95); hitBoom(.6); }); at(4.0, () => { endCap(''); cineEyes(false); }); t0 = 4.1; }
-  if (onW && (far || n === 3 || n === LAP_LEN + 1)) { const H = worldPt(HOLD.b.fx.head), E = H[1] + 1.45, i = HOLD.i; shots.push({ t: [t0, t0 + 1.1], pos: [[1.3, E - .5, H[2] + 9.2], [1.1, E - .4, H[2] + 8.4]], at: [[0, E - .1, H[2]], [0, E, H[2]]], fov: [30, 28], foc: [.5, .43, .5], grade: gr, vig: .85 }, { t: [t0 + 1.1, t0 + 2.9], pos: [[2.7, H[1] - 2.6, H[2] + 13.4], [2.1, H[1] - 2.9, H[2] + 15.4]], at: [[0, E - 1.2, H[2]], [0, E - 1.4, H[2]]], fov: [42, 44], foc: [.5, .4, .7, 1.25], blur: .8, grade: gr, flare: { x: .5, y: .1, r: .7, k: .3, c: WARLORDS[i].col } });
-    at(t0, () => { if (HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = false; rxGlow(HOLD.b, -.85); HOLD.b.mixer.timeScale = .2; swell(.75, .09, 220, 2600); }); at(t0 + .7, () => { rxGlow(HOLD.b, 1.8); hitBoom(.8); kingVoice('growl', .8); buzz(40); }); at(t0 + 1.1, () => { if (HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = true; HOLD.b.mixer.timeScale = 1; rxGlow(HOLD.b, .4); const M = RX_MOVES[i]; if (M) { RX.mv = RX.last = M[i === 3 ? 1 : 0]; RX.t = .05; RX.w = 1; RX.once = {}; RX.side = 1; } kingVoice('roar', .85); dirTitle(wlName(WARLORDS[i]), n === 3 || n === LAP_LEN + 1 ? 'Now on the wall' : WARLORDS[i].title); if (n === LAP_LEN + 1) endCap(''); }); at(t0 + 2.75, () => { dirTitle(); rxGlow(HOLD.b, 0); }); t0 += 2.9; }
+  if (onW && (far || n === 1 || n === LAP_LEN + 1)) { const H = worldPt(HOLD.b.fx.head), E = H[1] + 1.45, i = HOLD.i; shots.push({ t: [t0, t0 + 1.1], pos: [[1.3, E - .5, H[2] + 9.2], [1.1, E - .4, H[2] + 8.4]], at: [[0, E - .1, H[2]], [0, E, H[2]]], fov: [30, 28], foc: [.5, .43, .5], grade: gr, vig: .85 }, { t: [t0 + 1.1, t0 + 2.9], pos: [[2.7, H[1] - 2.6, H[2] + 13.4], [2.1, H[1] - 2.9, H[2] + 15.4]], at: [[0, E - 1.2, H[2]], [0, E - 1.4, H[2]]], fov: [42, 44], foc: [.5, .4, .7, 1.25], blur: .8, grade: gr, flare: { x: .5, y: .1, r: .7, k: .3, c: WARLORDS[i].col } });
+    at(t0, () => { if (HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = false; rxGlow(HOLD.b, -.85); HOLD.b.mixer.timeScale = .2; swell(.75, .09, 220, 2600); }); at(t0 + .7, () => { rxGlow(HOLD.b, 1.8); hitBoom(.8); kingVoice('growl', .8); buzz(40); }); at(t0 + 1.1, () => { if (HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = true; HOLD.b.mixer.timeScale = 1; rxGlow(HOLD.b, .4); const M = RX_MOVES[i]; if (M) { RX.mv = RX.last = M[i === 3 ? 1 : 0]; RX.t = .05; RX.w = 1; RX.once = {}; RX.side = 1; } kingVoice('roar', .85); dirTitle(wlName(WARLORDS[i]), n === LAP_LEN + 1 ? 'Now on the wall' : WARLORDS[i].title); if (n === LAP_LEN + 1) endCap(''); }); at(t0 + 2.75, () => { dirTitle(); rxGlow(HOLD.b, 0); }); t0 += 2.9; }
   const L = 2.5, name = n === 3 ? null : n === 46 ? ['The Throne Room', 'You are inside'] : road ? [WORLDS[worldIdx].name, 'The Endless Road'] : [WORLDS[worldIdx].name, 'World ' + (w + 1)];
   shots.push({ t: [t0, t0 + L], raw: true, pos: hallIn ? [[2.6, 8.4, -30], [1.5, 12, -18], () => [CAM.x, CAM.y, CAM.z]] : n === 3 || w === HALLW ? [[3, 6, -24], [1, 12, -12], () => [CAM.x, CAM.y, CAM.z]] : [[16, 15 + up, cz + 36], [7, 25, -32], () => [CAM.x, CAM.y, CAM.z]], at: [hallIn ? [0, 5, -46] : n === 3 || w === HALLW ? [0, 4.6, -42] : [0, 9 + up, cz], () => [LOOK.x, LOOK.y, LOOK.z]], fov: [46, () => 0], grade: gr, gk: .3, vig: .45 });
   at(t0 + .12, () => { if (name) { dirTitle(name[0], name[1]); brass(196, .5, .05); brass(294, .9, .05, .14); } swell(L * .8, .05, 1800, 260); }); at(t0 + L * .62, () => dirTitle()); at(t0 + L * .7, () => { for (const g of G.gates) { g.mesh.visible = true; g.pulse = 1; } if (laneWalls) laneWalls.visible = true; sawGroup.visible = true; tone(660, .08, 'triangle', .04, 1.4); });
