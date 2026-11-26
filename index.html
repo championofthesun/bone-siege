@@ -311,6 +311,8 @@ svg.ico.sm{width:18px;height:18px}
 #cine::before,#cine::after{content:'';position:absolute;left:0;right:0;height:8%;background:#05040c;z-index:1}
 #cine::before{top:0}#cine::after{bottom:0}
 #cine .cine-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:2}
+#clip{position:absolute;inset:0;background:#05040c;opacity:0;transition:opacity .2s;pointer-events:none}#clip.on{opacity:1}
+#clip video{position:absolute;left:0;right:0;top:8.5%;bottom:8.5%;width:100%;height:83%;object-fit:cover}#clip.fit video{object-fit:contain}
 #cine .cine-skip{position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom) + 2.4%);z-index:3;font-family:var(--disp);font-size:14px;letter-spacing:.5px;color:rgba(255,255,255,.6)}
 #fortBar.two::after{content:'';position:absolute;left:50%;top:3px;bottom:3px;width:3px;margin-left:-1.5px;border-radius:2px;background:#fff;opacity:.9;z-index:2}
 #shk{position:absolute;left:0;right:0;bottom:25.5%;display:none;flex-direction:column;align-items:center;gap:6px;z-index:4;font-family:var(--disp);font-size:23px;color:#fff;text-shadow:0 2px 0 #0a3a6a,0 0 12px #0a3a6a;pointer-events:none}#shk.on{display:flex}#shk svg{width:74px;height:30px;filter:drop-shadow(0 2px 0 #0a3a6a);animation:shkW .5s ease-in-out infinite alternate}#shk span{width:156px;height:16px;border-radius:10px;background:#0e2a5c;box-shadow:0 0 0 3px #fff;overflow:hidden}#shk b{display:block;height:100%;background:#8fe6ff;transform:scaleX(0);transform-origin:0 50%}@keyframes shkW{from{transform:translateX(-9px)}to{transform:translateX(9px)}}
@@ -536,7 +538,7 @@ svg.ico.sm{width:18px;height:18px}
 
   <div id="shk"><svg viewBox="0 0 64 26"><path d="M22 3 4 13l18 10zM42 3l18 10-18 10z" fill="#fff"/></svg>SHAKE IT LOOSE<span><b></b></span></div>
   <div id="film"><b id="filmCap"></b><span>Tap to skip</span></div>
-  <div id="cine"><div id="endHeal"></div><div id="endFade"></div><b id="endCap"></b><div id="dirT"><i></i><b></b></div><div class="cine-flash"></div><span class="cine-skip">Tap to skip</span></div>
+  <div id="cine"><div id="clip"></div><div id="endHeal"></div><div id="endFade"></div><b id="endCap"></b><div id="dirT"><i></i><b></b></div><div class="cine-flash"></div><span class="cine-skip">Tap to skip</span></div>
   <div id="hud">
     <div id="topbar">
       <span class="pill" id="lvlPill">Level 1</span>
@@ -5494,6 +5496,7 @@ function wallX(x, px, z, r) {
   return px < -w.x ? Math.min(x, -w.x - .15 - r) : px > w.x ? Math.max(x, w.x + .15 + r) : clamp(x, -w.x + .15 + r, w.x - .15 - r);
 }
 function setupLevel(n) {
+  clipLevel(n);
   boonsOn(); G.hornT = 0;
   if (BACK && !G.sim) BACK.reset(); // (everything back on the live list before anything is rebuilt or joined)
   if (!G.sim) clearToasts(); G.tauntT = -99; MUS.lift = MUS.push = 0; // (the King's taunt timer runs on G.t, which restarts each level, and the music's key change must not carry over)
@@ -7916,20 +7919,46 @@ const DIR = { s: null, t: 0, ev: {}, speed: 1, bars: 0, amt: 0, fade: 0, fadeTo:
 const dP = p => typeof p === 'function' ? p() : p;
 function stageClear(on) { for (const g of G.gates) g.mesh.visible = !on; if (laneWalls) laneWalls.visible = !on; sawGroup.visible = aim.visible = !on; } // the boards, the dividers and the saws leave the picture
 function dirTitle(a, b) { const e = $('dirT'); if (!a) { e.classList.remove('on'); return; } e.querySelector('i').textContent = b || ''; const q = e.querySelector('b'); q.textContent = a; q.style.fontSize = '9vw'; q.style.fontSize = 'min(' + Math.min(17, 112 / Math.max(6, a.length > 11 ? Math.max(...a.split(' ').map(w => w.length), Math.ceil(a.length / 2)) : a.length)).toFixed(1) + 'cqw,96px)'; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); }
+// ---- painted clips over a scene (models/cut): s.clips = [[t0, t1, 'vNN', from, rate]]; shown only once the video really plays
+const CUT = { boss: [['v01', 'v02'], ['v03', 'v04'], ['v05', 'v06'], ['v07', 'v08'], ['v09', 'v10']] }, CUT_LEN = { v20: 8, v21: 8, v22: 8, v23: 8, v26: 6.17, v44: 6.17 };
+const CLIPV = {}, CLIP = { seg: null, v: null, ok: !/[?&](noclip|perf)/.test(location.search) };
+function clipEl(k) {
+  let v = CLIPV[k]; if (v) return v; v = CLIPV[k] = document.createElement('video'); v.muted = v.defaultMuted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.setAttribute('muted', ''); v.preload = 'auto'; v.disableRemotePlayback = true;
+  v.addEventListener('playing', () => { if (CLIP.v === v) $('clip').classList.add('on'); }); v.src = 'models/cut/' + k + '.mp4'; v.load(); return v;
+}
+function clipLevel(n) { // what this level's scenes can play, fetched while it is set up
+  if (G.sim || !CLIP.ok) return; const w = Math.min(worldOf(n), 4), k = (n - 1) % WORLD_LEN, L = [];
+  if (isBoss(n)) { L.push(...CUT.boss[w], 'v' + (11 + w)); if (w < 4) L.push('v' + (16 + w), 'v' + (20 + w)); }
+  if (isCaptain(n)) L.push('v' + (29 + w));
+  if (n === 1) L.push('v01'); if (n === LAP_LEN + 1) L.push('v28'); if (n <= LAP_LEN && k === 0 && w > 0 && w < HALLW) L.push('v24', CUT.boss[w][0]); if (n <= LAP_LEN && k === 0 && w === HALLW) L.push('v25'); if (n === 46) L.push('v26', 'v27');
+  if (n === LAP_LEN) for (let j = 34; j <= 44; j++) L.push('v' + j);
+  for (const k in CLIPV) if (!L.includes(k) && CLIPV[k] !== CLIP.v) { const v = CLIPV[k]; v.removeAttribute('src'); v.load(); delete CLIPV[k]; } // (the last levels' clips let go)
+  for (const c of L) clipEl(c);
+}
+function clipOff() { const c = $('clip'); c.classList.remove('on'); const v = CLIP.v; CLIP.v = CLIP.seg = null; if (v) setTimeout(() => { if (CLIP.v !== v) { v.pause(); if (v.parentNode && CLIP.v !== v) v.remove(); } }, 260); }
+function clipTick(s, t) {
+  if (!CLIP.ok) return; let g = null; for (const c of s.clips) if (t >= c[0] && t < c[1]) { g = c; break; }
+  if (g === CLIP.seg) return; if (!g) { clipOff(); return; }
+  const w = $('clip'), v = clipEl(g[2]), from = g[3] || 0, len = CUT_LEN[g[2]] || 5.17; CLIP.seg = g;
+  if (CLIP.v && CLIP.v !== v) CLIP.v.pause(); if (CLIP.v !== v) w.classList.remove('on'); CLIP.v = v;
+  w.classList.toggle('fit', w.clientWidth / Math.max(1, w.clientHeight * .83) > .75); if (v.parentNode !== w) w.replaceChildren(v);
+  try { v.currentTime = from; } catch (e) {} v.playbackRate = g[4] || clamp((len - from) / (g[1] - g[0]), .8, 1.7); const p = v.play(); if (p && p.catch) p.catch(() => {});
+  if (!v.paused && v.readyState > 2) w.classList.add('on');
+}
 function dirStart(s) {
   if (DIR.s) dirStop(true); Object.assign(DIR, { s, t: 0, ev: {}, speed: 1, fov0: camera.fov, held: G.firing, q: null }); G.firing = false; G.toastKeep = 0;
   gameEl.classList.add('cinema'); const c = $('cine'); c.classList.add('on', 'dir'); c.classList.toggle('short', s.len < 2.6); endCap(''); dirTitle(); if (!s.keepStage) stageClear(true);
   s.pal = paladin.visible; if (s.noPal) paladin.visible = false; if (s.fadeIn) DIR.fade = 1; DIR.fadeTo = 0; if (s.start) s.start();
 }
 function dirStop(skipped) {
-  const s = DIR.s; if (!s) return; DIR.s = null; DIR.speed = 1; DIR.fadeTo = 0; gameEl.classList.remove('cinema'); $('cine').classList.remove('on', 'dir', 'short', 'end'); endCap(''); dirTitle(); if (!s.keepStage) stageClear(false); if (s.noPal) paladin.visible = s.pal;
+  const s = DIR.s; if (!s) return; DIR.s = null; DIR.speed = 1; if (s.clips) clipOff(); DIR.fadeTo = 0; gameEl.classList.remove('cinema'); $('cine').classList.remove('on', 'dir', 'short', 'end'); endCap(''); dirTitle(); if (!s.keepStage) stageClear(false); if (s.noPal) paladin.visible = s.pal;
   if (camera.fov !== DIR.fov0) { camera.fov = DIR.fov0; camera.updateProjectionMatrix(); } if (s.freeze) G.firing = DIR.held; if (s.done) s.done(skipped);
 }
 function dirAbort() { const s = DIR.s; if (!s) { DIR.fade = DIR.fadeTo = 0; return; } const d = s.done; s.done = null; dirStop(true); if (s.abort) s.abort(); DIR.fade = DIR.bars = DIR.amt = 0; s.done = d; } // the level is set up again under it
 addEventListener('pointerup', () => { DIR.held = false; }, true); addEventListener('pointercancel', () => { DIR.held = false; }, true);
 function dirTick(dt) {
   const s = DIR.s, real = dt / DIR.speed; DIR.t += real; const t = DIR.t, once = (k, at) => t >= at && !DIR.ev[k] && (DIR.ev[k] = true);
-  if (s.tick) s.tick(t, real, once); if (DIR.s === s && t >= s.len) dirStop(false);
+  if (s.tick) s.tick(t, real, once); if (DIR.s === s && s.clips) clipTick(s, t); if (DIR.s === s && t >= s.len) dirStop(false);
 }
 function dirFilm(dt) { // the bars slide, the light of a scene comes and goes, fades to black
   const on = DIR.s ? 1 : 0, to = on * .085; if (!on && DIR.bars < .0005 && DIR.amt < .01 && DIR.fade < .004 && !DIR.fadeTo) { if (DIR.live) { DIR.live = false; const u = POST.mat.uniforms; DIR.bars = DIR.amt = DIR.fade = 0; u.uFilm.value = u.uBars.value = u.uFade.value = u.uFocB.value = 0; } return; }
@@ -7976,6 +8005,7 @@ function bossScene(i) {
     if (once('land', L)) { hitBoom(1); smoke(0, .4, LZ, '#cbbfae', 4.2, 1.2); for (let k = 0; k < 14; k++) { const a = k / 14 * 6.283; burst(Math.sin(a) * 1.6, .2, LZ + Math.cos(a) * 1.6, ['#e2d6c4', '#b9ad9c', W.col], 3, 5, { vy: 3, life: .9, g: 9, sz: 1.8, kind: PK.ROCK }); } }
     if (once('name', L + .18)) { dirTitle(wlName(W), W.title); brass(98, .9, .06); brass(147, .9, .05, .02); tone(62, .9, 'sawtooth', .08, .7); kingVoice('roar', .9); }
   };
+  { const c = CUT.boss[i]; if (c) s.clips = full ? [[0, L, c[0], 0, 1.45], [L, len, c[1], 0, 1.3]] : [[0, len, c[1], 0, 1.3]]; }
   s.done = skipped => { if (king) cineEyes(false); { const b = WL.b || HOLD.b; if (b && b.fx.orbit) b.fx.orbit.visible = true; } if (skipped && !WL.on) { rxReset(); startWarlord(king ? 4 : i === worldOf(G.level) % WARLORDS.length && !isFinale() ? undefined : i); } if (WL.on && (WL.state === 'leap' || WL.state === 'enter')) { WL.y = 0; WL.z = LZ; WL.state = 'roar'; WL.st = 0; wlAct('roar'); } save.scenes = save.scenes || {}; if (!G.practice) { save.scenes[key] = 1; persist(); } };
   dirStart(s); return true;
 }
@@ -7999,6 +8029,7 @@ function deathScene() {
     if (t > B) { const u = (t - B) / (len - B); glowAt(x, hy * .5 + u * 5, z - .6, 9 + 8 * u, .9 * Math.max(0, 1 - u * 1.5)); }
     if (once('crack', B + .75)) { hitBoom(.8); smp('castleHit', .7, 0); for (let k = -1; k < 2; k++) { burst(k * 3.4, 3 + rand() * 1.5, FORT_Z + .5, ['#e2d6c4', '#b9ad9c', '#cfc5b6'], 18, 7, { vy: 5, life: 1.3, g: 15, sz: 2.2, kind: PK.ROCK }); smoke(k * 3.2, 2.2, FORT_Z + .6, '#b4a9c0', 2.4, 1); } for (let k = 0; k < 40; k++) burst((rand() - .5) * 11, .6 + rand() * 5.4, FORT_Z + 1.2, ['#d070ff', '#ffffff', '#8a30d0'], 1, 3, { vy: 2, life: .9, g: 6, sz: 1.6, kind: PK.SPARK }); G.fortFlash = 1; } // his ward breaks, and the walls behind it crack
   };
+  { const j = WARLORDS.indexOf(W); if (j >= 0 && j < 4) s.clips = [[0, len, 'v' + (16 + j)]]; }
   s.done = () => { DIR.speed = 1; glowAt(0, 0, 0, 1, 0); b.g.visible = false; if (b.fx.orbit) b.fx.orbit.visible = true; b.mixer.stopAllAction(); WL.on = false; WL.state = 'over'; popText('−' + Math.round(G.fortMax * WL_FALL), 0, 4.5, FORT_Z + 1.5, '#ffd23f'); };
   s.abort = () => { glowAt(0, 0, 0, 1, 0); if (b.fx.orbit) b.fx.orbit.visible = true; };
   dirStart(s); return true;
@@ -8030,6 +8061,7 @@ function startLook() {
     else if (t < T[2]) { if (once('crane', T[1])) { put(-1.05, -25, Math.PI - .25); pad([130.8, 196, 261.6, 329.6, 392], T[3] - T[1] + .5, .024, 2400); } headTurn(-.14); { const q = clamp((t - T[1]) / 1.1, 0, 1); fl = q * q * (3 - 2 * q) * (.86 + .14 * Math.sin(t * 2.4)); } horse.body.position.y = Math.sin(t * 2.1) * .02; for (const [o, sc] of [[gl[0], 7], [gl[1], 2.4]]) { o.material.opacity = (o === gl[0] ? .9 : 1) * (.25 + .75 * fl); o.scale.setScalar(sc * (.8 + .7 * fl)); } }
     else { if (once('rear', T[2])) { put(.1, -25, Math.PI - .75); chargeCall(); } const u = t - T[2], k = u < .5 ? cineEase(u / .5) : u > 1.15 ? Math.max(0, 1 - (u - 1.15) / .4) : 1; horse.body.rotation.x = -.5 * k; horse.body.position.y = .3 * k; for (const L of palLegs) { L.hip.rotation.x = L.front ? -1.1 * k + .25 * k * Math.sin(u * 9 + L.ph) : .28 * k; L.knee.rotation.x = L.front ? 1.2 * k : 0; } if (once('name', T[2] + .42)) { dirTitle(next.name, 'NEXT'); hitBoom(.6); } if (once('black', T[3] - .32)) DIR.fadeTo = 1; }
   };
+  if (w < 4) s.clips = [[0, T[3], 'v' + (20 + w), 0, 1]];
   const tidy = () => { headTurn(0); for (const g of gl) scene.remove(g); goldSky(SKY, 0); paladin.visible = false; paladin.scale.setScalar(PAL_S); paladin.rotation.y = Math.PI; horse.body.rotation.x = horse.body.position.y = 0; horseGait(0, 1); for (const L of palLegs) L.hip.rotation.x = L.knee.rotation.x = 0; for (const o of paladin.children) if (o.isSprite) o.visible = true; };
   s.done = () => { tidy(); showResult(true); }; s.abort = tidy;
   dirStart(s); return true;
@@ -8087,7 +8119,7 @@ function phaseTwo() {
   if (seen || G.fin || DIR.s || G.mode !== 'play' || G.lowQ) { kingVoice('roar', .85); hitBoom(.5); return; }
   hideTelegraphs(); if (WL.state !== 'stun') { WL.state = 'roar'; WL.st = .4; } wlAct('roar'); const b = WL.b, x = WL.x, z = WL.z, gr = WGRADE[i];
   const head = () => worldPt(b.fx.head, [x, 4, z]);
-  dirStart({ len: 1.9, freeze: true, wl: false, noAnts: true, noPal: true, boss: true, foeZ: z + 3, shots: [{ t: [0, 1.9], pos: [[x + 3.2, 1.0, z + 11.2], [x + 2.5, 1.3, z + 8.6]], at: [() => { const h = head(); return [h[0], h[1] - .5, h[2]]; }], fov: [44, 38], foc: [.5, .4, .65, 1.25], grade: gr, vig: .72, flare: { x: .5, y: .16, r: .8, k: .4, c: WL.def.col } }],
+  dirStart({ len: 2.4, clips: [[0, 2.4, 'v' + (11 + i), .5]], freeze: true, wl: false, noAnts: true, noPal: true, boss: true, foeZ: z + 3, shots: [{ t: [0, 1.9], pos: [[x + 3.2, 1.0, z + 11.2], [x + 2.5, 1.3, z + 8.6]], at: [() => { const h = head(); return [h[0], h[1] - .5, h[2]]; }], fov: [44, 38], foc: [.5, .4, .65, 1.25], grade: gr, vig: .72, flare: { x: .5, y: .16, r: .8, k: .4, c: WL.def.col } }],
     start: () => { hold(2); swell(.55, .1, 180, 2600); if (b.fx.orbit) b.fx.orbit.visible = false; }, tick: (t, dt, once) => { b.mixer.update(dt); if (once('r', .45)) { rxGlow(b, 1.8); cineFlash(.35, 300); hitBoom(.9); kingVoice('roar', 1); buzz([60, 30, 120]); dirTitle(N[0], wlName()); burst(x, 3, z + .6, [WL.def.col, '#ffffff'], 40, 7, { sph: true, life: 1, g: 1, sz: 1.6, kind: PK.SPARK }); } },
     done: () => { if (b.fx.orbit) b.fx.orbit.visible = true; rxGlow(b, .35); save.scenes = save.scenes || {}; if (!G.practice) { save.scenes[key] = 1; persist(); } }, abort: () => { if (b.fx.orbit) b.fx.orbit.visible = true; rxGlow(b, 0); } });
 }
@@ -8253,18 +8285,18 @@ const ROAR = ['', 'Wake up, Sek-Ra!', 'Stop them, Hrimgar!', 'Magmaw! They’re 
 function arrival() {
   const n = G.level, k = (n - 1) % WORLD_LEN, w = worldOf(n), road = onRoadLv(n), key = 'a' + n; save.scenes = save.scenes || {};
   if (G.sim || G.practice || G.fin || G.worldOverride != null || G.paused || G.lowQ || save.scenes[key]) return false; if (!(n === 46 || n === LAP_LEN + 1 || (!road && k === 0) || (road && k % 5 === 0))) return false;
-  const [cz, up] = citAt(), shots = [], ev = [], hallIn = inHall(), far = !road && k === 0 && w > 0 && w < HALLW && kingRig, onW = HOLD.b && HOLD.b.fx.head; let t0 = 0; const at = (t, f) => ev.push([t, f]);
+  const [cz, up] = citAt(), shots = [], ev = [], cl = [], hallIn = inHall(), far = !road && k === 0 && w > 0 && w < HALLW && kingRig, onW = HOLD.b && HOLD.b.fx.head; let t0 = 0; const at = (t, f) => ev.push([t, f]);
   king.updateMatrixWorld(true); const kz = cz + 4.6, ky = 9.4 + up, gr = road ? 'storm' : WGRADE[w];
   if (far) { const KH = ky + 2.9, KE = KH + 1.4; shots.push({ t: [0, 2.3], pos: [[3.6, KE - 4.2, kz + 17], [2.2, KE - 2.6, kz + 12.6]], at: [[0, KE - 1.2, kz], [0, KE - .6, kz]], fov: [42, 37], foc: [.5, .45, .75, 1.2], blur: .8, grade: 'storm', vig: .75 });
-    at(.35, () => { endCap('“' + ROAR[w] + '”'); kingVoice('roar', .95, 4); hitBoom(.5); buzz(50); }); at(.1, () => { king.visible = kingCrown.visible = true; }); at(2.2, () => endCap('')); at(2.3, () => { king.visible = kingCrown.visible = false; king.position.z = KPOS.z; G.kingSink = 0; }); t0 = 2.3; }
-  else if (HOLD.i < 0 && !road && k === 0 && w === HALLW && kingRig) { const H = worldPt(kingHead), E = H[1] + 1.42; shots.push({ t: [0, 2.3], pos: [[2.6, E + 1.0, H[2] + 12], [1.5, E + .7, H[2] + 9.2]], at: [[0, E - .6, H[2]], [0, E - .2, H[2]]], fov: [40, 36], foc: [.5, .42, .7, 1.2], blur: .8, grade: 'storm', vig: .75 }); at(.35, () => { endCap('“' + ROAR[w] + '”'); kingVoice('roar', .95); hitBoom(.5); }); at(2.2, () => endCap('')); t0 = 2.3; }
-  if (n === 46 && kingRig) { const H = worldPt(kingHead), E = H[1] + 1.42; shots.push({ t: [0, 2.2], pos: [[.9, 3.9, 3.4], [0, 3.7, -2.5], [0, 2.9, -11]], at: [[0, 2.0, -18], [0, 4.2, -42]], fov: [54, 44], grade: 'dusk', vig: .75 }, { t: [2.2, 4.1], pos: [[2.4, E - 1.6, H[2] + 8.6], [1.5, E - 1.1, H[2] + 7.8]], at: [[0, E - .2, H[2]], [0, E, H[2]]], fov: [46, 41], foc: [.5, .42, .6, 1.2], grade: 'storm', vig: .8 }); at(0, () => { pad([98, 116.5, 146.8], 4.4, .028, 900); }); at(2.35, () => { endCap('“Out of my hall!”'); cineEyes(true); kingVoice('roar', .95); hitBoom(.6); }); at(4.0, () => { endCap(''); cineEyes(false); }); t0 = 4.1; }
+    at(.35, () => { endCap('“' + ROAR[w] + '”'); kingVoice('roar', .95, 4); hitBoom(.5); buzz(50); }); at(.1, () => { king.visible = kingCrown.visible = true; }); at(2.2, () => endCap('')); at(2.3, () => { king.visible = kingCrown.visible = false; king.position.z = KPOS.z; G.kingSink = 0; }); cl.push([0, 2.3, 'v24']); t0 = 2.3; }
+  else if (HOLD.i < 0 && !road && k === 0 && w === HALLW && kingRig) { const H = worldPt(kingHead), E = H[1] + 1.42; shots.push({ t: [0, 2.3], pos: [[2.6, E + 1.0, H[2] + 12], [1.5, E + .7, H[2] + 9.2]], at: [[0, E - .6, H[2]], [0, E - .2, H[2]]], fov: [40, 36], foc: [.5, .42, .7, 1.2], blur: .8, grade: 'storm', vig: .75 }); at(.35, () => { endCap('“' + ROAR[w] + '”'); kingVoice('roar', .95); hitBoom(.5); }); at(2.2, () => endCap('')); cl.push([0, 2.3, 'v25']); t0 = 2.3; }
+  if (n === 46 && kingRig) { const H = worldPt(kingHead), E = H[1] + 1.42; shots.push({ t: [0, 2.2], pos: [[.9, 3.9, 3.4], [0, 3.7, -2.5], [0, 2.9, -11]], at: [[0, 2.0, -18], [0, 4.2, -42]], fov: [54, 44], grade: 'dusk', vig: .75 }, { t: [2.2, 4.1], pos: [[2.4, E - 1.6, H[2] + 8.6], [1.5, E - 1.1, H[2] + 7.8]], at: [[0, E - .2, H[2]], [0, E, H[2]]], fov: [46, 41], foc: [.5, .42, .6, 1.2], grade: 'storm', vig: .8 }); at(0, () => { pad([98, 116.5, 146.8], 4.4, .028, 900); }); at(2.35, () => { endCap('“Out of my hall!”'); cineEyes(true); kingVoice('roar', .95); hitBoom(.6); }); at(4.0, () => { endCap(''); cineEyes(false); }); cl.push([0, 2.2, 'v26'], [2.2, 4.1, 'v27']); t0 = 4.1; }
   if (onW && (far || n === 1 || n === LAP_LEN + 1)) { const H = worldPt(HOLD.b.fx.head), E = H[1] + 1.45, i = HOLD.i; shots.push({ t: [t0, t0 + 1.1], pos: [[1.3, E - .5, H[2] + 9.2], [1.1, E - .4, H[2] + 8.4]], at: [[0, E - .1, H[2]], [0, E, H[2]]], fov: [30, 28], foc: [.5, .43, .5], grade: gr, vig: .85 }, { t: [t0 + 1.1, t0 + 2.9], pos: [[2.7, H[1] - 2.6, H[2] + 13.4], [2.1, H[1] - 2.9, H[2] + 15.4]], at: [[0, E - 1.2, H[2]], [0, E - 1.4, H[2]]], fov: [42, 44], foc: [.5, .4, .7, 1.25], blur: .8, grade: gr, flare: { x: .5, y: .1, r: .7, k: .3, c: WARLORDS[i].col } });
-    at(t0, () => { if (HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = false; rxGlow(HOLD.b, -.85); HOLD.b.mixer.timeScale = .2; swell(.75, .09, 220, 2600); }); at(t0 + .7, () => { rxGlow(HOLD.b, 1.8); hitBoom(.8); kingVoice('growl', .8); buzz(40); }); at(t0 + 1.1, () => { if (HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = true; HOLD.b.mixer.timeScale = 1; rxGlow(HOLD.b, .4); const M = RX_MOVES[i]; if (M) { RX.mv = RX.last = M[i === 3 ? 1 : 0]; RX.t = .05; RX.w = 1; RX.once = {}; RX.side = 1; } kingVoice('roar', .85); dirTitle(wlName(WARLORDS[i]), n === LAP_LEN + 1 ? 'Now on the wall' : WARLORDS[i].title); if (n === LAP_LEN + 1) endCap(''); }); at(t0 + 2.75, () => { dirTitle(); rxGlow(HOLD.b, 0); }); t0 += 2.9; }
+    at(t0, () => { if (HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = false; rxGlow(HOLD.b, -.85); HOLD.b.mixer.timeScale = .2; swell(.75, .09, 220, 2600); }); at(t0 + .7, () => { rxGlow(HOLD.b, 1.8); hitBoom(.8); kingVoice('growl', .8); buzz(40); }); at(t0 + 1.1, () => { if (HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = true; HOLD.b.mixer.timeScale = 1; rxGlow(HOLD.b, .4); const M = RX_MOVES[i]; if (M) { RX.mv = RX.last = M[i === 3 ? 1 : 0]; RX.t = .05; RX.w = 1; RX.once = {}; RX.side = 1; } kingVoice('roar', .85); dirTitle(wlName(WARLORDS[i]), n === LAP_LEN + 1 ? 'Now on the wall' : WARLORDS[i].title); if (n === LAP_LEN + 1) endCap(''); }); at(t0 + 2.75, () => { dirTitle(); rxGlow(HOLD.b, 0); }); cl.push([t0, t0 + 2.9, i === ROWAN ? 'v28' : (CUT.boss[i] || [])[0], 0, i === ROWAN ? 0 : 1.1]); t0 += 2.9; }
   const L = 2.5, name = n === 3 ? null : n === 46 ? ['The Throne Room', 'You are inside'] : road ? [WORLDS[worldIdx].name, 'The Endless Road'] : [WORLDS[worldIdx].name, 'World ' + (w + 1)];
   shots.push({ t: [t0, t0 + L], raw: true, pos: hallIn ? [[2.6, 8.4, -30], [1.5, 12, -18], () => [CAM.x, CAM.y, CAM.z]] : n === 3 || w === HALLW ? [[3, 6, -24], [1, 12, -12], () => [CAM.x, CAM.y, CAM.z]] : [[16, 15 + up, cz + 36], [7, 25, -32], () => [CAM.x, CAM.y, CAM.z]], at: [hallIn ? [0, 5, -46] : n === 3 || w === HALLW ? [0, 4.6, -42] : [0, 9 + up, cz], () => [LOOK.x, LOOK.y, LOOK.z]], fov: [46, () => 0], grade: gr, gk: .3, vig: .45 });
   at(t0 + .12, () => { if (name) { dirTitle(name[0], name[1]); brass(196, .5, .05); brass(294, .9, .05, .14); } swell(L * .8, .05, 1800, 260); }); at(t0 + L * .62, () => dirTitle()); at(t0 + L * .7, () => { for (const g of G.gates) { g.mesh.visible = true; g.pulse = 1; } if (laneWalls) laneWalls.visible = true; sawGroup.visible = true; tone(660, .08, 'triangle', .04, 1.4); });
-  const s = { len: t0 + L, freeze: true, noAnts: false, shots, fadeIn: true, start: () => { hold(s.len * .8); if (far) { king.visible = kingCrown.visible = true; } },
+  const s = { len: t0 + L, clips: cl.filter(c => c[2]), freeze: true, noAnts: false, shots, fadeIn: true, start: () => { hold(s.len * .8); if (far) { king.visible = kingCrown.visible = true; } },
     tick: t => { if (far && t < 2.3) { king.position.z = kz + 39.75; G.kingSink = KPOS.y - ky; } for (const e of ev) if (!e[2] && t >= e[0]) { e[2] = 1; e[1](); } } };
   const tidy = () => { if (far) { king.visible = kingCrown.visible = false; king.position.z = KPOS.z; G.kingSink = 0; } cineEyes(false); if (HOLD.b) { rxGlow(HOLD.b, 0); HOLD.b.mixer.timeScale = 1; if (HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = true; } };
   s.done = () => { tidy(); save.scenes[key] = 1; persist(); }; s.abort = tidy; dirStart(s); return true;
@@ -8272,7 +8304,7 @@ function arrival() {
 // ---- a captain marches out: a second and a half
 function captainScene() {
   if (G.sim || G.fin || G.cine || DIR.s || G.mode !== 'play' || !CAP.b) return; save.scenes = save.scenes || {}; const key = 'c' + G.level, seen = save.scenes[key]; if (seen) return; const z = CAP.z, col = WARLORDS[CAP.w].col; resetKingShots();
-  dirStart({ len: 2.1, freeze: true, wl: false, noAnts: true, noPal: true, boss: true, foeZ: z + 2.2, shots: [{ t: [0, 2.1], pos: [[2.8, .75, z + 10.6], [2.1, 1.0, z + 8.7]], at: [[0, 2.2, z], [0, 2.4, z]], fov: [44, 40], foc: [.5, .42, .7, 1.25], blur: .8, grade: WGRADE[CAP.w], flare: { x: .5, y: .15, r: .7, k: .3, c: col } }],
+  dirStart({ len: 2.6, clips: CAP.w < 5 ? [[0, 2.6, 'v' + (29 + CAP.w)]] : null, freeze: true, wl: false, noAnts: true, noPal: true, boss: true, foeZ: z + 2.2, shots: [{ t: [0, 2.1], pos: [[2.8, .75, z + 10.6], [2.1, 1.0, z + 8.7]], at: [[0, 2.2, z], [0, 2.4, z]], fov: [44, 40], foc: [.5, .42, .7, 1.25], blur: .8, grade: WGRADE[CAP.w], flare: { x: .5, y: .15, r: .7, k: .3, c: col } }],
     start: () => { hold(2.2); hitBoom(.7); swell(.5, .07, 240, 2200); },
     tick: (t, dt, once) => { if (once('n', .4)) { dirTitle(CAP.def.name, wlName(WARLORDS[CAP.w], 0) + '’s captain'); hitBoom(.6); brass(110, .7, .05); } if (CAP.b) CAP.b.g.position.z = z + Math.max(0, t * .5); },
     done: () => { save.scenes[key] = 1; persist(); } });
@@ -8317,7 +8349,7 @@ function lastCharge() {
   if (DIR.s || G.end || WL.state !== 'kneel' || !horse) return; const x = WL.x, z = WL.z, b = WL.b, hy = worldPt(b.fx.head, [x, 3, z])[1]; let pz = -8, ph = 0, rx = 0;
   const gallop = dt => { ph += dt * 13; paladin.visible = true; paladin.scale.setScalar(PAL_S); paladin.position.set(rx, 0, pz); paladin.rotation.y = Math.PI; for (const L of palLegs) { const s = Math.sin(ph + L.ph); L.hip.rotation.x = s * .75; L.knee.rotation.x = (L.front ? -1 : 1) * Math.max(0, Math.sin(ph + L.ph + 1.3)) * 1.1; } horse.body.position.y = Math.abs(Math.sin(ph)) * .16; horse.body.rotation.x = Math.sin(ph) * .05; if (palMixer) { palMixer.update(dt); const R = palRig.userData, ul = R.ul || (R.ul = palRig.getObjectByName('upperlegl')), ur = R.ur || (R.ur = palRig.getObjectByName('upperlegr')), sit = R.sit || .55; if (ul) ul.rotation.z += sit; if (ur) ur.rotation.z -= sit; if (R.cape) R.cape.rotation.x = .95 + Math.sin(ph * 1.4) * .14; }
     if (rand() < dt * 26) burst(rx + (rand() - .5) * .9, .15, pz + 1.2, ['#c8bcaa', '#e8dcc8'], 1, 1.4, { vy: 1.6, life: .6, g: 3, sz: 1.5, kind: PK.ROCK }); if (rand() < dt * 30) burst(rx + (rand() - .5) * 1.2, 1 + rand() * 2.2, pz + 1.4, ['#ffd27a', '#fff1b8'], 1, 1, { vy: .8, life: .6, g: 0, sz: 1.5, kind: PK.SPARK }); };
-  G.pal = null; const s = { len: 4.1, freeze: true, wl: true, noAnts: true, noFoes: true, shots: [
+  G.pal = null; const s = { len: 4.1, clips: [[0, 1.6, 'v34', 0, 1.25], [1.6, 2.8, 'v35', 0, 1.6], [2.8, 4.1, 'v34', 2.6, 1.2]], freeze: true, wl: true, noAnts: true, noFoes: true, shots: [
     { t: [0, 1.6], pos: [() => [2.0, .7, pz - 8.4]], at: [() => [0, 2.5, pz - .4]], fov: [46, 42], foc: [.5, .45, .7, 1.2], blur: .8, grade: 'dawn', flare: { x: .8, y: .15, r: .7, k: .4, c: '#ffd08a' } },
     { t: [1.6, 2.8], pos: [[x + 1.9, 1.5, z + 8.8], [x + 1.3, 1.8, z + 7.2]], at: [[x, hy + .75, z], [x, hy + .95, z]], fov: [36, 32], foc: [.5, .42, .55, 1.2], grade: 'dark', gk: .5, vig: .85 },
     { t: [2.8, 4.1], pos: [[4.0, .9, z + 13.6], [3.6, 1.0, z + 12.4]], at: [[-.2, 2.7, z + 2.4], [-.1, 2.7, z + 1.4]], fov: [50, 46], grade: 'gold', vig: .7, roll: -.05 }],
@@ -8364,7 +8396,7 @@ function startEnding() {
   E.glow = halo('#ffd84a', 5, .1, 1, -33.6, g, .4);
   buildPaladin(); if (palRig) palRig.visible = false; paladin.visible = false; for (const o of paladin.children) if (o.isSprite) o.visible = false;
   for (const s of END_STILL()) s.remove(); const box = $('endHeal'); box.innerHTML = ''; for (const [a, b] of endArt || []) for (const im of [a, b]) { const n = im.cloneNode(); box.appendChild(n); } { const q = document.createElement('u'); box.appendChild(q); } endCap('');
-  dirStart({ len: ET.end, keepStage: true, freeze: false, ending: true, shots: endShots(E), sunZ: () => DIR.t < ET.bridge ? -36 : -14, start: () => { hold(5); $('cine').classList.add('end'); pad([98, 116.5, 146.8, 196], ET.walk + 1, .022, 900); }, tick: (t, dt) => { E.t = t; endTick(dt); }, done: () => finishEnding() });
+  dirStart({ len: ET.end, clips: [[0, ET.walk, 'v36'], [ET.walk, ET.throne, 'v37'], [ET.throne, ET.wide, 'v38', .8], [ET.wide, ET.heal, 'v39'], [ET.close, ET.hand, 'v40'], [ET.hand, ET.bridge, 'v41'], [ET.bridge, ET.meet, 'v42'], [ET.meet, ET.ride, 'v43'], [ET.ride, ET.end, 'v44']], keepStage: true, freeze: false, ending: true, shots: endShots(E), sunZ: () => DIR.t < ET.bridge ? -36 : -14, start: () => { hold(5); $('cine').classList.add('end'); pad([98, 116.5, 146.8, 196], ET.walk + 1, .022, 900); }, tick: (t, dt) => { E.t = t; endTick(dt); }, done: () => finishEnding() });
 }
 const END_STILL = () => [...$('endHeal').querySelectorAll('img')];
 function endCap(t, big) { const c = $('endCap'); c.textContent = t; c.classList.toggle('big', !!big); c.classList.toggle('on', !!t); }
