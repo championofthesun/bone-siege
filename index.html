@@ -47,6 +47,7 @@ svg.ico.sm{width:18px;height:18px}
 #fortBar i{background:linear-gradient(#d69aff,#7a2ad0)} /* the Bone King: purple */
 #nestBar{bottom:calc(env(safe-area-inset-bottom) + 16px);right:104px;left:40px}
 #nestBar i{background:linear-gradient(#7fd8ff,#1f7fe6)}
+#nestBar.low{animation:lowPulse .5s ease-in-out infinite alternate}@keyframes lowPulse{from{border-color:#ff5a5a}to{border-color:#ffd0d0;box-shadow:0 0 14px rgba(255,60,60,.8)}}
 #giant{position:absolute;right:12px;bottom:calc(env(safe-area-inset-bottom) + 8px);width:82px;height:82px;border-radius:50%;pointer-events:auto;border:3px solid #fff;cursor:pointer;touch-action:none;
   background:conic-gradient(var(--gold) calc(var(--p,0)*1%), rgba(10,18,44,.6) 0);box-shadow:0 4px 0 rgba(8,14,40,.4)}
 #giant .in{position:absolute;inset:5px;border-radius:50%;background:radial-gradient(circle at 50% 30%,#2d4f94,#13224a);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:var(--disp);font-size:13px;letter-spacing:.5px;line-height:1}
@@ -2566,7 +2567,7 @@ function cursedCrystals(spots) { // purple crystals breaking through the ground 
 // gate stands in its place on the same footprint, so the palace front no longer follows you down the road. Until a world's
 // gate is in, the old front stands (tinted, as before).
 const FORT_TH = ['meadow', 'dunes', 'frost', 'ember'], FORT_FIRE = ['#ffb24a', '#ffc84a', '#8ff0ff', '#ff7a1a'];
-const gateName = () => { const d = WARLORDS[HOLD.i]; if (!d || HOLD.i === ROWAN || !FORT_TH[worldIdx] || !BART['fort_' + FORT_TH[worldIdx]]) return 'Bone Castle · '; const n = d.name.charAt(0) + d.name.slice(1).toLowerCase(); return n + '’s Gate · '; };
+const gateName = () => { const d = WARLORDS[HOLD.i]; if (!d || HOLD.i === ROWAN || !FORT_TH[worldIdx] || !BART['fort_' + FORT_TH[worldIdx]]) return 'Bone Castle · '; const n = d.name.toLowerCase().replace(/(^|-)\w/g, c => c.toUpperCase()); return n + '’s Gate · '; };
 function fortTheme(i) {
   const A = BART.fort, k = FORT_TH[i], T = k && BART['fort_' + k], on = !!(T && A && A.glowM); if (!A || !A.glowM) return false;
   const under = o => { for (let p = o; p; p = p.parent) if (p === fortDress) return true; return false; };
@@ -7057,7 +7058,7 @@ function render() {
   if (capBar) { setCss('fortFill', 'transform', `scaleX(${clamp(CAP.hp / CAP.max, 0, 1).toFixed(3)})`); setHud('fortTxt', CAP.def.name + ' · ' + Math.max(0, Math.ceil(CAP.hp))); }
   else if (wlBar) { setCss('fortFill', 'transform', `scaleX(${clamp(WL.hp / WL.max, 0, 1).toFixed(3)})`); setHud('fortTxt', wlName() + ' · ' + Math.max(0, Math.ceil(WL.hp))); }
   else { setCss('fortFill', 'transform', `scaleX(${fp.toFixed(3)})`); if (LEAN || G.frameN % 6 === 0) setHud('fortTxt', (inHall() ? 'Wall of Bone · ' : gateName()) + Math.max(0, Math.ceil(G.fortHp))); }
-  setCss('nestFill', 'transform', `scaleX(${np.toFixed(3)})`); setHud('nestTxt', (LINE.on ? 'Your Line · ' : 'Your Camp · ') + Math.max(0, Math.ceil(G.nestHp)));
+  setCss('nestFill', 'transform', `scaleX(${np.toFixed(3)})`); { const lo = np < .3 && G.mode === 'play'; if (_hud.low !== lo) { _hud.low = lo; $('nestBar').classList.toggle('low', lo); } } /* nearly gone: the bar warns */ setHud('nestTxt', (LINE.on ? 'Your Line · ' : 'Your Camp · ') + Math.max(0, Math.ceil(G.nestHp)));
   const gc = sendCharge(), pct = Math.round(100 * G.charge / gc);
   const gEl = $('giant'); if (_hud.gp !== pct) { _hud.gp = pct; if (!GHUD || gEl.classList.contains('last')) gEl.style.setProperty('--p', pct); } gEl.classList.toggle('ready', pct >= 100 && G.mode === 'play'); { const ch = !palReady(); if (_hud.ch !== ch) { _hud.ch = ch; gEl.classList.toggle('champ', ch); for (const u of gEl.querySelectorAll('.hu')) u.setAttribute('href', ch ? '#i-champ' : '#i-horse'); gEl.setAttribute('aria-label', ch ? 'Send the Champion' : 'Send the Paladin'); } }
   setHud('giantTxt', pct >= 100 ? 'SEND!' : pct + '%');
@@ -7278,7 +7279,7 @@ const GHUD = (() => {
   const GOLD = rgb('#f7c95b'), PSTAR = rgb('#ffd23f'), PHOT = rgb('#ffd9a0');
   function measure() { const key = VIEW.w + 'x' + VIEW.h + '@' + pixelRatio; if (box && boxAt === key) return true; const g = gameEl.getBoundingClientRect(), r = id => { const q = $(id).getBoundingClientRect(); return { x: q.left - g.left, y: q.top - g.top, w: $(id).offsetWidth, h: $(id).offsetHeight }; }; const fort = r('fortBar'); if (!fort.w) return false; const gi = $('giant'); box = { fort, nest: r('nestBar'), par: r('parPill'), giant: { x: gi.offsetLeft, y: gi.offsetTop, w: gi.offsetWidth }, crowdH: $('crowd').offsetHeight || 34 }; box.par.x = $('parPill').offsetLeft; box.par.y = $('parPill').offsetTop; boxAt = key; const sk = [box.fort.w, box.nest.w, box.par.h, box.crowdH, Math.max(2, pixelRatio)].join(); if (sk !== sheetOf) { sheetOf = sk; build(); } return true; } // (only a new width or sharpness needs a new sheet, not Chrome's toolbar sliding away)
   const back = t => { const s = 1.70158 + 1; return 1 + s * Math.pow(t - 1, 3) + 1.70158 * Math.pow(t - 1, 2); }; // an overshoot, like the page's own pops
-  function bar(k, b, fill, f, label) { const w = box[b].w, x = box[b].x, y = box[b].y, f2 = clamp(f, 0, 1); put(cells['tr' + k], x, y); if (f2 > 0) { const c = cells['fi' + k], p = c.pad / (c.w + c.pad * 2); put(c, x + 3, y + 3, 1, W1, 0, p + (1 - 2 * p) * f2 + (f2 >= 1 ? p : 0)); const hw = (w - 22) * f2; if (hw > 6) stretch(cells.hi, x + 3 + 8 * f2, y + 6, hw, .38); } put(cells['fr' + b], x, y); text('label', label, x + 3 + 10 + (w - 16) / 2, y + 15, .5); }
+  function bar(k, b, fill, f, label, ft = W1) { const w = box[b].w, x = box[b].x, y = box[b].y, f2 = clamp(f, 0, 1); put(cells['tr' + k], x, y); if (f2 > 0) { const c = cells['fi' + k], p = c.pad / (c.w + c.pad * 2); put(c, x + 3, y + 3, 1, W1, 0, p + (1 - 2 * p) * f2 + (f2 >= 1 ? p : 0)); const hw = (w - 22) * f2; if (hw > 6) stretch(cells.hi, x + 3 + 8 * f2, y + 6, hw, .38); } put(cells['fr' + b], x, y, 1, ft); text('label', label, x + 3 + 10 + (w - 16) / 2, y + 15, .5); }
   let lastT = 0;
   H.draw = () => {
     if (!ready) return; const now = performance.now() / 1000, dt = Math.min(.05, now - lastT); lastT = now; const cls = gameEl.classList, hid = cls.contains('overlay') || cls.contains('cinema'), want = !hid && !cls.contains('cine') && (G.mode === 'play' || G.mode === 'lost' || G.mode === 'won') ? 1 : 0;
@@ -7286,7 +7287,7 @@ const GHUD = (() => {
     n = 0; A = H.vis; tf(1, 0, 0);
     if (A > 0 && G.cfg) {
       const num = k => parseFloat(String(_hud[k] || 'scaleX(1)').slice(7)), wl = _hud.wlBar;
-      bar(wl ? 'wl' : 'fort', 'fort', 0, num('fortFilltransform'), _hud.fortTxt || ''); if (wl && WL.phase && !CAP.alive) { const b = box.fort, w = cells.white, u = w.u + w.du / 2, v = w.v + w.dv / 2, mx = b.x + b.w / 2; quad(mx - 1.4, b.y + 4, mx + 1.4, b.y + 4, mx + 1.4, b.y + 26, mx - 1.4, b.y + 26, u, v, u, v, W1, .9); } bar('nest', 'nest', 0, num('nestFilltransform'), _hud.nestTxt || '');
+      bar(wl ? 'wl' : 'fort', 'fort', 0, num('fortFilltransform'), _hud.fortTxt || ''); if (wl && WL.phase && !CAP.alive) { const b = box.fort, w = cells.white, u = w.u + w.du / 2, v = w.v + w.dv / 2, mx = b.x + b.w / 2; quad(mx - 1.4, b.y + 4, mx + 1.4, b.y + 4, mx + 1.4, b.y + 26, mx - 1.4, b.y + 26, u, v, u, v, W1, .9); } bar('nest', 'nest', 0, num('nestFilltransform'), _hud.nestTxt || '', _hud.low ? (q => [1, q, q])(.3 + .35 * (.5 + .5 * Math.sin(now * 12.6))) : W1);
       if (G.cfg.par) { const p = box.par, t = _hud.parTxt || '', left = G.cfg.par - (G.clk || 0), a = left <= 0 ? .55 : 1, tw = lay('par', t).w, w = 2 + 8 + lay('star', '★').w + 4 + tw + 10 + 2, tip = $('parPill').classList.contains('tipping'); if (tip) { H.tipT += dt; tf(1 + .09 * (1 - Math.cos(H.tipT * 6.28)), p.x + w / 2, p.y + p.h / 2); }
         stretch(cells.ppar, p.x, p.y, w, a); text('star', '★', p.x + 10, p.y + p.h / 2, 0, PSTAR, a); text('par', t, p.x + 14 + lay('star', '★').w, p.y + p.h / 2, 0, left > 0 && left < 8 ? PHOT : W1, a); tf(1, 0, 0); }
       if (!$('giant').classList.contains('last')) { const g = box.giant, p = clamp(_hud.gp || 0, 0, 100), rd = $('giant').classList.contains('ready'), cx = g.x + 41, cy = g.y + 41, hk = _hud.ch ? 'champ' : 'horse'; if (rd && !H.rdyAt) H.rdyAt = now; if (!rd) H.rdyAt = 0;
