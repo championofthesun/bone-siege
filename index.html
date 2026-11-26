@@ -5574,7 +5574,7 @@ function paGate(grp, g) { // the gate as a painted signpost standing on the page
   if (grp.userData.bar) grp.userData.bar.position.set(0, B[2] * H + .2, .04); // a +N gate's recharge bar sits along the foot of the board
 }
 function paReset() { // each round: gates lettered on signs, the castle and camp wall stood back up, the horde's bones left their own colour
-  for (const g of G.gates) (PAPER === 'b' ? pbGate : paGate)(g.mesh, g); for (const p of PB.castle) p.rotation.set(0, 0, 0); for (const c of PB.camp) c.rotation.set(0, 0, 0); FOE_TINT.setRGB(1, 1, 1);
+  for (const g of G.gates) (PAPER === 'b' ? pbGate : paGate)(g.mesh, g); PA.shredded = false; PS.done = false; if (PAPER === 'a' && isBoss(G.level)) ['shred', 'turn', 'pop', 'st1'].forEach(psLoad); if (PA.shreds) { for (const q of PA.shreds) PA.g.remove(q.s); PA.shreds = null; } for (const p of PB.castle) p.rotation.set(0, 0, 0); for (const c of PB.camp) c.rotation.set(0, 0, 0); FOE_TINT.setRGB(1, 1, 1);
   if (PA.castle) PA.castle.rotation.x = -.22; for (const c of PA.camp || []) c.rotation.x = -.32; PA.rec = 0; PA.fired = G.fired;
 }
 const _paV = new THREE.Vector3();
@@ -5584,15 +5584,16 @@ function paTick(dt) { // the paper pieces that move
   if (PB.barrel) PB.barrel.position.z = PA.rec * .16;
   if (PA.can && PAPER === 'a') { PA.can.scale.set(1 + PA.rec * .05, 1 - PA.rec * .09, 1).multiplyScalar(1 / CANNON_K); PA.can.rotation.x = -.5 - PA.rec * .12; }
   // Grimbald, a puppet with four poses
-  const fight = !!(WL.on && WL.b), b = fight ? WL.b : HOLD.i >= 0 ? HOLD.b : null, gb = PA.gb; if (gb) { const on = !!(b && b.g.visible); gb.g.visible = on; // fighting on the road, or watching from his gate
+  const fight = !!(WL.on && WL.b), b = fight ? WL.b : HOLD.i >= 0 ? HOLD.b : null, gb = PA.gb; if (gb) { const on = !!(b && b.g.visible) && !PA.shredded; gb.g.visible = on; // fighting on the road, or watching from his gate
     if (on) { const st = fight ? WL.state : HOLD.act ? (HOLD.k === 'strike' ? 'wind' : 'stun') : 'idle', pose = PAPER === 'b' ? PB_POSE(st) : st === 'wind' || st === 'smash' ? 'wind' : st === 'roar' ? 'roar' : st === 'stun' || st === 'kneel' || st === 'recover' || st === 'dead' ? 'daze' : 'idle';
-      for (const k in gb.m) gb.m[k].visible = k === pose; b.g.getWorldPosition(_paV); gb.g.position.copy(_paV);
+      for (const k in gb.m) gb.m[k].visible = k === pose; b.g.getWorldPosition(_paV); gb.g.position.copy(_paV); if (fight && st === 'dead' && PAPER === 'a' && WL.st > .8) { gb.g.updateMatrixWorld(true); paShred(gb); }
       const grow = fight ? b.g.scale.x / (WL_S * ((WL.def && WL.def.s) || 1)) : 1; gb.g.scale.set(1, 1 + (st === 'idle' ? Math.sin((G.t || 0) * 2.2) * .018 : 0), 1).multiplyScalar(grow || 1); // (he breathes)
       const walk = st === 'walk' || st === 'enter' || st === 'leap', tt = G.t || 0;
       gb.g.rotation.z = walk ? Math.sin(tt * 9) * .07 : st === 'roar' ? Math.sin(tt * 30) * .02 : 0; gb.g.position.y += walk ? Math.abs(Math.sin(tt * 9)) * .25 : 0;
-      gb.g.rotation.x = st === 'smash' ? .32 * Math.min(1, WL.st / .12) : st === 'dead' && fight ? -(Math.min(1, WL.st / .8) ** 2) * (Math.PI / 2 - .28) : 0; // the smash lunges; the dead fall over flat
+      gb.g.rotation.x = st === 'smash' ? .32 * Math.min(1, WL.st / .12) : st === 'dead' && fight && PAPER === 'b' ? -(Math.min(1, WL.st / .8) ** 2) * (Math.PI / 2 - .28) : 0; // the smash lunges; the dead fall over flat
       const f = 1 + Math.max(0, WL.flash || 0) * .9; for (const k in gb.m) gb.m[k].material.color.setScalar(f); } }
   // a win folds the castle down flat, like a pop-up page closing; a loss folds the camp wall over
+  paShredTick(dt);
   if (PAPER === 'b') { const won = G.boomed && (G.mode === 'won' || G.mode === 'resultWin'), ft = won ? G.winT - BOOM_AT : -1; // the castle's pieces fold flat one after another; a loss tips the camp wall over
     PB.castle.forEach((p, i) => { const k = ft > 0 ? Math.min(1, Math.max(0, (ft - i * .14) / .8)) : 0, e = k * k; p.rotation.x = p.userData.fold[0] * e * (Math.PI / 2 - .04); p.rotation.z = -p.userData.fold[1] * e * .55; });
     const lt = G.mode === 'lost' || G.mode === 'resultLose' ? (PA.lostT = (PA.lostT || 0) + dt) : (PA.lostT = 0), k = Math.min(1, lt / .9); for (const c of PB.camp) c.rotation.x = k * k * (Math.PI / 2); }
@@ -5796,6 +5797,116 @@ function pbGate(grp, g) { // the gate as a folded-paper signpost: card posts wit
     const fl = new THREE.Mesh(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(.62 * s, -.16, 0), new THREE.Vector3(0, -.34, 0)]), new THREE.MeshStandardMaterial({ color: C(s < 0 ? col : '#ffffff'), roughness: 1, side: THREE.DoubleSide }));
     fl.geometry.computeVertexNormals(); fl.position.set(x, 2.3, -.05); gp.add(fl); }
   if (grp.userData.bar) grp.userData.bar.position.set(0, Y - .1, .2);
+}
+const PS_DIM = { st1_back: 2.3988, st1_sekra: .6982, st1_front: 2.4768 };
+// ---- the tale between the worlds (look A under test): the beaten warlord tears away as paper on the wind; after the win the
+//      battlefield page itself turns over like a book's, and the next part of the story stands up off the new page as a pop-up,
+//      read aloud by the narrator ----
+const PS = { on: false, ready: false, done: false, t: 0, once: {} };
+const PSND = {};
+const PS_TEXT = ['And so the Bone Butcher knelt in the road. “At last,” he whispered… and the wind carried him away, like scraps of paper.', 'But the King’s road ran on, into the golden dunes, where Sek-Ra, the Sand Pharaoh, was waiting.'];
+function psLoad(k) { // a paper sound or the narrator, decoded once
+  if (PSND[k]) return PSND[k].p; const o = PSND[k] = {};
+  o.p = fetch('models/paper/a/snd/' + k + '.mp3').then(r => r.ok ? r.arrayBuffer() : null).then(a => a && new Promise(ok => { audio(); if (!actx) return ok(null); actx.decodeAudioData(a, b => { o.buf = b; ok(b); }, () => ok(null)); })).catch(() => null);
+  return o.p;
+}
+function psSnd(k, vol = 1) {
+  if (!actx || muted || !PSND[k] || !PSND[k].buf) return null;
+  const s = actx.createBufferSource(), g = actx.createGain(); s.buffer = PSND[k].buf; g.gain.value = vol; s.connect(g); g.connect(actx.destination); s.start(); return s;
+}
+function paShred(gb) { // he tears into strips of paper that the wind lifts away
+  const m = gb.m.daze; gb.g.updateMatrixWorld(true); const M = m.matrixWorld, w = m.geometry.parameters.width, h = m.geometry.parameters.height, N = 9, R = 4;
+  const q0 = new THREE.Quaternion(), s0 = new THREE.Vector3(), p0 = new THREE.Vector3(); M.decompose(p0, q0, s0); PA.shreds = [];
+  for (let i = 0; i < N; i++) for (let j = 0; j < R; j++) {
+    const sw = w / N, sh = h / R, g2 = new THREE.PlaneGeometry(sw, sh), uv = g2.attributes.uv; for (let k = 0; k < uv.count; k++) uv.setXY(k, (i + uv.getX(k)) / N, (j + uv.getY(k)) / R);
+    const mat = m.material.clone(); Object.assign(mat, { transparent: true, alphaTest: .02, depthWrite: false }); mat.color.setScalar(1);
+    const s = new THREE.Mesh(g2, mat); s.position.set(-w / 2 + sw * (i + .5), sh * (j + .5), 0).applyMatrix4(M); s.quaternion.copy(q0); s.scale.copy(s0); s.renderOrder = 3; PA.g.add(s);
+    const cx = (i + .5) / N - .5, cy = (j + .5) / R;
+    PA.shreds.push({ s, d: Math.abs(cx) * .35 + (1 - cy) * .25 + Math.random() * .1, v: new THREE.Vector3(cx * 6 + (Math.random() - .5) * 2.4, 1.6 + cy * 2 + Math.random() * 2, 1 + Math.random() * 1.6), r: new THREE.Vector3((Math.random() - .5) * 7, (Math.random() - .5) * 9, (Math.random() - .5) * 6), t: 0 });
+  }
+  gb.g.visible = false; PA.shredded = true; psLoad('shred').then(() => psSnd('shred', .75)); tone(330, .3, 'triangle', .05, .4);
+  burst(p0.x, p0.y + h * .5, p0.z, ['#fffaf0', '#f3e7cc', '#e8d9b8'], 34, 4, { vy: 4, life: 2, g: -1, sz: 1.6, kind: PK.PAPER });
+}
+function paShredTick(dt) {
+  if (!PA.shreds) return; let alive = 0;
+  for (const q of PA.shreds) { q.t += dt; const t = q.t - q.d; if (t < 0) { alive++; continue; }
+    q.v.y += dt * .9; q.v.x += Math.sin((q.t + q.d * 9) * 4) * dt * 3; // the wind lifts them, and they flutter
+    q.s.position.addScaledVector(q.v, dt); q.s.rotation.x += q.r.x * dt; q.s.rotation.y += q.r.y * dt; q.s.rotation.z += q.r.z * dt;
+    const f = 1 - Math.min(1, t / 2.6); q.s.material.opacity = Math.min(1, f * 1.6); q.s.scale.multiplyScalar(1 + dt * .3); if (f > 0) alive++; else q.s.visible = false; }
+  if (!alive) { for (const q of PA.shreds) { PA.g.remove(q.s); q.s.geometry.dispose(); q.s.material.dispose(); } PA.shreds = null; }
+}
+function paStory() { // true while the tale holds the results card back (Grimbald's level, the paper round only)
+  if (!PA.on || PAPER !== 'a' || G.sim || !isBoss(G.level) || PS.done) return false;
+  if (!PS.on) psStart(); return true;
+}
+function psStart() {
+  PS.on = true; PS.ready = false; PS.t = 0; PS.once = {}; clearToasts(); endCap(''); ['turn', 'pop', 'st1'].forEach(psLoad);
+  render(); const cv = renderer.domElement, snap = document.createElement('canvas'); snap.width = cv.width; snap.height = cv.height; snap.getContext('2d').drawImage(cv, 0, 0); // the battlefield as it is now
+  const sc = PS.scene = new THREE.Scene(), asp = cv.width / cv.height, fov = 40, H = 10, W = H * asp, D = H / 2 / Math.tan(fov * Math.PI / 360);
+  Object.assign(PS, { W, H, D }); sc.background = C('#3a2414');
+  const cam = PS.cam = new THREE.PerspectiveCamera(fov, asp, .1, 400); cam.position.set(0, D, 0); cam.up.set(0, 0, -1); cam.lookAt(0, 0, 0);
+  const flat = (w, h, mat, y, z = 0) => { const g = new THREE.PlaneGeometry(w, h); g.rotateX(-Math.PI / 2); const o = new THREE.Mesh(g, mat); o.position.set(0, y, z); sc.add(o); return o; };
+  const basic = o => new THREE.MeshBasicMaterial(Object.assign({ toneMapped: false }, o));
+  // the table, the stack of pages, and the new page underneath with its border
+  flat(300, 300, basic({ map: canvasTex(256, 256, (x, w, h) => { x.fillStyle = '#5b3a22'; x.fillRect(0, 0, w, h); for (let i = 0; i < 90; i++) { const y = Math.random() * h; x.strokeStyle = Math.random() < .5 ? 'rgba(40,22,10,.35)' : 'rgba(140,92,52,.25)'; x.lineWidth = 1 + Math.random() * 3; x.beginPath(); x.moveTo(0, y); for (let k = 1; k <= 8; k++) x.lineTo(k * w / 8, y + Math.sin(k + i) * 3); x.stroke(); } }, [40, 40]) }), -.06);
+  flat(W * 1.025, H * 1.015, basic({ color: C('#e6d6b6') }), -.03, .04);
+  const spread = canvasTex(512, Math.round(512 / asp), (x, w, h) => { x.fillStyle = '#f7ecd4'; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 3000; i++) { x.fillStyle = `rgba(${Math.random() < .5 ? '120,90,50' : '255,255,255'},${.03 + Math.random() * .05})`; x.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5); }
+    const g = x.createRadialGradient(w / 2, h / 2, Math.min(w, h) * .3, w / 2, h / 2, Math.max(w, h) * .75); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(120,80,30,.28)'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+    x.strokeStyle = '#c9963c'; x.lineWidth = 5; x.strokeRect(18, 18, w - 36, h - 36); x.lineWidth = 1.5; x.strokeRect(27, 27, w - 54, h - 54);
+    x.fillStyle = '#c9963c'; for (const [cx, cy] of [[18, 18], [w - 18, 18], [18, h - 18], [w - 18, h - 18]]) { x.beginPath(); x.arc(cx, cy, 9, 0, 7); x.fill(); } });
+  flat(W, H, basic({ map: spread }), -.01);
+  // the page that turns: the battlefield on its front, plain paper on its back
+  const snapT = new THREE.CanvasTexture(snap); snapT.encoding = THREE.sRGBEncoding;
+  const pg = new THREE.PlaneGeometry(W, H, 48, 1); pg.rotateX(-Math.PI / 2); const pos = pg.attributes.position, n = pos.count; PS.x0 = new Float32Array(n);
+  for (let i = 0; i < n; i++) PS.x0[i] = pos.getX(i); pg.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 3).fill(1), 3)); PS.pg = pg;
+  const backT = canvasTex(256, 256, (x, w, h) => { x.fillStyle = '#efe2c6'; x.fillRect(0, 0, w, h); for (let i = 0; i < 1500; i++) { x.fillStyle = `rgba(110,80,40,${.03 + Math.random() * .05})`; x.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5); } });
+  PS.front = new THREE.Mesh(pg, basic({ map: snapT, vertexColors: true, side: THREE.FrontSide })); PS.back = new THREE.Mesh(pg, basic({ map: backT, vertexColors: true, side: THREE.BackSide }));
+  PS.front.renderOrder = PS.back.renderOrder = 5; sc.add(PS.front, PS.back);
+  // the pop-up: each piece lies folded flat on the page, hinged at its foot, and springs up after the page has gone over
+  PS.layers = [];
+  for (const [nm, hk, zk, at, lean] of [['st1_back', .4, -.1, 1.25, .1], ['st1_sekra', .34, .02, 1.6, .16], ['st1_front', .26, .22, 1.95, .22]]) {
+    let h = H * hk, w = h * PS_DIM[nm]; if (w > W * 1.02) { w = W * 1.02; h = w / PS_DIM[nm]; }
+    const g = new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0), o = new THREE.Mesh(g, basic({ map: paTex(nm), alphaTest: .5, side: THREE.DoubleSide }));
+    o.position.set(0, .004 * (PS.layers.length + 1), H * zk); o.rotation.x = -Math.PI / 2; sc.add(o);
+    const sh = flat(w * 1.05, h * .45, basic({ map: blobTex, color: C('#5a3818'), transparent: true, opacity: 0, depthWrite: false }), .003, H * zk - h * .16); sh.renderOrder = 1; // its shadow on the page as it stands
+    PS.layers.push({ o, sh, at, lean, sway: nm === 'st1_sekra' });
+  }
+  // the words
+  const cap = PS.cap = document.createElement('div'); cap.id = 'psCap';
+  cap.style.cssText = 'position:absolute;left:5%;right:5%;bottom:calc(env(safe-area-inset-bottom,0px) + 5%);z-index:30;padding:14px 18px 12px;border-radius:14px;background:rgba(251,244,226,.96);border:2px solid #c9963c;box-shadow:0 6px 18px rgba(40,20,5,.45);font:italic 17px/1.35 Georgia,"Times New Roman",serif;color:#3a2412;opacity:0;transition:opacity .5s;pointer-events:none';
+  cap.innerHTML = '<div class="t" style="min-height:3.9em"></div><div class="n" style="margin-top:6px;font:13px Georgia,serif;color:#9a7a4a;text-align:right;opacity:0;transition:opacity .4s">Tap to continue</div>'; gameEl.appendChild(cap);
+  PS.tap = () => { if (!PS.on || PS.t < 2.6) return; if (PS.shown < 1) PS.full = true; else psEnd(); };
+  window.addEventListener('pointerdown', PS.tap);
+  PS.ready = true;
+}
+function psTick(dt) {
+  if (!PS.ready) return; const P = PS, t = P.t += dt, once = (k, at) => !P.once[k] && t >= at && (P.once[k] = 1), W = P.W, H = P.H, D = P.D;
+  if (once('turn', .3)) psSnd('turn', .8);
+  // the page turns over the spine on the left, its free edge lagging behind, so it curls like paper
+  const p = clamp((t - .3) / 1.35, 0, 1), e = p * p * (3 - 2 * p), pos = P.pg.attributes.position, col = P.pg.attributes.color, cols = 49, X = new Float32Array(cols), Y = new Float32Array(cols), TH = new Float32Array(cols);
+  for (let c = 0; c < cols; c++) { const u = c / (cols - 1), k = clamp(e * 1.6 - (1 - u) * .6, 0, 1); TH[c] = Math.PI * k * k * (3 - 2 * k); }
+  for (let c = 1; c < cols; c++) { const a = (TH[c] + TH[c - 1]) / 2, du = W / (cols - 1); X[c] = X[c - 1] + Math.cos(a) * du; Y[c] = Y[c - 1] + Math.sin(a) * du; }
+  for (let i = 0; i < pos.count; i++) { const c = Math.round((P.x0[i] + W / 2) / W * (cols - 1)), sh = .72 + .28 * Math.abs(Math.cos(TH[c])); pos.setX(i, -W / 2 + X[c]); pos.setY(i, .02 + Y[c]); col.setXYZ(i, sh, sh, sh); }
+  pos.needsUpdate = col.needsUpdate = true; P.front.visible = P.back.visible = p < 1;
+  // then the reader leans in: from straight above to a raised eye over the pop-up
+  const ck = clamp((t - 1.35) / 1.5, 0, 1), ce = ck * ck * (3 - 2 * ck);
+  P.cam.position.set(0, D * (1 - .5 * ce), D * .86 * ce); P.cam.up.set(0, ce, -(1 - ce)).normalize(); P.cam.lookAt(0, H * .07 * ce, H * .12 * ce);
+  if (once('pop', 1.2)) psSnd('pop', .7);
+  for (const L of P.layers) { const k = clamp((t - L.at) / .6, 0, 1), c1 = 1.9, y = k <= 0 ? 0 : 1 + (c1 + 1) * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2);
+    L.o.rotation.x = -Math.PI / 2 + (Math.PI / 2 - L.lean) * y; L.sh.material.opacity = .42 * Math.min(1, Math.max(0, y)); if (L.sway && k >= 1) L.o.rotation.z = Math.sin((t - L.at) * 1.7) * .035; }
+  // the narrator reads; the words write themselves in time with him
+  if (P.t0 == null && t >= 2.4 && (PSND.st1 && PSND.st1.buf || t > 6 || muted || !actx) && once('read', 2.4)) { /* it waits for the narrator to be in hand */ P.cap.style.opacity = '1'; P.src = psSnd('st1', 1); P.dur = P.src && PSND.st1.buf ? PSND.st1.buf.duration : 11; P.t0 = t; }
+  if (P.t0 != null) { const all = PS_TEXT.join(' '), sh = P.full ? 1 : clamp((t - P.t0) / (P.dur * .92), 0, 1), nch = Math.round(all.length * sh);
+    if (nch !== P.nch) { P.nch = nch; P.cap.firstChild.textContent = all.slice(0, nch); } P.shown = sh;
+    if (sh >= 1 && P.cap.lastChild.style.opacity !== '1') P.cap.lastChild.style.opacity = '1';
+    if (t > P.t0 + P.dur + 6) psEnd(); } // (it moves on by itself in the end)
+}
+function psRender() { renderer.setRenderTarget(null); renderer.setScissorTest(false); const s = renderer.getSize(new THREE.Vector2()); renderer.setViewport(0, 0, s.x, s.y); renderer.render(PS.scene, PS.cam); }
+function psEnd() {
+  if (!PS.on) return; window.removeEventListener('pointerdown', PS.tap); if (PS.src) try { PS.src.stop(); } catch (e) {}
+  if (PS.cap) PS.cap.remove(); PS.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map && !Object.values(PA.tex).includes(o.material.map)) o.material.map.dispose(); o.material.dispose(); } });
+  Object.assign(PS, { on: false, ready: false, done: true, scene: null, cam: null, layers: null, src: null, t0: null, full: false, shown: 0, nch: -1 });
 }
 function setupLevel(n) {
   clipLevel(n);
@@ -6517,15 +6628,15 @@ function slayWarlord() {
   if (kingDies) G.fortHp = 0; // (on the Endless Road his walls fall with him)
   else if (!thenKing) G.fortHp = Math.max(1, WL.wardHp - G.fortMax * WL_FALL);
   G.fortFlash = 1; G.shake = Math.max(G.shake, 1.2); buzz([60, 30, 140]);
-  burst(WL.x, 2.5, WL.z, [WL.def.col, FOE_FX, '#ffffff', FOE], 70, 10, { vy: 9, life: 1.2, g: 13, sz: 2.4, kind: PK.ROCK });
+  if (!(PA.on && PAPER === 'a')) burst(WL.x, 2.5, WL.z, [WL.def.col, FOE_FX, '#ffffff', FOE], 70, 10, { vy: 9, life: 1.2, g: 13, sz: 2.4, kind: PK.ROCK });
   burst(WL.x, 3, WL.z, ['#ffc62b', '#ffd84a'], 40, 6, { vy: 10, life: 1.6, g: 16, sz: 2, kind: PK.COIN });
   splat(WL.x, WL.z, FOE, 4.5); // (the banner says he is slain; a second label sat on top of the castle's damage number)
   burst(0, 3, FORT_Z + .5, ['#e2d6c4', '#b9ad9c', WL.def.col], 40, 9, { vy: 7, life: 1.2, g: 15, sz: 2.2, kind: PK.ROCK }); // and the castle walls crack
-  const film = !thenKing && !kingDies && !WL.shade && deathScene();
+  const film = !thenKing && !kingDies && !WL.shade && !(PA.on && PAPER === 'a') && deathScene();
   if (!thenKing && !kingDies && !film) popText('−' + Math.round(G.fortMax * WL_FALL), 0, 4.5, FORT_Z + 1.5, '#ffd23f');
   if (!G.sim && thenKing) { if (WL.queue[0] === 4) { toastMsg('THE SHADES ARE GONE', 'Now the Bone King himself comes for you', { now: true }); tone(55, 1.4, 'sawtooth', .09, .5); } else tone(220, .5, 'sine', .08, .5); }
   else if (!G.sim && kingDies) { G.kingFell = true; [392, 523, 659, 784, 1046].forEach((f, k) => setTimeout(() => tone(f, .3, 'triangle', .14), k * 120)); }
-  else if (!G.sim) { const L = WALL_SAY[WARLORDS.indexOf(WL.def)]; if (L && !WL.lap && !film) { const f = popText(L.last, WL.x, 5.6, WL.z, '#ffffff'); if (f) f.hold = 1.6; } toastMsg(wlName() + ' SLAIN!', 'The shield is down. Finish the ' + TGT() + '!', { now: true }); smp('shieldDown', .36, 0); tone(60, .9, 'sine', .3, .3); }
+  else if (!G.sim) { const L = WALL_SAY[WARLORDS.indexOf(WL.def)]; if (L && !WL.lap && !film) { const f = popText(L.last, WL.x, 5.6, WL.z, '#ffffff'); if (f) f.hold = 1.6; } { const slainT = () => { if (G.mode === 'play' && !PS.on) toastMsg(wlName() + ' SLAIN!', 'The shield is down. Finish the ' + TGT() + '!', { now: true }); }; if (PA.on && PAPER === 'a') setTimeout(slainT, 2300); else slainT(); } smp('shieldDown', .36, 0); tone(60, .9, 'sine', .3, .3); }
 }
 function beginAttack() {
   if (WL.phase === 2 && (WL.n2 = (WL.n2 || 0) + 1) % 2 === 1 && !(p2Who() === 1 && P2.tomb.length) && !(p2Who() === 3 && P2.fis) && p2Who() < 5) return beginAttack2(); WL.a2 = false;
@@ -7161,7 +7272,7 @@ function update(dt) {
       if (fort.position.y > -3.6 && rand() < dt * 34) burst((rand() - .5) * 11, 1 + rand() * 2, FORT_Z - .5 + rand() * 2, rand() < .6 ? '#e2d6c4' : '#b9ad9c', 2, 5, { vy: 5, life: 1, g: 16, sz: 1.4, kind: PK.ROCK });
       if (fort.position.y > -3.4 && rand() < dt * 2.4) smoke((rand() - .5) * 10, .8, FORT_Z - 1 + rand() * 2, '#a89cb4', 2 + rand() * 1.2, 1.1);
     }
-    if (!DIR.s && G.endT <= 0 && !startLook()) showResult(true);
+    if (!DIR.s && G.endT <= 0 && !paStory() && !startLook()) showResult(true);
   } else if (G.mode === 'lost') { G.endT -= dt; if (G.endT <= 0) showResult(false); }
   if (celebrating && G.boomed && !DIR.s) { G.fwT -= dt; if (G.fwT <= 0) { firework(); G.fwT = G.mode === 'won' ? .18 + rand() * .2 : .5 + rand() * .5; } }
   if (G.boomed) { // shock rings, flash and flying pieces
@@ -7283,6 +7394,7 @@ const _hud = {};
 const setHud = (id, v) => { if (_hud[id] !== v) { _hud[id] = v; if (!(GHUD && GHUD.own[id])) $(id).textContent = v; } };
 const setCss = (id, p, v) => { const k = id + p; if (_hud[k] !== v) { _hud[k] = v; if (!GHUD) $(id).style[p] = v; } };
 function render() {
+  if (PS.ready) return psRender(); // the storybook draws itself while the tale is told
   const an0 = ants.n, bn0 = beetles.n, sn0 = SH.n, en0 = EA.n; if (DIR.s) { if (DIR.s.noAnts) ants.n = SH.n = EA.n = 0; if (DIR.s.noFoes) beetles.n = 0; }
   drawPool(ants, antMesh, crownMesh, WHITE); drawPool(beetles, beetleMesh, helmetMesh, STAG_TINT); drawBlobs(); drawDecals(); drawShots(); drawFoeExtras(); ants.n = an0; beetles.n = bn0; SH.n = sn0; EA.n = en0;
   const pc = [0, 0, 0, 0, 0, 0];
@@ -7799,7 +7911,7 @@ function maTick(dt) { // the world's air over the painting (a 2D canvas: a few d
 }
 const maShowing = () => MART.on && G.mode === 'menu' && $('menu').classList.contains('on') && !DIR.s && !G.cine && !FILM.on && !G.fin;
 function showMenu() {
-  if (PA.on) paperScene(false);
+  if (PS.on) psEnd(); if (PA.on) paperScene(false);
   storyWarm();
   if (!G.menuIntroDone) { G.menuIntroDone = true; $('menu').classList.add('intro'); setTimeout(() => $('menu').classList.remove('intro'), 1500); } // the first open of a session: the logo drops in, the rest rises after it
   closeMore(); openUp(false); if (G.palCardDue) { G.palCardDue = false; setTimeout(showPalUnlock, 700); } // the Paladin card held back while a battle ran
@@ -8236,7 +8348,7 @@ const ease01 = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
 const winSpeed = w => w < .22 ? .28 + .72 * ease01(w / .22) : w < BOOM_AT ? 1 - .6 * ease01((w - BOOM_AT + .07) / .07) : .4 + .6 * ease01((w - BOOM_AT) / .22);
 function frame(now) {
   requestAnimationFrame(frame); if (PA.on) paHide();
-  const raw = (now - last) / 1000; let dt = Math.min(0.05, raw); last = now; adaptResolution(raw); if (PA.on) paTick(dt);
+  const raw = (now - last) / 1000; let dt = Math.min(0.05, raw); last = now; adaptResolution(raw); if (PA.on) paTick(dt); if (PS.on) psTick(Math.min(.1, raw));
   if (LEAN) { const q = raw * 60, n = Math.round(q); if (n >= 1 && n <= 3 && Math.abs(q - n) < .3) dt = n / 60; } // the phone's clock is only good to a millisecond: move by whole sixtieths, so nothing shivers
   if (LEAN && (G.mode === 'menu' || G.mode === 'resultWin' || G.mode === 'resultLose') && !G.cine && !G.end && !DIR.s && DIR.fade < .01) { if ((G.halfN = !G.halfN)) { G.halfDt = dt; return; } dt += G.halfDt || 0; } G.halfDt = 0;
   if (keys.ArrowLeft) G.lx = clamp(G.lx - dt * 9, -LANE + .6, LANE - .6);
