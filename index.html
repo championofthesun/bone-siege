@@ -4837,7 +4837,7 @@ const P = { n: 0, x: new Float32Array(PCAP), y: new Float32Array(PCAP), z: new F
 for (let i = 0; i < PCAP; i++) P.col.push(new THREE.Color());
 // o.kind picks the look; without it, slow floaty bursts are sparks and everything else is goo droplets
 function burst(x, y, z, color, n, speed = 4, o) {
-  if (PA.on && o && o.kind === PK.ROCK) color = PAPER === 'b' ? ['#e9dcbc', '#d8453a', '#cdb994', '#ffffff'] : ['#fbf3dc', '#efe2c4', '#e2d2b0']; // in the storybook the rubble is scraps of paper
+  if (PA.on && o && o.kind === PK.ROCK) color = PAPER === 'b' ? ['#e9dcbc', '#d8453a', '#cdb994', '#ffffff'] : ['#ffffff', '#fdfaf2', '#f3ecdc']; // in the storybook the rubble is scraps of paper
   if (G.lowQ && n > 1) n = Math.ceil(n * .5);
   const kind = o && o.kind != null ? o.kind : o && o.g < 10 ? PK.SPARK : PK.ROCK; // hits throw bouncing chips (bone, armour) rather than goo
   if (P.n > 650) n = Math.min(n, 1);
@@ -5535,6 +5535,7 @@ function wallX(x, px, z, r) {
 }
 // ---- look A under test (?paper=a): the land is a painted open book on a table, everything standing is a cut-out card ----
 const PA_BOARD = { gold: [.189, .811, .322, .716], blue: [.188, .812, .325, .715], red: [.189, .812, .327, .716], purple: [.189, .813, .327, .715] }; // each sign's empty board: x from, x to, y from, y to (y up from the foot)
+const PAGE_W = 2048, PAGE_H = 3065;
 const PA_GB_A = { idle: [1.0383, 732], wind: [.7242, 794], roar: [1.2185, 714], daze: [1.0653, 704] }; // Grimbald's poses: width / height, and height in pixels at one shared scale
 const PA_DIM_A = { cannon: .9125, puff: 1.0987, star: 1.0802, sign_gold: 1.3559, sign_blue: 1.3559, sign_red: 1.3559, sign_purple: 1.3531, oak: .9746, pines: .8649, bush: 1.3714, cottage: 1.1532, knight: .7901, skullrock: 1.2632, crownrock: 1.0909, lamp: .4555, bannerp: .5833, bannerb: .6034, fence: 1.8551, torch: .4097, castle: 1.5366, camp: 3.4115, back: 4.2227 }; // width / height of each card
 const PB_DIM = { statue: .6146, skullrock: 1.0756, crownskull: .8438, crystals: .9167, cottage: 1.219, barricade: 1.113, fence: 1.2973, torch: .4688, bannerp: .6172, bannerb: .651, bush: 1.0696, rockpile: 1.4328 };
@@ -5565,7 +5566,7 @@ function paGate(grp, g) { // the gate as a painted signpost standing on the page
   const p = grp.userData.panel; if (!p || p.userData.pa || g.shift) return; const kind = g.arm != null ? 'blue' : g.k < 1 && !g.add ? 'red' : 'gold', img = PA.img[kind]; if (!img) return;
   for (const o of grp.children) if (o !== p && o !== grp.userData.ice) o.visible = false; // the 3D posts, bands, pennants, glint and glow
   const A = PA_DIM['sign_' + kind], B = PA_BOARD[kind], W = g.w + .75, H = W / A;
-  const tex = canvasTex(640, Math.round(640 / A), (x, w, h) => { x.drawImage(img, 0, 0, w, h); paLabel(x, g, B[0] * w, (1 - B[3]) * h, (B[1] - B[0]) * w, (B[3] - B[2]) * h); });
+  const tex = canvasTex(640, Math.round(640 / A), (x, w, h) => { x.drawImage(img, 0, 0, w, h); paLabel(x, g, B[0] * w, (1 - B[3]) * h, (B[1] - B[0]) * w, (B[3] - B[2]) * h, { stroke: '#4a2810', fill: '#ffffff', lw: .24 }); });
   p.geometry.dispose(); p.geometry = new THREE.PlaneGeometry(W, H).translate(0, H / 2, 0); if (p.material.map) p.material.map.dispose();
   Object.assign(p.material, { map: tex, transparent: false, alphaTest: .5, depthWrite: true }); p.material.needsUpdate = true; p.position.set(0, 0, 0); p.rotation.set(-.38, 0, 0); p.renderOrder = 0; p.userData.pa = true;
   if (grp.userData.bar) grp.userData.bar.position.set(0, B[2] * H + .2, .04); // a +N gate's recharge bar sits along the foot of the board
@@ -5611,7 +5612,7 @@ function paBuild() {
   PA.sh = new THREE.MeshBasicMaterial({ map: blobTex, color: C('#5a3818'), transparent: true, opacity: .55, depthWrite: false, toneMapped: false, fog: false });
   const wood = canvasTex(256, 256, (x, w, h) => { x.fillStyle = '#5b3a22'; x.fillRect(0, 0, w, h); for (let i = 0; i < 90; i++) { const y = Math.random() * h, v = Math.random(); x.strokeStyle = v < .5 ? 'rgba(40,22,10,.35)' : 'rgba(140,92,52,.25)'; x.lineWidth = 1 + Math.random() * 3; x.beginPath(); x.moveTo(0, y); for (let k = 1; k <= 8; k++) x.lineTo(k * w / 8, y + Math.sin(k + i) * 3); x.stroke(); } }, [6, 6]);
   const table = new THREE.Mesh(new THREE.PlaneGeometry(240, 240), new THREE.MeshBasicMaterial({ map: wood, toneMapped: false, fog: false })); table.rotation.x = -Math.PI / 2; table.position.set(0, -.08, -40); g.add(table);
-  const PW = 33, PH = PW * 1542 / 1024, PZ = -50 + PH / 2; // the painted road (0.314 of the page) is the game's road; the painted river runs just in front of the castle, a moat
+  const PW = 33, PH = PW * PAGE_H / PAGE_W, PZ = -50 + PH / 2; // the painted road (0.314 of the page) is the game's road; the painted river runs just in front of the castle, a moat
   const under = new THREE.Mesh(new THREE.PlaneGeometry(PW + 1.2, PH + .8), new THREE.MeshBasicMaterial({ color: C('#e9dcc0'), toneMapped: false, fog: false })); under.rotation.x = -Math.PI / 2; under.position.set(0, -.04, PZ + .25); g.add(under); // the stack of pages under the top one
   const page = new THREE.Mesh(new THREE.PlaneGeometry(PW, PH), new THREE.MeshBasicMaterial({ map: paTex('page'), toneMapped: false, fog: false })); page.rotation.x = -Math.PI / 2; page.position.set(0, -.01, PZ); g.add(page);
   { const sky = canvasTex(512, 384, (x, w, h) => { const q = x.createLinearGradient(0, 0, 0, h); q.addColorStop(0, '#a9cbe6'); q.addColorStop(.6, '#d9e8ef'); q.addColorStop(1, '#f4ead2'); x.fillStyle = q; x.fillRect(0, 0, w, h);
@@ -5622,7 +5623,7 @@ function paBuild() {
     const sp = new THREE.Mesh(new THREE.PlaneGeometry(60, 40).translate(0, 20, 0), new THREE.MeshBasicMaterial({ map: sky, toneMapped: false, fog: false })); sp.position.set(0, -.05, -54); sp.rotation.x = -.06; g.add(sp); }
   paCard('back', 15, 0, -51, { lean: .12, bare: true });
   PA.castle = paCard('castle', 10.2, 0, FORT_Z - 7, { lean: .22 }); // behind Grimbald: he guards his gate
-  PA.camp = [paCard('camp', 5.6, -6.8, -5.4, { lean: .32, u: [0, .47] }), paCard('camp', 5.6, 6.8, -5.4, { lean: .32, u: [.53, 1] })]; // the camp wall's two halves either side of the cannon, where the 3D wall stood
+  PA.camp = [paCard('camp', 4.1, -6.9, -3.7, { lean: .32, u: [0, .47] }), paCard('camp', 4.1, 6.9, -3.7, { lean: .32, u: [.53, 1] })]; // the camp wall's two halves either side of the cannon, where the 3D wall stood
   for (const [n, h, x, z, o] of [
     ['pines', 5.6, -12.5, -44], ['oak', 4.4, -10.5, -33], ['bannerp', 4.2, -7.6, -30, { bare: true }], ['bush', 2.2, -13, -28], ['knight', 4, -9.4, -25],
     ['lamp', 3, -7.2, -19, { bare: true }], ['cottage', 4, -11.5, -18], ['fence', 1.8, -13, -12.5], ['oak', 3.8, -9.6, -10.5, { flip: true }], ['bannerb', 4, -7.4, -6.5, { bare: true }],
@@ -5652,8 +5653,8 @@ function paperScene(on) { // the storybook level in place of the 3D land, castle
   for (const p of puffs) { p.s.material.map = on ? (PAPER === 'b' ? PB.puff : paTex('puff')) : smokeTex; p.s.material.needsUpdate = true; } // paper smoke
   Object.assign(muzzleFlash.material, on ? { map: PAPER === 'b' ? PB.star : paTex('star'), blending: THREE.NormalBlending } : { map: glowTex, blending: THREE.AdditiveBlending }); muzzleFlash.material.color.set(on ? '#ffffff' : '#ffc860'); muzzleFlash.material.needsUpdate = true;
   if (on) PA.ft = FOE_TINT.clone(); else if (PA.ft) FOE_TINT.copy(PA.ft);
-  if (on) { PA.was = { bg: scene.background, far: scene.fog.far, near: scene.fog.near }; scene.background = C(PAPER === 'b' ? '#8cc6f2' : '#3b2414'); scene.fog.near = 900; scene.fog.far = 1000; paHide(); }
-  else { scene.background = PA.was.bg; scene.fog.near = PA.was.near; scene.fog.far = PA.was.far; PA.was = null; world.visible = campWall.visible = hoard.visible = nest.visible = true; for (const o of fort.children) if (!paKeep(o)) o.visible = true; for (const b of WL.built) if (b && b.g) for (const c of b.g.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } for (const c of launcher.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } PA.gb.g.visible = false; }
+  if (on) { PA.was = { bg: scene.background, far: scene.fog.far, near: scene.fog.near, wc: WCAM.clone(), wl: WLOOK.clone() }; if (PAPER === 'a') { WCAM.set(0, 17, -21); WLOOK.set(0, 2.2, -44.5); }; scene.background = C(PAPER === 'b' ? '#8cc6f2' : '#3b2414'); scene.fog.near = 900; scene.fog.far = 1000; paHide(); }
+  else { scene.background = PA.was.bg; WCAM.copy(PA.was.wc); WLOOK.copy(PA.was.wl); scene.fog.near = PA.was.near; scene.fog.far = PA.was.far; PA.was = null; world.visible = campWall.visible = hoard.visible = nest.visible = true; for (const o of fort.children) if (!paKeep(o)) o.visible = true; for (const b of WL.built) if (b && b.g) for (const c of b.g.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } for (const c of launcher.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } PA.gb.g.visible = false; }
 }
 // ---- look B under test (?paper=b): a papercraft diorama. The land, road, walls, castle, camp wall, trees, rocks, river, hills, gates
 //      and cannon are real folded-paper models (matte card, flat-shaded so every fold shows, each sheet with its own grain); the army,
@@ -7427,6 +7428,7 @@ function paperGrain() { // paper fibre: speckles and short fibres round mid grey
     x.lineWidth = 1; for (let i = 0; i < 260; i++) { const v = Math.random() < .5 ? 104 : 156; x.strokeStyle = `rgba(${v},${v},${v},.55)`; const px = Math.random() * w, py = Math.random() * h, a = Math.random() * 6.28, L = 4 + Math.random() * 12; x.beginPath(); x.moveTo(px, py); x.lineTo(px + Math.cos(a) * L, py + Math.sin(a) * L); x.stroke(); } }, [1, 1]);
   tx.wrapS = tx.wrapT = THREE.RepeatWrapping; return tx;
 }
+const SAT_A = '1.18', LIFT_A = '1.05';
 const POST = (() => {
   const gl2 = renderer.capabilities.isWebGL2, msaa = gl2 && !!THREE.WebGLMultisampleRenderTarget; // 4x multisampling on every WebGL2 device: on phones (tile-based GPUs, Apple especially) MSAA is nearly free and is how mobile games keep edges clean
   const rt = new (msaa ? THREE.WebGLMultisampleRenderTarget : THREE.WebGLRenderTarget)(4, 4, { format: THREE.RGBAFormat, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: false, depthBuffer: true, stencilBuffer: false });
@@ -7472,9 +7474,10 @@ const POST = (() => {
         if (uPaper > 1.5) col = mix(col, floor(col * 4.0 + .5) / 4.0, .4);
         float pl = dot(col, W), keep = 1.0 - smoothstep(.62, .82, dot(texture2D(uMap, q).rgb, W)); // paper-white stays clean of ink
         if (uPaper < 1.5) { // a: the pop-up storybook
-          col = mix(col, vec3(.22, .13, .07), ed * .4 * keep);
-          col *= .93 + .1 * gr;
-          col *= mix(1.0, .86, smoothstep(.5, .8, length((vUv - .5) * vec2(1.0, .8))));
+          col = mix(col, vec3(.22, .13, .07), ed * .28 * keep);
+          col = mix(vec3(dot(col, W)), col, ${SAT_A}) * ${LIFT_A} + .015; // brighter and more colourful, as a mobile game should be
+          col *= .97 + .05 * gr;
+          col *= mix(1.0, .94, smoothstep(.55, .85, length((vUv - .5) * vec2(1.0, .8))));
         } else { // b: papercraft
           col = mix(vec3(pl), col, 1.32); col += vec3(clamp((ly - lx) * .7, -.1, .1)); // a cut-paper bevel: lit on one side, shaded on the other
           col = mix(col, col * .5, ed * .6 * keep);
