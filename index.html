@@ -96,7 +96,17 @@ svg.ico.sm{width:18px;height:18px}
 .up.locked em{background:rgba(255,255,255,.14);box-shadow:none;width:34px;height:34px}
 .up.locked em svg{width:18px;height:18px}
 .up.locked span{color:rgba(255,255,255,.8)}
-#menu{padding-bottom:0}
+#menu{padding-bottom:0;isolation:isolate}
+#menuArt{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none;opacity:0;transition:opacity .5s}
+#menuArt.on{opacity:1}
+#menuArt{background:var(--sky)}
+#maImg{position:absolute;left:0;top:17%;width:100%;height:100%;object-fit:cover;object-position:50% 0;-webkit-mask-image:linear-gradient(transparent,#000 9%);mask-image:linear-gradient(transparent,#000 9%);transform-origin:50% 60%;animation:maDrift 36s ease-in-out infinite alternate}
+.ma-glow{position:absolute;left:50%;top:74%;width:130%;aspect-ratio:1;translate:-50% -50%;border-radius:50%;background:radial-gradient(circle,var(--gc),transparent 58%);mix-blend-mode:screen;animation:maGlow 2.8s ease-in-out infinite alternate}
+#maFx{position:absolute;inset:0;width:100%;height:100%}
+#menuArt::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,8,30,.4),rgba(10,8,30,0) 26%,rgba(10,8,30,0) 64%,rgba(8,10,28,.78) 93%)}
+@keyframes maDrift{from{transform:scale(1)}to{transform:scale(1.07)}}
+@keyframes maGlow{from{opacity:.2}to{opacity:.55}}
+@media (prefers-reduced-motion:reduce){#maImg,.ma-glow{animation:none}}
 .uptoggle{margin-top:20px;display:flex;align-items:center;gap:8px;font-family:var(--disp);font-size:18px;letter-spacing:.5px;color:#fff;background:rgba(10,18,44,.66);border:2px solid rgba(255,255,255,.85);border-radius:999px;padding:7px 16px 7px 12px;box-shadow:0 3px 0 rgba(8,14,40,.4);cursor:pointer}
 .uptoggle svg{width:22px;height:22px}.uptoggle i{font-style:normal;font-size:14px;opacity:.85;transition:transform .2s}
 .uptoggle span{min-width:24px;height:24px;border-radius:12px;background:var(--gold);color:var(--navy);font-size:15px;display:grid;place-items:center;padding:0 7px;animation:rpulse 1.4s ease-in-out infinite}.uptoggle span:empty{display:none}
@@ -577,6 +587,7 @@ svg.ico.sm{width:18px;height:18px}
   </div>
 
   <div class="screen" id="menu">
+    <div id="menuArt" aria-hidden="true"><img id="maImg" alt="" draggable="false"><div class="ma-glow"></div><canvas id="maFx"></canvas></div>
     <span class="pill wallet"><svg class="ico sm"><use href="#i-coin"/></svg><span id="menuCoinN">0</span></span>
     <svg class="logo" viewBox="0 -50 340 296" role="img" aria-label="Bone Siege">
       <defs>
@@ -7462,13 +7473,41 @@ function renderUpgrades() {
   $('trail').innerHTML = trail;
   setHud('coinN', save.coins); setHud('menuCoinN', G.walletShown != null ? G.walletShown : save.coins);
 }
+// ---- the menu's painting: one per world, with its own air ----
+const MART_FX = [{ k: 'fly', g: 'rgba(255,150,70,.42)', s: '#432464' }, { k: 'sand', g: 'rgba(255,200,90,.38)', s: '#542951' }, { k: 'snow', g: 'rgba(120,220,255,.32)', s: '#081958' }, { k: 'ember', g: 'rgba(255,110,30,.5)', s: '#3f0c20' }, { k: 'mote', g: 'rgba(190,90,255,.42)', s: '#281e76' }]; // (s: the colour at the top of each painting's sky, which fills the band above it)
+const MART = { on: false, w: -1, P: [], cw: 0, ch: 0, bolt: 0, nextBolt: 6 };
+const maCalm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+function menuArt(w) {
+  w = clamp(w | 0, 0, 4); if (MART.w === w) return; const el = $('menuArt'), im = $('maImg'); MART.w = w; MART.on = false; el.classList.remove('on'); el.style.setProperty('--gc', MART_FX[w].g); el.style.setProperty('--sky', MART_FX[w].s); MART.P = [];
+  im.onload = () => { if (MART.w !== w) return; MART.on = true; el.classList.add('on'); }; im.src = 'models/menu/m' + w + '.webp';
+}
+function maSeed(W, H) {
+  const k = MART_FX[MART.w].k, n = { fly: 22, sand: 42, snow: 64, ember: 36, mote: 28 }[k], P = MART.P = [];
+  for (let i = 0; i < n; i++) P.push({ x: Math.random() * W, y: Math.random() * H, r: .8 + Math.random() * 2.2, v: .4 + Math.random(), ph: Math.random() * 6.28, a: .4 + Math.random() * .6 });
+}
+function maTick(dt) { // the world's air over the painting (a 2D canvas: a few dozen dots)
+  const cv = $('maFx'), W = cv.clientWidth, H = cv.clientHeight; if (!W || maCalm()) return; const dpr = Math.min(2, devicePixelRatio || 1);
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr) || !MART.P.length) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); maSeed(W, H); }
+  const c = cv.getContext('2d'), k = MART_FX[MART.w].k, T = performance.now() / 1000; c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
+  for (const p of MART.P) {
+    if (k === 'snow') { p.y += (14 + 26 * p.v) * dt; p.x += Math.sin(T * .8 + p.ph) * 10 * dt; if (p.y > H + 4) { p.y = -4; p.x = Math.random() * W; } c.fillStyle = `rgba(255,255,255,${.55 * p.a})`; c.beginPath(); c.arc(p.x, p.y, p.r, 0, 6.283); c.fill(); }
+    else if (k === 'sand') { p.x -= (60 + 90 * p.v) * dt; p.y += Math.sin(T + p.ph) * 4 * dt; if (p.x < -40) { p.x = W + 40; p.y = H * (.45 + Math.random() * .55); } c.strokeStyle = `rgba(255,214,150,${.28 * p.a})`; c.lineWidth = p.r * .8; c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x + 12 + 18 * p.v, p.y); c.stroke(); }
+    else { // rising: fireflies, embers, motes
+      const sp = k === 'ember' ? 30 + 40 * p.v : 8 + 12 * p.v; p.y -= sp * dt; p.x += Math.sin(T * (k === 'ember' ? 2.2 : .9) + p.ph) * (k === 'ember' ? 16 : 12) * dt; if (p.y < -6) { p.y = H + 6; p.x = Math.random() * W; }
+      const tw = .5 + .5 * Math.sin(T * (k === 'fly' ? 2.6 : 5) + p.ph), col = k === 'ember' ? '255,150,50' : k === 'mote' ? '210,140,255' : '255,225,140';
+      c.fillStyle = `rgba(${col},${(.25 + .6 * tw) * p.a})`; c.shadowColor = `rgba(${col},.9)`; c.shadowBlur = 6; c.beginPath(); c.arc(p.x, p.y, p.r * (k === 'ember' ? .9 : 1), 0, 6.283); c.fill(); c.shadowBlur = 0;
+    }
+  }
+  if (k === 'mote') { MART.nextBolt -= dt; if (MART.nextBolt <= 0) { MART.bolt = 1; MART.nextBolt = 6 + Math.random() * 6; } if (MART.bolt > 0) { c.fillStyle = `rgba(200,170,255,${.22 * MART.bolt * MART.bolt})`; c.fillRect(0, 0, W, H * .55); MART.bolt = Math.max(0, MART.bolt - dt * 3); } } // far lightning
+}
+const maShowing = () => MART.on && G.mode === 'menu' && $('menu').classList.contains('on') && !DIR.s && !G.cine && !FILM.on && !G.fin;
 function showMenu() {
   storyWarm();
   if (!G.menuIntroDone) { G.menuIntroDone = true; $('menu').classList.add('intro'); setTimeout(() => $('menu').classList.remove('intro'), 1500); } // the first open of a session: the logo drops in, the rest rises after it
   closeMore(); openUp(false); if (G.palCardDue) { G.palCardDue = false; setTimeout(showPalUnlock, 700); } // the Paladin card held back while a battle ran
   if (G.practice) { if (G.practiceKeep) save = JSON.parse(G.practiceKeep); G.practice = false; G.practiceKeep = null; }
   $('rewDot').classList.toggle('on', rewardsReady()); // back from a boss practice: your real progress returns
-  setupLevel(save.level); G.mode = 'menu'; renderUpgrades(); if (crowdReady && save.level >= 4) loadPaladinArt();
+  setupLevel(save.level); G.mode = 'menu'; renderUpgrades(); menuArt(G.worldOverride != null ? G.worldOverride : worldOf(save.level)); if (crowdReady && save.level >= 4) loadPaladinArt();
   $('menu').classList.add('on'); $('result').classList.remove('on'); $('boon').classList.remove('on'); gameEl.classList.add('overlay'); gameEl.classList.remove('lostwash'); POST.mat.uniforms.uWash.value = 0;
   { const L = boonList().map(id => BOON_BY[id]).filter(Boolean); $('boonMenu').innerHTML = L.map(b => `<em style="--r:${BOON_CAT[b.c][1]}" title="${b.name}">${boonPic(b)}</em>`).join(''); }
   if (save.boonDue && save.boonDue.n === save.level - 1) showBoons(() => showMenu()); // (the game was closed before the choice was made)
@@ -7906,7 +7945,8 @@ function frame(now) {
   if (keys.ArrowRight) G.lx = clamp(G.lx + dt * 9, -LANE + .6, LANE - .6);
   if (P2.frz > 0 && (keys.ArrowLeft || keys.ArrowRight)) P2.shk += dt * .7;
   const wt = G.winT; // slow motion on the winning hit and again as the king pops
-  if (!G.paused) { update(dt * (G.mode === "won" ? winSpeed(wt) : 1) * (DIR.s ? DIR.speed : 1)); render(); G.pauseDrawn = false; }
+  const art = maShowing(); if (art) maTick(dt); // (the menu's painting covers the scene: no need to draw it)
+  if (!G.paused) { update(dt * (G.mode === "won" ? winSpeed(wt) : 1) * (DIR.s ? DIR.speed : 1)); if (!art) render(); G.pauseDrawn = false; }
   else if (!G.pauseDrawn) { render(); G.pauseDrawn = true; } // paused: the scene holds still, so it is drawn once, not every frame
 }
 
