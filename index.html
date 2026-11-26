@@ -6368,7 +6368,7 @@ function startCaptain() {
   G.shake = Math.max(G.shake, 1); buzz([80, 40, 120]); G.fortFlash = 1; const col = WARLORDS[w].col;
   burst(0, 1.5, FORT_Z + .6, ['#e2d6c4', '#b9ad9c', '#cfc5b6'], 34, 8, { vy: 8, life: 1.3, g: 17, sz: 2.2, kind: PK.ROCK }); burst(0, 2, FORT_Z + .8, [col, '#ffffff'], 24, 7, { vy: 6, life: .9, g: 6, sz: 2, kind: PK.SPARK });
   capPool.material.color.copy(C(col)); capPool.material.opacity = .6; capPool.visible = !G.sim;
-  if (!G.sim) { captainScene(); if (!DIR.s) toastMsg(wlName(WARLORDS[w], 0) + "'S CAPTAIN", CAP.def.name, { live: true, name: true }); if (!save.wardTip) toastMsg((inHall() ? 'WALL' : 'CASTLE') + ' SHIELDED!', 'Beat ' + CAP.def.name + ' to break the shield', { ok: () => CAP.alive, on: () => { save.wardTip = 1; persist(); } }); holdHead(_kv); popText('CRUSH THEM!', _kv.x, _kv.y + 1.5, _kv.z + 1, wallSay().col); kingVoice('roar', .8); }
+  if (!G.sim) { toastMsg(wlName(WARLORDS[w], 0) + "'S CAPTAIN", CAP.def.name, { live: true, name: true }); if (!save.wardTip) toastMsg((inHall() ? 'WALL' : 'CASTLE') + ' SHIELDED!', 'Beat ' + CAP.def.name + ' to break the shield', { ok: () => CAP.alive, on: () => { save.wardTip = 1; persist(); } }); holdHead(_kv); popText('CRUSH THEM!', _kv.x, _kv.y + 1.5, _kv.z + 1, wallSay().col); kingVoice('roar', .8); }
 }
 let CAP_HPK = 10, CAP_WARD = .45, CAP_TURN = 1.7;
 function captainDown(x, z, through) { // he falls, or breaks into your camp: either way his shield goes with him
@@ -7927,7 +7927,6 @@ function clipEl(k) {
 function clipLevel(n) { // what this level's scenes can play, fetched while it is set up
   if (G.sim || !CLIP.ok) return; const w = Math.min(worldOf(n), 4), k = (n - 1) % WORLD_LEN, L = [];
   if (isBoss(n)) { L.push(...CUT.boss[w], 'v' + (11 + w)); if (w < 4) L.push('v' + (16 + w), 'v' + (20 + w)); }
-  if (isCaptain(n)) L.push('v' + (29 + w));
   if (n === 1) L.push('v01'); if (n === LAP_LEN + 1) L.push('v28'); if (n <= LAP_LEN && k === 0 && w > 0 && w < HALLW) L.push('v24', CUT.boss[w][0]); if (n <= LAP_LEN && k === 0 && w === HALLW) L.push('v25'); if (n === 46) L.push('v26', 'v27');
   if (n === LAP_LEN) for (let j = 34; j <= 44; j++) L.push('v' + j);
   for (const k in CLIPV) if (!L.includes(k) && CLIPV[k] !== CLIP.v) { const v = CLIPV[k]; v.removeAttribute('src'); v.load(); delete CLIPV[k]; } // (the last levels' clips let go)
@@ -8300,13 +8299,6 @@ function arrival() {
   s.done = () => { tidy(); save.scenes[key] = 1; persist(); }; s.abort = tidy; dirStart(s); return true;
 }
 // ---- a captain marches out: a second and a half
-function captainScene() {
-  if (G.sim || G.fin || G.cine || DIR.s || G.mode !== 'play' || !CAP.b) return; save.scenes = save.scenes || {}; const key = 'c' + G.level, seen = save.scenes[key]; if (seen) return; const z = CAP.z, col = WARLORDS[CAP.w].col; resetKingShots();
-  dirStart({ len: 2.6, clips: CAP.w < 5 ? [[0, 2.6, 'v' + (29 + CAP.w)]] : null, freeze: true, wl: false, noAnts: true, noPal: true, boss: true, foeZ: z + 2.2, shots: [{ t: [0, 2.1], pos: [[2.8, .75, z + 10.6], [2.1, 1.0, z + 8.7]], at: [[0, 2.2, z], [0, 2.4, z]], fov: [44, 40], foc: [.5, .42, .7, 1.25], blur: .8, grade: WGRADE[CAP.w], flare: { x: .5, y: .15, r: .7, k: .3, c: col } }],
-    start: () => { hold(2.2); hitBoom(.7); swell(.5, .07, 240, 2200); },
-    tick: (t, dt, once) => { if (once('n', .4)) { dirTitle(CAP.def.name, wlName(WARLORDS[CAP.w], 0) + '’s captain'); hitBoom(.6); brass(110, .7, .05); } if (CAP.b) CAP.b.g.position.z = z + Math.max(0, t * .5); },
-    done: () => { save.scenes[key] = 1; persist(); } });
-}
 $('cine').addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); if (DIR.s) { if (DIR.t > .45) dirStop(true); } else if (G.fin && G.fin.t > .4) endFinale(); });
 
 /* ---------------- level 50 and the ending ----------------
