@@ -1323,7 +1323,7 @@ function hexWorld(t) {
     if (d < .3) add(pick(R.wild || t.wild), x, z, s, y); else if (d < .44) add(pick(t.rock), x, z, s * .9, y); else if (d < .52) add('k:building_destroyed', x, z, s, y);
     if (R.glow && rand() < .12) glows.push([x + (rand() - .5) * 1.4, y + tTop, z + (rand() - .5) * 1.2]);
   };
-  for (let row = -3; row < 30; row++) for (let col = -9; col <= 9; col++) {
+  for (let row = -3; row < (KL ? 30 : 41); row++) for (let col = -9; col <= 9; col++) { // (outside his land the country runs on all the way to his far-off palace)
     const x = (col + (row & 1) * .5) * HEX_DX, z = 7 - row * HEX_DZ, ax = Math.abs(x), r = rand();
     if (ax < cor + HEX_DX * .5 && z > FORT_Z - 9.5) continue;            // the road, its kerbs and the castle stay clear
     if (ax > edgeX(z) + 7 + Math.max(0, -z - 40) * .25) continue;            // and nothing is built where the camera never looks
@@ -1338,8 +1338,8 @@ function hexWorld(t) {
     if (!dais) tiles.push(item(x, z, HEX_S, { y, ry: 0, c: tint(z) }));
     const s = HEX_S * (.95 + rand() * .15);
     if (dais || road) continue;
-    if (back <= 0 && z > FORT_Z + 2 && h === 0 && out < 15 && rand() < .6) for (let k = 0; k < 3; k++) { const a = rand() * 6.28, r = .9 + rand() * .55; cover.push([x + Math.cos(a) * r, z + Math.sin(a) * r, y + tTop]); } /* tufts and flowers round the edges of open tiles */
-    if (far && !KL) { if (ax < 3) continue; const d = rand(); if (d < .5) add(pick(t.wild), x, z, s, y); else if (d < .66) add(pick(t.rock), x, z, s, y); else if (d < .76 && ax > 7) add(pick(t.home), x, z, s * HOME_K, y, Math.floor(rand() * 6) * Math.PI / 3); continue; } // the road goes on through the world's own country
+    if (((back <= 0 && z > FORT_Z + 2 && out < 15) || (!KL && back > 0 && ax > 3.2 && out < 22)) && h === 0 && rand() < .6) for (let k = 0; k < 3; k++) { const a = rand() * 6.28, r = .9 + rand() * .55; cover.push([x + Math.cos(a) * r, z + Math.sin(a) * r, y + tTop]); } /* tufts and flowers round the edges of open tiles */
+    if (far && !KL) { if (ax < 3.2) continue; const d = rand(), j = () => (rand() - .5) * 1.5; add(pick(t.wild), x, z, s * (.9 + rand() * .35), y); if (d < .6) add(pick(t.wild), x + j(), z + j(), s * (.7 + rand() * .3), y); else if (d < .8) add(pick(t.rock), x + j(), z + j(), s * .8, y); continue; } // the road goes on through the world's own country, wooded on both sides
     if (far) { // round the citadel: a few dead trees; out at the sides, dark crags
       if (plateau) { if (ax > 11 && rand() < .5) add(pick(R.wild || t.wild), x, z, s, y); continue; }
       const d = rand(); if (d < .6) add(pick(R.wild || t.wild), x, z, s * (1 + rand() * .3), y); else if (d < .8) add(pick(t.rock), x, z, s, y); continue;
@@ -1348,6 +1348,7 @@ function hexWorld(t) {
     const d = rand();
     if (KL && z < FORT_Z + 12) { if (d < .3) { const rn = pick(R.ruin || t.ruin); add((/destroyed/.test(rn) ? 'k:' : '') + rn, x, z, s, y); } else if (d < .75) add(pick(R.wild || t.wild), x, z, s, y); else if (d < .9) add(pick(t.rock), x, z, s, y); continue; } // the edge of his land
     if (z > -14 && out < 10) { if (d < .55) add(pick(t.home), x, z, s * HOME_K, y, Math.floor(rand() * 6) * Math.PI / 3); else if (d < .85) add(pick(t.wild), x, z, s, y); else add(pick(t.camp), x, z, s * 1.25, y); continue; } // your village
+    if (!KL && back > 0) { const j = () => (rand() - .5) * 1.5; add(pick(t.wild), x, z, s * (.9 + rand() * .3), y); if (d < .5) add(pick(t.wild), x + j(), z + j(), s * .8, y); else if (d < .65) add(pick(t.rock), x + j(), z + j(), s * .8, y); else if (d < .72 && out > 4) add(pick(t.home), x + j(), z + j(), s * HOME_K, y, Math.floor(rand() * 6) * Math.PI / 3); continue; } // behind his gate: the world goes on, thick with trees
     if (d < .7) add(pick(t.wild), x, z, s, y); else if (d < .82) add(pick(t.home), x, z, s * HOME_K, y); else if (d < .92) add(pick(t.rock), x, z, s, y);
   }
   if (LMART.lm) lmMesh('lm', 'skullrock', world, 12, H(0), HOARD_Z + 1.5, { s: .82, ry: -.5, tint: { magic: '#a59ac0', tar: '#d8aa74', ice: '#b4c2dc', lava: '#94808e' }[R.river || 'magic'] });
@@ -1366,9 +1367,10 @@ function hexWorld(t) {
     const far = mesh(new THREE.PlaneGeometry(130, 34), new THREE.MeshBasicMaterial({ color: sc, transparent: true, opacity: Math.min(.8, sh.material.opacity * 1.15), depthWrite: false }), 0, .118, CHASM_Z1 - .9 - 17, world, false); far.rotation.x = -Math.PI / 2; far.renderOrder = 2; } // and the whole far bank round his citadel
   // his road from the dais to the bridge
   const rz0 = HOARD_Z - 5.2, rlen = rz0 - CHASM_Z0, kt = tint(-56);
-  const road = mesh(new THREE.PlaneGeometry(3.4, rlen), new THREE.MeshLambertMaterial({ map: kingRoadTex, color: C(kt || '#ffffff') }), 0, tTop + .03, rz0 - rlen / 2, world, false);
+  const rk = !KL && ROAD[LM_SETS[worldIdx]], stones = len => { const m = rk.map.clone(), n = rk.normalMap.clone(); m.needsUpdate = n.needsUpdate = true; m.repeat.set(1, len / 5.5); n.repeat.set(1, len / 5.5); return new THREE.MeshStandardMaterial({ map: m, normalMap: n, normalScale: new THREE.Vector2(1.25, 1.25), roughness: .88, metalness: 0 }); }; // (outside his land the road behind the gate is the battle lane's own cobbles)
+  const road = mesh(new THREE.PlaneGeometry(rk ? 4 : 3.4, rlen), rk ? stones(rlen) : new THREE.MeshLambertMaterial({ map: kingRoadTex, color: C(kt || '#ffffff') }), 0, tTop + .03, rz0 - rlen / 2, world, false);
   road.rotation.x = -Math.PI / 2; road.receiveShadow = true; road.userData.sharedMaps = true; kingRoadTex.repeat.set(1, rlen / 3.4);
-  if (!KL) { const fz0 = CHASM_Z1 - 1.4, fz1 = citAt()[0] + 6, fl = fz0 - fz1, tx = kingRoadTex.clone(); tx.needsUpdate = true; tx.repeat.set(1, fl / 3.4); const fr = mesh(new THREE.PlaneGeometry(3.4, fl), new THREE.MeshLambertMaterial({ map: tx }), 0, tTop + H(3) + .03, fz0 - fl / 2, world, false); fr.rotation.x = -Math.PI / 2; fr.receiveShadow = true; } // on over the bridge and away
+  if (!KL) { const fz0 = CHASM_Z1 - 1.4, fz1 = citAt()[0] + 6, fl = fz0 - fz1, tx = kingRoadTex.clone(); tx.needsUpdate = true; tx.repeat.set(1, fl / 3.4); const fr = mesh(new THREE.PlaneGeometry(rk ? 4 : 3.4, fl), rk ? stones(fl) : new THREE.MeshLambertMaterial({ map: tx }), 0, tTop + H(3) + .03, fz0 - fl / 2, world, false); fr.rotation.x = -Math.PI / 2; fr.receiveShadow = true; } // on over the bridge and away
   // the river: glowing purple water flowing across his land between rocky banks, foam along the edges, rocks breaking the surface
   const cw = CHASM_Z0 - CHASM_Z1 + 2.4, cz = (CHASM_Z0 + CHASM_Z1) / 2, wy = .14, RV = riverSet(KL ? R.river || 'magic' : R.water || R.river || 'magic'), rp = RV.p;
   const water = mesh(new THREE.PlaneGeometry(120, cw), new THREE.MeshBasicMaterial({ map: RV.water, toneMapped: false }), 0, wy, cz, world, false);
@@ -8010,7 +8012,7 @@ function clipEl(k) {
 }
 function clipLevel(n) { // what this level's scenes can play, fetched while it is set up
   if (G.sim || !CLIP.ok) return; const w = Math.min(worldOf(n), 4), k = (n - 1) % WORLD_LEN, L = [];
-  if (isBoss(n)) { L.push(...CUT.boss[w], 'v' + (11 + w)); if (w < 4) L.push('v' + (16 + w), 'v' + (20 + w)); }
+  if (isBoss(n)) { L.push(...CUT.boss[w]); if (w < 4) L.push('v' + (16 + w), 'v' + (20 + w)); }
   if (n === 1) L.push('v01'); if (n === LAP_LEN + 1) L.push('v28'); if (n <= LAP_LEN && k === 0 && w > 0 && w < HALLW) L.push('v24', CUT.boss[w][0]); if (n <= LAP_LEN && k === 0 && w === HALLW) L.push('v25'); if (n === 46) L.push('v26', 'v27');
   if (n === LAP_LEN) for (let j = 34; j <= 44; j++) L.push('v' + j);
   for (const k in CLIPV) if (!L.includes(k) && CLIPV[k] !== CLIP.v) { const v = CLIPV[k]; v.removeAttribute('src'); v.load(); delete CLIPV[k]; } // (the last levels' clips let go)
@@ -8197,12 +8199,7 @@ function phaseTwo() {
   WL.phase = 2; WL.n2 = 0; WL.a2 = false; WL.atkT = Math.min(WL.atkT, 1.6); const i = p2Who(), N = P2N[i]; if (G.sim || !N) return;
   burst(WL.x, 3, WL.z, [WL.def.col, '#ffffff'], 24, 6, { vy: 6, life: .8, g: 6, sz: 2, kind: PK.SPARK }); const key = 'p' + G.level, seen = save.scenes && save.scenes[key];
   toastMsg(N[0].toUpperCase(), N[1], { live: true, ok: () => WL.alive });
-  if (seen || G.fin || DIR.s || G.mode !== 'play' || G.lowQ) { kingVoice('roar', .85); hitBoom(.5); return; }
-  hideTelegraphs(); if (WL.state !== 'stun') { WL.state = 'roar'; WL.st = .4; } wlAct('roar'); const b = WL.b, x = WL.x, z = WL.z, gr = WGRADE[i];
-  const head = () => worldPt(b.fx.head, [x, 4, z]);
-  dirStart({ len: 2.4, clips: [[0, 2.4, 'v' + (11 + i), .5]], freeze: true, wl: false, noAnts: true, noPal: true, boss: true, foeZ: z + 3, shots: [{ t: [0, 1.9], pos: [[x + 3.2, 1.0, z + 11.2], [x + 2.5, 1.3, z + 8.6]], at: [() => { const h = head(); return [h[0], h[1] - .5, h[2]]; }], fov: [44, 38], foc: [.5, .4, .65, 1.25], grade: gr, vig: .72, flare: { x: .5, y: .16, r: .8, k: .4, c: WL.def.col } }],
-    start: () => { hold(2); swell(.55, .1, 180, 2600); if (b.fx.orbit) b.fx.orbit.visible = false; }, tick: (t, dt, once) => { b.mixer.update(dt); if (once('r', .45)) { rxGlow(b, 1.8); cineFlash(.35, 300); hitBoom(.9); kingVoice('roar', 1); buzz([60, 30, 120]); dirTitle(N[0], wlName()); burst(x, 3, z + .6, [WL.def.col, '#ffffff'], 40, 7, { sph: true, life: 1, g: 1, sz: 1.6, kind: PK.SPARK }); } },
-    done: () => { if (b.fx.orbit) b.fx.orbit.visible = true; rxGlow(b, .35); save.scenes = save.scenes || {}; if (!G.practice) { save.scenes[key] = 1; persist(); } }, abort: () => { if (b.fx.orbit) b.fx.orbit.visible = true; rxGlow(b, 0); } });
+  kingVoice('roar', .85); hitBoom(.5); if (WL.state !== 'stun') { WL.state = 'roar'; WL.st = .4; } wlAct('roar'); // (his second phase plays out in the battle: no cut scene)
 }
 function beginAttack2() {
   const i = p2Who(); WL.a2 = true; WL.state = 'wind'; WL.st = 0; WL.tg = []; wlAct(i === 1 ? 'roar' : 'strike', .15);
