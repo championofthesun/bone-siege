@@ -1260,8 +1260,8 @@ const HEX_S = 1.8, HEX_DX = 2 * HEX_S, HEX_DZ = 1.5 * 1.155 * HEX_S;
 // behind the castle is the Bone King's own land: blighted ground with dead trees and ruins, a chasm full of purple mist, a
 // stone bridge over it, and on the far cliff his citadel, one hand-built fortress, with dark peaks behind and a storm overhead.
 // Everything there fades toward the world's dusk colour; his roofs are the same purple as his castle on every map.
-const KING_ROOF = '#6a34b0', CHASM_Z0 = -60.5, CHASM_Z1 = -69.5, CIT_Z = -80;
-const CIT_AT = [[-104, 3.4], [-97, 2.4], [-91.5, 1.4], [-80, 0], [-84, 0]], citAt = () => CIT_AT[Math.max(0, worldIdx)] || CIT_AT[3]; // how far off it stands in each world, and how high on its hill: you can see yourself getting closer
+const KING_ROOF = '#6a34b0', CHASM_Z0 = -60.5, CHASM_Z1 = -69.5, CIT_Z = -80; const citSc = () => worldIdx === HALLW ? 1 : [.5, .62, .75, .88][worldIdx] || 1; // his palace drawn smaller the further off it stands
+const CIT_AT = [[-124, 1.2], [-117, 1], [-110, .8], [-101, .4], [-84, 0]], citAt = () => CIT_AT[Math.max(0, worldIdx)] || CIT_AT[3]; // how far off it stands in each world, and how high on its hill: you can see yourself getting closer
 const HOME_K = 1.45; // the hex-pack houses and windmill come out smaller than the trees beside them; this brings them up to size
 // a horizon cut-out 300 wide and 16 high in a world's own shape: rolling mountains, flat-topped mesas, ice peaks, volcanoes
 const bgGeos = {};
@@ -1311,11 +1311,11 @@ function skyClouds(R, lift = 0) {
 }
 function hexWorld(t) {
   if (!MODELS['hex/hex_grass']) return false;
-  const R = t.realm || {}, duskC = new THREE.Color(R.dusk || '#8f86a8'), tc = new THREE.Color();
+  const R = t.realm || {}, duskC = new THREE.Color(R.dusk || '#8f86a8'), tc = new THREE.Color(), KL = worldIdx === HALLW; // KL: this is his own land (the Citadel); in the four worlds before it the warlord's world goes on behind his gate
   // how far into his land a spot is: 0 on your side of the castle, easing to 1 a little way behind it
   const darkOf = z => { const f = clamp((FORT_Z + 9 - z) / 20, 0, 1); return f * f * (3 - 2 * f); };
   const deepC = duskC.clone().multiplyScalar(.62); // past the chasm the land is darker still
-  const tint = z => { const f = darkOf(z); if (z < CHASM_Z0) return '#' + tc.copy(duskC).lerp(deepC, clamp((CHASM_Z0 - z) / 10, 0, 1)).getHexString(); return f > .01 ? '#' + tc.set('#ffffff').lerp(duskC, f).getHexString() : undefined; };
+  const tint = z => { if (!KL) return undefined; const f = darkOf(z); if (z < CHASM_Z0) return '#' + tc.copy(duskC).lerp(deepC, clamp((CHASM_Z0 - z) / 10, 0, 1)).getHexString(); return f > .01 ? '#' + tc.set('#ffffff').lerp(duskC, f).getHexString() : undefined; };
   const tiles = [], dress = {}, glows = [], homes = [], cover = [], add = (n, x, z, s, y, ry) => { (dress[n] = dress[n] || []).push(item(x, z, s, { y, ry: ry === undefined ? Math.floor(rand() * 6) * Math.PI / 3 : ry, c: tint(z) })); if (/^building_(?!destroyed)/.test(n)) homes.push([x, z, s, y, n]); };
   const cor = LANE + 1.9, pick = a => { const b = a.filter(n => MODELS["hex/" + n]), c = b.length ? b : a; return c[Math.floor(rand() * c.length)]; }, tTop = MODELS["hex/hex_grass"].h * HEX_S, H = n => n * .42 * HEX_S + .015;
   const blight = (x, z, s, y) => { // dead trees, rocks and the odd ruin; lots of bare ground between
@@ -1339,13 +1339,14 @@ function hexWorld(t) {
     const s = HEX_S * (.95 + rand() * .15);
     if (dais || road) continue;
     if (back <= 0 && z > FORT_Z + 2 && h === 0 && out < 15 && rand() < .6) for (let k = 0; k < 3; k++) { const a = rand() * 6.28, r = .9 + rand() * .55; cover.push([x + Math.cos(a) * r, z + Math.sin(a) * r, y + tTop]); } /* tufts and flowers round the edges of open tiles */
+    if (far && !KL) { if (ax < 3) continue; const d = rand(); if (d < .5) add(pick(t.wild), x, z, s, y); else if (d < .66) add(pick(t.rock), x, z, s, y); else if (d < .76 && ax > 7) add(pick(t.home), x, z, s * HOME_K, y, Math.floor(rand() * 6) * Math.PI / 3); continue; } // the road goes on through the world's own country
     if (far) { // round the citadel: a few dead trees; out at the sides, dark crags
       if (plateau) { if (ax > 11 && rand() < .5) add(pick(R.wild || t.wild), x, z, s, y); continue; }
       const d = rand(); if (d < .6) add(pick(R.wild || t.wild), x, z, s * (1 + rand() * .3), y); else if (d < .8) add(pick(t.rock), x, z, s, y); continue;
     }
-    if (back > 0 || (z < FORT_Z - 1 && out > 1)) { blight(x, z, s, y); continue; } // his blighted land
+    if (KL && (back > 0 || (z < FORT_Z - 1 && out > 1))) { blight(x, z, s, y); continue; } // his blighted land
     const d = rand();
-    if (z < FORT_Z + 12) { if (d < .3) { const rn = pick(R.ruin || t.ruin); add((/destroyed/.test(rn) ? 'k:' : '') + rn, x, z, s, y); } else if (d < .75) add(pick(R.wild || t.wild), x, z, s, y); else if (d < .9) add(pick(t.rock), x, z, s, y); continue; } // the edge of his land
+    if (KL && z < FORT_Z + 12) { if (d < .3) { const rn = pick(R.ruin || t.ruin); add((/destroyed/.test(rn) ? 'k:' : '') + rn, x, z, s, y); } else if (d < .75) add(pick(R.wild || t.wild), x, z, s, y); else if (d < .9) add(pick(t.rock), x, z, s, y); continue; } // the edge of his land
     if (z > -14 && out < 10) { if (d < .55) add(pick(t.home), x, z, s * HOME_K, y, Math.floor(rand() * 6) * Math.PI / 3); else if (d < .85) add(pick(t.wild), x, z, s, y); else add(pick(t.camp), x, z, s * 1.25, y); continue; } // your village
     if (d < .7) add(pick(t.wild), x, z, s, y); else if (d < .82) add(pick(t.home), x, z, s * HOME_K, y); else if (d < .92) add(pick(t.rock), x, z, s, y);
   }
@@ -1358,7 +1359,7 @@ function hexWorld(t) {
   for (const n in dress) if (/sy_Env_Dungeon_Crystal/.test(n)) dress[n].slice(0, 12).forEach(q => halo('#ff5a40', 1.4 + rand() * .5, q[0], q[1] + .65, q[2], world, .5)); // the Synty crystals glow like the hand-made ones
   // his land lies under a dusk shade: the world's ground sheet runs on bright (green lawn, pale sand) right up to the river,
   // over the darkened tiles, so a soft shadow in the world's dusk colour is laid over it, deepening from just behind his castle
-  { const z0 = FORT_Z - 3.5, z1 = CHASM_Z0 + .9, len = z0 - z1, sc = duskC.clone().multiplyScalar(.3);
+  if (KL) { const z0 = FORT_Z - 3.5, z1 = CHASM_Z0 + .9, len = z0 - z1, sc = duskC.clone().multiplyScalar(.3);
     const gt = canvasTex(8, 128, (x, w, h) => { const g = x.createLinearGradient(0, h, 0, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.4, 'rgba(255,255,255,.85)'); g.addColorStop(1, 'rgba(255,255,255,1)'); x.fillStyle = g; x.fillRect(0, 0, w, h); });
     const sh = mesh(new THREE.PlaneGeometry(84, len), new THREE.MeshBasicMaterial({ map: gt, color: sc, transparent: true, opacity: R.shade === undefined ? .45 : R.shade, depthWrite: false }), 0, .118, (z0 + z1) / 2, world, false);
     sh.rotation.x = -Math.PI / 2; sh.renderOrder = 2; // drawn after the ground tiles (their material sorts as see-through), or they paint over it
@@ -1367,8 +1368,9 @@ function hexWorld(t) {
   const rz0 = HOARD_Z - 5.2, rlen = rz0 - CHASM_Z0, kt = tint(-56);
   const road = mesh(new THREE.PlaneGeometry(3.4, rlen), new THREE.MeshLambertMaterial({ map: kingRoadTex, color: C(kt || '#ffffff') }), 0, tTop + .03, rz0 - rlen / 2, world, false);
   road.rotation.x = -Math.PI / 2; road.receiveShadow = true; road.userData.sharedMaps = true; kingRoadTex.repeat.set(1, rlen / 3.4);
+  if (!KL) { const fz0 = CHASM_Z1 - 1.4, fz1 = citAt()[0] + 6, fl = fz0 - fz1, tx = kingRoadTex.clone(); tx.needsUpdate = true; tx.repeat.set(1, fl / 3.4); const fr = mesh(new THREE.PlaneGeometry(3.4, fl), new THREE.MeshLambertMaterial({ map: tx }), 0, tTop + H(3) + .03, fz0 - fl / 2, world, false); fr.rotation.x = -Math.PI / 2; fr.receiveShadow = true; } // on over the bridge and away
   // the river: glowing purple water flowing across his land between rocky banks, foam along the edges, rocks breaking the surface
-  const cw = CHASM_Z0 - CHASM_Z1 + 2.4, cz = (CHASM_Z0 + CHASM_Z1) / 2, wy = .14, RV = riverSet(R.river || 'magic'), rp = RV.p;
+  const cw = CHASM_Z0 - CHASM_Z1 + 2.4, cz = (CHASM_Z0 + CHASM_Z1) / 2, wy = .14, RV = riverSet(KL ? R.river || 'magic' : R.water || R.river || 'magic'), rp = RV.p;
   const water = mesh(new THREE.PlaneGeometry(120, cw), new THREE.MeshBasicMaterial({ map: RV.water, toneMapped: false }), 0, wy, cz, world, false);
   water.rotation.x = -Math.PI / 2; water.userData.sharedMaps = true;
   const sheen = mesh(new THREE.PlaneGeometry(120, cw), new THREE.MeshBasicMaterial({ map: RV.sheen, transparent: true, opacity: rp.sheen, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }), 0, wy + .03, cz, world, false);
@@ -1412,11 +1414,11 @@ function hexWorld(t) {
     mesh(new THREE.CylinderGeometry(.35, .22, .9, 8), std('#2a2230', .7), s * 2.2, yy + .7, zz, world, false); halo('#ff9a3a', 1.6, s * 2.2, yy + 1.45, zz, world, .85);
   }
   { const [cz, up] = citAt(), A = BART.citadel, yb = tTop + H(3) + up; // far off, it stands on a broken crag with a road winding up to the gate
-    if (up && A && A.geo.crag) { const mk = A.crag || (A.crag = {}), m = mk[worldIdx] || (mk[worldIdx] = worldIdx === 2 ? prepMat(A.mat, { snow: .7 }) : A.mat.clone()); m.color.copy(C(['#ffffff', '#f0cdb4', '#ffffff', '#ffffff'][worldIdx] || '#ffffff')); for (const [x, y, dz, k, ry] of [[0, 0, 0, 1, 0], [-27, -2.6, -7, .72, 1.9], [27, -2.2, -9, .78, -2.2], [-46, -3.4, -2, .7, .8], [47, -3.2, -4, .74, 2.6]]) { const o = bdMesh(A.geo.crag, m, x, yb + y, cz + dz, world, false); o.scale.setScalar(k); o.rotation.y = ry; } }
+    if (up && A && A.geo.crag) { const mk = A.crag || (A.crag = {}), m = mk[worldIdx] || (mk[worldIdx] = worldIdx === 2 ? prepMat(A.mat, { snow: .7 }) : A.mat.clone()); m.color.copy(C(['#ffffff', '#f0cdb4', '#ffffff', '#ffffff'][worldIdx] || '#ffffff')); for (const [x, y, dz, k, ry] of [[0, 0, 0, 1, 0], [-27, -2.6, -7, .72, 1.9], [27, -2.2, -9, .78, -2.2], [-46, -3.4, -2, .7, .8], [47, -3.2, -4, .74, 2.6]]) { const o = bdMesh(A.geo.crag, m, x, yb + y, cz + dz, world, false); o.scale.setScalar(k * citSc()); o.rotation.y = ry; } }
     buildCitadel(R, yb, cz); }
   // the citadel's forecourt: dark flagstones from the bridge to the gate, braziers lining the way, skull-topped obelisks with
   // glowing runes, and skull pikes and bone piles out to the sides
-  const cy = tTop + H(3), cz0 = CHASM_Z1 - .6, cz1 = CIT_Z + 4.6, cd = cz0 - cz1;
+  if (KL) { const cy = tTop + H(3), cz0 = CHASM_Z1 - .6, cz1 = CIT_Z + 4.6, cd = cz0 - cz1;
   const court = mesh(new THREE.PlaneGeometry(27, cd), new THREE.MeshLambertMaterial({ map: courtTex, color: C(tint(cz1) || '#ffffff').lerp(C('#b8aed0'), .45) }), 0, cy + .03, (cz0 + cz1) / 2, world, false);
   court.rotation.x = -Math.PI / 2; court.receiveShadow = true; court.userData.sharedMaps = true; courtTex.repeat.set(27 / 3.2, cd / 3.2);
   const iron = std('#2a2230', .7), stoneD = std('#4a4258', .85), boneM = std('#e6dac2', .6), runeM = new THREE.MeshBasicMaterial({ color: C('#e070ff'), toneMapped: false });
@@ -1444,7 +1446,7 @@ function hexWorld(t) {
   }
   if (pikeHeads.length) putM('dg/sy_Prop_Generic_Skull_02', pikeHeads, {});
   for (const sx of [-1, 1]) { for (let z = cz0; z > cz1 - 1; z -= 1.5) rim.push(item(sx * (13.4 + rand() * .7), z + rand(), .7 + rand() * .5, { y: cy - .1 })); } for (let x = -13; x <= 13; x += 1.6) if (Math.abs(x) > 3) rim.push(item(x + rand(), cz0 + .1 + rand() * .4, .5 + rand() * .35, { y: cy - .15 })); // a rough rock edge, so his court doesn't end in a ruled line
-  if (MODELS['pr/rockC']) putM('pr/rockC', rim, { bark: bankCol });
+  if (MODELS['pr/rockC']) putM('pr/rockC', rim, { bark: bankCol }); }
   // the horizon behind the citadel: three layers of Synty's background silhouettes in the world's own shape (rolling
   // mountains, desert mesas, ice peaks, volcanoes), each layer paler with distance like air haze; the old cones if absent
   {
@@ -1452,7 +1454,7 @@ function hexWorld(t) {
     for (let L = 2; L >= 0; L--) {
       const m = new THREE.MeshBasicMaterial({ color: C(cards[L]), fog: false, side: THREE.DoubleSide });
       if (STG && worldSt === 2) HEAL.mats.push({ mat: m, from: C(cards[L]), to: C((((WORLDS[worldIdx].stages[0] || {}).realm || {}).cards || (HEX_DRESS[WORLDS[worldIdx].hex || 'meadow'].realm || {}).cards || cards)[L]) }); // the far mountains heal with the sky
-      const top = 13 + L * 4.5, z = -122 - L * 18, g = bgRidge(R.river || 'magic', L), card = new THREE.Mesh(g, m); // each layer: how high its peaks reach, how far back
+      const top = 13 + L * 4.5, z = worldIdx === HALLW ? -122 - L * 18 : -150 - L * 12, g = bgRidge(R.river || 'magic', L), card = new THREE.Mesh(g, m); // each layer: how high its peaks reach, how far back
       card.scale.set(1, top / 16, 1); card.position.set(L * 9 - 6, 0, z); card.userData.keepGeo = true; if (STG && worldSt === 2) card.userData.dyn = true; world.add(card);
     }
   }
@@ -1466,6 +1468,7 @@ function hexWorld(t) {
 // each world's river: Meadow's glowing purple magic, Ember's lava with dark crust, Frost's frozen river with white cracks,
 // and the Dunes' slow black tar with oily glints and bubbles. The purple magic stays on his citadel in every world.
 const RIVERS = {
+  water: { deep: '#1d4f8a', mid: '#4aa8e0', streak: 'rgba(200,240,255,.5)', hi: 'rgba(255,255,255,.6)', glint: '255,255,255', foam: '240,250,255', mist: '#cfeaff', bank: '#5f6a5c', ring: '#eaf8ff', flow: .03, sheen: .5 },
   magic: { deep: '#3a1268', mid: '#7a36cc', streak: 'rgba(180,120,255,.5)', hi: 'rgba(240,220,255,.55)', glint: '255,240,255', foam: '250,235,255', mist: '#a050ff', bank: '#3e3650', ring: '#f2dcff', flow: .045, sheen: .55 },
   lava:  { deep: '#6a1204', mid: '#ff5a14', streak: 'rgba(255,190,60,.6)', hi: 'rgba(255,240,160,.7)', glint: '255,220,140', foam: '255,190,80', mist: '#ff6a20', bank: '#2a2026', ring: '#ffd27a', flow: .016, sheen: .5, crust: '#2a0a06' },
   ice:   { deep: '#7393c0', mid: '#d6eaf9', streak: 'rgba(255,255,255,.8)', hi: 'rgba(255,255,255,.85)', glint: '255,255,255', foam: '255,255,255', mist: '#dcefff', bank: '#8c96b2', ring: '#ffffff', flow: 0, sheen: .7, cracks: true },
@@ -1523,7 +1526,7 @@ const citBanTex = canvasTex(64, 160, (x, w, h) => {
 // corner towers, taller towers behind, a great octagonal keep and two needle spires, bone spikes jutting from the stone
 function buildCitadel(R, baseY, z) {
   if (BART.citadel) return buildCitadelArt(R, baseY, z);
-  const S = .78, cit = new THREE.Group(); cit.position.set(0, baseY, z); cit.scale.setScalar(S); world.add(cit);
+  const S = .78 * citSc(), cit = new THREE.Group(); cit.position.set(0, baseY, z); cit.scale.setScalar(S); world.add(cit);
   citBrick.wrapS = citBrick.wrapT = THREE.RepeatWrapping; const wallM = lam('#ffffff', { map: citBrick }); // one brick texture for every wall: each shape's own tiling goes into its UVs
   const wall = (geo, rx, ry) => { const u = geo.attributes.uv; for (let i = 0; i < u.count; i++) u.setXY(i, u.getX(i) * rx, u.getY(i) * ry); return geo; };
   const wallMesh = (geo, rx, ry, x, y, zz) => { const m = mesh(wall(geo, rx, ry), wallM, x, y, zz, cit); m.userData.sharedMaps = true; return m; };
@@ -1576,8 +1579,8 @@ HEX_DRESS.ember = { ...HEX_DRESS.meadow, leaf: '#4a3640', wild: ['trees_B_large'
 // each world's version of the Bone King's kingdom: the dusk it fades to, what his town is built from, its skyline,
 // the lights in it (window glow, lava, ice), the road lamps, and the storm overhead
 const TOWN = ['building_home_A_blue', 'building_home_B_blue', 'building_tower_A_blue', 'building_church_blue', 'building_tavern_blue', 'building_destroyed', 'building_windmill_blue', 'building_tower_A_blue'];
-HEX_DRESS.meadow.realm = { river: 'magic', dusk: '#7a6e98', roof: '#8a40e0', town: TOWN, ruin: ['building_destroyed', 'rock_single_A', 'rock_single_C'], wild: ['trees_B_medium', 'trees_B_large', 'tree_single_B'], peaks: ['mountain_A', 'mountain_B', 'mountain_C_grass'], glow: '#c070ff', lamp: '#ffb050', cloud: '#6c6288', bolt: '#e6d8ff' };
-HEX_DRESS.dunes.realm = { river: 'tar', dusk: '#8e6a7a', roof: '#a03c8c', town: ['building_destroyed', 'building_destroyed', 'building_tower_A_blue', 'building_home_A_blue', 'building_church_blue', 'building_well_blue'], ruin: ['building_destroyed', 'rock_single_A', 'rock_single_E'], wild: ['rock_single_A', 'rock_single_E', 'hill_single_A'], peaks: ['mountain_A', 'mountain_B', 'mountain_C_grass'], glow: '#ff9a3a', lamp: '#ffb050', cloud: '#8a6878', bolt: '#ffe0c8' };
+HEX_DRESS.meadow.realm = { river: 'magic', water: 'water', dusk: '#7a6e98', roof: '#8a40e0', town: TOWN, ruin: ['building_destroyed', 'rock_single_A', 'rock_single_C'], wild: ['trees_B_medium', 'trees_B_large', 'tree_single_B'], peaks: ['mountain_A', 'mountain_B', 'mountain_C_grass'], glow: '#c070ff', lamp: '#ffb050', cloud: '#6c6288', bolt: '#e6d8ff' };
+HEX_DRESS.dunes.realm = { river: 'tar', water: 'water', dusk: '#8e6a7a', roof: '#a03c8c', town: ['building_destroyed', 'building_destroyed', 'building_tower_A_blue', 'building_home_A_blue', 'building_church_blue', 'building_well_blue'], ruin: ['building_destroyed', 'rock_single_A', 'rock_single_E'], wild: ['rock_single_A', 'rock_single_E', 'hill_single_A'], peaks: ['mountain_A', 'mountain_B', 'mountain_C_grass'], glow: '#ff9a3a', lamp: '#ffb050', cloud: '#8a6878', bolt: '#ffe0c8' };
 HEX_DRESS.frost.realm = { river: 'ice', dusk: '#7a7ea8', roof: '#7a44d0', town: TOWN, ruin: ['building_destroyed', 'rock_single_A', 'rock_single_C'], wild: ['tree_single_A', 'trees_A_medium', 'tree_single_A'], peaks: ['mountain_A', 'mountain_B'], glow: '#80d8ff', lamp: '#ffc070', cloud: '#686c90', bolt: '#e0ecff' };
 HEX_DRESS.ember.realm = { river: 'lava', dusk: '#5a3848', roof: '#8a2a5a', town: ['building_destroyed', 'building_tower_A_blue', 'building_church_blue', 'building_destroyed', 'building_home_B_blue', 'rock_single_C'], ruin: ['building_destroyed', 'rock_single_E'], wild: ['trees_B_medium', 'rock_single_E'], peaks: ['mountain_A', 'mountain_B'], glow: '#ff6a20', lamp: '#ff8a30', cloud: '#4a3040', bolt: '#ffb0a0' };
 // the Synty scenery mixed into each world (hexWorld's pick skips any name that didn't load, so the KayKit set still fills in)
@@ -3066,12 +3069,12 @@ function addSkyline(i) {
   { const d0 = STG && STG.disc, d1 = STG && worldSt === 2 ? (WORLDS[i].stages[0] || {}).disc || null : null, f0 = skyDisc(d0, 1);
     if (STG && worldSt === 2 && JSON.stringify(d0 || 0) !== JSON.stringify(d1 || 0)) { const f1 = skyDisc(d1, 0); f1(0); HEAL.fx.push(k => { f0(Math.max(0, 1 - k * 2)); f1(Math.max(0, k * 2 - 1)); }); } } // the storm's sun goes, the old sky's own comes back
   if (STG && worldSt === 2) { // the storm is his: the eyes of his citadel's skull burn through it
-    const [cz, up] = citAt(), es = [-1, 1].map(q => [glow('#ff4ad8', 5, q * 1.28, 8.35 + up, cz + 8.2, dyn, .95), glow('#ffffff', 1.5, q * 1.28, 8.35 + up, cz + 8.4, dyn, .9)]), aura = glow('#c040ff', 17, 0, 9 + up, cz + 7.6, dyn, .42);
-    worldAnim.push(t => { const on = HEAL.on ? Math.max(0, 1 - Math.max(0, HEAL.t) * 1.4) : 1, f = on * (.82 + .18 * Math.sin(t * 2.3) + .08 * Math.sin(t * 17)); for (const [a, b] of es) { a.scale.setScalar(.01 + 5.4 * f); b.scale.setScalar(.01 + 1.7 * f); } aura.scale.setScalar(.01 + 17 * f); });
+    const [cz, up] = citAt(), k = citSc(), es = [-1, 1].map(q => [glow('#ff4ad8', 5, q * 1.28 * k, 8.35 * k + up, cz + 8.2 * k, dyn, .95), glow('#ffffff', 1.5, q * 1.28 * k, 8.35 * k + up, cz + 8.4 * k, dyn, .9)]), aura = glow('#c040ff', 17, 0, 9 * k + up, cz + 7.6 * k, dyn, .42);
+    worldAnim.push(t => { const on = HEAL.on ? Math.max(0, 1 - Math.max(0, HEAL.t) * 1.4) : 1, f = on * (.82 + .18 * Math.sin(t * 2.3) + .08 * Math.sin(t * 17)); for (const [a, b] of es) { a.scale.setScalar(.01 + 5.4 * f * citSc()); b.scale.setScalar(.01 + 1.7 * f * citSc()); } aura.scale.setScalar(.01 + 17 * f * citSc()); });
   }
   // spirit wisps circling the keep in the realm's glow colour
   { const wc = R.glow || '#c070ff', ws = Array.from({ length: 7 }, (_, k) => ({ s: glow(wc, 1.6, 0, 0, 0, dyn, .85), a: k / 7 * Math.PI * 2, y: 13 + (k % 3) * 2.4, r: 5.5 + (k % 2) * 1.6, sp: .5 + (k % 3) * .12 }));
-    worldAnim.push(t => { for (const w of ws) { const a = w.a + t * w.sp; w.s.position.set(Math.sin(a) * w.r, w.y + citAt()[1] + Math.sin(t * 1.7 + w.a * 3) * .6, citAt()[0] - .8 + Math.cos(a) * w.r * .7); w.s.scale.setScalar(1.3 + .5 * Math.sin(t * 3 + w.a * 5)); } }); }
+    worldAnim.push(t => { for (const w of ws) { const a = w.a + t * w.sp; const k = citSc(); w.s.position.set(Math.sin(a) * w.r * k, w.y * k + citAt()[1] + Math.sin(t * 1.7 + w.a * 3) * .6 * k, citAt()[0] - .8 * k + Math.cos(a) * w.r * .7 * k); w.s.scale.setScalar((1.3 + .5 * Math.sin(t * 3 + w.a * 5)) * k); } }); }
   if (i === 0) { // floating ruins over the plain, each pouring a purple magic waterfall into mist
     const fallTex = canvasTex(64, 256, (x, w, h) => { for (let k = 0; k < 26; k++) { const px = rand() * w, gw = 3 + rand() * 8, g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(230,200,255,.9)'); g.addColorStop(.5, 'rgba(170,100,255,.6)'); g.addColorStop(1, 'rgba(120,60,220,0)'); x.fillStyle = g; x.fillRect(px, rand() * 30, gw, h); } }, [1, 1]);
     fallTex.wrapT = THREE.RepeatWrapping; worldAnim.push(t => { fallTex.offset.y = (t * .45) % 1; });
@@ -4202,7 +4205,7 @@ function dressFort() { // his castle: the old walls, towers and trimmings go, th
   }
 }
 function buildCitadelArt(R, baseY, z) {
-  const A = BART.citadel, cit = new THREE.Group(); cit.position.set(0, baseY, z); cit.scale.setScalar(.78); cit.userData.dyn = true; world.add(cit);
+  const A = BART.citadel, cit = new THREE.Group(); cit.position.set(0, baseY, z); cit.scale.setScalar(.78 * citSc()); cit.userData.dyn = true; world.add(cit);
   bdHalf(A, 'half').forEach(g => bdMesh(g, A.mat, 0, 0, 0, cit, false));
   const y0 = 2.6, glowM = A.glow || (A.glow = new THREE.MeshBasicMaterial({ color: C('#f08aff'), toneMapped: false })), pane = A.pane || (A.pane = paneGeo(.27, .56));
   const at = [[9.7, y0 + 3.2, 6.68], [9.7, y0 + 5.9, 6.58], [5.4, y0 + 6.8, 2.67], [5.4, y0 + 9.4, 2.63]]; for (let lv = 0; lv < 3; lv++) at.push([1.35, y0 + 7 + lv * 2.6 + (lv ? 0 : .4), 3.45 - lv * .07]);
@@ -7571,7 +7574,7 @@ function win() {
   if (!G.sim) { mission("win", 1); if (G.stars === 3) mission("stars3", 1); mission("fired", G.fired - (G.firedSent || 0)); mission("kills", (G.kills || 0) - (G.killsSent || 0)); persist(); }
 }
 function boom() {
-  if (isBoss(G.level)) { healStart(); if (!G.sim) { const [cz, up] = citAt(); citFlash.position.set(0, 18 + up, cz + 4); CITF.t = 0; CITF.k = 1; } }
+  if (isBoss(G.level)) { healStart(); if (!G.sim) { const [cz, up] = citAt(); citFlash.position.set(0, 18 * citSc() + up, cz + 4 * citSc()); CITF.t = 0; CITF.k = 1; } }
   for (const o of fortDress.children) if (o.userData.veil) o.visible = false; // the magic in the bone wall goes out
   stageClear(true); holdBlown(); burstHoard(); G.boomed = true; G.boom2 = 0; G.puff = 0; king.visible = false; P.n = 0; G.shake = 1.5; buzz([70, 30, 140]);
   burst(0, 4.2, -40.8, ['#ffd84a', '#ffffff', '#ff7af8', '#ffb040'], 70, 15, { sph: true, life: .95, g: 4, sz: 2.4, kind: PK.SPARK }); // a burst of white-hot sparks (they catch the glow)
@@ -8122,7 +8125,7 @@ function goldSky(L, k) { // the hour after a victory: the sky, the haze and the 
 function headTurn(k) { if (!palRig) return; const R = palRig.userData, h = R.hd || (R.hd = palRig.getObjectByName('head')); if (!h) return; if (!R.hq) R.hq = h.quaternion.clone(); h.quaternion.copy(R.hq).multiply(_rxq.setFromEuler(_rxe.set(k, 0, 0))); }
 function startLook() {
   if (G.lookDone || save.crowned || G.sim || G.practice || G.fin || !isBoss(G.level) || G.level >= LAP_LEN || !palReady() || !palArt || worldIdx >= HALLW || G.worldOverride != null) return false;
-  G.lookDone = true; buildPaladin(); if (!horse) return false; const [cz, up] = citAt(), w = worldOf(G.level), next = WORLDS[w + 1], CR = [0, 10.6 + up, cz + 5.8], gl = [halo('#ffd84a', 7, ...CR, scene, 0), halo('#ffffff', 2.4, CR[0], CR[1], CR[2] + .2, scene, 0)], SKY = {};
+  G.lookDone = true; buildPaladin(); if (!horse) return false; const [cz, up] = citAt(), w = worldOf(G.level), next = WORLDS[w + 1], CR = [0, 10.6 * citSc() + up, cz + 5.8 * citSc()], gl = [halo('#ffd84a', 7, ...CR, scene, 0), halo('#ffffff', 2.4, CR[0], CR[1], CR[2] + .2, scene, 0)], SKY = {};
   const T = [1.9, 3.9, 6.4, 8.1]; let gait = 0, shadeT = 0, fl = 0;
   const put = (x, z, ry) => { paladin.position.set(x, 0, z); paladin.rotation.y = ry; };
   const s = { len: T[3], keepGold: true, shots: [
