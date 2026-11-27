@@ -5636,7 +5636,7 @@ function paTick(dt) { // the paper pieces that move
   if (PA.can && PAPER === 'a') { PA.can.scale.set(1 + PA.rec * .05, 1 - PA.rec * .09, 1).multiplyScalar(1 / CANNON_K); PA.can.rotation.x = -.5 - PA.rec * .12; }
   // Grimbald, a puppet with four poses
   const fight = !!(WL.on && WL.b), b = fight ? WL.b : HOLD.i >= 0 ? HOLD.b : null, gb = PA.gb; if (gb) { const on = !!(b && b.g.visible) && !PA.shredded; gb.g.visible = on; // fighting on the road, or watching from his gate
-    if (on) { const st = fight ? WL.state : HOLD.act ? (HOLD.k === 'strike' ? 'wind' : 'stun') : 'idle', pose = PAPER === 'b' ? PB_POSE(st) : st === 'wind' || st === 'smash' ? 'wind' : st === 'roar' ? 'roar' : st === 'stun' || st === 'kneel' || st === 'recover' || st === 'dead' ? 'daze' : 'idle';
+    if (on) { const st = !fight && PA.poseHold ? PA.poseHold : fight ? WL.state : HOLD.act ? (HOLD.k === 'strike' ? 'wind' : 'stun') : 'idle', pose = PAPER === 'b' ? PB_POSE(st) : st === 'wind' || st === 'smash' ? 'wind' : st === 'roar' ? 'roar' : st === 'stun' || st === 'kneel' || st === 'recover' || st === 'dead' ? 'daze' : 'idle';
       for (const k in gb.m) gb.m[k].visible = k === pose; b.g.getWorldPosition(_paV); gb.g.position.copy(_paV); if (!fight && PAPER === 'a') { gb.g.position.y += 1.62; gb.g.position.z -= 1.2; } /* on his gate he stands a step up, looking over the wall: clear behind the leaning wall card (it was cutting his legs) */ if (fight && st === 'dead' && PAPER === 'a' && WL.st > .8) { gb.g.updateMatrixWorld(true); paShred(gb); PA.shredded = true; }
       const grow = fight ? b.g.scale.x / (WL_S * ((WL.def && WL.def.s) || 1)) : 1; gb.g.scale.set(1, 1 + (st === 'idle' ? Math.sin((G.t || 0) * 2.2) * .018 : 0), 1).multiplyScalar(grow || 1); // (he breathes)
       const walk = st === 'walk' || st === 'enter' || st === 'leap', tt = G.t || 0;
@@ -6063,7 +6063,7 @@ function setupLevel(n) {
   clearBones(); spawnHorde(G.cfg.horde); G.kingT = 4; G.casts = 0; resetKingShots(); resetCharges(); resetHoard(); resetSaws(); resetPaladin(); resetWarlord(); resetCaptain(); setHolder(holderOf(n)); resetHazards(); G.kills = 0; G.dps = 0; G.fortPrev = null; G.surged = false; G.rage = false; rageGlow.visible = false;
   if (FUSE && !G.sim) FUSE.level();
   $('lvlPill').textContent = lvName(n);
-  paperScene(!G.sim && !G.cine && !G.menuSetup && (PAPER === 'b' ? !!G.practice : PAPER === 'a' && (!!(G.practice && PAPER_FLAG) || G.level <= WORLD_LEN))); if (PA.on) paReset(); // only the test round; your real game afterwards is the usual one
+  paperScene(!G.sim && (!G.cine || PAPER === 'a') && !G.menuSetup && (PAPER === 'b' ? !!G.practice : PAPER === 'a' && (!!(G.practice && PAPER_FLAG) || G.level <= WORLD_LEN))); if (PA.on) paReset(); // only the test round; your real game afterwards is the usual one
 }
 const lvName = n => n > LAP_LEN ? 'Road ' + (n - LAP_LEN) : 'Level ' + n;
 
@@ -8868,8 +8868,8 @@ function startCine(full) {
   save.up = { ...save.up, rate: Math.max(save.up.rate || 0, 10), twin: Math.max(save.up.twin || 0, 4) }; // a thick stream of knights for the show (the practice round is thrown away)
   G.cine = { t: 0, ev: {} }; setupLevel(save.level); spawnHorde(Math.max(60, 170 - G.cfg.horde)); G.mode = 'play'; G.introT = G.grandT = G.hintT = 0;
   G.fortHp = G.fortMax * 1000; G.nestHp = G.nestMax * 1000; G.firing = false; G.lx = 0; G.chT = G.kingT = 99; if (G.cfg.archers) G.volT = 99;
-  const T = long ? { c: 0, e: 3.6, h: 6.1, r: 8.7, k: 11.3, x: 12.9, end: 15.1 } : { c: -1, e: 0, h: 1.9, r: 3.5, k: 3.5, x: 4.9, end: 7 };
-  const king0 = kingRig && (long && HOLD.i !== ROWAN || HOLD.i < 0); if (king0 && HOLD.b) HOLD.b.g.visible = false; king.visible = kingCrown.visible = king0 || HOLD.i < 0; scene.updateMatrixWorld(true);
+  const pa = PA.on && PAPER === 'a', T = pa ? (long ? { c: 0, e: 2.6, h: 4.8, r: 7.2, k: 7.2, x: 8.8, end: 11 } : { c: -1, e: 0, h: 1.9, r: 3.5, k: 3.5, x: 4.9, end: 7 }) : long ? { c: 0, e: 3.6, h: 6.1, r: 8.7, k: 11.3, x: 12.9, end: 15.1 } : { c: -1, e: 0, h: 1.9, r: 3.5, k: 3.5, x: 4.9, end: 7 }; /* (on paper: no Rowan shot) */
+  const king0 = !pa && kingRig && (long && HOLD.i !== ROWAN || HOLD.i < 0); if (king0 && HOLD.b) HOLD.b.g.visible = false; king.visible = kingCrown.visible = king0 || HOLD.i < 0; scene.updateMatrixWorld(true);
   king.updateMatrixWorld(true); const H = king0 ? worldPt(kingHead) : HOLD.b && HOLD.b.fx.head ? worldPt(HOLD.b.fx.head) : [0, 4.1, -41.6], EY = H[1] + 1.42, C0 = H[1] + 3.0, Z = H[2], LC = HOLD.i < 0 ? 0 : 0;
   const shots = [];
   if (long) shots.push({ t: [T.c, T.e], pos: [[2.7, C0 - .7, Z + 7.0], [.2, C0 - .35, Z + 6.4]], at: [[.35, C0 - .2, Z], [-.25, C0 - .05, Z]], fov: [25, 23], foc: [.5, .45, .5], grade: 'storm', vig: .85, flare: { x: .3, y: .32, r: .42, k: () => .25 + .2 * Math.sin(DIR.t * 2.2), c: '#ffe9a0' } });
@@ -8878,13 +8878,19 @@ function startCine(full) {
   if (long) shots.push({ t: [T.r, T.k], pos: [[-2.7, .7, -5.0], [-2.1, 1.0, -6.0]], at: [[.45, 3.3, -13], [.45, 4.0, -13]], fov: [44, 39], foc: [.5, .42, .75, 1.2], blur: .8, grade: 'dawn', flare: { x: .82, y: .16, r: .7, k: .42, c: '#ffd08a' } });
   shots.push({ t: [T.k, T.x], pos: [[2.2, .6, -10.8], [1.75, .75, -10.1]], at: [[0, 1.5, -5.4], [.05, 1.7, -5.4]], fov: [46, 43], foc: [.45, .5, .7, 1.15], blur: .8, grade: 'dawn', vig: .6, flare: { x: .5, y: .12, r: .7, k: .35, c: '#ffd08a' } },
     { t: [T.x, T.end], pos: [[2.0, 1.2, -9.5], [1.8, 2.6, -14], [0, 7.2, -15.5]], at: [[-.6, 1.5, -20], [0, 1.0, -26]], fov: [54, 52], grade: 'storm', gk: .4, vig: .6 });
+  if (pa) { shots.length = 0; const GB = [0, 7.1, -43.6], dawn = { x: .82, y: .16, r: .7, k: .42, c: '#ffd08a' };
+    if (long) shots.push({ t: [T.c, T.e], pos: [[2.8, 5.0, -24.5], [1.0, 5.6, -27]], at: [[0, GB[1] - .8, GB[2]], [0, GB[1] - .5, GB[2]]], fov: [40, 35], foc: [.5, .45, .5], grade: 'storm', vig: .8, flare: { x: .3, y: .3, r: .42, k: () => .2 + .15 * Math.sin(DIR.t * 2.2), c: '#ffe9a0' } }); /* Grimbald on his gate */
+    shots.push({ t: [T.e, T.h], pos: [[-1.4, 6.6, -33.4], [-.8, 6.9, -34.6]], at: [[0, GB[1] + .2, GB[2]], [0, GB[1] + .4, GB[2]]], fov: [32, 28], foc: [.5, .45, .5], grade: 'storm', vig: .85 }, /* he roars */
+      { t: [T.h, T.k], pos: [[1.9, .8, -25.2], [.7, 1.05, -23.2]], at: [[-.5, 3.0, -38], [0, 3.5, -38]], fov: [46, 49], foc: [.5, .4, .8, 1.15], blur: .8, grade: 'storm', vig: .75 }, /* the horde marches on the road */
+      { t: [T.k, T.x], pos: [[1.7, 1.5, -.4], [1.05, 1.9, -1.9]], at: [[0, 2.2, -22], [0, 2.5, -24]], fov: [50, 46], foc: [.5, .45, .75, 1.15], blur: .6, grade: 'dawn', vig: .6, flare: dawn }, /* over the cannon's shoulder as it opens fire */
+      { t: [T.x, T.end], pos: [[2.0, 1.4, -6.5], [1.8, 3.0, -11], [0, 7.6, -13.5]], at: [[-.6, 1.6, -20], [0, 1.0, -27]], fov: [54, 52], grade: 'storm', gk: .4, vig: .6 }); } /* the charge */
   const orbit = v => { if (HOLD.b && HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = v; };
   const s = { len: T.end, freeze: false, fadeIn: true, shots, foeZ: -27, cine: true, start: () => { if (long) { pad([49, 73.4, 98], 9, .03, 500); } else pad([49, 98], 4, .02, 500); hold(T.end); cineEyes(2); orbit(false); },
     tick: (t, dt, once) => {
       G.cine && (G.cine.t = t); if (king0 && t < T.h) { king.visible = kingCrown.visible = true; }
-      if (long && once('th', .5)) thunderClap(.6); if (long && once('c1', .9)) endCap('The crown commands the dead.'); if (long && once('c1x', T.e - .25)) endCap(''); if (long && (once('g1', 1.1) || once('g2', 2.5))) shine(.8, 1568);
-      if (once('eyes', T.e + (long ? .95 : .55))) { cineEyes(true); if (!king0 && HOLD.b) rxGlow(HOLD.b, 1.6); hitBoom(.9); thunderClap(.5); buzz([20, 30, 60]); swell(.9, .08, 2400, 260); }
-      if (once('march', T.h)) { cineEyes(false); if (king0 && HOLD.i >= 0) { king.visible = kingCrown.visible = false; if (HOLD.b) HOLD.b.g.visible = true; } orbit(true); if (HOLD.b) rxGlow(HOLD.b, 0); for (let j = 0; j < beetles.n; j++) beetles.kind[j] = 0; }
+      if (long && once('th', .5)) thunderClap(.6); if (long && !pa && once('c1', .9)) endCap('The crown commands the dead.'); if (long && once('c1x', T.e - .25)) endCap(''); if (long && (once('g1', 1.1) || once('g2', 2.5))) shine(.8, 1568);
+      if (once('eyes', T.e + (long ? .95 : .55))) { if (pa) { PA.poseHold = 'roar'; bossSay('roar', 0, .9); } cineEyes(true); if (!king0 && HOLD.b) rxGlow(HOLD.b, 1.6); hitBoom(.9); thunderClap(.5); buzz([20, 30, 60]); swell(.9, .08, 2400, 260); }
+      if (once('march', T.h)) { PA.poseHold = null; cineEyes(false); if (king0 && HOLD.i >= 0) { king.visible = kingCrown.visible = false; if (HOLD.b) HOLD.b.g.visible = true; } orbit(true); if (HOLD.b) rxGlow(HOLD.b, 0); for (let j = 0; j < beetles.n; j++) beetles.kind[j] = 0; }
       if (t > T.h && t < T.r) { const b = Math.floor((t - T.h) / .42); if (b !== DIR.beat) { DIR.beat = b; tone(62, .32, 'sine', .2, .6); noise(.12, .05, 'lowpass', 320, 90); } }
       if (long && t > T.r && t < T.k) { if (once('row', T.r)) { if (!palArt) { DIR.t = T.k; return; } buildPaladin(); paladin.visible = true; paladin.scale.setScalar(1.5); paladin.position.set(.2, 0, -13); paladin.rotation.y = .3; for (const o of paladin.children) if (o.isSprite) o.visible = false; horseGait(0, 1); for (let j = 0; j < beetles.n; j++) if (beetles.z[j] > -19) beetles.hp[j] = 0; pad([130.8, 196, 246.9, 329.6], 3.4, .026, 1800); [196, 294, 392].forEach((f, q) => brass(f, .8 - q * .1, .05, q * .22)); }
         if (palMixer) { palMixer.update(dt); const R = palRig.userData, ul = R.ul || (R.ul = palRig.getObjectByName('upperlegl')), ur = R.ur || (R.ur = palRig.getObjectByName('upperlegr')), sit = R.sit || .55; if (ul) ul.rotation.z += sit; if (ur) ur.rotation.z -= sit; if (R.cape) R.cape.rotation.x = .6 + Math.sin(t * 2.4) * .12; } headTurn(.2 - .28 * cineEase(clamp((t - T.r - .5) / 1.1, 0, 1))); if (horse && horse.mane) for (let k = 0; k < horse.mane.length; k++) horse.mane[k].rotation.z = Math.sin(t * 3 + k) * .12; if (horse && horse.flag) horse.flag.rotation.y = Math.sin(t * 2.6) * .25; if (horse) horse.body.position.y = Math.sin(t * 2.2) * .02;
@@ -8894,7 +8900,7 @@ function startCine(full) {
       if (once('cheer', T.x)) { beetles.n = 0; clearBones(); spawnHorde(170); for (let j = 0; j < beetles.n; j++) { beetles.kind[j] = 0; beetles.z[j] += 6; } s.foeZ = undefined; brass(196, .34, .07); brass(294, .6, .075, .16); brass(392, .9, .06, .36); swell(1.6, .12, 240, 2800); }
       if (once('clash', T.end - .65)) { cineFlash(1, 560); hitBoom(1.1); noise(.7, .16, 'lowpass', 2400, 150); buzz(60); }
     } };
-  const back = () => { orbit(true); G.cine = null; G.firing = false; cineEyes(false); if (palRig) headTurn(0); if (HOLD.b) rxGlow(HOLD.b, 0); paladin.visible = false; paladin.scale.setScalar(PAL_S); paladin.rotation.y = Math.PI; for (const o of paladin.children) if (o.isSprite) o.visible = true; };
+  const back = () => { PA.poseHold = null; orbit(true); G.cine = null; G.firing = false; cineEyes(false); if (palRig) headTurn(0); if (HOLD.b) rxGlow(HOLD.b, 0); paladin.visible = false; paladin.scale.setScalar(PAL_S); paladin.rotation.y = Math.PI; for (const o of paladin.children) if (o.isSprite) o.visible = true; };
   s.done = () => { back(); DIR.fade = 0; showMenu(); save.introDay = today(); save.openSeen = 1; persist(); /* the real save is back; the day is marked so it plays once */ $('menu').classList.add('slam'); setTimeout(() => $('menu').classList.remove('slam'), 1000); setTimeout(() => { tone(70, .5, 'sine', .22, .5); noise(.3, .1, 'lowpass', 1500, 200); }, 250); };
   s.abort = back; dirStart(s);
 }
