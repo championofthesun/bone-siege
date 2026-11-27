@@ -492,7 +492,7 @@ svg.ico.sm{width:18px;height:18px}
 #game.papermenu #menuArt{display:none}
 #game.papermenu #menu{background:#f8e5c2 var(--ptgrain)!important}
 #game.papermenu .dock{background:none}
-#game.papermenu #menu::before{content:'';position:absolute;left:50%;bottom:17%;width:min(80%,430px);aspect-ratio:900/991;transform:translateX(-50%);background:url(models/paper/a/title_vignette.webp) center/contain no-repeat;z-index:-1;pointer-events:none}
+#game.papermenu #menu::before{content:'';position:absolute;left:50%;bottom:17%;width:min(86%,460px);aspect-ratio:1000/753;transform:translateX(-50%);background:url(models/paper/a/title_vignette.webp) center bottom/contain no-repeat;z-index:-1;pointer-events:none}
 #game.papermenu #menu::after,#game.paper #result::after{content:'';position:absolute;inset:0;z-index:-2;pointer-events:none;border-style:solid;border-width:var(--tpt,90px) var(--tps,80px);border-image:url(models/paper/a/title_frame.webp) 13% 21% 13% 21% fill;border-image-width:var(--tpt,90px) var(--tps,80px)}
 #game.papermenu .logo{filter:drop-shadow(0 4px 0 rgba(74,44,20,.35))}
 #game.papermenu .tag{color:#5a3a1a;text-shadow:none}
@@ -8741,7 +8741,7 @@ $('mapClose').onclick = () => swapOut($('map'), $('menu'));
 $('mapPath').onclick = e => { if (!e.target.closest('.mcard.here') || PT.on) return; audio(); pageTurn(() => { $('map').classList.remove('on'); startPlay(); }); }; // v202h: the world you are on is a door: tap it to play its next level
 // the painting on the story card; the drawn emblem stays until it is here
 const STORY_ART = ['s_grimbald', 's_sekra', 's_hrimgar', 's_magmaw', 's_king'];
-function storyPic(k) { const im = $('storyArt'), c = im.parentNode; c.classList.remove('art'); im.onload = () => c.classList.add('art'); im.onerror = () => c.classList.remove('art'); const pa = PA.on && PAPER === 'a' && k === 's_grimbald'; c.classList.toggle('pa', pa); im.src = pa ? 'models/paper/a/gb_roar.webp' : artDir(k) + k + '.webp'; if (im.complete && im.naturalWidth) c.classList.add('art'); }
+function storyPic(k) { const im = $('storyArt'), c = im.parentNode; c.classList.remove('art'); im.onload = () => c.classList.add('art'); im.onerror = () => c.classList.remove('art'); const pa = PA.on && PAPER === 'a' && (k === 's_grimbald' || k === 's_crown' || k === 's_rowan'); c.classList.toggle('pa', pa); im.src = pa && k === 's_grimbald' ? 'models/paper/a/gb_roar.webp' : artDir(k) + k + '.webp'; /* (v202q: the crown and Rowan are paper cut-outs on the card too) */ if (im.complete && im.naturalWidth) c.classList.add('art'); }
 function storyWarm() { const n = save.level; if (n === 1 && !save.openSeen) artWarm('s_crown'); if (isBoss(n)) artWarm(onRoadLv(n) && worldOf(n) === HALLW ? 's_demoted' : STORY_ART[worldOf(n) % WORLDS.length]); if (n === CAP_AT) artWarm('s_rowan'); }
 // before a boss level, his story card (once per level); the battle waits behind it
 function maybeStory() {
