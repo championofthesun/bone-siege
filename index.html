@@ -6043,12 +6043,14 @@ function paCard(n, h, x, z, o = {}) { // a cut-out h tall standing on the page a
   if (o.u || o.v) { const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, u[0] + uv.getX(i) * (u[1] - u[0]), v[0] + uv.getY(i) * (v[1] - v[0])); } // just part of the picture
   const c = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: paTex(n), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }));
   c.position.set(x, o.y || 0, z); c.rotation.set(-(o.lean === undefined ? .3 : o.lean), o.ry || 0, 0); /* leaning back, like a pop-up page facing the reader's raised eye */ if (o.flip) c.scale.x = -1; PA.g.add(c);
-  if (!o.bare) { const s = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.05, Math.max(1.2, h * .32)), PA.sh); s.rotation.x = -Math.PI / 2; s.position.set(x, (o.y || 0) + .02, z - h * .1); s.renderOrder = 1; PA.g.add(s); c.userData.sh = s; } // its soft shadow on the paper
+  if (n !== 'back') { const s = new THREE.Mesh(new THREE.PlaneGeometry(Math.max(w * 1.1, 1.6), Math.max(2.4, h * .8)), PA.sh); s.rotation.x = -Math.PI / 2; s.position.set(x, (o.y || 0) + .02, z + h * .3); /* (v202ab: at the card's foot and a little toward the reader, so it shows; it used to sit behind the card, hidden. Poles and banners get one too) */ s.renderOrder = 1; PA.g.add(s); c.userData.sh = s; } // its soft shadow on the paper
   return c;
 }
 function paBuild() {
   const g = PA.g = new THREE.Group(); g.visible = false; scene.add(g);
-  PA.sh = new THREE.MeshBasicMaterial({ map: blobTex, color: C('#5a3818'), transparent: true, opacity: .55, depthWrite: false, toneMapped: false, fog: false });
+  PA.sh = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -8, vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'varying vec2 vUv; void main() { float d = length(vUv * 2.0 - 1.0); gl_FragColor = vec4(.15, .1, .06, .72 * (1.0 - smoothstep(.15, 1.0, d))); }' }); /* (v202ab) the soft shadow under each cut-out. These had never shown: the page won the depth test against a plane .03 above it
+     at this grazing angle (so the polygon offset), and a soft blob that thin was all hidden behind its card (so it sits further forward) */
   const table = new THREE.Mesh(new THREE.PlaneGeometry(240, 240), new THREE.MeshBasicMaterial({ color: C('#5a2a34'), toneMapped: false, fog: false })); table.rotation.x = -Math.PI / 2; table.position.set(0, -.6, -40); g.add(table); // the book's cloth cover
   const PW = 33, PH = PW * PAGE_H / PAGE_W, PZ = -50 + PH / 2; // the painted road (0.314 of the page) is the game's road; the painted river runs just in front of the castle, a moat
   const under = new THREE.Mesh(new THREE.PlaneGeometry(PW + 1.2, PH + .8), new THREE.MeshBasicMaterial({ color: C('#e9dcc0'), toneMapped: false, fog: false })); under.rotation.x = -Math.PI / 2; under.position.set(0, -.04, PZ + .25); g.add(under); // the stack of pages under the top one
@@ -6057,6 +6059,8 @@ function paBuild() {
     const bend = (geo, z0, dy) => { geo.rotateX(-Math.PI / 2); const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const z = p.getZ(i) + z0; p.setZ(i, z); p.setY(i, bow(-50 - z) + dy); } return geo; };
     const fu = new THREE.Mesh(bend(new THREE.PlaneGeometry(PW + 1.2, FD + .6, 1, 24), -50 - FD / 2 - .2, -.05), new THREE.MeshBasicMaterial({ color: C('#e9dcc0'), toneMapped: false, fog: false })); g.add(fu); // its stack of pages
     const far = new THREE.Mesh(bend(new THREE.PlaneGeometry(PW, FD, 1, 24), -50 - FD / 2, -.01), new THREE.MeshBasicMaterial({ map: paTex('far'), toneMapped: false, fog: false })); g.add(far);
+    { const hz = new THREE.Mesh(far.geometry, new THREE.ShaderMaterial({ transparent: true, depthWrite: false, vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader: 'varying vec2 vUv; void main() { gl_FragColor = vec4(.91, .93, .92, .4 * pow(vUv.y, 1.4)); }' })); hz.position.y = .012; hz.renderOrder = 1; g.add(hz); } // (v202ab) a light haze over the far page, so the board recedes behind the castle
     const ct = canvasTex(8, 256, (x, w, h) => { const q = x.createLinearGradient(0, 0, 0, h); [[0, 0], [.35, .05], [.58, .2], [.676, .42], [.74, .16], [.86, .04], [1, 0]].forEach(([s, a]) => q.addColorStop(s, `rgba(70,40,20,${a})`)); x.fillStyle = q; x.fillRect(0, 0, w, h); });
     const cr = new THREE.Mesh(bend(new THREE.PlaneGeometry(PW + 1.2, 3.7, 1, 16), -50 - 3.7 / 2 + 1.2, .02), new THREE.MeshBasicMaterial({ map: ct, transparent: true, depthWrite: false, toneMapped: false, fog: false })); cr.renderOrder = 1; g.add(cr); } // the crease: a soft shadow, no line
 
@@ -6097,7 +6101,8 @@ function paExtras() { // the cannon card (on the real cannon, so it slides and l
     PB.puff = canvasTex(128, 128, (x, w, h) => { x.fillStyle = '#ffffff'; x.strokeStyle = '#c9ccd6'; x.lineWidth = 5; x.beginPath(); for (const [cx, cy, r] of [[44, 70, 26], [70, 54, 30], [92, 74, 22], [64, 84, 24]]) { x.moveTo(cx + r, cy); x.arc(cx, cy, r, 0, 7); } x.stroke(); x.fill(); });
     PB.star = canvasTex(128, 128, (x, w, h) => { const st = (r1, r2, c) => { x.fillStyle = c; x.beginPath(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? r2 : r1; x.lineTo(64 + Math.cos(a) * r, 64 + Math.sin(a) * r); } x.fill(); }; st(60, 28, '#ffffff'); st(50, 21, '#ffb21e'); st(32, 13, '#ffe45a'); });
   } else { const ch = 3.6, can = PA.can = new THREE.Mesh(new THREE.PlaneGeometry(ch * PA_DIM.cannon, ch).translate(0, ch / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('cannon'), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }));
-  can.position.set(0, 0, .3); launcher.add(can); can.visible = false; }
+  can.position.set(0, 0, .3); launcher.add(can); can.visible = false;
+  { const cs = new THREE.Mesh(new THREE.PlaneGeometry(ch * PA_DIM.cannon * 1.15, 1.9), PA.sh); cs.rotation.x = -Math.PI / 2; cs.position.set(0, .02, .4); cs.renderOrder = 1; can.add(cs); } } // (v202ab) its shadow rides with it
   const gb = PA.gb = { g: new THREE.Group(), m: {} }; PA.g.add(gb.g); gb.g.visible = false;
   for (const k in PA_GB) { const h = 6.6 * PA_GB[k][1] / PA_GB.idle[1], w = h * PA_GB[k][0], m = gb.m[k] = new THREE.Mesh(new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('gb_' + k), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }));
     m.rotation.x = -.28; m.visible = false; gb.g.add(m); }
