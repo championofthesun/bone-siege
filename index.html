@@ -544,10 +544,10 @@ svg.ico.sm{width:18px;height:18px}
 .paper #result .res-coins svg{display:none}.paper #result .res-coins::after{content:'';width:38px;height:38px;background:url(models/paper/a/ui/coin.webp) center/contain no-repeat}
 .paper #result .res-hint{margin-top:4px;background:rgba(255,250,234,.7)!important;border:1.5px solid #b08a5a!important;color:var(--pk-ink)!important}
 .paper #result .res-prog .res-bar{background:rgba(120,80,40,.22);border:1.5px solid #8a5a2a}.paper #result .res-prog .res-bar i{background:linear-gradient(90deg,#c9553a,#94301f)}
-#resBoons{width:100%;display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 10px}#resBoons[hidden]{display:none}
+#resBoons{width:100%;display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 26px}#resBoons[hidden]{display:none}
 .rb-h{font-family:var(--pk-fell);font-size:19px;color:var(--pk-red)}
 .rb-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
-.rb{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 2px 6px;border:0;border-radius:6px;background:rgba(255,250,234,.35);box-shadow:inset 0 0 0 1.5px rgba(176,138,90,.55);cursor:pointer;color:var(--pk-ink);animation:rbIn .4s cubic-bezier(.2,1.5,.4,1) both;transition:transform .2s,opacity .2s,box-shadow .2s}
+.rb{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 2px 6px;border:0;border-radius:6px;background:rgba(255,250,234,.14);box-shadow:inset 0 0 0 1.5px rgba(176,138,90,.5);cursor:pointer;color:var(--pk-ink);animation:rbIn .4s cubic-bezier(.2,1.5,.4,1) both;transition:transform .2s,opacity .2s,box-shadow .2s}
 @keyframes rbIn{from{transform:translateY(10px) scale(.85);opacity:0}}
 .rb em{width:100%;aspect-ratio:1;display:block}.rb em img{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;display:block}.rb em svg{width:60%;height:60%;margin:20%}
 .rb b{font-family:'Lilita One',sans-serif;font-weight:400;font-size:13px;line-height:1.05;color:var(--pk-red);text-align:center}
@@ -561,6 +561,7 @@ svg.ico.sm{width:18px;height:18px}
 .paper #hud .bar i{inset:3px 2px!important;border-radius:3px;overflow:hidden;filter:none!important}
 .paper #fortBar{right:32px}
 .paper #nestBadge{background:url(models/paper/a/art/u_nest.webp) center/112% no-repeat!important}.paper #nestBadge svg{display:none}
+.paper #giant .hero{width:52px;height:52px;margin:-4px 0 0}.paper #giant .hero svg{background:url(models/paper/a/art/u_giant.webp) center/cover no-repeat;border-radius:50%}.paper #giant.champ .hero svg{background-image:url(models/paper/a/art/u_giantC.webp)}.paper #giant .hero use{display:none} /* (v201b: the SEND button shows the painted Paladin or Champion) */
 .paper #fortBar i{background:linear-gradient(180deg,#d8705a,#a83a26)!important}.paper #nestBar i{background:linear-gradient(180deg,#86aee2,#3f6fb8)!important}
 .paper #hud .bar span{color:#fff6df!important}
 .paper #nestBar.low::before{filter:drop-shadow(0 0 8px rgba(220,60,40,.9))}
@@ -569,6 +570,7 @@ svg.ico.sm{width:18px;height:18px}
 #game.papermenu .logo{display:none}#game.papermenu .logo-pa{display:block}
 #game.papermenu .tag{font-family:var(--pk-fell);font-style:italic;font-size:17px}
 #game.papermenu .menu-pills .uptoggle{margin:0;font-size:17px;padding:7px 14px}
+#game.papermenu #boonMenu{position:absolute;right:12px;top:calc(env(safe-area-inset-top) + 54px);margin:0;flex-direction:column;gap:6px;z-index:2} /* (v201b: the held boons were sitting on the castle in the painting) */
 .pill-btn img.pi,.uptoggle img.pi{width:22px;height:22px;object-fit:contain;vertical-align:-5px;margin-right:5px}
 /* the Realm: a painted map page; lands you haven't reached stay sepia */
 #game.papermenu #map{background:#3a2412 url(models/paper/a/ui/map.webp) center/cover no-repeat!important;justify-content:flex-start}
@@ -620,7 +622,8 @@ svg.ico.sm{width:18px;height:18px}
 .paper .pause-card .res-title{font-family:var(--pk-fell)!important;color:var(--pk-red)!important;-webkit-text-stroke:0!important;text-shadow:none!important;font-size:34px}
 .paper .pause-card .res-sub{color:var(--pk-ink)!important;text-shadow:none!important;font-family:var(--pk-fell);font-style:italic}
 .paper #pauseBoons{color:var(--pk-ink)}.paper #pauseBoons em{background:none!important;box-shadow:none!important;border-radius:50%}
-.paper .pause-card .link{color:var(--pk-ink2);text-shadow:none}
+.paper #pauseBoons div{color:var(--pk-ink2)!important;text-shadow:none!important}.paper #pauseBoons b{color:var(--pk-red)!important;text-shadow:none!important}
+.paper .pause-card .link,.paper #quitBtn{color:var(--pk-ink2)!important;text-shadow:none!important;font-family:var(--pk-fell);font-style:italic;font-size:18px;text-decoration:underline;text-decoration-color:rgba(107,68,38,.4)}
 .paper #audBtns button,#game.papermenu #audBtns button{background:url(models/paper/a/ui/ring.webp) center/100% 100% no-repeat,radial-gradient(circle,#fbf1dc 58%,transparent 60%)!important;border:0!important;box-shadow:0 3px 4px rgba(60,30,8,.3)!important}
 /* the boon screen (only when the choice was left over from a closed game) */
 #game.papermenu #boon,.paper #boon{background:#f3e6c8 var(--ptgrain)!important}
@@ -5821,6 +5824,13 @@ function paReset() { // each round: gates lettered on signs, the castle and camp
   for (const g of G.gates) (PAPER === 'b' ? pbGate : paGate)(g.mesh, g); if (PAPER === 'a' && !PA.img.gold) paPre().then(() => { if (PA.on) for (const g of G.gates) paGate(g.mesh, g); }); /* the signs letter themselves as soon as their pictures are in */ PA.shredded = false; PA.cpShred = false; PS.done = false; if (PAPER === 'a' && isBoss(G.level)) { ['shred', 'turn', 'pop', 'st1'].forEach(psLoad); psFont(); ['story_bg', 'st1_back', 'st1_sekra', 'st1_front'].forEach(paTex); } if (PA.shreds) { for (const q of PA.shreds) PA.g.remove(q.s); PA.shreds = null; } for (const p of PB.castle) p.rotation.set(0, 0, 0); for (const c of PB.camp) c.rotation.set(0, 0, 0); FOE_TINT.setRGB(1, 1, 1);
   if (PA.castle) PA.castle.rotation.x = -.22; if (PA.castle2) PA.castle2.rotation.x = -.22; PA.torn = false; for (const c of [PA.castle, PA.castle2]) if (c) { c.visible = true; if (c.userData.sh) c.userData.sh.visible = true; } if (PA.castleF) { PA.castleF.visible = true; PA.castleF.rotation.x = -.22; } if (PA.hoard) PA.hoard.visible = PA.hoard.userData.sh.visible = false; PA.popped = false; for (const c of PA.camp || []) c.rotation.x = -.32; PA.rec = 0; PA.fired = G.fired;
 }
+/* (v201b) boss levels on paper: the page turns to dusk (plum shadows, warm orange light) and Grimbald's red banners line the road */
+function paBossMood() {
+  if (PAPER !== 'a' || !PA.g) return; const boss = !!(G.cfg && G.cfg.boss) && !G.cine;
+  if (boss) { const u = POST.mat.uniforms; u.uShadow.value.set(1.06, .82, 1.1); u.uHigh.value.set(1.14, .93, .76); u.uSat.value = 1.08; u.uCon.value = 1.12; } else applyGrade(Math.max(0, worldIdx));
+  if (boss && !PA.bossB) PA.bossB = [[-7.7, -12.5], [7.7, -11], [-7.7, -38], [7.7, -38.5]].map(([x, z], i) => paCard('bannerp', 3.4, x, z, { bare: true, flip: i % 2 === 1 }));
+  for (const b of PA.bossB || []) b.visible = boss;
+}
 const _paV = new THREE.Vector3();
 function paTick(dt) { // the paper pieces that move
   // the cannon slides with the real one (it is its child) and kicks back on each shot
@@ -5894,7 +5904,7 @@ function paBuild() {
     ['pines', 5.4, 12.5, -43, { flip: true }], ['bush', 2.2, 9.5, -36, { flip: true }], ['bannerp', 4.2, 7.6, -30, { bare: true, flip: true }], ['skullrock', 3.6, 10.5, -30], ['torch', 2.8, 7.2, -24, { bare: true }],
     ['crownrock', 4, 11, -22.5], ['lamp', 3, 7.2, -15, { bare: true }], ['pines', 5, 10.5, -15], ['oak', 4, 12, -8.5], ['bannerb', 4, 7.4, -6.5, { bare: true, flip: true }],
     ['pines', 5.6, -13, -71], ['oak', 4.4, -12.6, -60], ['bush', 2.2, -10.5, -66], ['pines', 5.4, 13, -70, { flip: true }], ['bush', 2.4, 12.6, -58, { flip: true }], ['oak', 4, 11, -66.5, { flip: true }],
-    ['pines', 6.4, -17.8, -66], ['oak', 5, -17.4, -56.5], ['pines', 6, -16.6, -50.5], ['pines', 6.2, 17.8, -65, { flip: true }], ['oak', 5, 17.4, -55.5, { flip: true }], ['pines', 5.8, 16.6, -49.5, { flip: true }]]) paCard(n, h, x, z, o);
+    ['pines', 6.4, -17.8, -66], ['oak', 5, -17.4, -56.5], ['pines', 6, -16.6, -50.5], ['pines', 6.2, 17.8, -65, { flip: true }], ['oak', 5, 17.4, -55.5, { flip: true }], ['pines', 5.8, 16.6, -49.5, { flip: true }]]) paCard(n, h * (z > -46 ? .8 : 1), x, z, o); /* (v201b: the roadside pieces 0.8x, now the dolls are bigger) */
 }
 const paKeep = o => o === king || o.userData.holder || WL.built.some(b => b && b.g === o);
 function paHide() { world.visible = campWall.visible = hoard.visible = nest.visible = false; for (const o of fort.children) if (o.visible && !paKeep(o)) o.visible = false;
@@ -6292,7 +6302,7 @@ function setupLevel(n) {
   clearBones(); spawnHorde(G.cfg.horde); G.kingT = 4; G.casts = 0; resetKingShots(); resetCharges(); resetHoard(); resetSaws(); resetPaladin(); resetWarlord(); resetCaptain(); setHolder(holderOf(n)); resetHazards(); G.kills = 0; G.dps = 0; G.fortPrev = null; G.surged = false; G.rage = false; rageGlow.visible = false;
   if (FUSE && !G.sim) FUSE.level();
   $('lvlPill').textContent = lvName(n);
-  paperScene(!G.sim && (!G.cine || PAPER === 'a') && !G.menuSetup && (PAPER === 'b' ? !!G.practice : PAPER === 'a' && (!!(G.practice && PAPER_FLAG) || G.level <= WORLD_LEN))); if (PA.on) paReset(); // only the test round; your real game afterwards is the usual one
+  paperScene(!G.sim && (!G.cine || PAPER === 'a') && !G.menuSetup && (PAPER === 'b' ? !!G.practice : PAPER === 'a' && (!!(G.practice && PAPER_FLAG) || G.level <= WORLD_LEN))); if (PA.on) { paReset(); paBossMood(); } // only the test round; your real game afterwards is the usual one
 }
 const lvName = n => n > LAP_LEN ? 'Road ' + (n - LAP_LEN) : 'Level ' + n;
 
@@ -7696,7 +7706,7 @@ const nearLens = (p, i) => p === beetles && DIR.s.foeZ !== undefined && p.z[i] >
 function drawSprites(p, sm) {
   const cell = sm.geometry.attributes.aCell.array, party = G.boomed && p === ants;
   for (let i = 0; i < p.n; i++) {
-    const s = p === beetles && p.tier[i] === F_CAP && CAP.b || DIR.s && nearLens(p, i) ? .001 : p.s[i] * US * popOf(p, i), air = liftOf(p, i), flying = air > 0.05, t = unitType(p, i); // (the sculpted captain is drawn in place of his brute)
+    const s = p === beetles && p.tier[i] === F_CAP && CAP.b || DIR.s && nearLens(p, i) || party && PA.on && p.z[i] - camera.position.z > -8 ? .001 : /* (v201b: on the paper win camera, nobody stands in the lens) */ p.s[i] * US * popOf(p, i), air = liftOf(p, i), flying = air > 0.05, t = unitType(p, i); // (the sculpted captain is drawn in place of his brute)
     const hopK = party ? Math.abs(Math.sin(G.t * 7 + p.ph[i])) : 0;
     let f = p === beetles && p.tier[i] === F_NEC ? p.atk[i] > 0 ? ATK_F : JUMP_F : flying || hopK > .35 || (p === beetles && p.kind[i] && !(p.atk[i] > 0)) ? JUMP_F : p.atk[i] > 0 ? ATK_F : Math.floor(((G.t * (p.big[i] ? 1.1 : 1.55) + p.ph[i] * .16) % 1) * RUN_FRAMES);
     _m.makeScale(s, s, s); _m.setPosition(p.x[i], air + hopK * .55 * s, p.z[i]);
@@ -8019,7 +8029,7 @@ const GHUD = (() => {
   const icon = (id, w, h) => new Promise(ok => { const sy = document.getElementById(id), vb = sy.getAttribute('viewBox'), defs = [...document.querySelectorAll('body > svg defs')].map(d => d.outerHTML).join(''); const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null);
     im.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + vb + '" width="' + w * 4 + '" height="' + h * 4 + '">' + defs + sy.innerHTML + '</svg>'); });
   const pic = src => new Promise(ok => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = src; });
-  const load = Promise.all([icon('i-slime', 24, 22), icon('i-horse', 42, 38), icon('i-champ', 42, 38), document.fonts.load("16px 'Lilita One'").catch(() => 0), PAPER === 'a' ? pic('models/paper/a/ui/bar.webp') : null]).then(([crowd, horse, champ, , bar]) => { icons = { crowd, horse, champ, bar }; ready = true; });
+  const load = Promise.all([icon('i-slime', 24, 22), icon('i-horse', 42, 38), icon('i-champ', 42, 38), document.fonts.load("16px 'Lilita One'").catch(() => 0), PAPER === 'a' ? pic('models/paper/a/ui/bar.webp') : null, PAPER === 'a' ? pic('models/paper/a/art/u_giant.webp') : null, PAPER === 'a' ? pic('models/paper/a/art/u_giantC.webp') : null]).then(([crowd, horse, champ, , bar, pHorse, pChamp]) => { icons = { crowd, horse, champ, bar, pHorse, pChamp }; ready = true; });
   // (v201) the painted wooden bar, cut in nine so its gold caps keep their shape at any width; the trough is (0, 0, w, h)
   const nine = (c, im, w, h, T = 15, B = 18, L = 17, R = 17) => { const iw = im.width, ih = im.height, st = ih * .276, sb = ih * .337, sl = iw * .056, sr = iw * .056, xs = [0, sl, iw - sr, iw], ys = [0, st, ih - sb, ih], dx = [-L, 0, w, w + R], dy = [-T, 0, h, h + B];
     for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) c.drawImage(im, xs[i], ys[j], xs[i + 1] - xs[i], ys[j + 1] - ys[j], dx[i], dy[j], dx[i + 1] - dx[i], dy[j + 1] - dy[j]); };
@@ -8059,7 +8069,7 @@ const GHUD = (() => {
     cell('icrowd', 24, 22, 1, c => { if (icons.crowd) c.drawImage(icons.crowd, 0, 0, 24, 22); });
     cell('gbase', 82, 82, 6, c => { if (HUDP.k) { c.fillStyle = 'rgba(90,55,20,.4)'; c.beginPath(); c.arc(41, 45, 41, 0, 7); c.fill(); c.fillStyle = '#6b4426'; c.beginPath(); c.arc(41, 41, 41, 0, 7); c.fill(); c.fillStyle = '#e9dcc0'; c.beginPath(); c.arc(41, 41, 38.5, 0, 7); c.fill(); paGrain(c, 82, 82, 160); return; } c.fillStyle = 'rgba(87,162,255,.2)'; c.beginPath(); c.arc(41, 41, 44, 0, 7); c.fill(); c.fillStyle = '#141b3e'; c.beginPath(); c.arc(41, 44, 41, 0, 7); c.fill(); c.globalCompositeOperation = 'destination-out'; c.beginPath(); c.arc(41, 41, 40.5, 0, 7); c.fill(); c.globalCompositeOperation = 'source-over'; c.fillStyle = 'rgba(10,18,44,.6)'; c.beginPath(); c.arc(41, 41, 39, 0, 7); c.fill(); });
     const hero = (c, im, a) => { c.globalAlpha = a; if (im) { const k = Math.min(42 / im.width, 38 / im.height); c.drawImage(im, (42 - im.width * k) / 2, (38 - im.height * k) / 2, im.width * k, im.height * k); } c.globalAlpha = 1; };
-    for (const [k, im] of [['horse', icons.horse], ['champ', icons.champ]]) {
+    for (const [k, im] of [['horse', HUDP.k && icons.pHorse || icons.horse], ['champ', HUDP.k && icons.pChamp || icons.champ]]) { // (v201b: painted portraits on paper)
       cell('gtop' + k, 82, 82, 1, c => { if (HUDP.k) { c.fillStyle = '#6b4426'; c.beginPath(); c.arc(41, 41, 32.5, 0, 7); c.fill(); const g = c.createRadialGradient(31, 22, 0, 31, 22, 66); g.addColorStop(0, '#93b9e6'); g.addColorStop(1, '#4570b0'); c.fillStyle = g; c.beginPath(); c.arc(41, 41, 30.5, 0, 7); c.fill(); paGrain(c, 82, 82, 140); c.translate(20, 14); hero(c, im, .3); return; } c.strokeStyle = '#ffe7a8'; c.lineWidth = 3; c.beginPath(); c.arc(41, 41, 39.5, 0, 7); c.stroke(); const g = c.createRadialGradient(31.1, 21.2, 0, 31.1, 21.2, 70); g.addColorStop(0, '#428afa'); g.addColorStop(1, '#152352'); c.fillStyle = g; c.beginPath(); c.arc(41, 41, 33, 0, 7); c.fill(); c.translate(20, 14); hero(c, im, .3); });
       cell('g' + k, 42, 38, 0, c => hero(c, im, 1));
     }
