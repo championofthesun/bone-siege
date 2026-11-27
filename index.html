@@ -559,7 +559,7 @@ svg.ico.sm{width:18px;height:18px}
 .paper #hud .bar{overflow:visible!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;height:28px;z-index:1}
 .paper #hud .bar::before{content:'';position:absolute;top:-15px;bottom:-18px;left:-17px;right:-17px;border-style:solid;border-width:15px 17px 18px;border-image:url(models/paper/a/ui/bar.webp) 27.6% 5.6% 33.7% 5.6% fill/15px 17px 18px stretch;z-index:-1;filter:drop-shadow(0 3px 2px rgba(60,30,8,.3))}
 .paper #hud .bar i{inset:3px 2px!important;border-radius:3px;overflow:hidden;filter:none!important}
-.paper #fortBar{right:32px}
+.paper #fortBar{right:32px}.paper #nestBar{right:126px}
 .paper #nestBadge{background:url(models/paper/a/art/u_nest.webp) center/112% no-repeat!important}.paper #nestBadge svg{display:none}
 .paper #giant .hero{width:52px;height:52px;margin:-4px 0 0}.paper #giant .hero svg{background:url(models/paper/a/art/u_giant.webp) center/cover no-repeat;border-radius:50%}.paper #giant.champ .hero svg{background-image:url(models/paper/a/art/u_giantC.webp)}.paper #giant .hero use{display:none} /* (v201b: the SEND button shows the painted Paladin or Champion) */
 .paper #fortBar i{background:linear-gradient(180deg,#d8705a,#a83a26)!important}.paper #nestBar i{background:linear-gradient(180deg,#86aee2,#3f6fb8)!important}
@@ -634,7 +634,7 @@ svg.ico.sm{width:18px;height:18px}
 #game.papermenu #boonHave,.paper #boonHave{color:var(--pk-ink)}
 #game.papermenu #boonHave em,#game.papermenu #boonMenu em,.paper #boonHave em{background:none!important;box-shadow:none!important;border-radius:50%}
 /* the loading screen: the desk with the book, until the pieces are in */
-#loading{background:#1a0e07 url(models/paper/a/open/desk_book.webp) center/cover no-repeat;align-content:end;padding-bottom:calc(env(safe-area-inset-bottom) + 9vh);font-family:var(--pk-fell);font-style:italic;font-size:20px;letter-spacing:.3px;color:#f6d98a;text-shadow:0 2px 3px #2a1206}
+#loading{background:#1a0e07;align-content:end;padding-bottom:calc(env(safe-area-inset-bottom) + 9vh);font-family:var(--pk-fell);font-style:italic;font-size:20px;letter-spacing:.3px;color:#f6d98a;text-shadow:0 2px 3px #2a1206}
 /* the desk and the book (v201 opening) */
 #dk{position:absolute;inset:0;z-index:40;overflow:hidden;background:#1a0e07;perspective:1150px;perspective-origin:50% 38%;cursor:pointer}
 #dk.in{animation:dkIn .6s ease-out both}@keyframes dkIn{from{opacity:0}}
@@ -654,7 +654,7 @@ svg.ico.sm{width:18px;height:18px}
 .dk-pic{width:74%;aspect-ratio:4/5;border-radius:50%;background:url(models/paper/a/open/crown.webp) 50% 30%/cover;box-shadow:0 0 0 3px #c99232,0 0 0 6px #f6ecd4,0 0 0 8px #8a5a2a}
 .dk-txt{margin:0;min-height:7.5em;font-family:var(--pk-fell);font-size:clamp(15px,4.9vw,21px);line-height:1.38;color:var(--pk-ink);text-align:left}
 .dk-txt::first-letter{float:left;font-size:3.1em;line-height:.82;padding:.04em .08em 0 0;color:#8e1f24}
-.dk-front{background:#8f1d1c;border-style:solid;border-width:calc(var(--bkt,90px) * .74) calc(var(--bks,80px) * .74);border-image:url(models/paper/a/cover_frame.webp) 14% 22% 14% 22% fill;border-image-width:calc(var(--bkt,90px) * .74) calc(var(--bks,80px) * .74);box-sizing:border-box}
+.dk-front{overflow:visible;background:#8f1d1c;border-style:solid;border-width:calc(var(--bkt,90px) * .74) calc(var(--bks,80px) * .74);border-image:url(models/paper/a/cover_frame.webp) 14% 22% 14% 22% fill;border-image-width:calc(var(--bkt,90px) * .74) calc(var(--bks,80px) * .74);box-sizing:border-box}
 .dk-emb{position:absolute;left:50%;top:58%;width:96%;aspect-ratio:760/972;transform:translate(-50%,-50%);background:url(models/paper/a/cover_emblem.webp) center/contain no-repeat}
 .dk-logo{position:absolute;left:50%;top:-6%;width:118%;transform:translateX(-50%);filter:drop-shadow(0 4px 4px rgba(40,5,0,.55));pointer-events:none}
 .dk-endp{background:radial-gradient(circle at 30% 20%,#a8322c,transparent 40%),radial-gradient(circle at 70% 70%,#6e1412,transparent 45%),#8a1f1c;box-shadow:inset 0 0 0 10px #f1e3c4}
@@ -662,6 +662,17 @@ svg.ico.sm{width:18px;height:18px}
 .dk-hint{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 4.5%);text-align:center;font-family:var(--pk-fell);font-style:italic;font-size:21px;color:#f6d98a;text-shadow:0 2px 3px #2a1206;animation:tapPulse 1.1s ease-in-out infinite alternate;pointer-events:none}
 #dk.go .dk-hint{display:none}
 @media (prefers-reduced-motion:reduce){#dk.in{animation:none}.dk-hint{animation:none}}
+/* v202e: the toy-medieval cover (one painted piece: spine, corners and crown medallion) */
+.dk-front{background:url(models/paper/a/open/cover.webp) center/100% 100% no-repeat!important;border:0!important;border-image:none!important;border-radius:6px 10px 10px 6px}
+.dk-emb{display:none}
+.dk-endp{background:radial-gradient(circle at 30% 20%,#e64a3e,transparent 45%),radial-gradient(circle at 70% 75%,#a51616,transparent 50%),#c62222!important;border-radius:6px 10px 10px 6px}
+.dk-logo{top:6.5%;width:90%}
+.dk-desk{inset:-24% -22%}
+.dk-hint{color:#5a2e0e;text-shadow:0 1px 0 rgba(255,244,214,.8),0 0 8px rgba(255,236,190,.7)}
+#loading{background:#1a0e07;perspective:1150px;perspective-origin:50% 38%;overflow:hidden;color:#5a2e0e;text-shadow:0 1px 0 rgba(255,244,214,.8),0 0 8px rgba(255,236,190,.7)} /* (the desk and the closed book, drawn the same way as the opening so the hand-off is seamless) */
+#loading .ld-t{position:absolute;z-index:1;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 4.5%);text-align:center;font-size:21px}
+#loading.book .dk-world,#loading.tapgo .dk-world{display:none}
+.dk-book::before{background:linear-gradient(90deg,#8e1414,#c42222 10%,#a81a1a);border-radius:6px 12px 12px 6px}
 #game.lean #parPill.miss{filter:none}
 #game.glhud #fortBar,#game.glhud #nestBar,#game.glhud #crowd,#game.glhud #floats,#game.glhud #parPill{visibility:hidden} /* drawn inside the picture instead: see GHUD */
 #game.glhud #giant:not(.last){opacity:0;animation:none;box-shadow:none;background:none}
@@ -787,7 +798,7 @@ svg.ico.sm{width:18px;height:18px}
 
 <div id="game">
   <canvas id="c"></canvas>
-  <div id="loading">Forging the royal army…<small id="loadMsg" style="display:block;font-size:12px;opacity:.7;margin-top:6px"></small></div>
+  <div id="loading"><div class="dk-world" aria-hidden="true"><div class="dk-desk"></div><div class="dk-book"><div class="dk-block"></div><div class="dk-leaf"><div class="dk-face dk-front"><img class="dk-logo" src="models/paper/a/ui/logo.webp" alt="" draggable="false"></div></div></div></div><span class="ld-t">Forging the royal army…<small id="loadMsg" style="display:block;font-size:12px;opacity:.7;margin-top:6px"></small></span></div>
   <div id="flash"></div>
   <div id="audBtns"><button id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.2" fill="#fff"/><rect x="14" y="5" width="4" height="14" rx="1.2" fill="#fff"/></svg></button><button id="mute" aria-label="Sound effects on/off"><svg viewBox="0 0 24 24"><use id="muteUse" href="#i-sound"/></svg></button><button id="musBtn" aria-label="Music on/off"><svg viewBox="0 0 24 24"><use id="musUse" href="#i-music"/></svg></button></div>
 
@@ -5772,7 +5783,7 @@ const PA_BTINT = { gold: '#ffcf45', blue: '#8fb8ff', red: '#ff9484', purple: '#d
 const PA_BOARD = { gold: [.189, .811, .322, .716], blue: [.188, .812, .325, .715], red: [.189, .812, .327, .716], purple: [.189, .813, .327, .715] }; // each sign's empty board: x from, x to, y from, y to (y up from the foot)
 const PAGE_W = 2048, PAGE_H = 3065;
 const PA_GB_A = { idle: [1.0383, 732], wind: [.7242, 794], roar: [1.2185, 714], daze: [1.0653, 704] }; // Grimbald's poses: width / height, and height in pixels at one shared scale
-const PA_DIM_A = { cleaver_t: .8516, cannon: .9125, puff: 1.0987, star: 1.0802, sign_gold: 1.3559, sign_blue: 1.3559, sign_red: 1.3559, sign_purple: 1.3531, oak: .9746, pines: .8649, bush: 1.3714, cottage: 1.1532, knight: .7901, skullrock: 1.2632, crownrock: 1.0909, lamp: .4555, bannerp: .3918, bannerb: .6034, fence: 1.8551, torch: .4097, castle: 1.5202, camp: 3.4115, back: 4.2227, hoard: 2.1955 }; // width / height of each card
+const PA_DIM_A = { hs_rogue: .7391, hs_warrior: .8873, hs_grunt: .8027, cleaver_t: .8516, cannon: .9125, puff: 1.0987, star: 1.0802, sign_gold: 1.3559, sign_blue: 1.3559, sign_red: 1.3559, sign_purple: 1.3531, oak: .9746, pines: .8649, bush: 1.3714, cottage: 1.1532, knight: .7901, skullrock: 1.2632, crownrock: 1.0909, lamp: .4555, bannerp: .3918, bannerb: .6034, fence: 1.8551, torch: .4097, castle: 1.5202, camp: 3.4115, back: 4.2227, hoard: 2.1955 }; // width / height of each card
 const PB_DIM = { statue: .6146, skullrock: 1.0756, crownskull: .8438, crystals: .9167, cottage: 1.219, barricade: 1.113, fence: 1.2973, torch: .4688, bannerp: .6172, bannerb: .651, bush: 1.0696, rockpile: 1.4328 };
 const PA_CP = { walk: [.8735, 601], swing: [.6973, 631], hit: [1.0265, 567], down: [1.1417, 515] }; // The Carver's poses: width / height, height in pixels
 const PB_GB = { idle: [.9363, 487], walk: [.8911, 496], wind: [.6147, 558], smash: [.7537, 475], roar: [1.1279, 477], daze: [1.0995, 422] };
@@ -7476,10 +7487,11 @@ function update(dt) {
 
   // move player slimes + gates + castle hits
   const ah = soldHp(), bm0 = (G.bn.burn ? 1.2 : 1) * (G.hornT > 0 ? 1.35 : 1); bnPop = 0; if (G.hornT > 0) G.hornT -= dt;
+  const DOOR = PA.on && PA.castle && PA.castle.visible, GZ = DOOR ? FORT_Z - 3.9 : FORT_Z; // (v202e: the paper castle stands 4.3 back, so soldiers march on to its gate)
   for (let i = 0; i < ants.n; i++) {
     if (ants.hp[i] <= 0) continue;
     const pz = ants.z[i]; let z = pz - (play || pz > -4.2 ? ants.sp[i] * dt * (G.rally > 0 ? 1.4 : 1) * (G.bn.boots ? 1.2 : 1) : 0); let x = ants.x[i] + Math.sin(ants.ph[i] + G.t * 3) * 0.25 * dt;
-    const r = 0.3 * ants.s[i]; x = wallX(clamp(x, -LANE + r, LANE - r), ants.x[i], z, r); if (P2.cl.length || P2.fis || P2.tomb.length) { if (!p2Walk(i, x, pz, z, r, dt, ah)) continue; x = _p2.x; z = _p2.z; } // (G.rally: the Paladin's horn hurries everyone along)
+    const r = 0.3 * ants.s[i]; x = wallX(clamp(x, -LANE + r, LANE - r), ants.x[i], z, r); if (DOOR && z < FORT_Z) x *= Math.max(0, 1 - 2.4 * dt); /* (funnelled into the gateway) */ if (P2.cl.length || P2.fis || P2.tomb.length) { if (!p2Walk(i, x, pz, z, r, dt, ah)) continue; x = _p2.x; z = _p2.z; } // (G.rally: the Paladin's horn hurries everyone along)
     for (const g of G.gates) {
       if ((ants.pass[i] & g.bit) || !(pz > g.z && z <= g.z) || Math.abs(x - g.cx) > g.w / 2) continue;
       if (sandOff()) { ants.pass[i] |= g.bit; continue; } /* lost in the sandstorm: the gate does nothing */
@@ -7521,11 +7533,11 @@ function update(dt) {
       if (rand() < .4) burst(x, 1.1, g.z, [gateCol(g), "#ffffff"], 2, 2.6, { vy: 3.5, life: .6, g: 6, sz: 1.2 });
     }
     if (ants.hp[i] <= 0) continue; // folded into a cannon crew
-    if (z <= FORT_Z) {
-      if (ants.kind[i]) { explode(x, FORT_Z + .6); if (play) G.fortHp -= bombDmg(save.up.bomb) * 2; }
+    if (z <= GZ) {
+      if (ants.kind[i]) { explode(x, GZ + .6); if (play) G.fortHp -= bombDmg(save.up.bomb) * 2; }
       if (play || G.mode === 'won') { G.fortHp -= ants.hp[i]; G.fortFlash = 1; G.shake = Math.min(0.5, G.shake + (ants.big[i] ? 0.4 : 0.03)); }
-      burst(x, 1.2, FORT_Z + .2, rand() < .5 ? ALLY_FX : '#e2d6c4', ants.big[i] ? 14 : 2, 5);
-      if (rand() < .25 || ants.big[i]) splat(x, FORT_Z + .6, ALLY, ants.big[i] ? 3 : .9);
+      burst(x, 1.2, GZ + .2, rand() < .5 ? ALLY_FX : '#e2d6c4', ants.big[i] ? 14 : 2, 5);
+      if (rand() < .25 || ants.big[i]) splat(x, GZ + .6, ALLY, ants.big[i] ? 3 : .9);
       sfx('fort', 120, () => smp('castleHit', .3, .07)); // soldiers pounding on his stone walls (the King's castle is G.fort)
       ants.hp[i] = 0; continue;
     }
@@ -8772,7 +8784,7 @@ function frame(now) {
 
 /* debug hooks for automated playtests */
 window.__CR = {
-  G, ants, beetles, get save() { return save; }, musicProbe, winProbe, start: startPlay, menu: showMenu,
+  G, ants, beetles, get save() { return save; }, get PA() { return PA; }, get DIR() { return DIR; }, musicProbe, winProbe, start: startPlay, menu: showMenu,
   step(sec, opts = {}) { const n = Math.round(sec * 60); for (let i = 0; i < n; i++) { if (opts.aim) G.lx = opts.aim(G); if (opts.fire !== undefined) G.firing = opts.fire; if (opts.giant) sendGiant(); update(1 / 60); } render(); return { mode: G.mode, ants: ants.n, beetles: beetles.n, fort: Math.ceil(G.fortHp), nest: Math.ceil(G.nestHp), t: +G.t.toFixed(1) }; },
   boonAfter(C) { const sv = { boons: { w: boonWorld(C.lv), list: C.boons } }; if (C.lv < 2) return; boonTake(sv, C.lv, null); const ids = boonOffer(sv, C.lv, Math.random); boonTake(sv, C.lv, ids[(Math.random() * ids.length) | 0]); C.boons = sv.boons.list; },
   UPG, upCost, freshSave, levelCfg, coinFly, TIERS, get world() { return world; }, get KK() { return KK; },
@@ -8849,7 +8861,7 @@ function dirStart(s) {
   s.pal = paladin.visible; if (s.noPal) paladin.visible = false; if (s.fadeIn) DIR.fade = 1; DIR.fadeTo = 0; if (s.start) s.start();
 }
 function dirStop(skipped) {
-  const s = DIR.s; if (!s) return; DIR.s = null; DIR.speed = 1; if (s.clips) clipOff(); DIR.fadeTo = 0; gameEl.classList.remove('cinema'); $('cine').classList.remove('on', 'dir', 'short', 'end'); endCap(''); dirTitle(); if (!s.keepStage) stageClear(false); if (s.noPal) paladin.visible = s.pal;
+  const s = DIR.s; if (!s) return; DIR.s = null; DIR.speed = 1; if (PA.heroes) PA.heroes.visible = false; if (s.clips) clipOff(); DIR.fadeTo = 0; gameEl.classList.remove('cinema'); $('cine').classList.remove('on', 'dir', 'short', 'end'); endCap(''); dirTitle(); if (!s.keepStage) stageClear(false); if (s.noPal) paladin.visible = s.pal;
   if (camera.fov !== DIR.fov0) { camera.fov = DIR.fov0; camera.updateProjectionMatrix(); } if (s.freeze) G.firing = DIR.held; if (s.done) s.done(skipped);
 }
 function dirAbort() { const s = DIR.s; if (!s) { DIR.fade = DIR.fadeTo = 0; return; } const d = s.done; s.done = null; dirStop(true); if (s.abort) s.abort(); DIR.fade = DIR.bars = DIR.amt = 0; s.done = d; } // the level is set up again under it
@@ -9175,6 +9187,7 @@ function startCine(full) {
         if (once('c2', T.r + .55)) endCap('Take it, and end the war.'); }
       if (once('gun', T.k)) { endCap(''); if (palRig) headTurn(0); paladin.visible = false; paladin.scale.setScalar(PAL_S); paladin.rotation.y = Math.PI; for (const o of paladin.children) if (o.isSprite) o.visible = true; noise(.35, .06, 'highpass', 2600, 5200); }
       if (t > T.k + .25) { G.firing = true; G.lx = t < T.x ? 0 : Math.sin((t - T.x) * 1.6) * 1.8; }
+      if (pa && t < T.k + .1) { const m = t > T.h - .03 && t < T.k; s.foeZ = m ? -32 : -27; if (m) { paHeroes().visible = true; paHeroMarch(t - T.h); } else if (PA.heroes) PA.heroes.visible = false; } /* (v202e: the march's close-up skeletons are painted large; the small dolls keep their distance) */
       if (once('cheer', T.x)) { beetles.n = 0; clearBones(); spawnHorde(170); for (let j = 0; j < beetles.n; j++) { beetles.kind[j] = 0; beetles.z[j] += 6; } s.foeZ = undefined; brass(196, .34, .07); brass(294, .6, .075, .16); brass(392, .9, .06, .36); swell(1.6, .12, 240, 2800); }
       if (desk) { puTick(t, 1.6); if (s.noFoes && t > 2.2) s.noFoes = false; } /* the cut-outs spring up as the camera tilts down; the horde joins them */
       if (once('ptEnd', T.end - .05)) { if (desk && !long) dirStop(false); else pageTurn(() => dirStop(false)); return; } if (once('clash', T.end - .65)) { cineFlash(1, 560); hitBoom(1.1); noise(.7, .16, 'lowpass', 2400, 150); buzz(60); }
@@ -9246,6 +9259,13 @@ function puSnapshot() { // the 3D page from straight above with every cut-out ly
     G.camOverride = null; G.mode = m0; camera.position.copy(p0); camera.quaternion.copy(q0); camera.fov = f0; camera.updateProjectionMatrix(); puReset(); return s.toDataURL('image/jpeg', .9);
   } catch (e) { console.error(e); G.camOverride = null; puReset(); return null; }
 }
+const PA_HEROES = [['hs_warrior', 1.55, .2, -28.4], ['hs_rogue', 1.4, 1.5, -28.6], ['hs_grunt', 1.4, -.8, -30.1], ['hs_rogue', 1.4, .75, -30.6, 1], ['hs_warrior', 1.5, 1.95, -30.9, 1]];
+function paHeroes() { // v202e: the opening's close-up skeletons, painted large (the sprite sheet's dolls are too small to fill the picture)
+  if (PA.heroes && PA.heroes.parent === PA.g) return PA.heroes; const g = PA.heroes = new THREE.Group(); PA.g.add(g);
+  for (const [n, h, x, z, fl] of PA_HEROES) { const c = paCard(n, h, x, z, { lean: .1, flip: fl }), u = c.userData; for (const o of [c, u.sh]) if (o) { PA.g.remove(o); g.add(o); } u.z0 = z; u.ph = x * 2.3; }
+  g.visible = false; return g;
+}
+function paHeroMarch(t) { for (const c of PA.heroes.children) { const u = c.userData; if (u.z0 === undefined) continue; const z = u.z0 + t * .9, b = Math.sin(t * 6 + u.ph); c.position.z = z; c.position.y = Math.abs(b) * .07; c.rotation.z = b * .05; if (u.sh) u.sh.position.z = z - c.geometry.parameters.height * .1; } }
 function puReset() { if (PU.list) for (const p of PU.list) { p.c.scale.y = p.s; p.c.rotation.x = p.b; if (p.c.userData.sh) p.c.userData.sh.scale.set(1, 1, 1); } PU.list = null; }
 $('film').addEventListener('pointerdown', e => e.stopPropagation());
 $('film').addEventListener('click', e => { e.stopPropagation(); if (FILM.on && performance.now() - FILM.t0 > 700) filmEnd(true); });
@@ -9528,7 +9548,7 @@ function boot() {
     if (!l) { filmOrCine(); return; }
     const book = PAPER === 'a'; if (book && save.level <= WORLD_LEN) { paPre(); if (!PA.g) { paBuild(); paExtras(); } }
     const w1 = book && save.level <= WORLD_LEN; // (v201) World 1: the desk and the book
-    Promise.all([w1 ? paWait() : null, book ? imgWait(['models/paper/a/cover_frame.webp', 'models/paper/a/cover_emblem.webp', 'models/paper/a/title_frame.webp', 'models/paper/a/title_vignette.webp'].concat(w1 ? ['models/paper/a/open/desk.webp', 'models/paper/a/ui/logo.webp', 'models/paper/a/open/crown.webp', 'models/paper/a/page.webp'] : [])) : null]).then(() => { // (the paper pieces and the cover are in hand before the tap)
+    Promise.all([w1 ? paWait() : null, book ? imgWait((w1 ? ['models/paper/a/open/cover.webp'] : ['models/paper/a/cover_frame.webp', 'models/paper/a/cover_emblem.webp']).concat(['models/paper/a/title_frame.webp', 'models/paper/a/title_vignette.webp']).concat(w1 ? ['models/paper/a/open/desk.webp', 'models/paper/a/ui/logo.webp', 'models/paper/a/open/crown.webp', 'models/paper/a/page.webp'] : [])) : null]).then(() => { // (the paper pieces and the cover are in hand before the tap)
       if (w1) { ptSizes(); const d = dkBuild(); d.classList.add('in'); { const pg = puSnapshot(); if (pg) { const e = d.querySelector('.dk-p2'); e.style.backgroundImage = `url(${pg})`; e.style.backgroundSize = '100% 100%'; } } setTimeout(() => l.remove(), 600); d.addEventListener('click', () => { audio(); if (!DK.on) { d.classList.remove('in'); dkOpen(!save.openSeen); } else dkSkip(); }); return; }
       ptSizes(); l.classList.add('tapgo'); if (book) { l.classList.add('book'); l.innerHTML = '<div class="bk-emb"></div><b>BONE<i>SIEGE</i></b><span>Tap to open</span>'; } else l.innerHTML = '<svg viewBox="0 0 48 52"><use href="#i-king"/></svg><b>BONE SIEGE</b><span>Tap to begin</span>';
       l.addEventListener('click', () => { audio(); pageTurn(() => { l.remove(); filmOrCine(); }); }, { once: true }); /* the cover turns onto the opening */ // (click, not pointerdown: an iPhone only lets sound start on the finger's way up)
