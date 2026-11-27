@@ -704,6 +704,7 @@ svg.ico.sm{width:18px;height:18px}
 /* v202j: the title page's picture takes only the room between the level trail and the buttons, so nothing sits on it */
 #game.papermenu #menu::before{position:relative!important;left:auto!important;bottom:auto!important;transform:none!important;order:1;flex:1 1 0;min-height:0;width:min(92%,460px);aspect-ratio:auto!important;margin:4px auto -26px;background-position:center bottom!important;z-index:0!important}
 #game.papermenu #menu>.dock{order:2;position:relative;z-index:1}
+#game.papermenu #menu::before{mix-blend-mode:multiply} /* v202k: the picture is drawn on the page, like the tale */
 #game.papermenu #menu>.spacer{display:none}
 #game.papermenu #menu .lvl{margin-top:14px!important}
 #game.papermenu .logo-pa{max-height:22vh;width:auto;max-width:min(78%,330px)}
@@ -6345,12 +6346,16 @@ function bendTitle(el) {
   const w = el.clientWidth, h = el.clientHeight; if (!w || !h) { if ((el._btTry = (el._btTry || 0) + 1) < 30) setTimeout(() => bendTitle(el), 150); return; } el._btTry = 0; // (not on screen yet: look again shortly)
   if (keep && el.dataset.bw === w + 'x' + h + txt) return; el.dataset.bw = w + 'x' + h + txt;
   const cs = getComputedStyle(el); let fs = parseFloat(cs.fontSize); const x = BEND.cx || (BEND.cx = document.createElement('canvas').getContext('2d'));
-  x.font = `${cs.fontWeight} ${fs}px ${cs.fontFamily}`; const tw = x.measureText(txt).width + txt.length * (parseFloat(cs.letterSpacing) || 0), room = w * .6; if (tw > room) fs *= room / tw;
-  const b = fs * .34, y0 = (h * .46 + b).toFixed(1), yc = (h * .12 + b).toFixed(1), id = 'btp' + (++BEND.n), esc = txt.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  fs = Math.min(fs, h * .335); x.font = `${cs.fontWeight} ${fs}px ${cs.fontFamily}`; const tw = x.measureText(txt).width + txt.length * (parseFloat(cs.letterSpacing) || 0), room = w * .58; if (tw > room) fs *= room / tw; // (v202k: the red band is 42% of the ribbon tall; the letters stay inside it)
+  const b = fs * .35, y0 = (h * .464 + b).toFixed(1), yc = (h * .128 + b).toFixed(1), id = 'btp' + (++BEND.n), esc = txt.replace(/&/g, '&amp;').replace(/</g, '&lt;');
   el.innerHTML = `<span class="bt-t">${esc}</span><svg class="bt" viewBox="0 0 ${w} ${h}" aria-hidden="true"><path id="${id}" d="M${(w * .14).toFixed(1)} ${y0} Q${(w / 2).toFixed(1)} ${yc} ${(w * .86).toFixed(1)} ${y0}" fill="none"/><text style="font-size:${fs.toFixed(1)}px;stroke-width:${(fs * .09).toFixed(1)}px"><textPath href="#${id}" startOffset="50%" text-anchor="middle">${esc}</textPath></text></svg>`;
 }
 function bendWatch(el) { if (!el) return; if (!BEND.ro) BEND.ro = new ResizeObserver(es => es.forEach(e => bendTitle(e.target))); BEND.ro.observe(el); bendTitle(el); }
 for (const el of document.querySelectorAll('#map .map-title, #rewards > .map-title, #resTitle')) bendWatch(el); if (document.fonts) document.fonts.ready.then(() => document.querySelectorAll('.map-title, #resTitle').forEach(el => { el.dataset.bw = ''; bendTitle(el); }));
+function fadeSwap(change, ms = 650) { // v202k: the picture as it is holds a moment over the change, then melts away (the camera is the same on both sides)
+  let c = null; try { c = ptSnap(); } catch (e) {} if (c) { c.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;z-index:79;pointer-events:none;opacity:1;transition:opacity ' + ms + 'ms ease'; gameEl.appendChild(c); }
+  try { change(); } catch (e) { console.error(e); } if (!c) return; requestAnimationFrame(() => requestAnimationFrame(() => { c.style.opacity = '0'; })); setTimeout(() => c.remove(), ms + 150);
+}
 function pageTurn(change, o = {}) { // o.back: the previous page swings back in from the left over the current one (going back)
   if (PT.on || G.sim || document.hidden || !gameEl.clientWidth) { change(); return; }
   const W = gameEl.clientWidth, N = PT.N, sw = W / N;
@@ -7808,13 +7813,17 @@ const FLY_T = .3, MUZZLE_H = 1.64; // a soldier fired from the cannon is in the 
 const liftOf = (p, i) => { if (p === beetles && p.tier[i] === F_NEC) return 1.5 + Math.sin(G.t * 1.7) * .18; if (!p.fly || !p.fly[i]) return 0; const u = p.age[i] / FLY_T; return u >= 1 ? 0 : (1 - u) * MUZZLE_H + Math.sin(u * Math.PI) * .75; };
 const HORDE_REST = .66; // the waiting horde stands a little smaller (it reads as a sea), and grows to full size as it wakes. (Its age never ran while it waited, so it was drawn at a third of its size: crumbs along the castle foot)
 const popOf = (p, i) => { if (p === beetles && p.pass[i] === 1) { if (p.tier[i] === F_ARCH || p.tier[i] >= F_SHLD) return 1; const u = Math.min(1, p.age[i] * 2.2); return HORDE_REST + (1 - HORDE_REST) * u * (2 - u); } const t = Math.min(1, p.age[i] * 5); return t < 1 ? .35 + .65 * t + Math.sin(t * Math.PI) * .3 : 1; };
+const riseOf = (p, i) => { // v202k, the opening: the horde springs up one by one with the paper cut-outs, and soldiers grow out of the lens instead of filling it
+  if (p === beetles && G.foeRise !== undefined) { const u = clamp((DIR.t - G.foeRise - (i * .618 % 1) * 1.1) / .45, 0, 1); return u * u * (3 - 2 * u); }
+  if (p === ants && DIR.s && DIR.s.cine) { const u = clamp((camera.position.z - p.z[i] - 2.4) / 1.8, 0, 1); return u * u * (3 - 2 * u); }
+  return 1; };
 // sprite crowds: units run (a cycle per second or so, each a little out of step), fly out of the cannon in the mid-air pose,
 // and jump for joy once the castle falls
 const nearLens = (p, i) => p === beetles && DIR.s.foeZ !== undefined && p.z[i] > DIR.s.foeZ - (p.big[i] || p.tier[i] >= F_BOMB ? 5.5 : 0); // (right by the camera of a scene they would fill the picture)
 function drawSprites(p, sm) {
   const cell = sm.geometry.attributes.aCell.array, party = G.boomed && p === ants;
   for (let i = 0; i < p.n; i++) {
-    const s = p === beetles && p.tier[i] === F_CAP && CAP.b || DIR.s && nearLens(p, i) || party && PA.on && p.z[i] - camera.position.z > -8 ? .001 : /* (v201b: on the paper win camera, nobody stands in the lens) */ p.s[i] * US * popOf(p, i), air = liftOf(p, i), flying = air > 0.05, t = unitType(p, i); // (the sculpted captain is drawn in place of his brute)
+    const s = p === beetles && p.tier[i] === F_CAP && CAP.b || DIR.s && nearLens(p, i) || party && PA.on && p.z[i] - camera.position.z > -8 ? .001 : /* (v201b: on the paper win camera, nobody stands in the lens) */ p.s[i] * US * popOf(p, i) * riseOf(p, i), air = liftOf(p, i), flying = air > 0.05, t = unitType(p, i); // (the sculpted captain is drawn in place of his brute)
     const hopK = party ? Math.abs(Math.sin(G.t * 7 + p.ph[i])) : 0;
     let f = p === beetles && p.tier[i] === F_NEC ? p.atk[i] > 0 ? ATK_F : JUMP_F : flying || hopK > .35 || (p === beetles && p.kind[i] && !(p.atk[i] > 0)) ? JUMP_F : p.atk[i] > 0 ? ATK_F : Math.floor(((G.t * (p.big[i] ? 1.1 : 1.55) + p.ph[i] * .16) % 1) * RUN_FRAMES);
     _m.makeScale(s, s, s); _m.setPosition(p.x[i], air + hopK * .55 * s, p.z[i]);
@@ -7834,7 +7843,7 @@ function drawPool(p, mesh, hat, tint) {
   if (crowdReady) return drawSprites(p, p === ants ? allySprites : foeSprites);
   let h = 0, nb = 0;
   for (let i = 0; i < p.n; i++) {
-    const s = p.s[i] * US * popOf(p, i), air = liftOf(p, i), flying = air > 0.05, hop = flying ? 0 : hopOf(p, i);
+    const s = p.s[i] * US * popOf(p, i) * riseOf(p, i), air = liftOf(p, i), flying = air > 0.05, hop = flying ? 0 : hopOf(p, i);
     const sy = flying ? s * 1.12 : s * (0.84 + 0.3 * hop), sx = flying ? s * .93 : s * (1.1 - 0.16 * hop);
     _m.makeRotationY(Math.sin(G.t * 3 + p.ph[i]) * 0.15); _m.scale(_v.set(sx, sy, sx)); _m.setPosition(p.x[i], air + hop * (G.boomed && p === ants ? 0.65 : 0.2) * s, p.z[i]);
     if (p === ants && p.kind[i] && nb < HCAP) { bombMesh.setMatrixAt(nb++, _m); mesh.setMatrixAt(i, ZERO_M); } else mesh.setMatrixAt(i, _m);
@@ -7851,7 +7860,7 @@ const FOE_WARM = new THREE.Color(.8, .69, .58), FOE_TINT = new THREE.Color(1, 1,
 function drawBlobs() {
   let k = 0;
   for (const p of [ants, beetles]) for (let i = 0; i < p.n; i++) {
-    const s = (DIR.s && nearLens(p, i) ? .001 : p.s[i]) * US * popOf(p, i) * (p === beetles ? 1.5 : 1) * (crowdReady ? (p === beetles ? .72 : .8) : 1 - hopOf(p, i) * .25);
+    const s = (DIR.s && nearLens(p, i) ? .001 : p.s[i]) * US * popOf(p, i) * riseOf(p, i) * (p === beetles ? 1.5 : 1) * (crowdReady ? (p === beetles ? .72 : .8) : 1 - hopOf(p, i) * .25);
     // a soft contact shadow under every unit (the horde's overlap into a dark carpet under it)
     _m.makeScale(s, 1, s * .8); _m.setPosition(p.x[i], 0.025, p.z[i] + s * .06); blobMesh.setMatrixAt(k++, _m);
   }
@@ -8212,8 +8221,8 @@ const GHUD = (() => {
   function bar(k, b, fill, f, label, ft = W1) { const w = box[b].w, x = box[b].x, y = box[b].y, f2 = clamp(f, 0, 1); put(cells['tr' + k], x, y); if (f2 > 0) { const c = cells['fi' + k], p = c.pad / (c.w + c.pad * 2); put(c, x + 3, y + 3, 1, W1, 0, p + (1 - 2 * p) * f2 + (f2 >= 1 ? p : 0)); const hw = (w - 22) * f2; if (hw > 6) stretch(cells.hi, x + 3 + 8 * f2, y + 6, hw, .38); } put(cells['fr' + b], x, y, 1, ft); text('label', label, x + 3 + 10 + (w - 16) / 2, y + 15, .5); }
   let lastT = 0;
   H.draw = () => {
-    if (!ready) return; const now = performance.now() / 1000, dt = Math.min(.05, now - lastT); lastT = now; const cls = gameEl.classList, hid = cls.contains('overlay') || cls.contains('cinema'), want = !hid && !cls.contains('cine') && (G.mode === 'play' || G.mode === 'lost' || G.mode === 'won') ? 1 : 0;
-    H.vis = hid ? 0 : H.vis + clamp(want - H.vis, -dt * 2, dt * 8); H.fl = hid ? 0 : 1; if (H.vis <= 0 && !floats.some(f => f.t > 0) || hid) return; if (!measure()) return;
+    if (!ready) return; const now = performance.now() / 1000, dt = Math.min(.05, now - lastT); lastT = now; const cls = gameEl.classList, hid = cls.contains('overlay') || cls.contains('cinema') || !!(DIR.s && DIR.s.cine) || !!G.camOverride, want = !hid && !cls.contains('cine') && (G.mode === 'play' || G.mode === 'lost' || G.mode === 'won') ? 1 : 0;
+    H.vis = hid ? 0 : H.vis + clamp(want - H.vis, -dt * 2, dt * 2.5); /* (v202k: no HUD on the storybook page or in the opening; it fades in as the battle begins) */ H.fl = hid ? 0 : 1; if (H.vis <= 0 && !floats.some(f => f.t > 0) || hid) return; if (!measure()) return;
     n = 0; A = H.vis; tf(1, 0, 0);
     if (A > 0 && G.cfg) {
       const num = k => parseFloat(String(_hud[k] || 'scaleX(1)').slice(7)), wl = _hud.wlBar;
@@ -8442,7 +8451,7 @@ const wlName = (d = WL.def) => d.name;
 function startPlay() {
   audio(); $('menu').classList.remove('on'); gameEl.classList.remove('overlay');
   setupLevel(save.level); G.mode = 'play'; G.hintT = save.level <= 2 ? 6 : 0; G.introT = G.sim ? 0 : INTRO_T; G.grandT = 0; { const w0 = [G.waveT, G.kingT, G.chT]; G.waveT += G.introT; G.kingT += G.introT; G.chT += G.introT; G.film = () => { [G.waveT, G.kingT, G.chT] = w0; G.introT = 0; }; } /* (the first brute charge came during the opening swoop) */
-  maybeStory(); const film = arrival(); if (film) G.film(); G.film = null;
+  maybeStory(); const film = arrival(); if (film || G.chapterTitle) G.film(); G.film = null; /* (v202k: after the opening the camera is already in place: no second swoop) */
   $('lvlPill').textContent = G.cfg.boss ? 'Boss · ' + (save.level > LAP_LEN ? 'Road ' + roadN(save.level) : save.level) : lvName(save.level); $('lvlPill').classList.toggle('boss', G.cfg.boss);
   if (G.worldOverride != null) toastMsg('PREVIEW', WORLDS[worldIdx].name, { name: true, fly: true });
   else if (!film && PAPER === 'a' && save.level <= WORLD_LEN && (save.level === 1 || G.chapterTitle)) toastMsg('CHAPTER I', save.level === 1 ? WORLDS[0].name : WORLDS[0].name + ' · ' + lvName(save.level), { name: true, fly: true }), G.chapterTitle = false; /* (v201: the storybook's chapter ribbon) */
@@ -9272,8 +9281,8 @@ function startCine(full) {
     if (long) shots.push({ t: [T.c, T.e], pos: [[2.8, 5.0, -24.5], [1.0, 5.6, -27]], at: [[0, GB[1] - .8, GB[2]], [0, GB[1] - .5, GB[2]]], fov: [40, 35], foc: [.5, .45, .5], grade: 'storm', vig: .8, flare: { x: .3, y: .3, r: .42, k: () => .2 + .15 * Math.sin(DIR.t * 2.2), c: '#ffe9a0' } }); /* Grimbald on his gate */
     shots.push({ t: [T.e, T.h], pos: [[-1.6, 6.4, -29.6], [-.9, 6.8, -31]], at: [[0, GB[1] + .2, GB[2]], [0, GB[1] + .4, GB[2]]], fov: [40, 36], /* (v201: wider; at 28 the cut-out went soft) */ foc: [.5, .45, .5], grade: 'storm', vig: .85 }, /* he roars */
       { t: [T.h, T.k], pos: [[1.9, .8, -25.2], [.7, 1.05, -23.2]], at: [[-.5, 3.0, -38], [0, 3.5, -38]], fov: [46, 49], foc: [.5, .4, .8, 1.15], blur: .8, grade: 'storm', vig: .75 }, /* the horde marches on the road */
-      { t: [T.k, T.x], pos: [[1.7, 1.5, -.4], [1.05, 1.9, -1.9]], at: [[0, 2.2, -22], [0, 2.5, -24]], fov: [50, 46], foc: [.5, .45, .75, 1.15], blur: .6, grade: 'dawn', vig: .6, flare: dawn }, /* over the cannon's shoulder as it opens fire */
-      { t: [T.x, T.end], pos: [[2.0, 1.4, -6.5], [1.8, 3.0, -11], [0, 7.6, -13.5]], at: [[-.6, 1.6, -20], [0, 1.0, -27]], fov: [54, 52], grade: 'storm', gk: .4, vig: .6 }); } /* the charge */
+      { t: [T.k, T.x], pos: [[1.7, 2.9, -.4], [1.05, 3.3, -1.9]], at: [[0, 1.8, -22], [0, 2.0, -24]], fov: [50, 46], foc: [.5, .45, .75, 1.15], blur: .6, grade: 'dawn', vig: .6, flare: dawn }, /* over the cannon's shoulder as it opens fire */
+      desk ? { t: [T.x, T.end], pos: [[2.0, 1.4, -6.5], [1.3, 4.4, -8.5], [CAM.x, CAM.y, CAM.z]], at: [[-.6, 1.6, -20], [LOOK.x, LOOK.y, LOOK.z]], fov: [54, camera.fov] } : { t: [T.x, T.end], pos: [[2.0, 1.4, -6.5], [1.8, 3.0, -11], [0, 7.6, -13.5]], at: [[-.6, 1.6, -20], [0, 1.0, -27]], fov: [54, 52], grade: 'storm', gk: .4, vig: .6 }); } /* the charge (v202k: from the desk it lands on the battle camera, so the level takes over in place) */
   if (pa) for (const sh of shots) { delete sh.foc; delete sh.blur; sh.vig = Math.min(sh.vig || 0, .35); if (sh.grade === 'storm') sh.gk = .25; } // (v201: on paper no focus blur and a light grade: the cut-outs stay crisp)
   const orbit = v => { if (HOLD.b && HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = v; };
   const s = { len: T.end, freeze: false, fadeIn: !PT.on, shots, foeZ: -27, cine: true, start: () => { if (long) { pad([49, 73.4, 98], 9, .03, 500); } else pad([49, 98], 4, .02, 500); hold(T.end); cineEyes(2); orbit(false); },
@@ -9290,11 +9299,11 @@ function startCine(full) {
       if (t > T.k + .25) { G.firing = true; G.lx = t < T.x ? 0 : Math.sin((t - T.x) * 1.6) * 1.8; }
       if (pa && t < T.k + .1) { const m = t > T.h - .03 && t < T.k; s.foeZ = m ? -32 : -27; if (m) { paHeroes().visible = true; paHeroMarch(t - T.h); } else if (PA.heroes) PA.heroes.visible = false; } /* (v202e: the march's close-up skeletons are painted large; the small dolls keep their distance) */
       if (once('cheer', T.x)) { beetles.n = 0; clearBones(); spawnHorde(170); for (let j = 0; j < beetles.n; j++) { beetles.kind[j] = 0; beetles.z[j] += 6; } s.foeZ = undefined; brass(196, .34, .07); brass(294, .6, .075, .16); brass(392, .9, .06, .36); swell(1.6, .12, 240, 2800); }
-      if (desk) { puTick(t, 1.6); if (s.noFoes && t > 2.2) s.noFoes = false; } /* the cut-outs spring up as the camera tilts down; the horde joins them */
-      if (once('ptEnd', T.end - .05)) { if (desk && !long) dirStop(false); else pageTurn(() => dirStop(false)); return; } if (once('clash', T.end - .65)) { cineFlash(1, 560); hitBoom(1.1); noise(.7, .16, 'lowpass', 2400, 150); buzz(60); }
+      if (desk) { puTick(t, 1.6); if (s.noFoes && t > 1.9) { s.noFoes = false; G.foeRise = DIR.t; } if (G.foeRise !== undefined && DIR.t - G.foeRise > 2) G.foeRise = undefined; } /* the cut-outs spring up as the camera tilts down; the horde joins them */
+      if (once('ptEnd', T.end - .05)) { if (desk && !long) dirStop(false); else if (desk) fadeSwap(() => dirStop(false)); else pageTurn(() => dirStop(false)); return; } if (once('clash', T.end - .65)) { if (!desk) cineFlash(1, 560); hitBoom(1.1); noise(.7, .16, 'lowpass', 2400, 150); buzz(60); }
     } };
   if (desk) { s.fadeIn = false; s.noFoes = true; s.start0 = s.start; s.start = () => { s.start0(); puTick(0, 1.6); }; } // (the cut-outs begin with no height: from straight above, only the painted page shows)
-  const back = () => { puReset(); PA.poseHold = null; orbit(true); G.cine = null; G.firing = false; cineEyes(false); if (palRig) headTurn(0); if (HOLD.b) rxGlow(HOLD.b, 0); paladin.visible = false; paladin.scale.setScalar(PAL_S); paladin.rotation.y = Math.PI; for (const o of paladin.children) if (o.isSprite) o.visible = true; };
+  const back = () => { puReset(); G.foeRise = undefined; PA.poseHold = null; orbit(true); G.cine = null; G.firing = false; cineEyes(false); if (palRig) headTurn(0); if (HOLD.b) rxGlow(HOLD.b, 0); paladin.visible = false; paladin.scale.setScalar(PAL_S); paladin.rotation.y = Math.PI; for (const o of paladin.children) if (o.isSprite) o.visible = true; };
   if (desk) { s.done = () => { back(); DIR.fade = 0; if (G.practice) { if (G.practiceKeep) save = JSON.parse(G.practiceKeep); G.practice = false; G.practiceKeep = null; } save.introDay = today(); save.openSeen = 1; persist(); G.chapterTitle = true; paNextLevel(); }; s.abort = back; dirStart(s); return; } // (v201: from the desk, straight into the bookmarked level)
   s.done = () => { back(); DIR.fade = 0; showMenu(); save.introDay = today(); save.openSeen = 1; persist(); /* the real save is back; the day is marked so it plays once */ $('menu').classList.add('slam'); setTimeout(() => $('menu').classList.remove('slam'), 1000); setTimeout(() => { tone(70, .5, 'sine', .22, .5); noise(.3, .1, 'lowpass', 1500, 200); }, 250); };
   s.abort = back; dirStart(s);
@@ -9313,7 +9322,7 @@ const DK_TALE = [ // v202g: a few pages of the tale before the dive, each drawn 
 ];
 function dkBuild() {
   const d = document.createElement('div'); d.id = 'dk';
-  const leaves = DK_TALE.map((p, i) => `<div class="dk-leaf dk-tl${i ? '' : ' dk-p1'}" data-i="${i}"><div class="dk-face dk-tale"><div class="dk-pic" style="background-image:url(models/paper/a/open/${p.pic}.webp);background-size:${p.z * 100}% auto"></div><p class="dk-txt">${p.txt.split(' ').map(w => '<span>' + w + '</span>').join(' ')}</p><i class="dk-orn"></i><span class="dk-num">${i + 1}</span></div><div class="dk-face dk-back dk-paper"></div></div>`).reverse().join(''); // (the first page on top)
+  const leaves = DK_TALE.map((p, i) => `<div class="dk-leaf dk-tl${i ? '' : ' dk-p1'}" data-i="${i}"><div class="dk-face dk-tale"><div class="dk-pic" style="background-image:url(models/paper/a/open/${p.pic}.webp);background-size:contain"></div><p class="dk-txt">${p.txt.split(' ').map(w => '<span>' + w + '</span>').join(' ')}</p><i class="dk-orn"></i><span class="dk-num">${i + 1}</span></div><div class="dk-face dk-back dk-paper"></div></div>`).reverse().join(''); // (the first page on top)
   d.innerHTML = '<div class="dk-world"><div class="dk-desk"></div><div class="dk-book"><div class="dk-block"></div>'
     + '<div class="dk-page dk-p2"><i class="dk-gilt"></i></div>' + leaves
     + '<div class="dk-leaf dk-cover"><div class="dk-face dk-front"><div class="dk-emb"></div><img class="dk-logo" src="models/paper/a/ui/logo.webp" alt="Bone Siege" draggable="false"></div><div class="dk-face dk-back dk-endp"></div></div>'
