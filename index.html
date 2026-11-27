@@ -472,6 +472,51 @@ svg.ico.sm{width:18px;height:18px}
 .paper #dirT{filter:drop-shadow(0 4px 0 rgba(74,44,20,.4))}
 .paper #dirT i{margin-top:6px;color:#fffaea;-webkit-text-stroke:4px #4a2c14;paint-order:stroke fill;text-shadow:0 3px 0 #4a2c14}
 .paper #endCap{color:#fffaea;-webkit-text-stroke:4px #4a2c14;paint-order:stroke fill;text-shadow:0 3px 0 #4a2c14}
+/* v200 the book: turning pages, the cover, the title page, the results page */
+:root{--ptgrain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .4 0 0 0 0 .25 0 0 0 .32 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+#pt{position:absolute;inset:0;z-index:80;perspective:1800px;perspective-origin:50% 50%;pointer-events:auto;overflow:hidden}
+#pt .pt-under{position:absolute;inset:0;background:rgba(46,26,10,.4);pointer-events:none}
+#pt .pt-s{position:absolute;top:0;height:100%;transform-origin:0 50%;transform-style:preserve-3d}
+#pt .pt-f,#pt .pt-b{position:absolute;inset:0;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+#pt .pt-b{transform:rotateY(180deg);background:var(--ptgrain),linear-gradient(90deg,#e9dab9,#f4e8cc);background-blend-mode:multiply,normal}
+#pt .pt-c{position:absolute;top:0;height:100%;pointer-events:none}
+#pt .pt-snap{position:absolute;top:0;height:100%}
+#pt .pt-sh{position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(60,35,12,.6),rgba(60,35,12,.12) 60%,rgba(255,250,235,.1));opacity:0}
+#loading.book{background:#8f1d1c;border-style:solid;border-width:var(--bkt,90px) var(--bks,80px);border-image:url(models/paper/a/cover_frame.webp) 14% 22% 14% 22% fill;border-image-width:var(--bkt,90px) var(--bks,80px);box-sizing:border-box;justify-content:flex-start;gap:0}
+#loading.book>svg{display:none}
+#loading.book .bk-emb{position:absolute;left:50%;top:54%;width:min(calc((100% + 2 * var(--bks,80px)) * .8),420px);aspect-ratio:760/972;transform:translate(-50%,-50%);background:url(models/paper/a/cover_emblem.webp) center/contain no-repeat;pointer-events:none}
+#loading.book b{position:absolute;left:0;right:0;top:4%;text-align:center;font-size:min(15vw,64px);line-height:1;letter-spacing:2px;color:#f6cf6a;background:linear-gradient(180deg,#fff8d8,#ffd970 50%,#e2a23a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 3px 0 #4a0e0c) drop-shadow(0 0 10px rgba(0,0,0,.35))}
+#loading.book b i{display:block;font-style:normal;font-size:.36em;letter-spacing:6px;margin-top:6px}
+#loading.book span{position:absolute;left:0;right:0;bottom:3%;text-align:center;color:#f6d98a;font-size:17px;letter-spacing:1px;text-shadow:0 2px 0 #4a0e0c}
+#game.papermenu #menuArt{display:none}
+#game.papermenu #menu{background:#f8e5c2 var(--ptgrain)!important}
+#game.papermenu .dock{background:none}
+#game.papermenu #menu::before{content:'';position:absolute;left:50%;bottom:17%;width:min(80%,430px);aspect-ratio:900/991;transform:translateX(-50%);background:url(models/paper/a/title_vignette.webp) center/contain no-repeat;z-index:-1;pointer-events:none}
+#game.papermenu #menu::after,#game.paper #result::after{content:'';position:absolute;inset:0;z-index:-2;pointer-events:none;border-style:solid;border-width:var(--tpt,90px) var(--tps,80px);border-image:url(models/paper/a/title_frame.webp) 13% 21% 13% 21% fill;border-image-width:var(--tpt,90px) var(--tps,80px)}
+#game.papermenu .logo{filter:drop-shadow(0 4px 0 rgba(74,44,20,.35))}
+#game.papermenu .tag{color:#5a3a1a;text-shadow:none}
+#game.papermenu .lvl{background:linear-gradient(180deg,#c9553a,#94301f);border-color:#fffaea;box-shadow:0 0 0 2px #6b4426,0 5px 0 2px #6b4426;color:#fffaea;text-shadow:0 2px 0 #4a2c14}
+#game.papermenu .worldname{color:#6b4426;text-shadow:none}
+#game.papermenu .trail b{background:#fffaea;border-color:#6b4426;color:#6b4426}
+#game.papermenu .trail b.done{background:linear-gradient(#93c47d,#5e9a4c);border-color:#fffaea;box-shadow:0 0 0 1.5px #6b4426;color:#fffaea}
+#game.papermenu .trail b.now{background:linear-gradient(#86b4e6,#4d7ec2);border-color:#fffaea;box-shadow:0 0 0 2px #6b4426,0 0 0 6px rgba(107,68,38,.18);color:#fffaea}
+#game.papermenu .trail b.boss{background:radial-gradient(circle at 40% 35%,#d0563c,#8e2a1c);border-color:#fffaea;box-shadow:0 0 0 1.5px #6b4426}
+#game.papermenu .trail b.boss.done{background:radial-gradient(circle at 40% 35%,#f2c25a,#c58a22)}
+#game.papermenu .trail i{background:#c9a77a}#game.papermenu .trail i.done{background:#5e9a4c}
+#game.papermenu .trail b s{color:#c58a22;text-shadow:0 1px 0 #fffaea}
+#game.papermenu .uptoggle,#game.papermenu .pill-btn,#game.papermenu #menu .pill.wallet,#game.papermenu.overlay #audBtns button,#game.papermenu #gearBtn{background:linear-gradient(170deg,#fffaea,#f1e0b8)!important;color:#4a2c14!important;border:2px solid #8a5a2a!important;box-shadow:0 3px 0 rgba(90,55,20,.35)!important;text-shadow:none!important}
+#game.papermenu .uptoggle svg,#game.papermenu.overlay #audBtns svg,#game.papermenu #gearBtn svg{filter:brightness(.2) sepia(1) saturate(2.4)}
+#game.papermenu .btn.big,#game.papermenu #map .btn.big,#game.papermenu #rewards .btn.big{color:#fffaea!important;border:3px solid #fffaea!important;box-shadow:0 0 0 2.5px #6b4426,0 7px 0 2.5px #6b4426,0 12px 18px rgba(40,20,5,.35)!important;text-shadow:-2px -2px 0 #4a2c14,2px -2px 0 #4a2c14,-2px 2px 0 #4a2c14,2px 2px 0 #4a2c14,0 3px 0 #4a2c14!important;background:var(--ptgrain),linear-gradient(180deg,#86b4e6,#4d7ec2)!important;background-blend-mode:multiply,normal!important}
+#game.papermenu .sheet-card{background:var(--ptgrain),linear-gradient(180deg,#fbf1dc,#efdcb6);background-blend-mode:multiply,normal;border-color:#6b4426}
+#game.papermenu .sheet-head b{color:#7a1f14}#game.papermenu #upSheet{background:rgba(46,26,10,.5)}
+#game.papermenu .up{box-shadow:0 4px 0 rgba(90,55,20,.45);border-color:#c9a77a}
+#game.papermenu #map,#game.papermenu #rewards{background:#f8e5c2 var(--ptgrain)!important}
+#game.papermenu .map-title{color:#7a1f14;text-shadow:none}
+#game.paper #result{background:#f8e5c2 var(--ptgrain)!important}
+#game.paper #result .res-sub{color:#4a2c14!important;text-shadow:none!important}
+#game.paper #result.win .res-rays{background:repeating-conic-gradient(rgba(227,165,54,.2) 0 9deg,rgba(227,165,54,0) 9deg 22.5deg)}
+#game.paper #result.win .res-hero::before{background:radial-gradient(circle,rgba(255,226,120,.6),rgba(255,190,60,0) 68%)}
+#game.paper #result .res-prog span{color:#4a2c14;text-shadow:none}
 .paper #result{background:linear-gradient(180deg,rgba(80,48,18,.22),rgba(70,40,14,.6) 39%,rgba(45,25,8,.95) 86%)!important}
 #game.lean #parPill.miss{filter:none}
 #game.glhud #fortBar,#game.glhud #nestBar,#game.glhud #crowd,#game.glhud #floats,#game.glhud #parPill{visibility:hidden} /* drawn inside the picture instead: see GHUD */
@@ -5614,13 +5659,13 @@ function paGate(grp, g) { // the gate as a painted signpost standing on the page
 function paGrain(c, w, h, n = 260) { c.save(); c.globalCompositeOperation = 'source-atop'; for (let i = 0; i < n; i++) { c.fillStyle = Math.random() < .55 ? 'rgba(70,40,15,.14)' : 'rgba(255,250,235,.18)'; c.fillRect(Math.random() * w, Math.random() * h, 1.3, 1.3); } c.restore(); } /* paper grain on a drawn piece */
 function paWard(on) { /* the ward in the paper round: a sheet of purple vellum with inked hexes, held up across the gate */
   const m = ward.material;
-  if (on) { if (!PA.wardT) PA.wardT = canvasTex(512, 256, (x, w, h) => {
-      x.fillStyle = 'rgba(214,190,240,.62)'; x.fillRect(0, 0, w, h);
-      for (let i = 0; i < 3000; i++) { x.fillStyle = `rgba(${Math.random() < .5 ? '120,80,170' : '255,255,255'},${.05 + Math.random() * .07})`; x.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
-      x.strokeStyle = 'rgba(96,52,150,.8)'; x.lineWidth = 3; const r = 26, dx = r * 1.732;
-      for (let row = 0; row < h / (r * 1.5) + 1; row++) for (let c = -1; c < w / dx + 1; c++) { const cx = c * dx + (row % 2 ? dx / 2 : 0), cy = 18 + row * r * 1.5; x.beginPath(); for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; x.lineTo(cx + Math.cos(a) * r * .86, cy + Math.sin(a) * r * .86); } x.closePath(); x.stroke(); }
-      x.globalCompositeOperation = 'destination-out'; for (const top of [true, false]) { x.beginPath(); x.moveTo(0, top ? 0 : h); for (let s = 0; s <= w; s += 8) x.lineTo(s, (top ? 10 : h - 10) + (Math.random() - .5) * 9); x.lineTo(w, top ? 0 : h); x.closePath(); x.fill(); } x.globalCompositeOperation = 'source-over'; }); /* torn top and bottom edges */
-    Object.assign(m, { map: PA.wardT, blending: THREE.NormalBlending, opacity: .88 }); m.color.set('#ffffff'); }
+  if (on) { if (!PA.wardT) PA.wardT = canvasTex(512, 280, (x, w, h) => { const P = 16, top = h * .5, arch = () => { x.beginPath(); x.moveTo(P, h - 2); x.lineTo(P, top); x.bezierCurveTo(P, P - 6, w - P, P - 6, w - P, top); x.lineTo(w - P, h - 2); x.closePath(); };
+      x.lineJoin = 'round'; arch(); x.lineWidth = 15; x.strokeStyle = '#6b4426'; x.stroke(); x.lineWidth = 10; x.strokeStyle = '#fffaea'; x.stroke(); /* the die-cut edge */
+      arch(); x.save(); x.clip(); const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(200,170,245,.62)'); g.addColorStop(1, 'rgba(170,135,230,.3)'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+      for (let i = 0; i < 1600; i++) { x.fillStyle = `rgba(${Math.random() < .5 ? '120,80,170' : '255,255,255'},${.05 + Math.random() * .06})`; x.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
+      x.strokeStyle = 'rgba(96,52,150,.45)'; x.lineWidth = 2.5; const r = 24, dx = r * 1.732; for (let row = 0; row < h / (r * 1.5) + 1; row++) for (let c = -1; c < w / dx + 1; c++) { const cx = c * dx + (row % 2 ? dx / 2 : 0), cy = 10 + row * r * 1.5; x.beginPath(); for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; x.lineTo(cx + Math.cos(a) * r * .86, cy + Math.sin(a) * r * .86); } x.closePath(); x.stroke(); }
+      x.fillStyle = 'rgba(255,250,235,.85)'; for (const [sx, sy, s] of [[.22, .42, 9], [.74, .36, 11], [.5, .2, 8], [.86, .7, 7], [.14, .78, 7]]) { const X = sx * w, Y = sy * h; x.beginPath(); for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, q = k % 2 ? s * .35 : s; x.lineTo(X + Math.cos(a) * q, Y + Math.sin(a) * q); } x.closePath(); x.fill(); } x.restore(); }); /* an arched paper ward over the gate */
+    Object.assign(m, { map: PA.wardT, blending: THREE.NormalBlending, opacity: 1 }); m.color.set('#ffffff'); }
   else { Object.assign(m, { map: wardTex, blending: THREE.AdditiveBlending, opacity: .4 }); m.color.set('#c060ff'); ward.rotation.z = 0; }
   m.needsUpdate = true;
 }
@@ -5654,7 +5699,7 @@ function paTick(dt) { // the paper pieces that move
     PB.castle.forEach((p, i) => { const k = ft > 0 ? Math.min(1, Math.max(0, (ft - i * .14) / .8)) : 0, e = k * k; p.rotation.x = p.userData.fold[0] * e * (Math.PI / 2 - .04); p.rotation.z = -p.userData.fold[1] * e * .55; });
     const lt = G.mode === 'lost' || G.mode === 'resultLose' ? (PA.lostT = (PA.lostT || 0) + dt) : (PA.lostT = 0), k = Math.min(1, lt / .9); for (const c of PB.camp) c.rotation.x = k * k * (Math.PI / 2); }
   if (PA.castle && PA.castleF) { const won = G.boomed && (G.mode === 'won' || G.mode === 'resultWin'), ft = won ? G.winT - BOOM_AT : -1, F = PA.castleF, k = ft > 0 ? Math.min(1, ft / 1.1) : 0;
-    PA.castle.visible = !(ft > 0); if (PA.castle2) PA.castle2.visible = !(ft > 0); if (PA.castle.userData.sh) PA.castle.userData.sh.visible = k < .45; F.visible = ft > 0;
+    if (F !== PA.castle) { PA.castle.visible = !(ft > 0); F.visible = ft > 0; } else F.visible = true; if (PA.castle2) PA.castle2.visible = !(ft > 0); if (PA.castle.userData.sh) PA.castle.userData.sh.visible = k < .45; /* (one card stands, then falls) */
     F.rotation.x = -.22 - k * k * (Math.PI / 2 - .24) + (ft > 1.1 ? Math.sin((ft - 1.1) * 16) * Math.exp(-(ft - 1.1) * 6) * .06 : 0); /* it tips back like a piece of cardboard and slaps down flat across the crease */
     const H = PA.hoard, hk = ft > .8 ? Math.min(1, (ft - .8) / .55) : 0, x1 = hk - 1, eb = 1 + 2.70158 * x1 * x1 * x1 + 1.70158 * x1 * x1;
     H.visible = hk > 0; H.userData.sh.visible = hk > .6; H.rotation.x = -.14 - (Math.PI / 2 - .14) * (1 - eb); /* the treasure springs up off the far page */
@@ -5692,8 +5737,8 @@ function paBuild() {
     const sp = new THREE.Mesh(new THREE.PlaneGeometry(96, 44).translate(0, 22, 0), new THREE.MeshBasicMaterial({ map: sky, toneMapped: false, fog: false })); sp.position.set(0, -.05, -79); sp.rotation.x = -.06; g.add(sp); }
   paCard('back', 12.5, 0, -75, { lean: .12, bare: true }); // the mountains at the far page's top edge
   PA.hoard = paCard('hoard', 6, 0, -61.5, { lean: .14 }); PA.hoard.visible = PA.hoard.userData.sh.visible = false; // the Bone King's treasure on the plaza: it pops up when the castle falls
-  PA.castleF = PA.castle; // the whole castle as one piece of card, for the fall
-  { PA.castle = paCard('castle', 10.2, 0, FORT_Z - 4.3, { lean: .22 }); PA.castle2 = null; } /* one card: Grimbald stands behind it, and it holds together from any camera */
+   // the whole castle as one piece of card, for the fall
+  { PA.castle = PA.castleF = paCard('castle', 10.2, 0, FORT_Z - 4.3, { lean: .22 }); PA.castle2 = null; } /* one card: Grimbald stands behind it, and it holds together from any camera */
   PA.camp = [paCard('camp', 4.1, -6.9, -3.7, { lean: .32, u: [0, .47] }), paCard('camp', 4.1, 6.9, -3.7, { lean: .32, u: [.53, 1] })]; // the camp wall's two halves either side of the cannon, where the 3D wall stood
   for (const [n, h, x, z, o] of [
     ['pines', 5.6, -12.5, -44], ['oak', 4.4, -10.5, -33], ['bannerp', 4.2, -7.6, -30, { bare: true }], ['bush', 2.2, -13, -28], ['knight', 4, -9.4, -25],
@@ -5988,7 +6033,7 @@ function psStart() {
     const sh = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.05, h * .4), basic({ map: blobTex, color: C('#5a3818'), transparent: true, opacity: 0, depthWrite: false })); sh.rotation.x = -Math.PI / 2; sh.position.set(0, .003, SP + zk - h * .14); sh.renderOrder = 1; sc.add(sh); // its shadow on the page as it stands
     PS.layers.push({ o, sh, at, lean, sway: nm === 'st1_sekra' });
   }
-  PS.tap = () => { if (!PS.on || PS.t < 2.8) return; if (PS.shown < 1) PS.full = true; else psEnd(); };
+  PS.tap = () => { if (!PS.on || PS.t < 2.8 || PT.on) return; if (PS.shown < 1) PS.full = true; else pageTurn(() => psEnd()); };
   window.addEventListener('pointerdown', PS.tap);
   PS.ready = true;
 }
@@ -6034,7 +6079,7 @@ function psTick(dt) {
   if (P.t0 == null && t >= 2.6 && (PSND.st1 && PSND.st1.buf || t > 6 || muted || !actx) && once('read', 2.6)) { P.src = psSnd('st1', 1); P.dur = P.src && PSND.st1.buf ? PSND.st1.buf.duration : 11; P.t0 = t; }
   if (P.t0 != null) { const all = PS_TEXT.join(' '), sh = P.full ? 1 : clamp((t - P.t0) / (P.dur * .92), 0, 1), nch = Math.round(all.length * sh), done = sh >= 1;
     if (nch !== P.nch || done !== P.dn) { P.nch = nch; P.dn = done; psText(nch, done); } P.shown = sh;
-    if (t > P.t0 + P.dur + 6) psEnd(); } // (it moves on by itself in the end)
+    if (t > P.t0 + P.dur + 6 && !PT.on) pageTurn(() => psEnd()); } // (it moves on by itself in the end)
 }
 function psRender() { renderer.setRenderTarget(null); renderer.setScissorTest(false); const s = renderer.getSize(new THREE.Vector2()); renderer.setViewport(0, 0, s.x, s.y); renderer.render(PS.scene, PS.cam); }
 function psEnd() {
@@ -6042,6 +6087,41 @@ function psEnd() {
   PS.scene.traverse(o => { try { if (o.geometry) o.geometry.dispose(); for (const m of [].concat(o.material || [])) { if (m.map && m.map.isTexture && !Object.values(PA.tex).includes(m.map)) m.map.dispose(); if (m.dispose) m.dispose(); } } catch (e) {} }); /* (the hardcover's boxes carry several materials each) */ 
   Object.assign(PS, { on: false, ready: false, done: true, motes: null, scene: null, cam: null, layers: null, up: null, src: null, t0: null, full: false, shown: 0, nch: -1, dn: false, lay: null, tc: null, tt: null });
 }
+/* ---- turning the page: every move from one screen to the next is a page of the book turning over the spine on the left ---- */
+const PT = { on: false, N: 10, set: null, fin: null };
+function ptSnap() { try { render(); if (GHUD && G.mode !== 'menu') GHUD.draw(); } catch (e) {} const cv = renderer.domElement, s = document.createElement('canvas'); s.width = cv.width; s.height = cv.height; s.getContext('2d').drawImage(cv, 0, 0); return s; }
+function ptSizes() { const W = gameEl.clientWidth || 390; gameEl.style.setProperty('--tps', (.21 * W).toFixed(1) + 'px'); gameEl.style.setProperty('--tpt', (.231 * W).toFixed(1) + 'px'); gameEl.style.setProperty('--bks', (.22 * W).toFixed(1) + 'px'); gameEl.style.setProperty('--bkt', (.249 * W).toFixed(1) + 'px'); } /* the gold frames keep their corners whatever the screen's shape */
+function pageTurn(change, o = {}) {
+  if (PT.on || G.sim || document.hidden || !gameEl.clientWidth) { change(); return; }
+  const W = gameEl.clientWidth, N = PT.N, sw = W / N, snap = ptSnap(), kx = snap.width / W;
+  const vis = [...gameEl.children].filter(el => { if (el === renderer.domElement || el.id === 'pt' || el.tagName === 'CANVAS' || el.tagName === 'SCRIPT') return false; const cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity > .02 && el.offsetWidth > 0; });
+  const root = document.createElement('div'); root.id = 'pt'; const under = document.createElement('div'); under.className = 'pt-under'; root.appendChild(under);
+  let parent = root; const strips = [];
+  for (let i = 0; i < N; i++) {
+    const s = document.createElement('div'); s.className = 'pt-s'; s.style.left = (i ? sw : 0) + 'px'; s.style.width = (sw + (i < N - 1 ? 1 : 0)) + 'px';
+    const f = document.createElement('div'); f.className = 'pt-f'; const c = document.createElement('div'); c.className = 'pt-c'; c.style.left = -i * sw + 'px'; c.style.width = W + 'px';
+    const x0 = Math.max(0, Math.floor(i * sw * kx) - 1), x1 = Math.min(snap.width, Math.ceil((i + 1) * sw * kx) + 2), cv = document.createElement('canvas'); cv.width = Math.max(1, x1 - x0); cv.height = snap.height;
+    cv.getContext('2d').drawImage(snap, x0, 0, x1 - x0, snap.height, 0, 0, x1 - x0, snap.height); cv.className = 'pt-snap'; cv.style.left = x0 / kx + 'px'; cv.style.width = (x1 - x0) / kx + 'px'; c.appendChild(cv);
+    for (const el of vis) { const k = el.cloneNode(true); k.removeAttribute('id'); k.id = el.id; c.appendChild(k); }
+    const sh = document.createElement('div'); sh.className = 'pt-sh'; f.append(c, sh);
+    const b = document.createElement('div'); b.className = 'pt-b'; const bs = document.createElement('div'); bs.className = 'pt-sh'; b.appendChild(bs);
+    s.append(f, b); parent.appendChild(s); parent = s; strips.push({ s, sh, bs });
+  }
+  gameEl.appendChild(root); PT.on = true; psLoad('turn').then(() => psSnd('turn', .5));
+  try { change(); } catch (e) { console.error(e); }
+  const ms = o.ms || 1050, t0 = performance.now();
+  const set = p => { const e = p * p * (3 - 2 * p); let prev = 0;
+    for (let i = 0; i < N; i++) { const u = (i + .5) / N, k = clamp(e * 1.55 - (1 - u) * .55, 0, 1), th = Math.PI * k * k * (3 - 2 * k), S = strips[i];
+      S.s.style.transform = 'rotateY(' + (-(th - prev)).toFixed(4) + 'rad)'; S.sh.style.opacity = (Math.sin(th) * .9).toFixed(3); S.bs.style.opacity = (Math.sin(th) * .6).toFixed(3); prev = th; }
+    under.style.opacity = (1 - e).toFixed(3); };
+  const fin = () => { if (!PT.on) return; root.remove(); PT.on = false; PT.set = PT.fin = null; if (o.done) o.done(); };
+  PT.set = set; PT.fin = fin; set(0);
+  const step = now => { if (!PT.on || PT.set !== set) return; const p = Math.min(1, (now - t0) / ms); set(p); if (p < 1) requestAnimationFrame(step); else fin(); };
+  requestAnimationFrame(step); setTimeout(() => { if (PT.fin === fin) fin(); }, ms + 2500); /* (never left standing) */
+}
+addEventListener('resize', () => ptSizes());
+const paWait = (ms = 6000) => new Promise(ok => { const t0 = performance.now(), w = () => (PA.g && Object.values(PA.tex).every(x => x.image && x.image.width)) || performance.now() - t0 > ms ? ok() : setTimeout(w, 80); w(); });
+const imgWait = (srcs, ms = 6000) => Promise.race([Promise.all(srcs.map(s => new Promise(ok => { const im = new Image(); im.onload = im.onerror = ok; im.src = s; }))), new Promise(r => setTimeout(r, ms))]);
 function setupLevel(n) {
   clipLevel(n);
   boonsOn(); G.hornT = 0;
@@ -6829,7 +6909,7 @@ function updateWarlord(dt, play) {
   // effects keep animating whatever happens
   for (const s of spikes) { if (s.t <= 0) continue; s.t -= dt; const k = s.t > .9 ? (1.1 - s.t) / .2 : s.t < .35 ? s.t / .35 : 1; s.m.scale.y = Math.max(.01, k * 1.2); if (s.t <= 0) s.m.visible = false; }
   if (fireRing.visible) { const u = (fireRing.userData.t += dt) / .45; if (u >= 1) fireRing.visible = false; else { fireRing.scale.setScalar(.3 + u * fireRing.userData.R); fireRing.material.opacity = 1 - u; } }
-  if (ward.visible) { const pw = PA.on && PAPER === 'a'; ward.material.opacity = pw ? .84 + .07 * Math.sin(G.t * 2.4) : .28 + .14 * Math.sin(G.t * 5); if (!pw) wardTex.offset.y = (G.t * .08) % 1; ward.rotation.z = pw ? Math.sin(G.t * 1.3) * .012 : 0; }
+  if (ward.visible) { const pw = PA.on && PAPER === 'a'; ward.material.opacity = pw ? .9 + .08 * Math.sin(G.t * 2.4) : .28 + .14 * Math.sin(G.t * 5); if (!pw) wardTex.offset.y = (G.t * .08) % 1; ward.rotation.z = pw ? Math.sin(G.t * 1.3) * .012 : 0; }
   for (let k = 0; k < WL.tg.length; k++) { const t = WL.tg[k], p = .5 + .5 * Math.abs(Math.sin(WL.st * 12)), RR = tgRings[t.ri || 0], mk = t.kind === 's' ? tgStrips[k].mark : RR.mark;
     if (t.kind === 's') { // a light fill and a pulsing edge; one "!" near the warlord's end (over his volley of three, just the middle one), clear of the gates
       const s = tgStrips[k], fan = WL.tg.length > 1; s.fill.material.opacity = .08 + .14 * (WL.st / WL.windT); s.frame.material.opacity = .55 + .4 * p;
@@ -7406,8 +7486,8 @@ function update(dt) {
       if (fort.position.y > -3.6 && rand() < dt * 34) burst((rand() - .5) * 11, 1 + rand() * 2, FORT_Z - .5 + rand() * 2, rand() < .6 ? '#e2d6c4' : '#b9ad9c', 2, 5, { vy: 5, life: 1, g: 16, sz: 1.4, kind: PK.ROCK });
       if (fort.position.y > -3.4 && rand() < dt * 2.4) smoke((rand() - .5) * 10, .8, FORT_Z - 1 + rand() * 2, '#a89cb4', 2 + rand() * 1.2, 1.1);
     }
-    if (!DIR.s && G.endT <= 0 && !paStory() && (PA.on || !startLook())) showResult(true);
-  } else if (G.mode === 'lost') { G.endT -= dt; if (G.endT <= 0) showResult(false); }
+    if (!DIR.s && G.endT <= 0 && !paStory() && (PA.on || !startLook())) { if (PA.on && PAPER === 'a') pageTurn(() => showResult(true)); else showResult(true); }
+  } else if (G.mode === 'lost') { G.endT -= dt; if (G.endT <= 0) { if (PA.on && PAPER === 'a') pageTurn(() => showResult(false)); else showResult(false); } }
   if (celebrating && G.boomed && !DIR.s) { G.fwT -= dt; if (G.fwT <= 0) { firework(); G.fwT = G.mode === 'won' ? .18 + rand() * .2 : .5 + rand() * .5; } }
   if (G.boomed) { // shock rings, flash and flying pieces
     if (G.mode !== 'won') G.winT += dt;
@@ -8054,6 +8134,7 @@ function showMenu() {
   closeMore(); openUp(false); if (G.palCardDue) { G.palCardDue = false; setTimeout(showPalUnlock, 700); } // the Paladin card held back while a battle ran
   if (G.practice) { if (G.practiceKeep) save = JSON.parse(G.practiceKeep); G.practice = false; G.practiceKeep = null; }
   $('rewDot').classList.toggle('on', rewardsReady()); // back from a boss practice: your real progress returns
+  gameEl.classList.toggle('papermenu', PAPER === 'a' && save.level <= WORLD_LEN && G.worldOverride == null); ptSizes();
   G.menuSetup = true; setupLevel(save.level); G.menuSetup = false; G.mode = 'menu'; renderUpgrades(); menuArt(G.worldOverride != null ? G.worldOverride : worldOf(save.level)); if (crowdReady && save.level >= 4) loadPaladinArt();
   $('menu').classList.add('on'); $('result').classList.remove('on'); $('boon').classList.remove('on'); gameEl.classList.add('overlay'); gameEl.classList.remove('lostwash'); POST.mat.uniforms.uWash.value = 0;
   { const L = boonList().map(id => BOON_BY[id]).filter(Boolean); $('boonMenu').innerHTML = L.map(b => `<em style="--r:${BOON_CAT[b.c][1]}" title="${b.name}">${boonPic(b)}</em>`).join(''); }
@@ -8199,7 +8280,7 @@ function keepFighting() {
   [523, 784, 1046].forEach((f, i) => setTimeout(() => tone(f, .15, 'triangle', .13), i * 90));
 }
 function collect(mult) {
-  if (G.practice) { showMenu(); return; } // a practice round (boss fights, previews, replays) pays nothing: no fake coin count-up, no ad
+  if (G.practice) { pageTurn(showMenu); return; } // a practice round (boss fights, previews, replays) pays nothing: no fake coin count-up, no ad
   const before = save.coins, gained = G.reward * mult;
   save.coins += gained;
   const hadPal = palReady();
@@ -8207,8 +8288,8 @@ function collect(mult) {
   const unlock = !hadPal && palReady() && !G.practice; // the first captain has fallen: the Paladin joins you
   persist();
   const retry = G.mode === 'resultLose' && mult === 1;
-  const after = () => { showMenu(); coinFly(before, gained); if (retry) setTimeout(() => { if (G.mode === 'menu' && $('upSheet').hidden && $('menu').classList.contains('on')) openUp(true); }, 1300); // Upgrade & retry: the sheet opens as the last coin lands
-    if (unlock) setTimeout(() => { if (G.mode === 'menu') showPalUnlock(); else G.palCardDue = true; }, 700); }; // (never over a battle the player already started)
+  const after = () => pageTurn(() => { showMenu(); coinFly(before, gained); if (retry) setTimeout(() => { if (G.mode === 'menu' && $('upSheet').hidden && $('menu').classList.contains('on')) openUp(true); }, 1300); // Upgrade & retry: the sheet opens as the last coin lands
+    if (unlock) setTimeout(() => { if (G.mode === 'menu') showPalUnlock(); else G.palCardDue = true; }, 700); }); // (never over a battle the player already started)
   const interstitial = G.mode === 'resultWin' && save.level > 3 && save.wins % 2 === 0 && mult === 1, due = G.mode === 'resultWin' && boonDue(save.level - 1), go = () => { if (interstitial) showAd('Interstitial · plays between levels', 2, after); else after(); };
   if (due) { persist(); showBoons(go); } else go();
 }
@@ -8237,7 +8318,7 @@ function showAd(label, secs, done) {
   const iv = setInterval(() => { n--; $('adN').textContent = n; if (n <= 0) { clearInterval(iv); el.classList.remove('on'); done(); } }, 1000);
 }
 
-$('playBtn').onclick = startPlay;
+$('playBtn').onclick = () => pageTurn(startPlay); /* the title page turns onto the battle */
 function openUp(on) { $('upSheet').hidden = !on; $('upToggle').setAttribute('aria-expanded', on); if (on) renderUpgrades(); } // the upgrades sheet
 $('upToggle').onclick = () => { audio(); smp('tap', .45, .03, 0, 1.08); openUp(true); };
 $('upClose').onclick = () => { smp('tap', .45, .03, 0, .94); openUp(false); };
@@ -8248,7 +8329,7 @@ addEventListener('keydown', e => { if (e.key === 'Escape' && !$('upSheet').hidde
 const resOnce = fn => () => { if (G.resBusy) return; G.resBusy = true; if (document.activeElement) document.activeElement.blur(); fn(); };
 $('collectBtn').onclick = resOnce(() => collect(1));
 $('x3Btn').onclick = resOnce(() => showAd('Rewarded video · player chose to watch', 3, () => collect(G.adMul || 2)));
-$('contBtn').onclick = resOnce(() => showAd('Rewarded video · player chose to watch', 3, keepFighting));
+$('contBtn').onclick = resOnce(() => showAd('Rewarded video · player chose to watch', 3, () => pageTurn(keepFighting)));
 let resetArmed = 0;
 // one character set: Slime Knights vs Slime Goblins (applyStyle keeps the hook if more looks come back later)
 function applyStyle(name) {
@@ -8271,8 +8352,8 @@ function resumeGame() {
 }
 $('pauseBtn').addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); pauseGame(); });
 $('resumeBtn').onclick = resumeGame;
-$('restartBtn').onclick = () => { resumeGame(); startPlay(); };
-$('quitBtn').onclick = () => { resumeGame(); showMenu(); };
+$('restartBtn').onclick = () => pageTurn(() => { resumeGame(); startPlay(); });
+$('quitBtn').onclick = () => pageTurn(() => { resumeGame(); showMenu(); });
 // leaving the app silences it everywhere (it only did so mid-battle, so menu music played on in the background), and coming
 // back brings the sound back unless the pause card is up
 if (LEAN) window.addEventListener('blur', () => { if (matchMedia('(pointer: coarse)').matches) pauseGame(); }); // leaving for the browser's own buttons: stop drawing at once, so they aren't slow
@@ -8313,8 +8394,8 @@ function renderMap() {
   }
   $('mapPath').innerHTML = rows.join(''); $('mapNg').textContent = '';
 }
-$('mapBtn').onclick = () => { renderMap(); $('menu').classList.remove('on'); $('map').classList.add('on'); };
-$('mapClose').onclick = () => { $('map').classList.remove('on'); $('menu').classList.add('on'); };
+$('mapBtn').onclick = () => pageTurn(() => { renderMap(); $('menu').classList.remove('on'); $('map').classList.add('on'); });
+$('mapClose').onclick = () => pageTurn(() => { $('map').classList.remove('on'); $('menu').classList.add('on'); });
 // the painting on the story card; the drawn emblem stays until it is here
 const STORY_ART = ['s_grimbald', 's_sekra', 's_hrimgar', 's_magmaw', 's_king'];
 function storyPic(k) { const im = $('storyArt'), c = im.parentNode; c.classList.remove('art'); im.onload = () => c.classList.add('art'); im.onerror = () => c.classList.remove('art'); const pa = PA.on && PAPER === 'a' && k === 's_grimbald'; c.classList.toggle('pa', pa); im.src = pa ? 'models/paper/a/gb_roar.webp' : 'models/art/' + k + '.webp'; if (im.complete && im.naturalWidth) c.classList.add('art'); }
@@ -8390,14 +8471,14 @@ $('rwMissions').onclick = e => { const b = e.target.closest('[data-m]'); if (!b)
 $('rwStable').onclick = e => { const b = e.target.closest('[data-s]'); if (!b) return; const s = SKINS.find(q => q.id === b.dataset.s); save.skins = save.skins || ['snow'];
   if (!save.skins.includes(s.id)) { if (save.coins < s.cost) return; save.coins -= s.cost; save.skins.push(s.id); }
   save.skin = s.id; persist(); applySkin(); renderRewards(); };
-$('rewardsBtn').onclick = () => { rwGained = 0; rwBefore = save.coins; renderRewards(); $('menu').classList.remove('on'); $('rewards').classList.add('on'); };
-$('rwBack').onclick = () => { $('rewards').classList.remove('on'); $('chestFx').hidden = true; showMenu(); };
+$('rewardsBtn').onclick = () => pageTurn(() => { rwGained = 0; rwBefore = save.coins; renderRewards(); $('menu').classList.remove('on'); $('rewards').classList.add('on'); });
+$('rwBack').onclick = () => pageTurn(() => { $('rewards').classList.remove('on'); $('chestFx').hidden = true; showMenu(); });
 // the Paladin's coat: recolours his warhorse (coat, legs and the spirit-flame mane)
 function applySkin() { if (!horse || !horse.mats) return; const s = SKINS.find(q => q.id === (save.skin || 'snow')) || SKINS[0]; horse.mats.coat.color.copy(C(s.coat)); if (palArt) horse.mats.coat.color.multiplyScalar(s.id === 'gold' ? .62 : .86); /* (the sculpted coat takes the light more brightly than the old one) */ horse.mats.coatD.color.copy(C(s.dark)); horse.mats.spirit.color.copy(C(s.spirit)); }
 function lockSpoilers() { const tro = save.trophies || {}, seen = w => tro[w] || save.level > w * WORLD_LEN + WORLD_LEN; let any = false; document.querySelectorAll('#bossRow [data-w]').forEach(b => { b.hidden = !seen(+b.dataset.w - 1); any = any || !b.hidden; }); $('bossBtn').hidden = !any; if (!any) $('bossRow').hidden = true; $('finaleBtn').hidden = !(tro[4] || save.level > LAP_LEN); }
 $('bossBtn').onclick = () => { $('bossRow').hidden = !$('bossRow').hidden; };
 $('introBtn').onclick = () => {
-  closeMore(); audio(); if (FILM.v || FILM.bad) { filmOrCine(true); return; }
+  closeMore(); audio(); if (FILM.v || FILM.bad) { pageTurn(() => filmOrCine(true)); return; }
   toastMsg('LOADING', 'One moment', { now: true }); Promise.race([filmWarm(), new Promise(r => setTimeout(r, 9000))]).then(() => { clearToasts(); if (G.mode === 'menu' && !FILM.on && !DIR.s) filmOrCine(true); });
 }; /* replays the opening cinematic */
 $('finaleBtn').onclick = () => watchFinale(); /* replays the Bone King's last stand */
@@ -8885,7 +8966,7 @@ function startCine(full) {
       { t: [T.k, T.x], pos: [[1.7, 1.5, -.4], [1.05, 1.9, -1.9]], at: [[0, 2.2, -22], [0, 2.5, -24]], fov: [50, 46], foc: [.5, .45, .75, 1.15], blur: .6, grade: 'dawn', vig: .6, flare: dawn }, /* over the cannon's shoulder as it opens fire */
       { t: [T.x, T.end], pos: [[2.0, 1.4, -6.5], [1.8, 3.0, -11], [0, 7.6, -13.5]], at: [[-.6, 1.6, -20], [0, 1.0, -27]], fov: [54, 52], grade: 'storm', gk: .4, vig: .6 }); } /* the charge */
   const orbit = v => { if (HOLD.b && HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = v; };
-  const s = { len: T.end, freeze: false, fadeIn: true, shots, foeZ: -27, cine: true, start: () => { if (long) { pad([49, 73.4, 98], 9, .03, 500); } else pad([49, 98], 4, .02, 500); hold(T.end); cineEyes(2); orbit(false); },
+  const s = { len: T.end, freeze: false, fadeIn: !PT.on, shots, foeZ: -27, cine: true, start: () => { if (long) { pad([49, 73.4, 98], 9, .03, 500); } else pad([49, 98], 4, .02, 500); hold(T.end); cineEyes(2); orbit(false); },
     tick: (t, dt, once) => {
       G.cine && (G.cine.t = t); if (king0 && t < T.h) { king.visible = kingCrown.visible = true; }
       if (long && once('th', .5)) thunderClap(.6); if (long && !pa && once('c1', .9)) endCap('The crown commands the dead.'); if (long && once('c1x', T.e - .25)) endCap(''); if (long && (once('g1', 1.1) || once('g2', 2.5))) shine(.8, 1568);
@@ -8898,7 +8979,7 @@ function startCine(full) {
       if (once('gun', T.k)) { endCap(''); if (palRig) headTurn(0); paladin.visible = false; paladin.scale.setScalar(PAL_S); paladin.rotation.y = Math.PI; for (const o of paladin.children) if (o.isSprite) o.visible = true; noise(.35, .06, 'highpass', 2600, 5200); }
       if (t > T.k + .25) { G.firing = true; G.lx = t < T.x ? 0 : Math.sin((t - T.x) * 1.6) * 1.8; }
       if (once('cheer', T.x)) { beetles.n = 0; clearBones(); spawnHorde(170); for (let j = 0; j < beetles.n; j++) { beetles.kind[j] = 0; beetles.z[j] += 6; } s.foeZ = undefined; brass(196, .34, .07); brass(294, .6, .075, .16); brass(392, .9, .06, .36); swell(1.6, .12, 240, 2800); }
-      if (once('clash', T.end - .65)) { cineFlash(1, 560); hitBoom(1.1); noise(.7, .16, 'lowpass', 2400, 150); buzz(60); }
+      if (once('ptEnd', T.end - .05)) { pageTurn(() => dirStop(false)); return; } if (once('clash', T.end - .65)) { cineFlash(1, 560); hitBoom(1.1); noise(.7, .16, 'lowpass', 2400, 150); buzz(60); }
     } };
   const back = () => { PA.poseHold = null; orbit(true); G.cine = null; G.firing = false; cineEyes(false); if (palRig) headTurn(0); if (HOLD.b) rxGlow(HOLD.b, 0); paladin.visible = false; paladin.scale.setScalar(PAL_S); paladin.rotation.y = Math.PI; for (const o of paladin.children) if (o.isSprite) o.visible = true; };
   s.done = () => { back(); DIR.fade = 0; showMenu(); save.introDay = today(); save.openSeen = 1; persist(); /* the real save is back; the day is marked so it plays once */ $('menu').classList.add('slam'); setTimeout(() => $('menu').classList.remove('slam'), 1000); setTimeout(() => { tone(70, .5, 'sine', .22, .5); noise(.3, .1, 'lowpass', 1500, 200); }, 250); };
@@ -8930,7 +9011,7 @@ function arrival() {
   s.done = () => { tidy(); save.scenes[key] = 1; persist(); }; s.abort = tidy; dirStart(s); return true;
 }
 // ---- a captain marches out: a second and a half
-$('cine').addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); if (DIR.s) { if (DIR.t > .45) dirStop(true); } else if (G.fin && G.fin.t > .4) endFinale(); });
+$('cine').addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); if (DIR.s) { if (DIR.t > .45) { if (DIR.s.cine) pageTurn(() => dirStop(true)); else dirStop(true); } } else if (G.fin && G.fin.t > .4) endFinale(); });
 
 /* ---------------- level 50 and the ending ----------------
    Shades of the four warlords, then the Bone King. Beaten, he drops to one knee and SEND lights up: the player strikes the last
@@ -9183,9 +9264,10 @@ function boot() {
   if (cineDue()) { // the day's first launch: a "tap to begin" card (the tap also lets the sound play), then the opening cinematic
     setupLevel(save.level); prewarm(); render(); requestAnimationFrame(frame); setTimeout(smpPrep, 400); const l = $('loading');
     if (!l) { filmOrCine(); return; }
-    Promise.race([save.filmSeen ? null : filmWarm(), new Promise(r => setTimeout(r, 6000))]).then(() => { // (a slow phone gets a few seconds more for the film)
-      l.classList.add('tapgo'); l.innerHTML = '<svg viewBox="0 0 48 52"><use href="#i-king"/></svg><b>BONE SIEGE</b><span>Tap to begin</span>';
-      l.addEventListener('click', () => { l.remove(); audio(); filmOrCine(); }, { once: true }); // (click, not pointerdown: an iPhone only lets sound start on the finger's way up)
+    const book = PAPER === 'a'; if (book && save.level <= WORLD_LEN) { paPre(); if (!PA.g) { paBuild(); paExtras(); } }
+    Promise.all([book && save.level <= WORLD_LEN ? paWait() : null, book ? imgWait(['models/paper/a/cover_frame.webp', 'models/paper/a/cover_emblem.webp', 'models/paper/a/title_frame.webp', 'models/paper/a/title_vignette.webp']) : null]).then(() => { // (the paper pieces and the cover are in hand before the tap)
+      ptSizes(); l.classList.add('tapgo'); if (book) { l.classList.add('book'); l.innerHTML = '<div class="bk-emb"></div><b>BONE<i>SIEGE</i></b><span>Tap to open</span>'; } else l.innerHTML = '<svg viewBox="0 0 48 52"><use href="#i-king"/></svg><b>BONE SIEGE</b><span>Tap to begin</span>';
+      l.addEventListener('click', () => { audio(); pageTurn(() => { l.remove(); filmOrCine(); }); }, { once: true }); /* the cover turns onto the opening */ // (click, not pointerdown: an iPhone only lets sound start on the finger's way up)
     }); return;
   }
   showMenu(); prewarm(); render(); requestAnimationFrame(frame); setTimeout(smpPrep, 400); const l = $('loading'); if (l) l.remove(); practiceBoss();
