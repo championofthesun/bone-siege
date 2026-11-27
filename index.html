@@ -5941,7 +5941,7 @@ function wallX(x, px, z, r) {
   return px < -w.x ? Math.min(x, -w.x - .15 - r) : px > w.x ? Math.max(x, w.x + .15 + r) : clamp(x, -w.x + .15 + r, w.x - .15 - r);
 }
 // ---- look A under test (?paper=a): the land is a painted open book on a table, everything standing is a cut-out card ----
-const PA_BTINT = { gold: '#ffcf45', blue: '#8fb8ff', red: '#ff9484', purple: '#d6a6ff' }; // the board's field tinted richer, so the white numbers stand out
+const PA_BTINT = { gold: '#e8bf6a', blue: '#8fb8ff', red: '#ff9484', purple: '#d6a6ff' }; // the board's field tinted richer, so the white numbers stand out (v202ah: gold softened from #ffcf45, the loudest colour on the page)
 const PA_BOARD = { gold: [.189, .811, .322, .716], blue: [.188, .812, .325, .715], red: [.189, .812, .327, .716], purple: [.189, .813, .327, .715] }; // each sign's empty board: x from, x to, y from, y to (y up from the foot)
 const PAGE_W = 2048, PAGE_H = 3065;
 const PA_GB_A = { idle: [1.0383, 732], wind: [.7242, 794], roar: [1.2185, 714], daze: [1.0653, 704] }; // Grimbald's poses: width / height, and height in pixels at one shared scale
@@ -7931,7 +7931,7 @@ const nearLens = (p, i) => p === beetles && DIR.s.foeZ !== undefined && p.z[i] >
 function drawSprites(p, sm) {
   const cell = sm.geometry.attributes.aCell.array, party = G.boomed && p === ants;
   for (let i = 0; i < p.n; i++) {
-    const s = p === beetles && p.tier[i] === F_CAP && CAP.b || DIR.s && nearLens(p, i) || party && PA.on && p.z[i] - camera.position.z > -8 ? .001 : /* (v201b: on the paper win camera, nobody stands in the lens) */ p.s[i] * US * popOf(p, i) * riseOf(p, i), air = liftOf(p, i), flying = air > 0.05, t = unitType(p, i); // (the sculpted captain is drawn in place of his brute)
+    const s = p === beetles && p.tier[i] === F_CAP && CAP.b || DIR.s && nearLens(p, i) || party && PA.on && p.z[i] - camera.position.z > -8 ? .001 : /* (v201b: on the paper win camera, nobody stands in the lens) */ p.s[i] * US * (PA.on && PAPER === 'a' ? 1.18 : 1) * popOf(p, i) * riseOf(p, i), air = liftOf(p, i), flying = air > 0.05, t = unitType(p, i); // (the sculpted captain is drawn in place of his brute)
     const hopK = party ? Math.abs(Math.sin(G.t * 7 + p.ph[i])) : 0;
     let f = p === beetles && p.tier[i] === F_NEC ? p.atk[i] > 0 ? ATK_F : JUMP_F : flying || hopK > .35 || (p === beetles && p.kind[i] && !(p.atk[i] > 0)) ? JUMP_F : p.atk[i] > 0 ? ATK_F : Math.floor(((G.t * (p.big[i] ? 1.1 : 1.55) + p.ph[i] * .16) % 1) * RUN_FRAMES);
     _m.makeScale(s, s, s); _m.setPosition(p.x[i], air + hopK * .55 * s, p.z[i]);
