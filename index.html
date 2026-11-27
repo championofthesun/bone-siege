@@ -564,7 +564,7 @@ svg.ico.sm{width:18px;height:18px}
 .paper #nestBadge{background:url(models/paper/a/art/u_nest.webp) center/112% no-repeat!important}.paper #nestBadge svg{display:none}
 .paper #giant .hero{width:52px;height:52px;margin:-4px 0 0}.paper #giant .hero svg{background:url(models/paper/a/art/u_giant.webp) center/cover no-repeat;border-radius:50%}.paper #giant.champ .hero svg{background-image:url(models/paper/a/art/u_giantC.webp)}.paper #giant .hero use{display:none} /* (v201b: the SEND button shows the painted Paladin or Champion) */
 .paper #fortBar i{background:linear-gradient(180deg,#d8705a,#a83a26)!important}.paper #nestBar i{background:linear-gradient(180deg,#86aee2,#3f6fb8)!important}
-.paper #hud .bar span{color:#fff6df!important}
+.paper #hud .bar span{color:#fff6df!important;font-family:var(--pk-fell)!important;font-weight:800!important} /* (v202ae) the menus' heading face */
 .paper #nestBar.low::before{filter:drop-shadow(0 0 8px rgba(220,60,40,.9))}
 /* the title page: painted gold lettering, Upgrades among the pills (it covered the castle in the painting) */
 .logo-pa{display:none;width:min(80%,340px);flex:none;margin-top:2px;filter:drop-shadow(0 6px 8px rgba(60,30,8,.35));pointer-events:none;user-select:none}
@@ -5945,14 +5945,15 @@ const PA_BTINT = { gold: '#ffcf45', blue: '#8fb8ff', red: '#ff9484', purple: '#d
 const PA_BOARD = { gold: [.189, .811, .322, .716], blue: [.188, .812, .325, .715], red: [.189, .812, .327, .716], purple: [.189, .813, .327, .715] }; // each sign's empty board: x from, x to, y from, y to (y up from the foot)
 const PAGE_W = 2048, PAGE_H = 3065;
 const PA_GB_A = { idle: [1.0383, 732], wind: [.7242, 794], roar: [1.2185, 714], daze: [1.0653, 704] }; // Grimbald's poses: width / height, and height in pixels at one shared scale
-const PA_DIM_A = { hs_rogue: .7391, hs_warrior: .8873, hs_grunt: .8027, cleaver_t: .8516, cannon: .9125, puff: 1.0987, star: 1.0802, sign_gold: 1.3559, sign_blue: 1.3559, sign_red: 1.3559, sign_purple: 1.3531, oak: .9746, pines: .8649, bush: 1.3714, cottage: 1.1532, knight: .7901, skullrock: 1.2632, crownrock: 1.0909, lamp: .4555, bannerp: .3918, bannerb: .6034, fence: 1.8551, torch: .4097, castle: 1.5202, camp: 3.4115, back: 4.2227, hoard: 2.1955 }; // width / height of each card
+const PA_DIM_A = { hs_rogue: .7391, hs_warrior: .8873, hs_grunt: .8027, cleaver_t: .8516, cannon: .9125, puff: 1.0987, star: 1.0802, sign_gold: 1.3559, sign_blue: 1.3559, sign_red: 1.3559, sign_purple: 1.3531, oak: .9746, pines: .8649, bush: 1.3714, cottage: 1.1532, knight: .7901, skullrock: 1.2632, crownrock: 1.0909, lamp: .4555, bannerp: .4134, bannerb: .6034, fence: 1.8551, torch: .4097, castle: 1.5202, camp: 3.4115, back: 4.2227, hoard: 2.1955 }; // width / height of each card
 const PB_DIM = { statue: .6146, skullrock: 1.0756, crownskull: .8438, crystals: .9167, cottage: 1.219, barricade: 1.113, fence: 1.2973, torch: .4688, bannerp: .6172, bannerb: .651, bush: 1.0696, rockpile: 1.4328 };
 const PA_CP = { walk: [.8735, 601], swing: [.6973, 631], hit: [1.0265, 567], down: [1.1417, 515] }; // The Carver's poses: width / height, height in pixels
 const PB_GB = { idle: [.9363, 487], walk: [.8911, 496], wind: [.6147, 558], smash: [.7537, 475], roar: [1.1279, 477], daze: [1.0995, 422] };
 const PA_DIM = PAPER === 'b' ? PB_DIM : PA_DIM_A, PA_GB = PAPER === 'b' ? PB_GB : PA_GB_A;
 const PA = { g: null, on: false, was: null, tex: {}, img: {}, uTok: 0, rec: 0, fired: 0 };
 function paPre() { // the sign pictures are drawn into each gate's lettering, so they must be in hand before the first gate is built
-  return Promise.all(['gold', 'blue', 'red', 'purple'].map(k => new Promise(ok => { const i = new Image(); i.onload = () => { PA.img[k] = i; ok(); }; i.onerror = () => ok(); i.src = 'models/paper/a/sign_' + k + '.webp'; })));
+  const font = document.fonts ? Promise.race([document.fonts.load('800 60px Fraunces').catch(() => 0), new Promise(ok => setTimeout(ok, 2500))]) : null; // (v202ae) and the lettering's face, or the boards would be lettered in Georgia
+  return Promise.all(['gold', 'blue', 'red', 'purple'].map(k => new Promise(ok => { const i = new Image(); i.onload = () => { PA.img[k] = i; ok(); }; i.onerror = () => ok(); i.src = 'models/paper/a/sign_' + k + '.webp'; })).concat([font]));
 }
 async function paUnits(on) { // the army's strips on the sprite sheet: paper dolls for the round, the sculpted ones after
   const tok = ++PA.uTok; while (!crowdReady) { await new Promise(r => setTimeout(r, 250)); if (tok !== PA.uTok) return; }
@@ -5961,15 +5962,15 @@ async function paUnits(on) { // the army's strips on the sprite sheet: paper dol
   const cc = renderer.getClearColor(new THREE.Color()), ca = renderer.getClearAlpha(); UNIT_TYPES.forEach((u, k) => { if (ts[k]) sprBake(u, ts[k]); }); renderer.setRenderTarget(null); renderer.setClearColor(cc, ca);
 }
 function paLabel(x, g, bx, by, bw, bh, st) { // the gate's number or weapon, lettered on the painted board
-  const fam = '"Lilita One", Fredoka, "Arial Black", sans-serif', arm = g.arm != null, red = g.k < 1 && !g.add && !arm, crew = arm && TIERS[g.arm].merge;
+  const fam = 'Fraunces, Georgia, serif', arm = g.arm != null, red = g.k < 1 && !g.add && !arm, crew = arm && TIERS[g.arm].merge;
   const word = arm ? TIERS[g.arm].gate : g.add ? '+' + g.add : red ? '\u00f7' + Math.round(1 / g.k) : '\u00d7' + g.k;
   const S = arm ? bh * (crew ? .5 : .62) : 0, gap = arm ? bh * .06 : 0; let fs = Math.round(bh * (arm ? (crew ? .34 : .42) : .74)), m, tw;
-  for (let k = 0; k < 9; k++) { x.font = `${fs}px ${fam}`; m = x.measureText(word); tw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight; if (S + gap + tw <= bw * .9) break; fs = Math.round(fs * .9); }
+  for (let k = 0; k < 9; k++) { x.font = `800 ${fs}px ${fam}`; m = x.measureText(word); tw = m.actualBoundingBoxLeft + m.actualBoundingBoxRight; if (S + gap + tw <= bw * .9) break; fs = Math.round(fs * .9); }
   const cy = by + bh * (crew ? .4 : .5), x0 = bx + (bw - (S + gap + tw)) / 2, tx = x0 + S + gap + m.actualBoundingBoxLeft, ty = cy + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
   x.lineJoin = 'round'; x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.lineWidth = Math.max(4, fs * (st ? st.lw : .16)); x.strokeStyle = st ? st.stroke : '#fff6e0'; x.strokeText(word, tx, ty);
   x.fillStyle = st ? st.fill : red ? '#8a1c14' : arm ? '#173a8a' : '#6a3a0a'; x.fillText(word, tx, ty);
   if (arm) gateIcon(x, g.arm, x0 + S / 2, cy, S);
-  if (crew) { const c = crew + ' \u2192 1'; x.font = `${Math.round(bh * .22)}px ${fam}`; x.textAlign = 'center'; x.lineWidth = 6; x.strokeText(c, bx + bw / 2, by + bh * .86); x.fillStyle = '#173a8a'; x.fillText(c, bx + bw / 2, by + bh * .86); }
+  if (crew) { const c = crew + ' \u2192 1'; x.font = `800 ${Math.round(bh * .22)}px ${fam}`; x.textAlign = 'center'; x.lineWidth = 6; x.strokeText(c, bx + bw / 2, by + bh * .86); x.fillStyle = '#173a8a'; x.fillText(c, bx + bw / 2, by + bh * .86); }
 }
 function paGate(grp, g) { // the gate as a painted signpost standing on the page
   const p = grp.userData.panel; if (!p || p.userData.pa || g.shift) return; const kind = g.arm != null ? 'blue' : g.k < 1 && !g.add ? 'red' : 'gold', img = PA.img[kind]; if (!img) return;
@@ -8245,7 +8246,7 @@ let HUDP = HUDP_NAVY; // the drawn HUD's colours: night blue and gold, or parchm
 const GHUD = (() => {
   if (!LEAN || /[?&]pagehud/.test(location.search)) return null;
   gameEl.classList.add('glhud'); sandEl.style.display = 'none';
-  const FONT = "'Lilita One',Fredoka,'Arial Black',sans-serif", CAPQ = 700; let AW = 1536, AH = 1600, live = false;
+  const FONT = "'Lilita One',Fredoka,'Arial Black',sans-serif", fnt = px => HUDP.k ? '800 ' + px + 'px Fraunces,Georgia,serif' : px + 'px ' + FONT, CAPQ = 700; let AW = 1536, AH = 1600, live = false; // (v202ae: fnt = paper lettering in Fraunces 800, the menus' heading face)
   const cv = document.createElement('canvas'), X = cv.getContext('2d'); let tex = null, S = 0, cells = {}, pen = null, icons = null, ready = false, box = null, boxAt = '', sheetOf = '';
   const H = { own: { fortTxt: 1, nestTxt: 1, giantTxt: 1, crowdN: 1, parTxt: 1 }, crowd: { on: false, x: 0, y: 0, pop: 0 }, haze: 0, vis: 0, fl: 0, rdyAt: 0, tipT: 0 };
   H.stub = () => { const c = new Set(); return { textContent: '', style: {}, bump: 0, classList: { contains: k => c.has(k), toggle(k, on) { const v = on === undefined ? !c.has(k) : !!on; if (k === 'bump' || k === 'bump2') H.bumped = true; v ? c.add(k) : c.delete(k); return v; } } }; };
@@ -8253,7 +8254,7 @@ const GHUD = (() => {
   const icon = (id, w, h) => new Promise(ok => { const sy = document.getElementById(id), vb = sy.getAttribute('viewBox'), defs = [...document.querySelectorAll('body > svg defs')].map(d => d.outerHTML).join(''); const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null);
     im.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + vb + '" width="' + w * 4 + '" height="' + h * 4 + '">' + defs + sy.innerHTML + '</svg>'); });
   const pic = src => new Promise(ok => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = src; });
-  const load = Promise.all([icon('i-slime', 24, 22), icon('i-horse', 42, 38), icon('i-champ', 42, 38), document.fonts.load("16px 'Lilita One'").catch(() => 0), PAPER === 'a' ? pic('models/paper/a/ui/bar.webp') : null, PAPER === 'a' ? pic('models/paper/a/ui/send_pal.webp') : null, PAPER === 'a' ? pic('models/paper/a/ui/send_champ.webp') : null]).then(([crowd, horse, champ, , bar, pHorse, pChamp]) => { icons = { crowd, horse, champ, bar, pHorse, pChamp }; ready = true; });
+  const load = Promise.all([icon('i-slime', 24, 22), icon('i-horse', 42, 38), icon('i-champ', 42, 38), document.fonts.load("16px 'Lilita One'").then(() => document.fonts.load('800 16px Fraunces')).catch(() => 0), PAPER === 'a' ? pic('models/paper/a/ui/bar.webp') : null, PAPER === 'a' ? pic('models/paper/a/ui/send_pal.webp') : null, PAPER === 'a' ? pic('models/paper/a/ui/send_champ.webp') : null]).then(([crowd, horse, champ, , bar, pHorse, pChamp]) => { icons = { crowd, horse, champ, bar, pHorse, pChamp }; ready = true; });
   // (v201) the painted wooden bar, cut in nine so its gold caps keep their shape at any width; the trough is (0, 0, w, h)
   const nine = (c, im, w, h, T = 15, B = 18, L = 17, R = 17) => { const iw = im.width, ih = im.height, st = ih * .276, sb = ih * .337, sl = iw * .056, sr = iw * .056, xs = [0, sl, iw - sr, iw], ys = [0, st, ih - sb, ih], dx = [-L, 0, w, w + R], dy = [-T, 0, h, h + B];
     for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) c.drawImage(im, xs[i], ys[j], xs[i + 1] - xs[i], ys[j + 1] - ys[j], dx[i], dy[j], dx[i + 1] - dx[i], dy[j + 1] - dy[j]); };
@@ -8272,10 +8273,10 @@ const GHUD = (() => {
     star: { px: 15, ls: .4, pad: 2, back: (c, t) => { c.strokeStyle = '#6a4300'; c.lineWidth = 1; c.strokeText(t, 0, 0); }, over: 1 },
     float: { px: 34, ls: .5, pad: 10, os: 1.35, back: (c, t) => { c.lineJoin = 'round'; if (HUDP.k) { c.lineWidth = 11; c.strokeStyle = 'rgba(74,44,20,.4)'; c.strokeText(t, 0, 4); c.strokeStyle = '#4a2c14'; c.strokeText(t, 0, 0); c.lineWidth = 6.5; c.strokeStyle = '#fffaea'; c.strokeText(t, 0, 0); return; } c.lineWidth = 6; c.fillStyle = c.strokeStyle = 'rgba(8,14,40,1)'; c.globalAlpha = .4; c.strokeText(t, 0, 4); c.globalAlpha = 1; c.strokeStyle = '#fff'; c.strokeText(t, 0, 0); } }
   };
-  const glyph = (st, ch, back) => { const k = st + (back ? '<' : '>') + ch; if (cells[k] !== undefined) return cells[k]; const d = ST[st]; X.font = d.px + 'px ' + FONT; const w = Math.max(1, X.measureText(ch).width), asc = d.px, h = d.px * 1.3;
-    return cell(k, w, h, d.pad, c => { c.font = d.px + 'px ' + FONT; c.textBaseline = 'alphabetic'; c.translate(0, asc); if (back) d.back(c, ch); else { c.fillStyle = '#fff'; c.fillText(ch, 0, 0); } }, d.os || 1); };
+  const glyph = (st, ch, back) => { const k = st + (back ? '<' : '>') + ch; if (cells[k] !== undefined) return cells[k]; const d = ST[st]; X.font = fnt(d.px); const w = Math.max(1, X.measureText(ch).width), asc = d.px, h = d.px * 1.3;
+    return cell(k, w, h, d.pad, c => { c.font = fnt(d.px); c.textBaseline = 'alphabetic'; c.translate(0, asc); if (back) d.back(c, ch); else { c.fillStyle = '#fff'; c.fillText(ch, 0, 0); } }, d.os || 1); };
   const lays = new Map();
-  function lay(st, t) { const k = st + t; let L = lays.get(k); if (L) return L; const d = ST[st]; X.font = d.px + 'px ' + FONT; const m = X.measureText('Hg'), asc = m.fontBoundingBoxAscent || d.px * .93, desc = m.fontBoundingBoxDescent || d.px * .22, xs = []; for (let i = 0; i < t.length; i++) xs.push(X.measureText(t.slice(0, i)).width + i * d.ls); L = { t, xs, w: X.measureText(t).width + t.length * d.ls, asc, desc }; if (lays.size > 300) lays.clear(); lays.set(k, L); return L; }
+  function lay(st, t) { const k = st + t; let L = lays.get(k); if (L) return L; const d = ST[st]; X.font = fnt(d.px); const m = X.measureText('Hg'), asc = m.fontBoundingBoxAscent || d.px * .93, desc = m.fontBoundingBoxDescent || d.px * .22, xs = []; for (let i = 0; i < t.length; i++) xs.push(X.measureText(t.slice(0, i)).width + i * d.ls); L = { t, xs, w: X.measureText(t).width + t.length * d.ls, asc, desc }; if (lays.size > 300) lays.clear(); lays.set(k, L); return L; }
   function build() {
     S = Math.max(2, pixelRatio); live = false; AW = Math.max(S >= 2.8 ? 2560 : S >= 2.4 ? 2048 : 1536, Math.ceil((box.fort.w + 12) * S) + 4); AH = Math.min(4096, Math.ceil(1780 * S * S / 4 * 1.45) + 64); /* (v201: room for the painted bar frames too) */ cv.width = AW; cv.height = AH; X.imageSmoothingQuality = 'high'; cells = {}; lays.clear(); pen = { x: 1, y: 1, h: 0 };
     if (tex) tex.dispose(); tex = new THREE.CanvasTexture(cv); tex.flipY = false; tex.premultiplyAlpha = true; tex.generateMipmaps = false; tex.minFilter = tex.magFilter = THREE.LinearFilter; mat.uniforms.uMap.value = tex;
