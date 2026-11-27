@@ -8,7 +8,7 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lilita+One&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lilita+One&family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,400..900,100,0;1,9..144,400..900,100,0&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#141c33; --ink:#1d2340; --navy:#0b2a5c; --blue:#2fa8ff; --red:#ff4d6d; --gold:#ffc62b; --muted:#7a7f99;
@@ -476,6 +476,7 @@ svg.ico.sm{width:18px;height:18px}
 :root{--ptgrain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .4 0 0 0 0 .25 0 0 0 .32 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 #pt{position:absolute;inset:0;z-index:80;perspective:1800px;perspective-origin:50% 50%;pointer-events:auto;overflow:hidden}
 #pt .pt-under{position:absolute;inset:0;background:rgba(46,26,10,.4);pointer-events:none}
+#pt .pt-old{position:absolute;inset:0;overflow:hidden;pointer-events:none}
 #pt .pt-s{position:absolute;top:0;height:100%;transform-origin:0 50%;transform-style:preserve-3d}
 #pt .pt-f,#pt .pt-b{position:absolute;inset:0;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
 #pt .pt-b{transform:rotateY(180deg);background:var(--ptgrain),linear-gradient(90deg,#e9dab9,#f4e8cc);background-blend-mode:multiply,normal}
@@ -520,7 +521,7 @@ svg.ico.sm{width:18px;height:18px}
 .paper #result{background:linear-gradient(180deg,rgba(80,48,18,.22),rgba(70,40,14,.6) 39%,rgba(45,25,8,.95) 86%)!important}
 /* ======== v201: World 1, one painted look everywhere (the style board Sterling approved 27 Nov 2026) ========
    Painted pieces live in models/paper/a/ui (buttons, scroll, ribbon, seals, bar, ring, coin, logo). Nothing glossy, no navy. */
-:root{--pk-ink:#3a2010;--pk-ink2:#6b4426;--pk-red:#7a1f14;--pk-parch:#f6ecd4;--pk-fell:'IM Fell English',Georgia,'Times New Roman',serif}
+:root{--pk-ink:#3a2010;--pk-ink2:#6b4426;--pk-red:#7a1f14;--pk-parch:#f6ecd4;--pk-fell:Fraunces,Georgia,'Times New Roman',serif}
 .res-slip{display:contents}
 /* painted buttons: blue card with a gold rim for "go", cream card for the second choice */
 .paper .btn.big,#game.papermenu .btn.big,#game.papermenu #map .btn.big,#game.papermenu #rewards .btn.big{background:none!important;border-style:solid!important;border-color:transparent!important;border-width:16px 34px!important;border-image:url(models/paper/a/ui/btn_blue.webp) 30% 14% fill/16px 34px stretch!important;border-radius:0!important;box-shadow:none!important;padding:4px 10px!important;color:#fff6df!important;-webkit-text-stroke:5px #1d2f5a;paint-order:stroke fill;text-shadow:0 3px 0 rgba(20,32,70,.55)!important;filter:drop-shadow(0 7px 6px rgba(40,20,5,.38))}
@@ -581,7 +582,7 @@ svg.ico.sm{width:18px;height:18px}
 #game.papermenu #map .map-path::before{display:none}
 #game.papermenu #map .mcard{flex:1;border:0;border-radius:0;background:none;box-shadow:none!important;align-items:flex-end;gap:8px;padding:0 12px 10px;isolation:auto}
 #game.papermenu #map .mcard::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none}
-#game.papermenu #map .mcard.locked::before{-webkit-backdrop-filter:sepia(.8) saturate(.85) brightness(.94);backdrop-filter:sepia(.8) saturate(.85) brightness(.94)}
+#game.papermenu #map::after{content:"";position:absolute;inset:0;background:url(models/paper/a/ui/map.webp) center/cover no-repeat;filter:sepia(.8) saturate(.85) brightness(.94);-webkit-mask:linear-gradient(#000 var(--lk,0px),transparent var(--lk,0px));mask:linear-gradient(#000 var(--lk,0px),transparent var(--lk,0px));pointer-events:none;z-index:0} /* (v202f: the locked worlds toned with a filtered copy of the map, not a backdrop-filter, so the page turn keeps it) */
 #game.papermenu #map .mcard:nth-child(1){flex:2.1}#game.papermenu #map .mcard:nth-child(2){flex:1.15}#game.papermenu #map .mcard:nth-child(3){flex:1.35}#game.papermenu #map .mcard:nth-child(4){flex:2}#game.papermenu #map .mcard:nth-child(5){flex:2.2} /* the bands follow the painted lands */
 #game.papermenu #map .mcard>div:not(.emb){background:rgba(250,240,216,.94);border:1.5px solid #8a5a2a;border-radius:4px;padding:3px 10px 4px;box-shadow:0 3px 6px rgba(40,20,5,.35)}
 #game.papermenu #map .mcard b{font-family:var(--pk-fell);font-size:18px;color:var(--pk-red);text-shadow:none}
@@ -608,7 +609,7 @@ svg.ico.sm{width:18px;height:18px}
 #game.papermenu .rw-chest .btn:disabled,#game.papermenu .rw-m .btn:disabled,#game.papermenu .rw-skin .btn:disabled{opacity:.42;filter:grayscale(.7)}
 /* Upgrades: parchment cards with painted round icons */
 #game.papermenu .up{background:rgba(255,250,234,.9)!important;border:1.5px solid #b08a5a!important}
-#game.papermenu .up em.pic{border-radius:50%;box-shadow:none;width:52px;height:52px}
+#game.papermenu .up em.pic{border-radius:50%;box-shadow:none;width:56px;height:56px;background:none!important}
 #game.papermenu .up b{color:var(--pk-red)}#game.papermenu .up span{color:var(--pk-ink2)}
 #game.papermenu .up .btn{background:none!important;border-style:solid;border-color:transparent;border-width:9px 18px;border-image:url(models/paper/a/ui/btn_blue.webp) 30% 14% fill/9px 18px stretch;box-shadow:none!important;padding:2px 4px;color:#fff6df;-webkit-text-stroke:3.5px #1d2f5a;paint-order:stroke fill}
 #game.papermenu .up .btn:disabled{opacity:.42;filter:grayscale(.7)}
@@ -672,6 +673,31 @@ svg.ico.sm{width:18px;height:18px}
 #loading{background:#1a0e07;perspective:1150px;perspective-origin:50% 38%;overflow:hidden;color:#5a2e0e;text-shadow:0 1px 0 rgba(255,244,214,.8),0 0 8px rgba(255,236,190,.7)} /* (the desk and the closed book, drawn the same way as the opening so the hand-off is seamless) */
 #loading .ld-t{position:absolute;z-index:1;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 4.5%);text-align:center;font-size:21px}
 #loading.book .dk-world,#loading.tapgo .dk-world{display:none}
+/* v202f: toy-medieval menus. Type: Fraunces (soft) for headings, Lilita One for item names and buttons, Fredoka for text */
+.paper #result .res-title,.paper .pause-card .res-title,#game.papermenu #map .map-title,#game.papermenu #rewards>.map-title,#game.papermenu .rw-head,#game.papermenu .boon-h,.paper .boon-h,.rb-h,#game.papermenu #map .mcard b,#game.papermenu .sheet-head b{font-family:var(--pk-fell)!important;font-weight:800!important;letter-spacing:.2px}
+#game.papermenu .tag,.paper .res-sub,.paper .pause-card .link,.paper #quitBtn{font-weight:500}
+#game.papermenu .up b,#game.papermenu .rw-chest b,#game.papermenu .rw-m b,#game.papermenu .rw-skin b,#game.papermenu .boon b,.paper .boon b{font-family:var(--disp)!important;font-weight:400!important;letter-spacing:.3px;color:var(--pk-red)!important}
+#game.papermenu .up,#game.papermenu .rw-chest,#game.papermenu .rw-m,#game.papermenu .rw-skin,#game.papermenu .boon,.paper .boon{background:linear-gradient(180deg,#fffaf0,#f6e6c4)!important;border:2.5px solid #8a5a2a!important;border-radius:18px!important;box-shadow:inset 0 2px 0 rgba(255,255,255,.9),0 5px 0 #b98a52,0 8px 12px rgba(60,30,8,.2)!important}
+#game.papermenu .up.locked{background:rgba(255,248,232,.5)!important;border:2.5px dashed #a87e4e!important;box-shadow:none!important}
+#game.papermenu .up.locked em{background:none!important;box-shadow:none!important;width:52px;height:52px;border-radius:50%}
+#game.papermenu .up em img.lk,#game.papermenu .rw-swatch img.lk{width:100%;height:100%;display:block}
+#game.papermenu .rw-swatch.lk{background:none!important;border:0!important;box-shadow:none!important;width:54px!important;height:54px!important;flex:none}
+#game.papermenu .rw-box.pic{border:0!important;box-shadow:none!important;background:none!important;width:58px!important;height:58px!important;border-radius:50%}
+#game.papermenu .rw-box.pic img{width:100%;height:100%}
+#game.papermenu .up .btn:disabled,#game.papermenu .rw-chest .btn:disabled,#game.papermenu .rw-m .btn:disabled,#game.papermenu .rw-skin .btn:disabled{opacity:1;filter:saturate(.55);border-image-source:url(models/paper/a/ui/btn_cream.webp);color:#9b7d5c;-webkit-text-stroke:0;text-shadow:none}
+#game.papermenu .up b i{background:#fff3d6!important;border:1.5px solid #c9a77a;border-radius:999px;font-family:var(--disp);font-weight:400;color:#8a5a2a!important}
+#game.papermenu .up b i.new{background:#c9452c!important;border-color:#7a1f14;color:#fff6df!important}
+#game.papermenu .pill-btn,#game.papermenu .uptoggle,#game.papermenu #rwWallet,#game.papermenu .pill.wallet,#game.papermenu .sheet-head .pill{border:2.5px solid #8a5a2a!important;box-shadow:inset 0 2px 0 rgba(255,255,255,.9),0 4px 0 #8a5a2a,0 7px 10px rgba(60,30,8,.2)!important;font-family:var(--disp)!important;font-weight:400!important}
+#game.papermenu .pill-btn:active,#game.papermenu .uptoggle:active{transform:translateY(3px);box-shadow:inset 0 2px 0 rgba(255,255,255,.9),0 1px 0 #8a5a2a!important}
+#game.papermenu .uptoggle svg{fill:#f2b632!important;stroke:#6b4426;stroke-width:1.8px;paint-order:stroke;filter:none!important}
+#game.papermenu .menu-pills{gap:8px}
+#game.papermenu .menu-pills .pill-btn,#game.papermenu .menu-pills .uptoggle{display:inline-flex;align-items:center;white-space:nowrap;padding:6px clamp(8px,2.8vw,13px)!important;font-size:clamp(13.5px,4vw,16.5px)!important}
+#game.papermenu .pill-btn img.pi,#game.papermenu .uptoggle img.pi{width:24px;height:24px;vertical-align:0;margin-right:4px}
+#game.papermenu .sheet-card{border:3px solid #8a5a2a!important;border-radius:26px!important;box-shadow:inset 0 2px 0 rgba(255,255,255,.8),0 6px 0 #8a5a2a,0 14px 24px rgba(40,20,5,.35)!important}
+#game.papermenu #playBtn{overflow:visible}
+#game.papermenu #playBtn::after{top:-8px;bottom:-8px;left:-22px;right:-22px;width:auto;transform:none;border-radius:14px;background:linear-gradient(100deg,transparent 40%,rgba(255,255,255,.42) 50%,transparent 60%) no-repeat;background-size:60% 100%;background-position:-120% 0;animation:playShineP 3.4s ease-in-out infinite}
+@keyframes playShineP{0%,62%{background-position:-120% 0}100%{background-position:220% 0}}
+@media (prefers-reduced-motion:reduce){#game.papermenu #playBtn::after{animation:none}}
 .dk-book::before{background:linear-gradient(90deg,#8e1414,#c42222 10%,#a81a1a);border-radius:6px 12px 12px 6px}
 #game.lean #parPill.miss{filter:none}
 #game.glhud #fortBar,#game.glhud #nestBar,#game.glhud #crowd,#game.glhud #floats,#game.glhud #parPill{visibility:hidden} /* drawn inside the picture instead: see GHUD */
@@ -6140,11 +6166,11 @@ function paStory() { // true while the tale holds the results card back (Grimbal
   if (!PA.on || PAPER !== 'a' || G.sim || !isBoss(G.level) || PS.done) return false;
   if (!PS.on) psStart(); return true;
 }
-function psFont() { // the storybook's own typeface (IM Fell English), fetched once
-  if (PS.font) return; PS.font = 1; const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap'; document.head.appendChild(l);
-  setTimeout(() => { if (document.fonts) Promise.all(['italic 40px "IM Fell English"', '40px "IM Fell English SC"'].map(f => document.fonts.load(f))).catch(() => {}); }, 300);
+function psFont() { // the storybook's own typeface (Fraunces, soft: v202f), fetched once
+  if (PS.font) return; PS.font = 1; const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,400..900,100,0;1,9..144,400..900,100,0&display=swap'; document.head.appendChild(l);
+  setTimeout(() => { if (document.fonts) Promise.all(['italic 40px Fraunces', '800 40px Fraunces', '40px Fraunces'].map(f => document.fonts.load(f))).catch(() => {}); }, 300);
 }
-const PS_SERIF = '"IM Fell English", Georgia, "Times New Roman", serif';
+const PS_SERIF = 'Fraunces, Georgia, "Times New Roman", serif';
 function psStart() {
   PS.on = true; PS.ready = false; PS.t = 0; PS.once = {}; clearToasts(); endCap(''); ['turn', 'pop', 'st1'].forEach(psLoad); psFont();
   for (const f of floats) { f.t = 0; if (f.el) f.el.style.opacity = '0'; } // (v201: his last words were still fading and showed through the story page)
@@ -6222,7 +6248,7 @@ function psText(nch, done) {
   const c = PS.tc, x = c.getContext('2d'), w = c.width, h = c.height; if (!PS.lay) psLayout(); const L = PS.lay, fs = L.fs, cw = L.cap;
   x.clearRect(0, 0, w, h); x.textBaseline = 'alphabetic';
   if (nch > 0) { const a = Math.min(1, nch / 3); x.globalAlpha = a; x.fillStyle = '#2a4aa8'; rrect(x, 4, 6, cw, cw, 8); x.fill(); x.lineWidth = 4; x.strokeStyle = '#b8321e'; x.stroke(); x.strokeStyle = '#f4c84a'; x.lineWidth = 2; rrect(x, 10, 12, cw - 12, cw - 12, 6); x.stroke();
-    x.font = `${Math.round(cw * .78)}px "IM Fell English SC", ${PS_SERIF}`; x.fillStyle = '#f4c84a'; x.textAlign = 'center'; x.fillText(L.all[0], 4 + cw / 2, 6 + cw * .8); x.globalAlpha = 1; }
+    x.font = `800 ${Math.round(cw * .78)}px ${PS_SERIF}`; x.fillStyle = '#f4c84a'; x.textAlign = 'center'; x.fillText(L.all[0], 4 + cw / 2, 6 + cw * .8); x.globalAlpha = 1; }
   x.textAlign = 'left'; x.font = `italic ${fs}px ${PS_SERIF}`; x.fillStyle = '#3a2412';
   L.lines.forEach((ln, k) => { const n = Math.max(0, Math.min(ln.s.length, nch - ln.at)); if (n <= 0) return; x.fillText(ln.s.slice(0, n), k < 2 ? cw + fs * .16 + 4 : 4, fs * (k + 1) * 1.28); });
   if (done) { x.font = `${Math.round(fs * .62)}px ${PS_SERIF}`; x.fillStyle = '#9a7a4a'; x.textAlign = 'right'; x.fillText('— tap to turn the page —', w - 8, h - fs * .3); }
@@ -6261,32 +6287,38 @@ function psEnd() {
 const PT = { on: false, N: 10, set: null, fin: null };
 function ptSnap() { try { render(); if (GHUD && G.mode !== 'menu') GHUD.draw(); } catch (e) {} const cv = renderer.domElement, s = document.createElement('canvas'); s.width = cv.width; s.height = cv.height; s.getContext('2d').drawImage(cv, 0, 0); return s; }
 function ptSizes() { const W = gameEl.clientWidth || 390; gameEl.style.setProperty('--tps', (.21 * W).toFixed(1) + 'px'); gameEl.style.setProperty('--tpt', (.231 * W).toFixed(1) + 'px'); gameEl.style.setProperty('--bks', (.22 * W).toFixed(1) + 'px'); gameEl.style.setProperty('--bkt', (.249 * W).toFixed(1) + 'px'); } /* the gold frames keep their corners whatever the screen's shape */
-function pageTurn(change, o = {}) {
+function pageTurn(change, o = {}) { // o.back: the previous page swings back in from the left over the current one (going back)
   if (PT.on || G.sim || document.hidden || !gameEl.clientWidth) { change(); return; }
-  const W = gameEl.clientWidth, N = PT.N, sw = W / N, snap = ptSnap(), kx = snap.width / W;
-  const vis = [...gameEl.children].filter(el => { if (el === renderer.domElement || el.id === 'pt' || el.tagName === 'CANVAS' || el.tagName === 'SCRIPT') return false; const cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity > .02 && el.offsetWidth > 0; });
+  const W = gameEl.clientWidth, N = PT.N, sw = W / N;
+  const visOf = () => [...gameEl.children].filter(el => { if (el === renderer.domElement || el.id === 'pt' || el.tagName === 'CANVAS' || el.tagName === 'SCRIPT') return false; const cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity > .02 && el.offsetWidth > 0; });
+  const clone = (el, into) => { const k = el.cloneNode(true); k.removeAttribute('id'); k.id = el.id; into.appendChild(k); };
   const root = document.createElement('div'); root.id = 'pt'; const under = document.createElement('div'); under.className = 'pt-under'; root.appendChild(under);
-  let parent = root; const strips = [];
-  for (let i = 0; i < N; i++) {
-    const s = document.createElement('div'); s.className = 'pt-s'; s.style.left = (i ? sw : 0) + 'px'; s.style.width = (sw + (i < N - 1 ? 1 : 0)) + 'px';
-    const f = document.createElement('div'); f.className = 'pt-f'; const c = document.createElement('div'); c.className = 'pt-c'; c.style.left = -i * sw + 'px'; c.style.width = W + 'px';
-    const x0 = Math.max(0, Math.floor(i * sw * kx) - 1), x1 = Math.min(snap.width, Math.ceil((i + 1) * sw * kx) + 2), cv = document.createElement('canvas'); cv.width = Math.max(1, x1 - x0); cv.height = snap.height;
-    cv.getContext('2d').drawImage(snap, x0, 0, x1 - x0, snap.height, 0, 0, x1 - x0, snap.height); cv.className = 'pt-snap'; cv.style.left = x0 / kx + 'px'; cv.style.width = (x1 - x0) / kx + 'px'; c.appendChild(cv);
-    for (const el of vis) { const k = el.cloneNode(true); k.removeAttribute('id'); k.id = el.id; c.appendChild(k); }
-    const sh = document.createElement('div'); sh.className = 'pt-sh'; f.append(c, sh);
-    const b = document.createElement('div'); b.className = 'pt-b'; const bs = document.createElement('div'); bs.className = 'pt-sh'; b.appendChild(bs);
-    s.append(f, b); parent.appendChild(s); parent = s; strips.push({ s, sh, bs });
-  }
-  gameEl.appendChild(root); PT.on = true; psLoad('turn').then(() => psSnd('turn', .5));
-  try { change(); } catch (e) { console.error(e); }
+  const strips = [];
+  const build = (snap, vis) => { const kx = snap.width / W; let parent = root;
+    for (let i = 0; i < N; i++) {
+      const s = document.createElement('div'); s.className = 'pt-s'; s.style.left = (i ? sw : 0) + 'px'; s.style.width = (sw + (i < N - 1 ? 1 : 0)) + 'px';
+      const f = document.createElement('div'); f.className = 'pt-f'; const c = document.createElement('div'); c.className = 'pt-c'; c.style.left = -i * sw + 'px'; c.style.width = W + 'px';
+      const x0 = Math.max(0, Math.floor(i * sw * kx) - 1), x1 = Math.min(snap.width, Math.ceil((i + 1) * sw * kx) + 2), cv = document.createElement('canvas'); cv.width = Math.max(1, x1 - x0); cv.height = snap.height;
+      cv.getContext('2d').drawImage(snap, x0, 0, x1 - x0, snap.height, 0, 0, x1 - x0, snap.height); cv.className = 'pt-snap'; cv.style.left = x0 / kx + 'px'; cv.style.width = (x1 - x0) / kx + 'px'; c.appendChild(cv);
+      for (const el of vis) clone(el, c);
+      const sh = document.createElement('div'); sh.className = 'pt-sh'; f.append(c, sh);
+      const b = document.createElement('div'); b.className = 'pt-b'; const bs = document.createElement('div'); bs.className = 'pt-sh'; b.appendChild(bs);
+      s.append(f, b); parent.appendChild(s); parent = s; strips.push({ s, sh, bs });
+    } };
+  if (o.back) { // the page being left stays put underneath; the one going back to is turned in on top of it
+    const old = document.createElement('div'), snap = ptSnap(), cv = document.createElement('canvas'); old.className = 'pt-old'; cv.width = snap.width; cv.height = snap.height; cv.getContext('2d').drawImage(snap, 0, 0); cv.className = 'pt-snap'; cv.style.left = 0; cv.style.width = W + 'px'; old.appendChild(cv);
+    for (const el of visOf()) clone(el, old); root.insertBefore(old, under); gameEl.appendChild(root); PT.on = true;
+    try { change(); } catch (e) { console.error(e); } build(ptSnap(), visOf());
+  } else { build(ptSnap(), visOf()); gameEl.appendChild(root); PT.on = true; try { change(); } catch (e) { console.error(e); } }
+  psLoad('turn').then(() => psSnd('turn', .5));
   const ms = o.ms || 1700, t0 = performance.now(); /* (v201: a slow, weighty turn; it was 1.05 s and read as a glitch) */
   const set = p => { const q = p < .16 ? .06 * (p / .16) * (p / .16) : .06 + .94 * ((p - .16) / .84), e = q < .06 ? q : .06 + .94 * (u => u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2)((q - .06) / .94); let prev = 0; /* the corner lifts a little first, then the page curls over and settles */
     for (let i = 0; i < N; i++) { const u = (i + .5) / N, k = clamp(e * 1.55 - (1 - u) * .55, 0, 1), th = Math.PI * k * k * (3 - 2 * k), S = strips[i];
       S.s.style.transform = 'rotateY(' + (-(th - prev)).toFixed(4) + 'rad)'; S.sh.style.opacity = (Math.sin(th) * .9).toFixed(3); S.bs.style.opacity = (Math.sin(th) * .6).toFixed(3); prev = th; }
     under.style.opacity = (1 - e).toFixed(3); };
   const fin = () => { if (!PT.on) return; root.remove(); PT.on = false; PT.set = PT.fin = null; if (o.done) o.done(); };
-  PT.set = set; PT.fin = fin; set(0);
-  const step = now => { if (!PT.on || PT.set !== set) return; const p = Math.min(1, (now - t0) / ms); set(p); if (p < 1) requestAnimationFrame(step); else fin(); };
+  const P = p => o.back ? 1 - p : p; PT.set = set; PT.fin = fin; set(P(0));
+  const step = now => { if (!PT.on || PT.set !== set) return; const p = Math.min(1, (now - t0) / ms); set(P(p)); if (p < 1) requestAnimationFrame(step); else fin(); };
   requestAnimationFrame(step); setTimeout(() => { if (PT.fin === fin) fin(); }, ms + 2500); /* (never left standing) */
 }
 addEventListener('resize', () => ptSizes());
@@ -8246,7 +8278,7 @@ function renderUpgrades() {
     const l = save.up[u.id] || 0, row = document.createElement('div');
     if (u.unlock && save.level < u.unlock) { // show only the next locked upgrade, as something to look forward to
       if (teased) continue; teased = true; row.className = 'up locked';
-      row.innerHTML = `<em><svg viewBox="0 0 24 24"><use href="#i-lock"/></svg></em><div class="m"><b>${u.name}</b><span>Unlocks at Level ${u.unlock}</span></div>`;
+      row.innerHTML = `<em>${paperUI() ? '<img class="lk" src="models/paper/a/art/lock.webp" alt="" draggable="false">' : '<svg viewBox="0 0 24 24"><use href="#i-lock"/></svg>'}</em><div class="m"><b>${u.name}</b><span>Unlocks at Level ${u.unlock}</span></div>`;
       lockRow = row; continue;
     }
     shown++;
@@ -8556,7 +8588,7 @@ function resumeGame() {
 $('pauseBtn').addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); pauseGame(); });
 $('resumeBtn').onclick = resumeGame;
 $('restartBtn').onclick = () => pageTurn(() => { resumeGame(); startPlay(); });
-$('quitBtn').onclick = () => pageTurn(() => { resumeGame(); showMenu(); });
+$('quitBtn').onclick = () => pageTurn(() => { resumeGame(); showMenu(); }, { back: true });
 // leaving the app silences it everywhere (it only did so mid-battle, so menu music played on in the background), and coming
 // back brings the sound back unless the pause card is up
 if (LEAN) window.addEventListener('blur', () => { if (matchMedia('(pointer: coarse)').matches) pauseGame(); }); // leaving for the browser's own buttons: stop drawing at once, so they aren't slow
@@ -8597,8 +8629,9 @@ function renderMap() {
   }
   $('mapPath').innerHTML = rows.join(''); $('mapNg').textContent = '';
 }
-$('mapBtn').onclick = () => pageTurn(() => { renderMap(); $('menu').classList.remove('on'); $('map').classList.add('on'); });
-$('mapClose').onclick = () => pageTurn(() => { $('map').classList.remove('on'); $('menu').classList.add('on'); });
+const mapTone = () => { const m = $('map'), p = $('mapPath'); if (!m.classList.contains('on')) return; const L = [...p.querySelectorAll('.mcard.locked')].pop(); m.style.setProperty('--lk', (L ? p.offsetTop + L.offsetTop + L.offsetHeight : 0) + 'px'); }; addEventListener('resize', mapTone);
+$('mapBtn').onclick = () => pageTurn(() => { renderMap(); $('menu').classList.remove('on'); $('map').classList.add('on'); mapTone(); });
+$('mapClose').onclick = () => pageTurn(() => { $('map').classList.remove('on'); $('menu').classList.add('on'); }, { back: true });
 // the painting on the story card; the drawn emblem stays until it is here
 const STORY_ART = ['s_grimbald', 's_sekra', 's_hrimgar', 's_magmaw', 's_king'];
 function storyPic(k) { const im = $('storyArt'), c = im.parentNode; c.classList.remove('art'); im.onload = () => c.classList.add('art'); im.onerror = () => c.classList.remove('art'); const pa = PA.on && PAPER === 'a' && k === 's_grimbald'; c.classList.toggle('pa', pa); im.src = pa ? 'models/paper/a/gb_roar.webp' : artDir(k) + k + '.webp'; if (im.complete && im.naturalWidth) c.classList.add('art'); }
@@ -8657,7 +8690,7 @@ function renderRewards() {
   const d = daily(); $('rwBox').innerHTML = art('r_chest', '🎁'); $('rwBox').className = 'rw-box' + (artNo.r_chest ? '' : ' pic') + (d.chest ? ' done' : ''); $('rwChestTxt').textContent = d.chest ? 'New chest in ' + untilTomorrow() : chestPay() + ' coins inside'; if (!RW.fly) $('rwCoinN').textContent = save.coins; $('rwChestBtn').disabled = d.chest; $('rwChestBtn').textContent = d.chest ? 'Opened' : 'Open';
   $('rwMissions').innerHTML = d.ms.map((m, k) => `<div class="rw-m ${m.claimed ? 'done' : ''}"><div><b>${MISSIONS[m.id].txt(m.goal)}</b><span>${m.prog} / ${m.goal} · <svg class="rw-c"><use href="#i-coin"/></svg> ${missionPay()}</span><div class="rw-bar"><i style="width:${Math.round(100 * m.prog / m.goal)}%"></i></div></div><button class="btn violet sm" data-m="${k}" ${m.claimed || m.prog < m.goal ? 'disabled' : ''}>${m.claimed ? 'Done' : 'Claim'}</button></div>`).join('');
   const own = save.skins || ['snow'], cur = save.skin || 'snow';
-  $('rwStable').innerHTML = !palReady() ? '<div class="rw-skin"><div class="rw-swatch" style="background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" style="width:22px;height:22px"><use href="#i-lock"/></svg></div><div><b>The Paladin</b><span>Beat Level ' + CAP_AT + ' to unlock him and his stable</span></div></div>' : SKINS.map(s => `<div class="rw-skin"><div class="rw-pic" style="box-shadow:0 0 10px ${s.spirit};background:radial-gradient(circle at 35% 30%,${s.coat},${s.dark})">${art('h_' + s.id, '')}</div><div><b>${s.name}</b><span>${own.includes(s.id) ? (cur === s.id ? 'Riding now' : 'In your stable') : s.cost + ' coins'}</span></div><button class="btn ${own.includes(s.id) ? 'green' : 'violet'} sm" data-s="${s.id}" ${cur === s.id || (!own.includes(s.id) && save.coins < s.cost) ? 'disabled' : ''}>${cur === s.id ? 'Riding' : own.includes(s.id) ? 'Ride' : 'Buy'}</button></div>`).join('');
+  $('rwStable').innerHTML = !palReady() ? '<div class="rw-skin">' + (paperUI() ? '<div class="rw-swatch lk"><img class="lk" src="models/paper/a/art/lock.webp" alt="" draggable="false"></div>' : '<div class="rw-swatch" style="background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" style="width:22px;height:22px"><use href="#i-lock"/></svg></div>') + '<div><b>The Paladin</b><span>Beat Level ' + CAP_AT + ' to unlock him and his stable</span></div></div>' : SKINS.map(s => `<div class="rw-skin"><div class="rw-pic" style="box-shadow:0 0 10px ${s.spirit};background:radial-gradient(circle at 35% 30%,${s.coat},${s.dark})">${art('h_' + s.id, '')}</div><div><b>${s.name}</b><span>${own.includes(s.id) ? (cur === s.id ? 'Riding now' : 'In your stable') : s.cost + ' coins'}</span></div><button class="btn ${own.includes(s.id) ? 'green' : 'violet'} sm" data-s="${s.id}" ${cur === s.id || (!own.includes(s.id) && save.coins < s.cost) ? 'disabled' : ''}>${cur === s.id ? 'Riding' : own.includes(s.id) ? 'Ride' : 'Buy'}</button></div>`).join('');
   $('rewDot').classList.toggle('on', rewardsReady());
 }
 function payOut(n, quiet) { save.coins += n; rwGained += n; persist(); if (!quiet) smp('reward', .23, .02); }
@@ -8675,7 +8708,7 @@ $('rwStable').onclick = e => { const b = e.target.closest('[data-s]'); if (!b) r
   if (!save.skins.includes(s.id)) { if (save.coins < s.cost) return; save.coins -= s.cost; save.skins.push(s.id); }
   save.skin = s.id; persist(); applySkin(); renderRewards(); };
 $('rewardsBtn').onclick = () => pageTurn(() => { rwGained = 0; rwBefore = save.coins; renderRewards(); $('menu').classList.remove('on'); $('rewards').classList.add('on'); });
-$('rwBack').onclick = () => pageTurn(() => { $('rewards').classList.remove('on'); $('chestFx').hidden = true; showMenu(); });
+$('rwBack').onclick = () => pageTurn(() => { $('rewards').classList.remove('on'); $('chestFx').hidden = true; showMenu(); }, { back: true });
 // the Paladin's coat: recolours his warhorse (coat, legs and the spirit-flame mane)
 function applySkin() { if (!horse || !horse.mats) return; const s = SKINS.find(q => q.id === (save.skin || 'snow')) || SKINS[0]; horse.mats.coat.color.copy(C(s.coat)); if (palArt) horse.mats.coat.color.multiplyScalar(s.id === 'gold' ? .62 : .86); /* (the sculpted coat takes the light more brightly than the old one) */ horse.mats.coatD.color.copy(C(s.dark)); horse.mats.spirit.color.copy(C(s.spirit)); }
 function lockSpoilers() { const tro = save.trophies || {}, seen = w => tro[w] || save.level > w * WORLD_LEN + WORLD_LEN; let any = false; document.querySelectorAll('#bossRow [data-w]').forEach(b => { b.hidden = !seen(+b.dataset.w - 1); any = any || !b.hidden; }); $('bossBtn').hidden = !any; if (!any) $('bossRow').hidden = true; $('finaleBtn').hidden = !(tro[4] || save.level > LAP_LEN); }
@@ -8784,7 +8817,7 @@ function frame(now) {
 
 /* debug hooks for automated playtests */
 window.__CR = {
-  G, ants, beetles, get save() { return save; }, get PA() { return PA; }, get DIR() { return DIR; }, musicProbe, winProbe, start: startPlay, menu: showMenu,
+  G, ants, beetles, get save() { return save; }, get PA() { return PA; }, get DIR() { return DIR; }, pause: () => pauseGame(), musicProbe, winProbe, start: startPlay, menu: showMenu,
   step(sec, opts = {}) { const n = Math.round(sec * 60); for (let i = 0; i < n; i++) { if (opts.aim) G.lx = opts.aim(G); if (opts.fire !== undefined) G.firing = opts.fire; if (opts.giant) sendGiant(); update(1 / 60); } render(); return { mode: G.mode, ants: ants.n, beetles: beetles.n, fort: Math.ceil(G.fortHp), nest: Math.ceil(G.nestHp), t: +G.t.toFixed(1) }; },
   boonAfter(C) { const sv = { boons: { w: boonWorld(C.lv), list: C.boons } }; if (C.lv < 2) return; boonTake(sv, C.lv, null); const ids = boonOffer(sv, C.lv, Math.random); boonTake(sv, C.lv, ids[(Math.random() * ids.length) | 0]); C.boons = sv.boons.list; },
   UPG, upCost, freshSave, levelCfg, coinFly, TIERS, get world() { return world; }, get KK() { return KK; },
