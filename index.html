@@ -672,7 +672,7 @@ svg.ico.sm{width:18px;height:18px}
 .dk-hint{color:#5a2e0e;text-shadow:0 1px 0 rgba(255,244,214,.8),0 0 8px rgba(255,236,190,.7)}
 #loading{background:#1a0e07;perspective:1150px;perspective-origin:50% 38%;overflow:hidden;color:#5a2e0e;text-shadow:0 1px 0 rgba(255,244,214,.8),0 0 8px rgba(255,236,190,.7)} /* (the desk and the closed book, drawn the same way as the opening so the hand-off is seamless) */
 #loading .ld-t{position:absolute;z-index:1;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 4.5%);text-align:center;font-size:21px}
-#dk .dk-pic{width:112%;margin:0 -6%;flex:none;aspect-ratio:4/5;max-height:60%;border-radius:0;background-position:center;background-size:128% auto;background-repeat:no-repeat;box-shadow:none;mix-blend-mode:multiply} /* v202g: the tale is drawn straight onto the page */
+#dk .dk-pic{width:112%;margin:0 -6%;flex:none;aspect-ratio:4/5;max-height:60%;border-radius:0;background-position:center;background-size:128% auto;background-repeat:no-repeat;box-shadow:none;mix-blend-mode:normal;filter:drop-shadow(0 3px 3px rgba(60,30,8,.25))} /* v202n: the tale pictures are paper cut-outs laid on the page */
 #dk .dk-tale{justify-content:center;gap:2%;padding:8% 9% 9%}
 #dk .dk-txt{font-size:clamp(16px,5.3vw,23px);min-height:6.2em}
 .dk-skip{display:none;position:absolute;z-index:3;top:calc(env(safe-area-inset-top) + 12px);right:12px;padding:6px 14px;border-radius:999px;border:2px solid #8a5a2a;background:linear-gradient(170deg,#fffaea,#f1e0b8);box-shadow:0 3px 0 #8a5a2a;font-family:var(--disp);font-size:15px;color:#4a2c14;cursor:pointer}
@@ -720,7 +720,7 @@ svg.ico.sm{width:18px;height:18px}
 /* v202j: the title page's picture takes only the room between the level trail and the buttons, so nothing sits on it */
 #game.papermenu #menu::before{position:relative!important;left:auto!important;bottom:auto!important;transform:none!important;order:1;flex:1 1 0;min-height:0;width:min(92%,460px);aspect-ratio:auto!important;margin:4px auto -26px;background-position:center bottom!important;z-index:0!important}
 #game.papermenu #menu>.dock{order:2;position:relative;z-index:1}
-#game.papermenu #menu::before{mix-blend-mode:multiply} /* v202k: the picture is drawn on the page, like the tale */
+#game.papermenu #menu::before{mix-blend-mode:normal;filter:drop-shadow(0 3px 3px rgba(60,30,8,.22))} /* v202n: the picture is a paper cut-out, like the battle board */
 #game.papermenu #menu>.spacer{display:none}
 #game.papermenu #menu .lvl{margin-top:14px!important}
 #game.papermenu .logo-pa{max-height:22vh;width:auto;max-width:min(78%,330px)}
@@ -731,7 +731,14 @@ svg.ico.sm{width:18px;height:18px}
 #game.papermenu #map .mcard i.lkp img{width:34px;height:34px;display:block;filter:drop-shadow(0 2px 2px rgba(40,20,5,.35))}
 #game.papermenu #map .mcard.locked i.lkp img{opacity:.92}
 #game.papermenu #map::after{-webkit-mask:linear-gradient(#000 calc(var(--lk,0px) - 36px),transparent calc(var(--lk,0px) + 36px))!important;mask:linear-gradient(#000 calc(var(--lk,0px) - 36px),transparent calc(var(--lk,0px) + 36px))!important}
-#game.papermenu #map .map-path{padding-bottom:calc(env(safe-area-inset-bottom) + 26px)!important}
+#game.papermenu #map .map-path{padding-top:5.4vh!important;padding-bottom:3.6vh!important} /* v202n: five equal bands, each centred on its landmark (measured at 14.5, 34.4, 51.9, 68.0, 87.4% of the map) */
+#game.papermenu #map .mcard{flex:1 1 0!important;align-items:center!important;padding-bottom:0!important}
+#game.papermenu #map .mcard>div:not(.emb){width:min(54%,228px);box-sizing:border-box;flex:none}
+#game.papermenu #map .mcard{position:relative}
+#game.papermenu #map .mcard>i{position:absolute!important;left:calc(24px + min((100% - 36px) * .54, 228px));top:50%;margin:0!important;transform:translate(-50%,-50%)} /* (the status badge is pinned on the label's right edge: one straight column for every world) */
+#game.papermenu #map .mcard.here>i{animation:herePulseC 1.6s ease-in-out infinite!important}
+#game.papermenu #map .mcard.here:active>i{transform:translate(-50%,-44%)}
+@keyframes herePulseC{50%{transform:translate(-50%,-50%) scale(1.07)}}
 #game.papermenu #map #mapClose.btn.big{position:absolute!important;z-index:3;top:calc(env(safe-area-inset-top) + 10px);right:12px;left:auto;width:46px!important;max-width:none!important;height:46px!important;min-height:0!important;padding:0!important;margin:0!important;border:0!important;border-image:none!important;border-radius:50%!important;background:url(models/paper/a/ui/ring.webp) center/100% 100% no-repeat,radial-gradient(circle,#fbf1dc 58%,transparent 60%)!important;box-shadow:0 3px 4px rgba(60,30,8,.3)!important;font-size:0!important;color:transparent!important;animation:none!important} /* v202m: on the map, Back is a small close ring (like the Upgrades sheet), so the whole map shows */
 #game.papermenu #map #mapClose.btn.big::before,#game.papermenu #map #mapClose.btn.big::after{content:"";position:absolute;left:50%;top:50%;width:18px;height:3px;border-radius:2px;background:#4a2c14;transform:translate(-50%,-50%) rotate(45deg)}
 #game.papermenu #map #mapClose.btn.big::after{transform:translate(-50%,-50%) rotate(-45deg)}
