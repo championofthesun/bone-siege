@@ -760,13 +760,13 @@ svg.ico.sm{width:18px;height:18px}
 #game.papermenu .uptoggle svg{fill:#f2b632!important;stroke:#6b4426;stroke-width:1.8px;paint-order:stroke;filter:none!important}
 #game.papermenu .menu-pills{gap:8px}
 #game.ot #toast{visibility:visible!important} /* (v202o: the chapter and Grimbald's name come during the one-take) */
-/* v202k: the boon choices are paper cut-outs pasted on the scroll, each held by a strip of tape */
-.rb{position:relative;background:#fffdf6 var(--ptgrain)!important;border-radius:3px!important;box-shadow:0 1px 0 rgba(90,55,20,.28),0 5px 9px rgba(60,30,8,.22)!important;padding:8px 5px 9px!important;transform:rotate(var(--tilt,0deg));transition:transform .25s cubic-bezier(.3,1.5,.5,1),box-shadow .25s,opacity .25s}
-.rb:nth-child(1){--tilt:-2.2deg}.rb:nth-child(2){--tilt:1.5deg}.rb:nth-child(3){--tilt:-1deg}
-.rb::before{content:'';position:absolute;z-index:1;top:-7px;left:50%;width:40px;height:13px;transform:translateX(-50%) rotate(-4deg);background:rgba(236,224,186,.82);box-shadow:0 1px 1px rgba(60,30,8,.18);pointer-events:none}
-.rb:nth-child(2)::before{transform:translateX(-50%) rotate(3deg)}
-.rb.took{transform:rotate(0deg) translateY(-4px) scale(1.06)!important;box-shadow:0 0 0 2.5px #c99232,0 9px 14px rgba(60,30,8,.3)!important}
-.rb.gone{opacity:.35!important;transform:rotate(var(--tilt,0deg)) scale(.95)!important}
+/* v202ac: the boon choices are round cut-outs like the star seals (a cream paper rim and a soft shadow), with their name and line printed on the scroll below. No card, no tape */
+.rb{position:relative;font-family:Fredoka,system-ui,sans-serif;background:none!important;border-radius:0!important;box-shadow:none!important;padding:2px 2px 4px!important;transition:transform .25s cubic-bezier(.3,1.5,.5,1),opacity .25s} /* (a button does not inherit the page font: the lines had fallen back to Arial) */
+.rb em{width:86%;margin:0 auto 3px;border-radius:50%;overflow:hidden;background:#fffaf0;box-shadow:0 0 0 3.5px #fffaf0,0 0 0 4.5px rgba(150,108,60,.4),0 4px 7px rgba(60,30,8,.3);transition:box-shadow .25s}
+.rb em img{mix-blend-mode:normal!important;object-fit:cover!important;transform:scale(.97)}
+.rb.took{transform:translateY(-4px) scale(1.07)!important}
+.rb.took em{box-shadow:0 0 0 3.5px #fffaf0,0 0 0 6px #d9a640,0 0 14px 3px rgba(240,190,80,.65),0 7px 12px rgba(60,30,8,.32)}
+.rb.gone{opacity:.38!important;transform:scale(.94)!important}
 /* the pause list: each boon a clear round picture, cropped inside its painted ring */
 .paper #pauseBoons em{width:52px!important;height:52px!important;border-radius:50%!important;background:#fffaf0!important;box-shadow:0 0 0 2px #c99232,0 2px 4px rgba(60,30,8,.3)!important;overflow:hidden}
 .paper #pauseBoons em img{transform:scale(1.32);object-fit:cover}
@@ -6043,8 +6043,22 @@ function paCard(n, h, x, z, o = {}) { // a cut-out h tall standing on the page a
   if (o.u || o.v) { const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, u[0] + uv.getX(i) * (u[1] - u[0]), v[0] + uv.getY(i) * (v[1] - v[0])); } // just part of the picture
   const c = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: paTex(n), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }));
   c.position.set(x, o.y || 0, z); c.rotation.set(-(o.lean === undefined ? .3 : o.lean), o.ry || 0, 0); /* leaning back, like a pop-up page facing the reader's raised eye */ if (o.flip) c.scale.x = -1; PA.g.add(c);
-  if (n !== 'back') { const sd = Math.max(1.1, h * .34), s = new THREE.Mesh(new THREE.PlaneGeometry(Math.max(w * .95, .9), sd), PA.shC); s.rotation.x = -Math.PI / 2; s.position.set(x, (o.y || 0) + .02, z - .12 + sd / 2); /* (v202ac) a pop-up's shadow: darkest along the fold where the card meets the page, fading toward the reader. Poles and banners get one too */ s.renderOrder = 1; PA.g.add(s); c.userData.sh = s; } // its soft shadow on the paper
+  c.userData.sh = new THREE.Object3D(); // (v202ad) no shadow on the page: the World 1 look was built without any (the old blob never drew), and every cast shadow tried since looked stuck on. paCast() is kept for reference
   return c;
+}
+/* (v202ad) Every cut-out casts its own shape: one light, low on the left, so each shadow is a soft copy of its silhouette thrown
+   to the right across the page (sideways reads at this grazing camera; toward the reader it squashed to a line), darkest at the fold */
+function paCast(map, w, h, u = [0, 1], v = [0, 1], flip = false) {
+  const L = Math.min(h * .22, 1.8), sx = Math.min(h * .7, 6), ua = flip ? u[1] : u[0], ub = flip ? u[0] : u[1], g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute([-w / 2, 0, 0, w / 2, 0, 0, -w / 2 + sx, 0, L, w / 2 + sx, 0, L], 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute([ua, v[0], ub, v[0], ua, v[1], ub, v[1]], 2));
+  g.setAttribute('tt', new THREE.Float32BufferAttribute([0, 0, 1, 1], 1)); g.setIndex([0, 1, 2, 1, 3, 2]);
+  const m = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -8, uniforms: { map: { value: map }, uR: { value: .014 / Math.max(.3, u[1] - u[0]) } },
+    vertexShader: 'attribute float tt; varying vec2 vUv; varying float vT; void main() { vUv = uv; vT = tt; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'uniform sampler2D map; uniform float uR; varying vec2 vUv; varying float vT; float A(vec2 p) { return texture2D(map, p).a; } void main() { float r = uR * (.3 + 1.6 * vT); vec2 q = vec2(r * .6, r);'
+      + ' float a = A(vUv) * .28 + (A(vUv + vec2(q.x, 0.)) + A(vUv - vec2(q.x, 0.)) + A(vUv + vec2(0., q.y)) + A(vUv - vec2(0., q.y))) * .11 + (A(vUv + q) + A(vUv - q) + A(vUv + vec2(q.x, -q.y)) + A(vUv + vec2(-q.x, q.y))) * .07;'
+      + ' gl_FragColor = vec4(.13, .09, .06, a * .62 * (1.0 - .5 * vT)); }' });
+  const s = new THREE.Mesh(g, m); s.renderOrder = 1; return s;
 }
 function paBuild() {
   const g = PA.g = new THREE.Group(); g.visible = false; scene.add(g);
@@ -6104,15 +6118,15 @@ function paExtras() { // the cannon card (on the real cannon, so it slides and l
     PB.star = canvasTex(128, 128, (x, w, h) => { const st = (r1, r2, c) => { x.fillStyle = c; x.beginPath(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? r2 : r1; x.lineTo(64 + Math.cos(a) * r, 64 + Math.sin(a) * r); } x.fill(); }; st(60, 28, '#ffffff'); st(50, 21, '#ffb21e'); st(32, 13, '#ffe45a'); });
   } else { const ch = 3.6, can = PA.can = new THREE.Mesh(new THREE.PlaneGeometry(ch * PA_DIM.cannon, ch).translate(0, ch / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('cannon'), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }));
   can.position.set(0, 0, .3); launcher.add(can); can.visible = false;
-  { const cs = new THREE.Mesh(new THREE.PlaneGeometry(ch * PA_DIM.cannon * .95, 1.3), PA.shC); cs.rotation.x = -Math.PI / 2; cs.position.set(0, .02, -.12 + .65); cs.renderOrder = 1; can.add(cs); } } // (v202ab) its shadow rides with it
+  }
   const gb = PA.gb = { g: new THREE.Group(), m: {} }; PA.g.add(gb.g); gb.g.visible = false;
   for (const k in PA_GB) { const h = 6.6 * PA_GB[k][1] / PA_GB.idle[1], w = h * PA_GB[k][0], m = gb.m[k] = new THREE.Mesh(new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('gb_' + k), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }));
     m.rotation.x = -.28; m.visible = false; gb.g.add(m); }
-  const sh = new THREE.Mesh(new THREE.PlaneGeometry(6, 2.2), PA.sh); sh.rotation.x = -Math.PI / 2; sh.position.set(0, .03, -.6); sh.renderOrder = 1; gb.g.add(sh);
+  const sh = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 2.2), PA.sh); sh.rotation.x = -Math.PI / 2; sh.position.set(1.6, .03, -.3); sh.renderOrder = 1; /* (v202ad) not added: no shadows on the page */
   if (PAPER === 'a') { const cp = PA.cp = { g: new THREE.Group(), m: {} }; PA.g.add(cp.g); cp.g.visible = false; // The Carver
     for (const k in PA_CP) { const h = 5.2 * PA_CP[k][1] / PA_CP.walk[1], w = h * PA_CP[k][0], m = cp.m[k] = new THREE.Mesh(new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('cp_' + k), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }));
       m.rotation.x = -.28; m.visible = false; cp.g.add(m); }
-    const s2 = new THREE.Mesh(new THREE.PlaneGeometry(4, 1.6), PA.sh); s2.rotation.x = -Math.PI / 2; s2.position.set(0, .03, -.4); s2.renderOrder = 1; cp.g.add(s2); }
+    const s2 = new THREE.Mesh(new THREE.PlaneGeometry(5, 1.6), PA.sh); s2.rotation.x = -Math.PI / 2; s2.position.set(1.1, .03, -.2); s2.renderOrder = 1; }
 }
 function paInk() { // an ink blot with a few drops round it (white, tinted where it falls)
   return canvasTex(128, 128, x => { x.fillStyle = '#fff'; x.beginPath(); for (let k = 0; k < 14; k++) { const a = k / 14 * 6.283, r = 30 + Math.random() * 16; x.lineTo(64 + Math.cos(a) * r, 64 + Math.sin(a) * r); } x.closePath(); x.fill();
@@ -8270,7 +8284,8 @@ const GHUD = (() => {
       if (HUDP.k && icons.bar) cell('tr' + k, w, 30, 20, c => { c.save(); c.shadowColor = 'rgba(60,30,8,.3)'; c.shadowOffsetY = 3; c.shadowBlur = 3; nine(c, icons.bar, w, 30); c.restore(); }); else
       cell('tr' + k, w, 30, 6, c => { c.fillStyle = HUDP.sh; rr(c, 0, 4, w, 30, 15); c.fill(); if (glow) { c.fillStyle = glow; rr(c, -2, -2, w + 4, 34, 17); c.fill(); } c.globalCompositeOperation = 'destination-out'; c.fillStyle = '#000'; rr(c, 0, 0, w, 30, 15); c.fill(); c.globalCompositeOperation = 'source-over'; c.fillStyle = HUDP.track; rr(c, .5, .5, w - 1, 29, 14.5); c.fill(); c.fillStyle = HUDP.trackIn; rr(c, 3, 3, w - 6, 2, 1); c.fill(); });
       const col = HUDP.k ? (k === 'fort' ? ['#d8705a', '#a83a26'] : k === 'wl' ? ['#e8896a', '#bc4630'] : ['#86aee2', '#3f6fb8']) : k === 'fort' ? ['#e8a7ff', '#8c2fdb'] : k === 'wl' ? ['#ffb07a', '#d0202a'] : ['#b0ecff', '#276eea']; /* (v201: on paper his castle's bar is Grimbald's red) */
-      cell('fi' + k, w - 6, 24, 1, c => { c.fillStyle = grad(c, 0, 0, 0, 24, ...col); rr(c, 0, 0, w - 6, 24, HUDP.k && icons.bar ? 3 : 12); c.fill(); if (HUDP.k) paGrain(c, w - 6, 24, w * 2); });
+      { const pb = HUDP.k && icons.bar, fw = pb ? w - .8 : w - 6, fh = pb ? 27.4 : 24; // (v202ad) on the painted bar the fill is exactly its cream channel (3.8 to 31.2 of the 30-high track, edge to edge); it was 3..27, so a cream strip showed under it as the bar drained
+        cell('fi' + k, fw, fh, 1, c => { c.fillStyle = grad(c, 0, 0, 0, fh, ...col); rr(c, 0, 0, fw, fh, pb ? 2 : 12); c.fill(); if (HUDP.k) paGrain(c, fw, fh, w * 2); }); }
     }
     for (const [k, w] of [['fort', box.fort.w], ['nest', box.nest.w]]) cell('fr' + k, w, 30, 1, c => { if (HUDP.k && icons.bar) return; c.strokeStyle = HUDP.frame; c.lineWidth = 3; rr(c, 1.5, 1.5, w - 3, 27, 13.5); c.stroke(); });
     cell('hi', 24, 6, 1, c => { if (HUDP.k) return; c.fillStyle = '#fff'; rr(c, 0, 0, 24, 6, 3); c.fill(); });
@@ -8313,7 +8328,7 @@ const GHUD = (() => {
   const GOLD = rgb('#f7c95b'), PSTAR = rgb('#ffd23f'), PHOT = rgb('#ffd9a0');
   function measure() { const key = VIEW.w + 'x' + VIEW.h + '@' + pixelRatio; if (box && boxAt === key) return true; const g = gameEl.getBoundingClientRect(), r = id => { const q = $(id).getBoundingClientRect(); return { x: q.left - g.left, y: q.top - g.top, w: $(id).offsetWidth, h: $(id).offsetHeight }; }; const fort = r('fortBar'); if (!fort.w) return false; const gi = $('giant'); box = { fort, nest: r('nestBar'), par: r('parPill'), giant: { x: gi.offsetLeft, y: gi.offsetTop, w: gi.offsetWidth }, crowdH: $('crowd').offsetHeight || 34 }; box.par.x = $('parPill').offsetLeft; box.par.y = $('parPill').offsetTop; boxAt = key; const sk = [box.fort.w, box.nest.w, box.par.h, box.crowdH, Math.max(2, pixelRatio), HUDP.k].join(); if (sk !== sheetOf) { sheetOf = sk; build(); } return true; } // (only a new width or sharpness needs a new sheet, not Chrome's toolbar sliding away)
   const back = t => { const s = 1.70158 + 1; return 1 + s * Math.pow(t - 1, 3) + 1.70158 * Math.pow(t - 1, 2); }; // an overshoot, like the page's own pops
-  function bar(k, b, fill, f, label, ft = W1) { const w = box[b].w, x = box[b].x, y = box[b].y, f2 = clamp(f, 0, 1); put(cells['tr' + k], x, y); if (f2 > 0) { const c = cells['fi' + k], p = c.pad / (c.w + c.pad * 2); put(c, x + 3, y + 3, 1, W1, 0, p + (1 - 2 * p) * f2 + (f2 >= 1 ? p : 0)); const hw = (w - 22) * f2; if (hw > 6) stretch(cells.hi, x + 3 + 8 * f2, y + 6, hw, .38); } put(cells['fr' + b], x, y, 1, ft); text('label', label, x + 3 + 10 + (w - 16) / 2, y + 15, .5); }
+  function bar(k, b, fill, f, label, ft = W1) { const w = box[b].w, x = box[b].x, y = box[b].y, f2 = clamp(f, 0, 1); put(cells['tr' + k], x, y); if (f2 > 0) { const c = cells['fi' + k], p = c.pad / (c.w + c.pad * 2), pb = HUDP.k && icons.bar, fx = pb ? .4 : 3, fy = pb ? 3.8 : 3; put(c, x + fx, y + fy, 1, W1, 0, p + (1 - 2 * p) * f2 + (f2 >= 1 ? p : 0)); const hw = (w - 22) * f2; if (hw > 6) stretch(cells.hi, x + 3 + 8 * f2, y + fy + 3, hw, .38); } put(cells['fr' + b], x, y, 1, ft); text('label', label, x + 3 + 10 + (w - 16) / 2, y + 15, .5); }
   let lastT = 0;
   H.draw = () => {
     if (!ready) return; const now = performance.now() / 1000, dt = Math.min(.05, now - lastT); lastT = now; const cls = gameEl.classList, hid = cls.contains('overlay') || cls.contains('cinema') || !!(DIR.s && DIR.s.cine) || !!G.camOverride, want = !hid && !cls.contains('cine') && (G.mode === 'play' || G.mode === 'lost' || G.mode === 'won') ? 1 : 0;
