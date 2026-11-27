@@ -701,6 +701,23 @@ svg.ico.sm{width:18px;height:18px}
 #game.papermenu .pill-btn:active,#game.papermenu .uptoggle:active{transform:translateY(3px);box-shadow:inset 0 2px 0 rgba(255,255,255,.9),0 1px 0 #8a5a2a!important}
 #game.papermenu .uptoggle svg{fill:#f2b632!important;stroke:#6b4426;stroke-width:1.8px;paint-order:stroke;filter:none!important}
 #game.papermenu .menu-pills{gap:8px}
+/* v202j: the title page's picture takes only the room between the level trail and the buttons, so nothing sits on it */
+#game.papermenu #menu::before{position:relative!important;left:auto!important;bottom:auto!important;transform:none!important;order:1;flex:1 1 0;min-height:0;width:min(92%,460px);aspect-ratio:auto!important;margin:4px auto -26px;background-position:center bottom!important;z-index:0!important}
+#game.papermenu #menu>.dock{order:2;position:relative;z-index:1}
+#game.papermenu #menu>.spacer{display:none}
+#game.papermenu #menu .lvl{margin-top:14px!important}
+#game.papermenu .logo-pa{max-height:22vh;width:auto;max-width:min(78%,330px)}
+/* the map: fewer pieces. No grey world discs; the same painted padlock and star seal used everywhere; a soft edge to the sepia; a smaller Back */
+#game.papermenu #map .mcard .emb{display:none!important}
+#game.papermenu #map .mcard{padding-left:24px!important}
+#game.papermenu #map .mcard i.lkp{background:none!important;border:0!important;box-shadow:none!important;padding:0!important}
+#game.papermenu #map .mcard i.lkp img{width:34px;height:34px;display:block;filter:drop-shadow(0 2px 2px rgba(40,20,5,.35))}
+#game.papermenu #map .mcard.locked i.lkp img{opacity:.92}
+#game.papermenu #map::after{-webkit-mask:linear-gradient(#000 calc(var(--lk,0px) - 36px),transparent calc(var(--lk,0px) + 36px))!important;mask:linear-gradient(#000 calc(var(--lk,0px) - 36px),transparent calc(var(--lk,0px) + 36px))!important}
+#game.papermenu #map .map-path{padding-bottom:calc(env(safe-area-inset-bottom) + 112px)!important}
+#game.papermenu #map #mapClose.btn.big,#game.papermenu #rewards #rwBack.btn.big{max-width:250px!important;width:62%!important;margin-left:auto;margin-right:auto}
+/* rewards: the title sits up top instead of floating mid-page */
+#game.papermenu #rewards>.map-title{margin-top:calc(env(safe-area-inset-top) + 34px)!important}
 #game.papermenu #map .mcard.here{cursor:pointer}
 #game.papermenu #map .mcard.here i{background:linear-gradient(180deg,#5b8ee0,#3461b0)!important;border:2px solid #fffaea!important;box-shadow:0 0 0 1.5px #1d2f5a,0 3px 0 1.5px #1d2f5a!important;color:#fffaea!important;font-family:var(--disp);animation:herePulse 1.6s ease-in-out infinite}
 #game.papermenu #map .mcard.here:active i{transform:translateY(2px)}
@@ -714,7 +731,7 @@ svg.ico.sm{width:18px;height:18px}
 #game.papermenu #rewards{padding-left:calc(var(--tps,80px) * .3)!important;padding-right:calc(var(--tps,80px) * .3)!important}
 #game.papermenu .rw-sec{width:100%!important;max-width:440px}
 #game.papermenu #rwBack{margin-bottom:calc(env(safe-area-inset-bottom) + var(--tps,80px) * .45)!important}
-#game.papermenu #menu::after,#game.paper #result::after,#game.papermenu #rewards::after{border-width:calc(var(--tps,80px) * .66)!important;border-image-slice:12% 20% 12% 20% fill!important;border-image-width:calc(var(--tps,80px) * .66)!important} /* v202g: the toy frame, its round corners kept round */
+#game.papermenu #menu::after,#game.paper #result::after,#game.papermenu #rewards::after{border-width:calc(var(--tps,80px) * .5)!important;border-image-slice:7.5% 13% 7.5% 13% fill!important;border-image-width:calc(var(--tps,80px) * .5)!important} /* v202g: the toy frame, its round corners kept round */
 .screen.sw-in{animation:swIn .28s cubic-bezier(.2,.8,.3,1) both;z-index:6}
 .screen.sw-out{animation:swOut .23s ease-in both;z-index:6}
 @keyframes swIn{from{opacity:0;transform:translateY(22px) scale(.985)}}
@@ -8667,8 +8684,8 @@ function renderMap() {
   const lap = Math.floor((save.level - 1) / (WORLD_LEN * WORLDS.length)), inLap = lap > 0 ? 999 : (save.level - 1) % (WORLD_LEN * WORLDS.length) + 1, tro = { ...(save.trophies || {}) };
   for (let w = 0; w < 5; w++) if (lap > 0 || inLap > (w + 1) * WORLD_LEN) tro[w] = 1; // progress made before trophies existed still counts
   const rows = [];
-  const ICO = { play: '<svg class="mplay" viewBox="0 0 10 10"><path d="M2 1l7 4-7 4z" fill="currentColor"/></svg>', star: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>', lock: '<svg viewBox="0 0 24 24" style="opacity:.75"><use href="#i-lock"/></svg>', crown: '<svg viewBox="0 0 40 24" style="width:30px"><use href="#i-crown"/></svg>' }; // drawn, not emoji, so every phone shows the same thing
-  const card = (cls, wc, emb, name, sub, tag) => `<div class="mcard ${cls}" style="--wc:${wc}"><div class="emb e${emb}"><svg viewBox="0 0 48 ${emb === 4 ? 52 : 48}"><use href="#t-${emb}"/></svg></div><div><b>${name}</b><span>${sub}</span></div><i>${tag}</i></div>`;
+  const PAP = paperUI(), ICO = { play: '<svg class="mplay" viewBox="0 0 10 10"><path d="M2 1l7 4-7 4z" fill="currentColor"/></svg>', star: PAP ? '<img src="models/paper/a/ui/seal_s.webp" alt="Won">' : '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>', lock: PAP ? '<img src="models/paper/a/art/lock.webp" alt="Locked">' : '<svg viewBox="0 0 24 24" style="opacity:.75"><use href="#i-lock"/></svg>', crown: '<svg viewBox="0 0 40 24" style="width:30px"><use href="#i-crown"/></svg>' }; // drawn, not emoji, so every phone shows the same thing
+  const card = (cls, wc, emb, name, sub, tag) => `<div class="mcard ${cls}" style="--wc:${wc}"><div class="emb e${emb}"><svg viewBox="0 0 48 ${emb === 4 ? 52 : 48}"><use href="#t-${emb}"/></svg></div><div><b>${name}</b><span>${sub}</span></div><i${/^<img/.test(tag) ? ' class="lkp"' : ''}>${tag}</i></div>`;
   if (lap > 0) rows.push(`<div class="mcard here" style="--wc:#d070ff"><div class="emb e4"><svg viewBox="0 0 48 52"><use href="#t-5"/></svg></div><div><b>The Endless Road</b><span>${WORLDS[worldOf(save.level)].name} · Rowan</span></div><i>${ICO.play}${roadN(save.level)}</i></div>`);
   for (let w = WORLDS.length - 1; w >= 0; w--) {
     const a = w * WORLD_LEN + 1, b = a + WORLD_LEN - 1, cls = (tro[w] ? 'won' : '') + (inLap >= a && inLap <= b ? ' here' : inLap < a && !tro[w] ? ' locked' : '');
