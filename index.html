@@ -8,7 +8,7 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lilita+One&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lilita+One&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#141c33; --ink:#1d2340; --navy:#0b2a5c; --blue:#2fa8ff; --red:#ff4d6d; --gold:#ffc62b; --muted:#7a7f99;
@@ -518,6 +518,147 @@ svg.ico.sm{width:18px;height:18px}
 #game.paper #result.win .res-hero::before{background:radial-gradient(circle,rgba(255,226,120,.6),rgba(255,190,60,0) 68%)}
 #game.paper #result .res-prog span{color:#4a2c14;text-shadow:none}
 .paper #result{background:linear-gradient(180deg,rgba(80,48,18,.22),rgba(70,40,14,.6) 39%,rgba(45,25,8,.95) 86%)!important}
+/* ======== v201: World 1, one painted look everywhere (the style board Sterling approved 27 Nov 2026) ========
+   Painted pieces live in models/paper/a/ui (buttons, scroll, ribbon, seals, bar, ring, coin, logo). Nothing glossy, no navy. */
+:root{--pk-ink:#3a2010;--pk-ink2:#6b4426;--pk-red:#7a1f14;--pk-parch:#f6ecd4;--pk-fell:'IM Fell English',Georgia,'Times New Roman',serif}
+.res-slip{display:contents}
+/* painted buttons: blue card with a gold rim for "go", cream card for the second choice */
+.paper .btn.big,#game.papermenu .btn.big,#game.papermenu #map .btn.big,#game.papermenu #rewards .btn.big{background:none!important;border-style:solid!important;border-color:transparent!important;border-width:16px 34px!important;border-image:url(models/paper/a/ui/btn_blue.webp) 30% 14% fill/16px 34px stretch!important;border-radius:0!important;box-shadow:none!important;padding:4px 10px!important;color:#fff6df!important;-webkit-text-stroke:5px #1d2f5a;paint-order:stroke fill;text-shadow:0 3px 0 rgba(20,32,70,.55)!important;filter:drop-shadow(0 7px 6px rgba(40,20,5,.38))}
+.paper .btn.big.violet,#game.papermenu .btn.big.violet{background:none!important;border-image-source:url(models/paper/a/ui/btn_cream.webp)!important;color:var(--pk-ink)!important;-webkit-text-stroke:0;text-shadow:none!important}
+.paper .btn.big:active,#game.papermenu .btn.big:active{transform:translateY(3px);filter:drop-shadow(0 3px 3px rgba(40,20,5,.38))}
+/* the results: a scroll laid over the battle board, the title on a ribbon, stars stamped as wax seals */
+#game.paper #result{background:radial-gradient(ellipse 95% 70% at 50% 40%,rgba(36,20,8,.08),rgba(36,20,8,.58))!important;justify-content:flex-start}
+#game.paper #result::after,.paper #result .res-rays,.paper #result .res-hero{display:none!important}
+#game.paper #result .res-slip{display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;width:min(88%,400px);margin-top:calc(env(safe-area-inset-top) + 13vh);border-style:solid;border-width:54px 30px 56px;border-image:url(models/paper/a/ui/scroll.webp) 19% 12% 20% 12% fill/54px 30px 56px stretch;filter:drop-shadow(0 16px 18px rgba(30,15,4,.5));padding:4px 2px 0}
+#game.paper #result.on .res-slip{animation:slipIn .62s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes slipIn{from{transform:translateY(-34px) scale(.92) rotate(-2deg);opacity:0}}
+.paper #result .res-title{position:absolute;top:-92px;left:-15%;right:-15%;height:clamp(64px,19vw,88px);margin:0;display:flex;align-items:center;justify-content:center;padding-bottom:.42em;background:url(models/paper/a/ui/ribbon.webp) center/100% 100% no-repeat;font-family:var(--pk-fell)!important;font-size:clamp(28px,8.6vw,40px)!important;letter-spacing:.5px;color:#fff4d8!important;-webkit-text-stroke:0!important;text-shadow:0 2px 0 #5a1010!important;filter:drop-shadow(0 5px 4px rgba(40,10,5,.35))}
+.paper #result .res-stars{margin:14px 0 0;gap:2px;align-items:center}
+.paper #result .res-stars svg{display:none}
+.paper #result .res-stars img.seal{width:clamp(44px,12vw,54px);opacity:.22;filter:grayscale(1) sepia(.5);transform:scale(.88)}
+.paper #result .res-stars img.seal:nth-of-type(2){width:clamp(58px,16vw,70px)}
+.paper #result .res-stars svg.on+img.seal{opacity:1;filter:drop-shadow(0 3px 2px rgba(60,10,5,.35));animation:stamp .42s cubic-bezier(.2,1.7,.4,1) both}
+@keyframes stamp{0%{transform:scale(1.9) rotate(-14deg);opacity:0}55%{opacity:1}100%{transform:scale(1) rotate(0)}}
+.paper #result .res-sub,#game.paper #result .res-sub{font-family:var(--pk-fell);font-style:italic;font-weight:400;font-size:17px;color:var(--pk-ink)!important;text-shadow:none!important;opacity:1;margin-top:2px}
+.paper #result .res-coins{background:none!important;border:0!important;box-shadow:none!important;margin-top:2px;padding:0;font-family:'Lilita One',sans-serif;font-size:40px;color:#fff6df!important;-webkit-text-stroke:7px var(--pk-ink);paint-order:stroke fill;text-shadow:0 3px 0 rgba(58,32,16,.35)!important}
+.paper #result .res-coins svg{display:none}.paper #result .res-coins::after{content:'';width:38px;height:38px;background:url(models/paper/a/ui/coin.webp) center/contain no-repeat}
+.paper #result .res-hint{margin-top:4px;background:rgba(255,250,234,.7)!important;border:1.5px solid #b08a5a!important;color:var(--pk-ink)!important}
+.paper #result .res-prog .res-bar{background:rgba(120,80,40,.22);border:1.5px solid #8a5a2a}.paper #result .res-prog .res-bar i{background:linear-gradient(90deg,#c9553a,#94301f)}
+#resBoons{width:100%;display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 10px}#resBoons[hidden]{display:none}
+.rb-h{font-family:var(--pk-fell);font-size:19px;color:var(--pk-red)}
+.rb-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
+.rb{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 2px 6px;border:0;border-radius:6px;background:rgba(255,250,234,.35);box-shadow:inset 0 0 0 1.5px rgba(176,138,90,.55);cursor:pointer;color:var(--pk-ink);animation:rbIn .4s cubic-bezier(.2,1.5,.4,1) both;transition:transform .2s,opacity .2s,box-shadow .2s}
+@keyframes rbIn{from{transform:translateY(10px) scale(.85);opacity:0}}
+.rb em{width:100%;aspect-ratio:1;display:block}.rb em img{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;display:block}.rb em svg{width:60%;height:60%;margin:20%}
+.rb b{font-family:'Lilita One',sans-serif;font-weight:400;font-size:13px;line-height:1.05;color:var(--pk-red);text-align:center}
+.rb span{font-size:10.5px;font-weight:600;line-height:1.15;text-align:center;color:var(--pk-ink2)}
+.rb:focus-visible{outline:2px solid #2f5fa8;outline-offset:2px}
+.rb.took{transform:scale(1.06);box-shadow:inset 0 0 0 2.5px #c99232,0 0 14px rgba(232,184,74,.75)}.rb.gone{opacity:.25;transform:scale(.94)}
+#result.rbwait .stack .btn{opacity:.45;pointer-events:none;filter:grayscale(.5)}
+/* the HUD bars (desktop and page HUD): the painted wooden bar, its parchment trough, a watercolour fill */
+.paper #hud .bar{overflow:visible!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;height:28px;z-index:1}
+.paper #hud .bar::before{content:'';position:absolute;top:-15px;bottom:-18px;left:-17px;right:-17px;border-style:solid;border-width:15px 17px 18px;border-image:url(models/paper/a/ui/bar.webp) 27.6% 5.6% 33.7% 5.6% fill/15px 17px 18px stretch;z-index:-1;filter:drop-shadow(0 3px 2px rgba(60,30,8,.3))}
+.paper #hud .bar i{inset:3px 2px!important;border-radius:3px;overflow:hidden;filter:none!important}
+.paper #fortBar{right:32px}
+.paper #nestBadge{background:url(models/paper/a/art/u_nest.webp) center/112% no-repeat!important}.paper #nestBadge svg{display:none}
+.paper #fortBar i{background:linear-gradient(180deg,#d8705a,#a83a26)!important}.paper #nestBar i{background:linear-gradient(180deg,#86aee2,#3f6fb8)!important}
+.paper #hud .bar span{color:#fff6df!important}
+.paper #nestBar.low::before{filter:drop-shadow(0 0 8px rgba(220,60,40,.9))}
+/* the title page: painted gold lettering, Upgrades among the pills (it covered the castle in the painting) */
+.logo-pa{display:none;width:min(80%,340px);flex:none;margin-top:2px;filter:drop-shadow(0 6px 8px rgba(60,30,8,.35));pointer-events:none;user-select:none}
+#game.papermenu .logo{display:none}#game.papermenu .logo-pa{display:block}
+#game.papermenu .tag{font-family:var(--pk-fell);font-style:italic;font-size:17px}
+#game.papermenu .menu-pills .uptoggle{margin:0;font-size:17px;padding:7px 14px}
+.pill-btn img.pi,.uptoggle img.pi{width:22px;height:22px;object-fit:contain;vertical-align:-5px;margin-right:5px}
+/* the Realm: a painted map page; lands you haven't reached stay sepia */
+#game.papermenu #map{background:#3a2412 url(models/paper/a/ui/map.webp) center/cover no-repeat!important;justify-content:flex-start}
+#game.papermenu #map .map-head{margin-top:calc(env(safe-area-inset-top) + 6px);z-index:2}
+#game.papermenu #map .map-title,#game.papermenu #rewards>.map-title{font-family:var(--pk-fell);font-size:28px;color:#fff4d8;text-shadow:0 2px 0 #5a1010;background:url(models/paper/a/ui/ribbon.webp) center/100% 100% no-repeat;padding:8px 54px 22px;filter:drop-shadow(0 4px 3px rgba(40,10,5,.35))}
+#game.papermenu #map .map-ng{color:#fff4d8;text-shadow:0 1px 2px #000}
+#game.papermenu #map .map-path{position:absolute;left:0;right:0;top:0;bottom:0;width:auto;margin:0;padding:calc(env(safe-area-inset-top) + 64px) 0 calc(env(safe-area-inset-bottom) + 92px);gap:0;z-index:1}
+#game.papermenu #map .map-path::before{display:none}
+#game.papermenu #map .mcard{flex:1;border:0;border-radius:0;background:none;box-shadow:none!important;align-items:flex-end;gap:8px;padding:0 12px 10px;isolation:auto}
+#game.papermenu #map .mcard::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none}
+#game.papermenu #map .mcard.locked::before{-webkit-backdrop-filter:sepia(.8) saturate(.85) brightness(.94);backdrop-filter:sepia(.8) saturate(.85) brightness(.94)}
+#game.papermenu #map .mcard:nth-child(1){flex:2.1}#game.papermenu #map .mcard:nth-child(2){flex:1.15}#game.papermenu #map .mcard:nth-child(3){flex:1.35}#game.papermenu #map .mcard:nth-child(4){flex:2}#game.papermenu #map .mcard:nth-child(5){flex:2.2} /* the bands follow the painted lands */
+#game.papermenu #map .mcard>div:not(.emb){background:rgba(250,240,216,.94);border:1.5px solid #8a5a2a;border-radius:4px;padding:3px 10px 4px;box-shadow:0 3px 6px rgba(40,20,5,.35)}
+#game.papermenu #map .mcard b{font-family:var(--pk-fell);font-size:18px;color:var(--pk-red);text-shadow:none}
+#game.papermenu #map .mcard span{color:var(--pk-ink);font-size:11.5px}
+#game.papermenu #map .mcard i{margin-left:0;background:rgba(250,240,216,.94);border:1.5px solid #8a5a2a;border-radius:999px;padding:2px 9px;color:var(--pk-red);font-size:15px}
+#game.papermenu #map .mcard i svg{filter:brightness(.4) sepia(1)}
+#game.papermenu #map .mcard.locked b,#game.papermenu #map .mcard.locked span,#game.papermenu #map .mcard.locked i{opacity:.82}
+#game.papermenu #map .mcard .emb{width:46px;height:46px;background:radial-gradient(circle at 40% 30%,#fffaea,#e6d0a0);border:2.5px solid #8a5a2a;box-shadow:0 3px 6px rgba(40,20,5,.35)}
+#game.papermenu #map .mcard .emb svg{width:30px;height:30px}
+#game.papermenu #map .mcard.here>div:not(.emb){box-shadow:0 0 0 2.5px #c99232,0 3px 8px rgba(40,20,5,.4)}
+#game.papermenu #map #mapClose{margin-top:auto;z-index:2;max-width:300px}
+/* Rewards: the title page's gold frame and ink lettering */
+#game.papermenu #rewards::after{content:'';position:absolute;inset:0;z-index:-2;pointer-events:none;border-style:solid;border-width:var(--tpt,90px) var(--tps,80px);border-image:url(models/paper/a/title_frame.webp) 13% 21% 13% 21% fill;border-image-width:var(--tpt,90px) var(--tps,80px)}
+#game.papermenu #rewards{isolation:isolate;padding:calc(env(safe-area-inset-top) + 30px) 0 0}
+#game.papermenu #rewards>.map-title{margin-top:auto}#game.papermenu #rwBack{margin-top:auto;margin-bottom:calc(env(safe-area-inset-bottom) + var(--tpt,90px) * .28)}
+#game.papermenu #rwWallet,#game.papermenu .pill.wallet{background:linear-gradient(170deg,#fffaea,#f1e0b8)!important;color:#4a2c14!important;border:2px solid #8a5a2a!important;box-shadow:0 3px 0 rgba(90,55,20,.35)!important;text-shadow:none!important}
+#game.papermenu .rw-head{font-family:var(--pk-fell);color:var(--pk-red);text-shadow:none;font-size:19px}
+#game.papermenu .rw-chest,#game.papermenu .rw-m,#game.papermenu .rw-skin{background:rgba(255,250,234,.72);border:1.5px solid #b08a5a;box-shadow:0 2px 0 rgba(90,55,20,.25)}
+#game.papermenu .rw-chest b,#game.papermenu .rw-m b,#game.papermenu .rw-skin b{color:var(--pk-ink)}
+#game.papermenu .rw-chest span,#game.papermenu .rw-m span,#game.papermenu .rw-skin span{color:var(--pk-ink2)}
+#game.papermenu .rw-bar{background:rgba(120,80,40,.22)}
+#game.papermenu .rw-pic{border-color:#c99232;border-radius:50%}
+#game.papermenu .rw-chest .btn,#game.papermenu .rw-m .btn,#game.papermenu .rw-skin .btn{background:none!important;border-style:solid;border-color:transparent;border-width:9px 18px;border-image:url(models/paper/a/ui/btn_blue.webp) 30% 14% fill/9px 18px stretch;box-shadow:none!important;padding:2px 4px;color:#fff6df;-webkit-text-stroke:3.5px #1d2f5a;paint-order:stroke fill;animation:none}
+#game.papermenu .rw-chest .btn:disabled,#game.papermenu .rw-m .btn:disabled,#game.papermenu .rw-skin .btn:disabled{opacity:.42;filter:grayscale(.7)}
+/* Upgrades: parchment cards with painted round icons */
+#game.papermenu .up{background:rgba(255,250,234,.9)!important;border:1.5px solid #b08a5a!important}
+#game.papermenu .up em.pic{border-radius:50%;box-shadow:none;width:52px;height:52px}
+#game.papermenu .up b{color:var(--pk-red)}#game.papermenu .up span{color:var(--pk-ink2)}
+#game.papermenu .up .btn{background:none!important;border-style:solid;border-color:transparent;border-width:9px 18px;border-image:url(models/paper/a/ui/btn_blue.webp) 30% 14% fill/9px 18px stretch;box-shadow:none!important;padding:2px 4px;color:#fff6df;-webkit-text-stroke:3.5px #1d2f5a;paint-order:stroke fill}
+#game.papermenu .up .btn:disabled{opacity:.42;filter:grayscale(.7)}
+#game.papermenu .sheet-x{background:url(models/paper/a/ui/ring.webp) center/100% 100% no-repeat,radial-gradient(circle,#fbf1dc 58%,transparent 60%)!important;border:0!important}#game.papermenu .sheet-x svg path{stroke:#4a2c14}
+#game.papermenu .sheet-head .pill{background:rgba(255,250,234,.9)!important;color:var(--pk-ink)!important;border:1.5px solid #8a5a2a!important;box-shadow:none!important;text-shadow:none!important}
+#game.papermenu .up b i{background:rgba(120,80,40,.14);color:var(--pk-ink2)}#game.papermenu .up b i.new{background:#a83a26;color:#fff6df}
+#game.papermenu .up.locked{background:rgba(120,80,40,.12)!important;border:1.5px dashed #8a5a2a!important;color:var(--pk-ink2)}#game.papermenu .up.locked span{color:var(--pk-ink2)}
+/* Pause: a slip of parchment over the board */
+.paper #pause{background:radial-gradient(ellipse at 50% 45%,rgba(36,20,8,.25),rgba(36,20,8,.66))}
+.paper .pause-card{border-style:solid;border-width:54px 30px 56px;border-image:url(models/paper/a/ui/scroll.webp) 19% 12% 20% 12% fill/54px 30px 56px stretch;padding:0 6px;filter:drop-shadow(0 14px 16px rgba(30,15,4,.5))}
+.paper .pause-card .res-title{font-family:var(--pk-fell)!important;color:var(--pk-red)!important;-webkit-text-stroke:0!important;text-shadow:none!important;font-size:34px}
+.paper .pause-card .res-sub{color:var(--pk-ink)!important;text-shadow:none!important;font-family:var(--pk-fell);font-style:italic}
+.paper #pauseBoons{color:var(--pk-ink)}.paper #pauseBoons em{background:none!important;box-shadow:none!important;border-radius:50%}
+.paper .pause-card .link{color:var(--pk-ink2);text-shadow:none}
+.paper #audBtns button,#game.papermenu #audBtns button{background:url(models/paper/a/ui/ring.webp) center/100% 100% no-repeat,radial-gradient(circle,#fbf1dc 58%,transparent 60%)!important;border:0!important;box-shadow:0 3px 4px rgba(60,30,8,.3)!important}
+/* the boon screen (only when the choice was left over from a closed game) */
+#game.papermenu #boon,.paper #boon{background:#f3e6c8 var(--ptgrain)!important}
+#game.papermenu .boon-h,.paper .boon-h{font-family:var(--pk-fell);color:var(--pk-red);text-shadow:none}#game.papermenu .boon-s,.paper .boon-s{color:var(--pk-ink)}
+#game.papermenu .boon,.paper .boon{background:rgba(255,250,234,.85);box-shadow:0 0 0 1.5px #b08a5a,0 4px 0 1.5px rgba(90,55,20,.3);color:var(--pk-ink)}
+#game.papermenu .boon em,.paper .boon em{background:none}#game.papermenu .boon em img,.paper .boon em img{mix-blend-mode:multiply}
+#game.papermenu .boon b,.paper .boon b{color:var(--pk-red)}#game.papermenu .boon span,.paper .boon span{color:var(--pk-ink2)}
+#game.papermenu #boonHave,.paper #boonHave{color:var(--pk-ink)}
+#game.papermenu #boonHave em,#game.papermenu #boonMenu em,.paper #boonHave em{background:none!important;box-shadow:none!important;border-radius:50%}
+/* the loading screen: the desk with the book, until the pieces are in */
+#loading{background:#1a0e07 url(models/paper/a/open/desk_book.webp) center/cover no-repeat;align-content:end;padding-bottom:calc(env(safe-area-inset-bottom) + 9vh);font-family:var(--pk-fell);font-style:italic;font-size:20px;letter-spacing:.3px;color:#f6d98a;text-shadow:0 2px 3px #2a1206}
+/* the desk and the book (v201 opening) */
+#dk{position:absolute;inset:0;z-index:40;overflow:hidden;background:#1a0e07;perspective:1150px;perspective-origin:50% 38%;cursor:pointer}
+#dk.in{animation:dkIn .6s ease-out both}@keyframes dkIn{from{opacity:0}}
+.dk-world{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(24deg) translateY(-2%)}
+.dk-desk{position:absolute;inset:-46% -36%;background:url(models/paper/a/open/desk.webp) center/cover}
+.dk-book{position:absolute;left:13%;top:13%;width:74%;height:74%;transform-style:preserve-3d}
+.dk-book::before{content:'';position:absolute;inset:-1.6% -2.6% -1.6% -1.2%;background:linear-gradient(90deg,#5a1210,#8f1d1c 8%,#7a1816);border-radius:3px 8px 8px 3px;box-shadow:0 22px 34px rgba(0,0,0,.6),0 6px 10px rgba(0,0,0,.4)}
+.dk-block{position:absolute;inset:0;background:#efe2c4;border-radius:2px 5px 5px 2px;box-shadow:2px 2px 0 #e4d4b0,4px 4px 0 #d9c7a0,6px 6px 0 #c9a45a,8px 8px 0 #b98d3e}
+.dk-page{position:absolute;inset:0;border-radius:2px 4px 4px 2px;overflow:hidden}
+.dk-p2{background:#e9dcc0 url(models/paper/a/page.webp) center/cover}
+.dk-gilt{position:absolute;inset:3.2%;border:2px solid rgba(201,146,50,.9);box-shadow:0 0 0 4px rgba(246,236,212,.55),inset 0 0 0 1px rgba(122,74,20,.5);pointer-events:none}
+.dk-leaf{position:absolute;inset:0;transform-origin:0 50%;transform-style:preserve-3d}
+.dk-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:2px 5px 5px 2px;overflow:hidden}
+.dk-back{transform:rotateY(180deg)}
+.dk-paper,.dk-tale{background:#f6ecd4 var(--ptgrain)}
+.dk-tale{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5%;padding:9% 10%;box-shadow:inset 0 0 0 7px #f6ecd4,inset 0 0 0 9px #c99232,inset -14px 0 22px -14px rgba(90,55,20,.35)}
+.dk-pic{width:74%;aspect-ratio:4/5;border-radius:50%;background:url(models/paper/a/open/crown.webp) 50% 30%/cover;box-shadow:0 0 0 3px #c99232,0 0 0 6px #f6ecd4,0 0 0 8px #8a5a2a}
+.dk-txt{margin:0;min-height:7.5em;font-family:var(--pk-fell);font-size:clamp(15px,4.9vw,21px);line-height:1.38;color:var(--pk-ink);text-align:left}
+.dk-txt::first-letter{float:left;font-size:3.1em;line-height:.82;padding:.04em .08em 0 0;color:#8e1f24}
+.dk-front{background:#8f1d1c;border-style:solid;border-width:calc(var(--bkt,90px) * .74) calc(var(--bks,80px) * .74);border-image:url(models/paper/a/cover_frame.webp) 14% 22% 14% 22% fill;border-image-width:calc(var(--bkt,90px) * .74) calc(var(--bks,80px) * .74);box-sizing:border-box}
+.dk-emb{position:absolute;left:50%;top:58%;width:96%;aspect-ratio:760/972;transform:translate(-50%,-50%);background:url(models/paper/a/cover_emblem.webp) center/contain no-repeat}
+.dk-logo{position:absolute;left:50%;top:-6%;width:118%;transform:translateX(-50%);filter:drop-shadow(0 4px 4px rgba(40,5,0,.55));pointer-events:none}
+.dk-endp{background:radial-gradient(circle at 30% 20%,#a8322c,transparent 40%),radial-gradient(circle at 70% 70%,#6e1412,transparent 45%),#8a1f1c;box-shadow:inset 0 0 0 10px #f1e3c4}
+.dk-glow{position:absolute;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse 60% 50% at 50% 52%,rgba(255,222,140,.85),rgba(255,190,80,0) 70%);mix-blend-mode:screen}
+.dk-hint{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 4.5%);text-align:center;font-family:var(--pk-fell);font-style:italic;font-size:21px;color:#f6d98a;text-shadow:0 2px 3px #2a1206;animation:tapPulse 1.1s ease-in-out infinite alternate;pointer-events:none}
+#dk.go .dk-hint{display:none}
+@media (prefers-reduced-motion:reduce){#dk.in{animation:none}.dk-hint{animation:none}}
 #game.lean #parPill.miss{filter:none}
 #game.glhud #fortBar,#game.glhud #nestBar,#game.glhud #crowd,#game.glhud #floats,#game.glhud #parPill{visibility:hidden} /* drawn inside the picture instead: see GHUD */
 #game.glhud #giant:not(.last){opacity:0;animation:none;box-shadow:none;background:none}
@@ -706,6 +847,7 @@ svg.ico.sm{width:18px;height:18px}
         <text x="173" y="230" text-anchor="middle" font-family="'Lilita One',Fredoka,sans-serif" font-size="34" letter-spacing="7" fill="#fff" stroke="#0b2a5c" stroke-width="7" paint-order="stroke">SIEGE</text>
       </g>
     </svg>
+    <img class="logo-pa" src="models/paper/a/ui/logo.webp" alt="Bone Siege" draggable="false">
     <div class="tag">Grow your army. Storm the castle.</div>
     <div class="lvl" id="menuLvl">Level 1</div>
     <div class="worldname" id="menuWorld"></div>
@@ -721,6 +863,7 @@ svg.ico.sm{width:18px;height:18px}
 
   <div class="screen" id="result"><div class="res-rays"></div><!-- the turning rays (styled, but this element had never been added) -->
 
+    <div class="res-slip">
     <div class="res-hero" id="resHero"><svg class="res-crown" viewBox="0 0 40 24"><use href="#i-crown"/></svg><svg class="res-ico" id="resIco" viewBox="0 0 48 44"><use id="resIcoUse" href="#i-slime"/></svg></div>
     <div class="res-title" id="resTitle">VICTORY!</div>
     <div class="res-stars" id="resStars"><svg viewBox="0 0 24 24"><use href="#i-star"/></svg><svg viewBox="0 0 24 24"><use href="#i-star"/></svg><svg viewBox="0 0 24 24"><use href="#i-star"/></svg></div>
@@ -728,6 +871,8 @@ svg.ico.sm{width:18px;height:18px}
     <div class="res-prog" id="resProg"><div class="res-bar"><i id="resProgFill"></i></div><span id="resProgTxt"></span></div>
     <div class="res-hint" id="resHint"><svg viewBox="0 0 24 24"><use id="resHintIco" href="#i-star"/></svg><span id="resHintTxt"></span></div>
     <div class="res-coins" id="resCoins"><span id="resN">+0</span><svg><use href="#i-coin"/></svg></div>
+    <div id="resBoons" hidden><div class="rb-h">Choose a boon</div><div class="rb-row" id="rbRow"></div></div>
+    </div>
     <div class="spacer"></div>
     <div class="stack">
       <button class="btn violet big sm" id="x3Btn">▶ ×3 coins · watch ad</button>
@@ -803,7 +948,10 @@ const arrow = (a, b, maxed) => maxed ? a : a + ' → ' + b, pct = v => Math.roun
 // the first four are always there; the rest unlock at the level shown and change how a battle plays
 // shop lines say what the next level gets you, in plain words ("Soldiers 20% tougher"), not raw stat pairs
 const gain = (a, b) => '+' + Math.max(1, Math.round((b / a - 1) * 100)) + '%';
-const artNo = {}, artFb = {}, art = (k, fb) => { artFb[k] = fb; return artNo[k] ? fb : `<img class="pic" src="models/art/${k}.webp" alt="" draggable="false" data-art="${k}">`; };
+const paperUI = () => { const g = document.getElementById('game'); return !!g && (g.classList.contains('paper') || g.classList.contains('papermenu')); }; // World 1's storybook look is on (the round or the title page)
+const PA_ART = new Set(['u_rate', 'u_tough', 'u_giant', 'u_giantC', 'u_nest', 'u_twin', 'u_bomb', 'u_lucky', 'u_turret', 'u_arsenal', 'r_chest', 'h_gold', 'h_night', 'h_snow', 's_rowan', 's_crown']); // painted again in the storybook style (v201)
+const artDir = k => paperUI() && PA_ART.has(k) ? 'models/paper/a/art/' : 'models/art/';
+const artNo = {}, artFb = {}, art = (k, fb) => { artFb[k] = fb; return artNo[k] ? fb : `<img class="pic" src="${artDir(k)}${k}.webp" alt="" draggable="false" data-art="${k}">`; };
 const artWarm = k => { if (!artNo[k]) new Image().src = 'models/art/' + k + '.webp'; };
 const UPG = [
   { id: 'rate',   ico: 'i-bolt',   c: '#ffe27a', name: 'Fire Rate', base: 30, desc: (l, m) => m ? 'Your cannon fires at full speed' : gain(1 / fireInterval(l), 1 / fireInterval(l + 1)) + ' soldiers per second' },
@@ -5787,7 +5935,7 @@ function paFx(on) { // the paper round's effects and its parchment HUD (and back
 function paperScene(on) { // the storybook level in place of the 3D land, castle and camp wall (and back again)
   if (on && !PA.g) { if (PAPER === 'b') pbBuild(); else paBuild(); paExtras(); } if (!PA.g || on === PA.on) return; PA.on = on; PA.g.visible = on; PA.can.visible = on;
   POST.mat.uniforms.uPaper.value = on && PAPER === 'a' ? 1 : 0; paUnits(on);
-  for (const [m, e] of [[spriteMat, '#0c1a3e'], [foeSpriteMat, '#2a0a30']]) { m.uniforms.uEdge.value.set(on ? (PAPER === 'b' ? '#8d8a96' : '#3a2010') : e); m.uniforms.uOut.value = on ? (PAPER === 'b' ? 1 : 1.2) : 1.3; m.uniforms.uDoll.value = on ? 1 : 0; m.uniforms.uQuad.value.set(BAKE_W * UNIT_K, BAKE_H * UNIT_K).multiplyScalar(on ? 1.45 : 1); } // a thin brown cut line round each doll's paper edge; the dolls drawn bigger (looks only)
+  for (const [m, e] of [[spriteMat, '#0c1a3e'], [foeSpriteMat, '#2a0a30']]) { m.uniforms.uEdge.value.set(on ? (PAPER === 'b' ? '#8d8a96' : '#3a2010') : e); m.uniforms.uOut.value = on ? (PAPER === 'b' ? 1 : 1.2) : 1.3; m.uniforms.uDoll.value = on ? 1 : 0; m.uniforms.uQuad.value.set(BAKE_W * UNIT_K, BAKE_H * UNIT_K).multiplyScalar(on ? 1.95 : 1); } /* (v201: dolls 1.35x bigger, so the army reads as an army) */ // a thin brown cut line round each doll's paper edge; the dolls drawn bigger (looks only)
   for (const p of puffs) { p.s.material.map = on ? (PAPER === 'b' ? PB.puff : paTex('puff')) : smokeTex; p.s.material.needsUpdate = true; } // paper smoke
   Object.assign(muzzleFlash.material, on ? { map: PAPER === 'b' ? PB.star : paTex('star'), blending: THREE.NormalBlending } : { map: glowTex, blending: THREE.AdditiveBlending }); muzzleFlash.material.color.set(on ? '#ffffff' : '#ffc860'); muzzleFlash.material.needsUpdate = true;
   if (on) PA.ft = FOE_TINT.clone(); else if (PA.ft) FOE_TINT.copy(PA.ft); paFx(on && PAPER === 'a');
@@ -5978,6 +6126,7 @@ function psFont() { // the storybook's own typeface (IM Fell English), fetched o
 const PS_SERIF = '"IM Fell English", Georgia, "Times New Roman", serif';
 function psStart() {
   PS.on = true; PS.ready = false; PS.t = 0; PS.once = {}; clearToasts(); endCap(''); ['turn', 'pop', 'st1'].forEach(psLoad); psFont();
+  for (const f of floats) { f.t = 0; if (f.el) f.el.style.opacity = '0'; } // (v201: his last words were still fading and showed through the story page)
   render(); const cv = renderer.domElement, snap = document.createElement('canvas'); snap.width = cv.width; snap.height = cv.height; snap.getContext('2d').drawImage(cv, 0, 0); // the battlefield as it is now
   const sc = PS.scene = new THREE.Scene(), asp = cv.width / cv.height, fov = 40, H = 10, W = H * asp, D = H / 2 / Math.tan(fov * Math.PI / 360), SP = -.5, HU = 5 + SP, HL = 5 - SP;
   Object.assign(PS, { W, H, D, SP, HU, HL, asp });
@@ -6042,7 +6191,7 @@ function psLayout() { // the story set in lines on the page once, with a big dro
   let fs = Math.round(h / 6.2), lines; const cap = () => fs * 2.05;
   for (let tries = 0; tries < 12; tries++) {
     x.font = `italic ${fs}px ${PS_SERIF}`; lines = []; let line = '', start = 1, lineNo = 0; const words = body.split(' ');
-    const maxW = k => w - (k < 2 ? cap() + fs * .6 : 0) - 8;
+    const maxW = k => w - (k < 2 ? cap() + fs * .16 : 0) - 8;
     for (const wd of words) { const tryL = line ? line + ' ' + wd : wd; if (x.measureText(tryL).width > maxW(lineNo) && line) { lines.push({ s: line, at: start }); start += line.length + 1; line = wd; lineNo++; } else line = tryL; }
     lines.push({ s: line, at: start }); if (lines.length * fs * 1.28 <= h - fs * 1.1) break; fs = Math.round(fs * .93);
   }
@@ -6054,7 +6203,7 @@ function psText(nch, done) {
   if (nch > 0) { const a = Math.min(1, nch / 3); x.globalAlpha = a; x.fillStyle = '#2a4aa8'; rrect(x, 4, 6, cw, cw, 8); x.fill(); x.lineWidth = 4; x.strokeStyle = '#b8321e'; x.stroke(); x.strokeStyle = '#f4c84a'; x.lineWidth = 2; rrect(x, 10, 12, cw - 12, cw - 12, 6); x.stroke();
     x.font = `${Math.round(cw * .78)}px "IM Fell English SC", ${PS_SERIF}`; x.fillStyle = '#f4c84a'; x.textAlign = 'center'; x.fillText(L.all[0], 4 + cw / 2, 6 + cw * .8); x.globalAlpha = 1; }
   x.textAlign = 'left'; x.font = `italic ${fs}px ${PS_SERIF}`; x.fillStyle = '#3a2412';
-  L.lines.forEach((ln, k) => { const n = Math.max(0, Math.min(ln.s.length, nch - ln.at)); if (n <= 0) return; x.fillText(ln.s.slice(0, n), k < 2 ? cw + fs * .6 + 4 : 4, fs * (k + 1) * 1.28); });
+  L.lines.forEach((ln, k) => { const n = Math.max(0, Math.min(ln.s.length, nch - ln.at)); if (n <= 0) return; x.fillText(ln.s.slice(0, n), k < 2 ? cw + fs * .16 + 4 : 4, fs * (k + 1) * 1.28); });
   if (done) { x.font = `${Math.round(fs * .62)}px ${PS_SERIF}`; x.fillStyle = '#9a7a4a'; x.textAlign = 'right'; x.fillText('— tap to turn the page —', w - 8, h - fs * .3); }
   PS.tt.needsUpdate = true;
 }
@@ -6109,8 +6258,8 @@ function pageTurn(change, o = {}) {
   }
   gameEl.appendChild(root); PT.on = true; psLoad('turn').then(() => psSnd('turn', .5));
   try { change(); } catch (e) { console.error(e); }
-  const ms = o.ms || 1050, t0 = performance.now();
-  const set = p => { const e = p * p * (3 - 2 * p); let prev = 0;
+  const ms = o.ms || 1700, t0 = performance.now(); /* (v201: a slow, weighty turn; it was 1.05 s and read as a glitch) */
+  const set = p => { const q = p < .16 ? .06 * (p / .16) * (p / .16) : .06 + .94 * ((p - .16) / .84), e = q < .06 ? q : .06 + .94 * (u => u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2)((q - .06) / .94); let prev = 0; /* the corner lifts a little first, then the page curls over and settles */
     for (let i = 0; i < N; i++) { const u = (i + .5) / N, k = clamp(e * 1.55 - (1 - u) * .55, 0, 1), th = Math.PI * k * k * (3 - 2 * k), S = strips[i];
       S.s.style.transform = 'rotateY(' + (-(th - prev)).toFixed(4) + 'rad)'; S.sh.style.opacity = (Math.sin(th) * .9).toFixed(3); S.bs.style.opacity = (Math.sin(th) * .6).toFixed(3); prev = th; }
     under.style.opacity = (1 - e).toFixed(3); };
@@ -7486,8 +7635,8 @@ function update(dt) {
       if (fort.position.y > -3.6 && rand() < dt * 34) burst((rand() - .5) * 11, 1 + rand() * 2, FORT_Z - .5 + rand() * 2, rand() < .6 ? '#e2d6c4' : '#b9ad9c', 2, 5, { vy: 5, life: 1, g: 16, sz: 1.4, kind: PK.ROCK });
       if (fort.position.y > -3.4 && rand() < dt * 2.4) smoke((rand() - .5) * 10, .8, FORT_Z - 1 + rand() * 2, '#a89cb4', 2 + rand() * 1.2, 1.1);
     }
-    if (!DIR.s && G.endT <= 0 && !paStory() && (PA.on || !startLook())) { if (PA.on && PAPER === 'a') pageTurn(() => showResult(true)); else showResult(true); }
-  } else if (G.mode === 'lost') { G.endT -= dt; if (G.endT <= 0) { if (PA.on && PAPER === 'a') pageTurn(() => showResult(false)); else showResult(false); } }
+    if (!DIR.s && G.endT <= 0 && !paStory() && (PA.on || !startLook())) showResult(true); /* (v201: on paper the scroll is laid over the board; no page turn) */
+  } else if (G.mode === 'lost') { G.endT -= dt; if (G.endT <= 0) showResult(false); }
   if (celebrating && G.boomed && !DIR.s) { G.fwT -= dt; if (G.fwT <= 0) { firework(); G.fwT = G.mode === 'won' ? .18 + rand() * .2 : .5 + rand() * .5; } }
   if (G.boomed) { // shock rings, flash and flying pieces
     if (G.mode !== 'won') G.winT += dt;
@@ -7637,7 +7786,7 @@ function render() {
     const gk = Math.min(1, G.grandT / GRAND_T), ge = gk * gk * (3 - 2 * gk), a = (1 - gk) * .6 - .3;
     camera.position.set(WCAM.x + (Math.sin(a) * 30 - WCAM.x) * ge, WCAM.y + (32 - WCAM.y) * ge + Math.sin(Math.PI * ge) * 9, WCAM.z + (-62 + Math.cos(a) * 28 - WCAM.z) * ge);
     camera.lookAt(_look.set(0, 3 + 3 * ge, WLOOK.z + (citAt()[0] + 6 - WLOOK.z) * ge)); } }
-  if (DIR.s) dirCamera(); // the opening cinematic's scripted shots, the ending's, and Rowan's look
+  if (DIR.s) dirCamera(); if (G.camOverride) G.camOverride(); // (v201: G.camOverride, the desk's snapshot of the page) the opening cinematic's scripted shots, the ending's, and Rowan's look
   { const nr = DIR.s || G.cine || G.fin || G.end ? .4 : 1.5; if (camera.near !== nr) { camera.near = nr; camera.updateProjectionMatrix(); } } // only the scripted close-ups need a near plane this near; the further out it sits, the finer the depth buffer
   // the sun's shadow area follows what the camera is looking at: the road in battle, the castle and citadel in the menu and on a win
   { const fz = DIR.s ? (DIR.s.sunZ ? DIR.s.sunZ() : DIR.s.boss || DIR.s.freeze ? -34 : -26) : G.cine ? -30 : G.mode === 'menu' ? -56 : (G.boomed && (G.mode === 'won' || G.mode === 'resultWin')) ? -16 + (-58 + 16) * ck : -16; const tz = sun.target.position.z + (fz - sun.target.position.z) * .12;
@@ -7869,7 +8018,11 @@ const GHUD = (() => {
   // the icons, taken from the page's own symbols
   const icon = (id, w, h) => new Promise(ok => { const sy = document.getElementById(id), vb = sy.getAttribute('viewBox'), defs = [...document.querySelectorAll('body > svg defs')].map(d => d.outerHTML).join(''); const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null);
     im.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + vb + '" width="' + w * 4 + '" height="' + h * 4 + '">' + defs + sy.innerHTML + '</svg>'); });
-  const load = Promise.all([icon('i-slime', 24, 22), icon('i-horse', 42, 38), icon('i-champ', 42, 38), document.fonts.load("16px 'Lilita One'").catch(() => 0)]).then(([crowd, horse, champ]) => { icons = { crowd, horse, champ }; ready = true; });
+  const pic = src => new Promise(ok => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = src; });
+  const load = Promise.all([icon('i-slime', 24, 22), icon('i-horse', 42, 38), icon('i-champ', 42, 38), document.fonts.load("16px 'Lilita One'").catch(() => 0), PAPER === 'a' ? pic('models/paper/a/ui/bar.webp') : null]).then(([crowd, horse, champ, , bar]) => { icons = { crowd, horse, champ, bar }; ready = true; });
+  // (v201) the painted wooden bar, cut in nine so its gold caps keep their shape at any width; the trough is (0, 0, w, h)
+  const nine = (c, im, w, h, T = 15, B = 18, L = 17, R = 17) => { const iw = im.width, ih = im.height, st = ih * .276, sb = ih * .337, sl = iw * .056, sr = iw * .056, xs = [0, sl, iw - sr, iw], ys = [0, st, ih - sb, ih], dx = [-L, 0, w, w + R], dy = [-T, 0, h, h + B];
+    for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) c.drawImage(im, xs[i], ys[j], xs[i + 1] - xs[i], ys[j + 1] - ys[j], dx[i], dy[j], dx[i + 1] - dx[i], dy[j + 1] - dy[j]); };
   // a piece on the sheet: w x h in page pixels (with room round it), drawn once
   function cell(key, w, h, pad, draw) {
     const pw = Math.ceil((w + pad * 2) * S) + 2, ph = Math.ceil((h + pad * 2) * S) + 2; if (pen.x + pw > AW) { pen.x = 1; pen.y += pen.h + 1; pen.h = 0; } if (pen.y + ph > AH) return cells[key] = null;
@@ -7890,15 +8043,16 @@ const GHUD = (() => {
   const lays = new Map();
   function lay(st, t) { const k = st + t; let L = lays.get(k); if (L) return L; const d = ST[st]; X.font = d.px + 'px ' + FONT; const m = X.measureText('Hg'), asc = m.fontBoundingBoxAscent || d.px * .93, desc = m.fontBoundingBoxDescent || d.px * .22, xs = []; for (let i = 0; i < t.length; i++) xs.push(X.measureText(t.slice(0, i)).width + i * d.ls); L = { t, xs, w: X.measureText(t).width + t.length * d.ls, asc, desc }; if (lays.size > 300) lays.clear(); lays.set(k, L); return L; }
   function build() {
-    S = Math.max(2, pixelRatio); live = false; AW = Math.max(1536, Math.ceil((box.fort.w + 12) * S) + 4); AH = Math.ceil(1780 * S * S / 4) + 64; cv.width = AW; cv.height = AH; X.imageSmoothingQuality = 'high'; cells = {}; lays.clear(); pen = { x: 1, y: 1, h: 0 };
+    S = Math.max(2, pixelRatio); live = false; AW = Math.max(1536, Math.ceil((box.fort.w + 12) * S) + 4); AH = Math.min(4096, Math.ceil(1780 * S * S / 4 * 1.45) + 64); /* (v201: room for the painted bar frames too) */ cv.width = AW; cv.height = AH; X.imageSmoothingQuality = 'high'; cells = {}; lays.clear(); pen = { x: 1, y: 1, h: 0 };
     if (tex) tex.dispose(); tex = new THREE.CanvasTexture(cv); tex.flipY = false; tex.premultiplyAlpha = true; tex.generateMipmaps = false; tex.minFilter = tex.magFilter = THREE.LinearFilter; mat.uniforms.uMap.value = tex;
     cell('white', 4, 4, 0, c => { c.fillStyle = '#fff'; c.fillRect(-2, -2, 8, 8); });
     for (const [k, w, glow] of [['fort', box.fort.w, ''], ['wl', box.fort.w, 'rgba(255,80,60,.55)'], ['nest', box.nest.w, '']]) {
+      if (HUDP.k && icons.bar) cell('tr' + k, w, 30, 20, c => { c.save(); c.shadowColor = 'rgba(60,30,8,.3)'; c.shadowOffsetY = 3; c.shadowBlur = 3; nine(c, icons.bar, w, 30); c.restore(); }); else
       cell('tr' + k, w, 30, 6, c => { c.fillStyle = HUDP.sh; rr(c, 0, 4, w, 30, 15); c.fill(); if (glow) { c.fillStyle = glow; rr(c, -2, -2, w + 4, 34, 17); c.fill(); } c.globalCompositeOperation = 'destination-out'; c.fillStyle = '#000'; rr(c, 0, 0, w, 30, 15); c.fill(); c.globalCompositeOperation = 'source-over'; c.fillStyle = HUDP.track; rr(c, .5, .5, w - 1, 29, 14.5); c.fill(); c.fillStyle = HUDP.trackIn; rr(c, 3, 3, w - 6, 2, 1); c.fill(); });
-      const col = HUDP.k ? (k === 'fort' ? ['#b48ad9', '#7e54b4'] : k === 'wl' ? ['#e8896a', '#bc4630'] : ['#8db6e6', '#4c7cbf']) : k === 'fort' ? ['#e8a7ff', '#8c2fdb'] : k === 'wl' ? ['#ffb07a', '#d0202a'] : ['#b0ecff', '#276eea'];
-      cell('fi' + k, w - 6, 24, 1, c => { c.fillStyle = grad(c, 0, 0, 0, 24, ...col); rr(c, 0, 0, w - 6, 24, 12); c.fill(); if (HUDP.k) paGrain(c, w - 6, 24, w * 2); });
+      const col = HUDP.k ? (k === 'fort' ? ['#d8705a', '#a83a26'] : k === 'wl' ? ['#e8896a', '#bc4630'] : ['#86aee2', '#3f6fb8']) : k === 'fort' ? ['#e8a7ff', '#8c2fdb'] : k === 'wl' ? ['#ffb07a', '#d0202a'] : ['#b0ecff', '#276eea']; /* (v201: on paper his castle's bar is Grimbald's red) */
+      cell('fi' + k, w - 6, 24, 1, c => { c.fillStyle = grad(c, 0, 0, 0, 24, ...col); rr(c, 0, 0, w - 6, 24, HUDP.k && icons.bar ? 3 : 12); c.fill(); if (HUDP.k) paGrain(c, w - 6, 24, w * 2); });
     }
-    for (const [k, w] of [['fort', box.fort.w], ['nest', box.nest.w]]) cell('fr' + k, w, 30, 1, c => { c.strokeStyle = HUDP.frame; c.lineWidth = 3; rr(c, 1.5, 1.5, w - 3, 27, 13.5); c.stroke(); });
+    for (const [k, w] of [['fort', box.fort.w], ['nest', box.nest.w]]) cell('fr' + k, w, 30, 1, c => { if (HUDP.k && icons.bar) return; c.strokeStyle = HUDP.frame; c.lineWidth = 3; rr(c, 1.5, 1.5, w - 3, 27, 13.5); c.stroke(); });
     cell('hi', 24, 6, 1, c => { if (HUDP.k) return; c.fillStyle = '#fff'; rr(c, 0, 0, 24, 6, 3); c.fill(); });
     const pill = (k, w, h, b0, b1, edge, shA) => cell(k, w, h, 5, c => { c.fillStyle = 'rgba(6,10,30,' + shA + ')'; rr(c, 0, 3, w, h, 99); c.fill(); c.fillStyle = grad(c, 0, 0, w * .35, h, b0, b1); rr(c, .5, .5, w - 1, h - 1, 99); c.fill(); c.strokeStyle = edge; c.lineWidth = 2; rr(c, 1, 1, w - 2, h - 2, 99); c.stroke(); });
     pill('pcrowd', 80, box.crowdH, ...HUDP.pc); pill('ppar', 72, box.par.h, ...HUDP.pp);
@@ -8135,6 +8289,9 @@ function showMenu() {
   if (G.practice) { if (G.practiceKeep) save = JSON.parse(G.practiceKeep); G.practice = false; G.practiceKeep = null; }
   $('rewDot').classList.toggle('on', rewardsReady()); // back from a boss practice: your real progress returns
   gameEl.classList.toggle('papermenu', PAPER === 'a' && save.level <= WORLD_LEN && G.worldOverride == null); ptSizes();
+  { const pm = gameEl.classList.contains('papermenu'), up = $('upToggle'), pills = $('mapBtn').parentNode, dot = $('rewDot').classList.contains('on'); // (v201) the title page: Upgrades joins the pills, painted icons in place of emoji
+    if (pm && up.parentNode !== pills) pills.insertBefore(up, $('rewardsBtn')); else if (!pm && up.parentNode === pills) $('boonMenu').after(up);
+    $('mapBtn').innerHTML = pm ? '<img class="pi" src="models/paper/a/ui/scroll.webp" alt="">Map' : '🗺️ Map'; $('rewardsBtn').innerHTML = (pm ? '<img class="pi" src="models/paper/a/art/r_chest.webp" alt="">Rewards' : '🎁 Rewards') + '<i id="rewDot"></i>'; $('rewDot').classList.toggle('on', dot); }
   G.menuSetup = true; setupLevel(save.level); G.menuSetup = false; G.mode = 'menu'; renderUpgrades(); menuArt(G.worldOverride != null ? G.worldOverride : worldOf(save.level)); if (crowdReady && save.level >= 4) loadPaladinArt();
   $('menu').classList.add('on'); $('result').classList.remove('on'); $('boon').classList.remove('on'); gameEl.classList.add('overlay'); gameEl.classList.remove('lostwash'); POST.mat.uniforms.uWash.value = 0;
   { const L = boonList().map(id => BOON_BY[id]).filter(Boolean); $('boonMenu').innerHTML = L.map(b => `<em style="--r:${BOON_CAT[b.c][1]}" title="${b.name}">${boonPic(b)}</em>`).join(''); }
@@ -8170,6 +8327,7 @@ function startPlay() {
   maybeStory(); const film = arrival(); if (film) G.film(); G.film = null;
   $('lvlPill').textContent = G.cfg.boss ? 'Boss · ' + (save.level > LAP_LEN ? 'Road ' + roadN(save.level) : save.level) : lvName(save.level); $('lvlPill').classList.toggle('boss', G.cfg.boss);
   if (G.worldOverride != null) toastMsg('PREVIEW', WORLDS[worldIdx].name, { name: true, fly: true });
+  else if (!film && PAPER === 'a' && save.level <= WORLD_LEN && (save.level === 1 || G.chapterTitle)) toastMsg('CHAPTER I', save.level === 1 ? WORLDS[0].name : WORLDS[0].name + ' · ' + lvName(save.level), { name: true, fly: true }), G.chapterTitle = false; /* (v201: the storybook's chapter ribbon) */
   else if (!film && (save.level - 1) % (save.level > LAP_LEN ? 5 : WORLD_LEN) === 0) toastMsg(save.level > LAP_LEN ? 'THE ENDLESS ROAD' : 'WORLD ' + (Math.floor((save.level - 1) / WORLD_LEN) + 1), WORLDS[worldIdx].name, { name: true, fly: true });
   if (G.cfg.boss && !$('story').classList.contains('on')) { const wd = WARLORDS[worldOf(save.level) % WARLORDS.length]; toastMsg('BOSS LEVEL', wlName(wd, Math.floor((save.level - 1) / LAP_LEN)) + (worldOf(save.level) === HALLW ? ' is waiting' : ' has nowhere left to run'), { snd: 1 }); } // (his story card says it the first time)
   if (!film && !G.practice && G.worldOverride == null && save.level <= LAP_LEN) { const w = worldOf(save.level), k = (save.level - 1) % WORLD_LEN; if (save.level === 1) toastMsg(WARLORDS[0].title.toUpperCase(), 'GRIMBALD', { name: true }); else if (k === 0 && w) toastMsg('THE BONE KING', ['', 'WAKE UP, SEK-RA!', 'STOP THEM, HRIMGAR!', 'MAGMAW, THEY\'RE AT MY DOOR!', 'GUARDS! HOLD THE BRIDGE!'][w], { fly: true }); else if (save.level === 46) toastMsg('YOU ARE INSIDE', 'THE THRONE ROOM', { name: true }); }
@@ -8184,7 +8342,7 @@ function startPlay() {
 const kingSays = (txt, col) => { let f; if (WL.b && WL.def && (WL.on && WL.alive || WL.def.move === 'barrage' && G.kingFell)) f = popText(txt, WL.x, 5.2, WL.z, col); else if (HOLD.b || king.visible) { holdHead(_kv); f = popText(txt, _kv.x, _kv.y + 1.6, _kv.z + 1, col); } return f; };
 function win() {
   clearToasts(); if (G.kingFell) toastMsg('THE BONE KING FALLS!', onRoadLv(G.level) ? 'Again. He is not happy about it' : 'His castle crumbles with him', { now: true }); for (const f of floats) f.t = Math.min(f.t, .2); // clear banners and numbers: the explosion gets the stage
-  G.mode = 'won'; G.endT = 2.9; G.winT = 0; G.firing = false; G.shake = 0.5; buzz(40); gameEl.classList.add('cine');
+  G.mode = 'won'; G.endT = PA.on && PAPER === 'a' ? 4.4 : 2.9; G.winT = 0; /* (v201: World 1 holds on the falling castle and the treasure before the scroll) */ G.firing = false; G.shake = 0.5; buzz(40); gameEl.classList.add('cine');
   for (let j = 0; j < beetles.n; j++) { if (j < 60) { burst(beetles.x[j], .4, beetles.z[j], FOE_FX, 3); splat(beetles.x[j], beetles.z[j], FOE, .9); } beetles.hp[j] = 0; }
   tone(180, BOOM_AT + .15, 'sawtooth', .03, 5); // rising whine while the king swells
   const cries = wallSay().cry, cry = isFinale() ? ['THIS CANNOT BE!', 'no'] : G.level === 1 ? ['LUCK!', 'scoff'] : cries[(G.level - 1) % cries.length]; // a different last word on every level
@@ -8222,7 +8380,7 @@ function firework() {
   if (!(PA.on && PAPER === 'a')) sfx('fw', 90, () => smp('firework', .40, .1)); // (paper confetti makes no pop)
 }
 function lose() {
-  clearToasts(); G.smashed = WL.state === 'smash' && WL.alive; G.mode = 'lost'; G.endT = 1.3; G.firing = false; G.shake = 0.6; buzz(80);
+  clearToasts(); G.smashed = WL.state === 'smash' && WL.alive; G.mode = 'lost'; G.endT = PA.on && PAPER === 'a' ? 2.2 : 1.3; G.firing = false; G.shake = 0.6; buzz(80);
   defeatSting(); if (actx) MUS.holdUntil = Math.max(MUS.holdUntil, actx.currentTime + 3.4); // the band stops dead for the sting, then the lament creeps in under the result screen
   setTimeout(() => { if (G.mode === 'lost' || G.mode === 'resultLose') { const tn = ['laugh', 'cackle', 'scoff'][(G.level + (save.fails || 0)) % 3]; kingVoice(tn, .9); if (G.mode === 'lost') kingSays(['HA HA HA!', 'HE HE HE!', 'TOO EASY!'][(G.level + (save.fails || 0)) % 3], wallSay().col); } }, 950); // and he gloats over your fallen camp
   G.reward = Math.round(5 + 3 * eff(G.level) + 25 * (1 - clamp(G.fortHp / G.fortMax, 0, 1)));
@@ -8239,7 +8397,7 @@ function showResult(won) {
   $('resTitle').style.color = won ? 'var(--gold)' : '#ff9aa9';
   $('resHero').classList.toggle('lost', !won); gameEl.classList.toggle('lostwash', !won); if (LEAN) { POST.mat.uniforms.uWash.value = won ? 0 : 1; G.pauseDrawn = false; }
   $('resIcoUse').setAttribute('href', won ? '#i-slime' : '#i-king'); $('resIco').setAttribute('viewBox', won ? '0 0 48 44' : '0 0 48 52');
-  const st = [...$('resStars').children]; st.forEach(s => s.classList.remove('on')); $('resStars').style.display = won ? '' : 'none';
+  const st = [...$('resStars').querySelectorAll('svg')]; st.forEach(s => s.classList.remove('on')); /* (svgs only: World 1 puts a wax seal after each) */ $('resStars').style.display = won ? '' : 'none';
   if (won) for (let k = 0; k < G.stars; k++) setTimeout(() => { st[k].classList.add('on'); smp('star', .27, 0, 0, Math.pow(1.12, k)); buzz(12); }, 450 + k * 280); // stars pop in one by one
   if (won) burst(0, 10, -22, CONFETTI, 120, 9, { vy: 5, life: 3, g: 4, sz: 1.8, kind: PK.PAPER }); // let off over the road, not in the camera's face
   clearInterval(G.countIv); clearTimeout(G.countTo);
@@ -8267,7 +8425,24 @@ function showResult(won) {
   $('x3Btn').style.display = won ? '' : 'none'; G.adMul = G.cfg.boss ? 3 : 2; $('x3Btn').textContent = '▶ ×' + G.adMul + ' coins · watch ad'; // double on normal levels, triple on a boss
   $('contBtn').style.display = !won && !G.continued ? '' : 'none'; // one second chance per level
   $('collectBtn').textContent = won ? 'Collect' : 'Upgrade & retry';
+  G.rbNeed = G.rbDone = false; $('resBoons').hidden = true; $('result').classList.remove('rbwait');
+  if (paperUI()) paResult(won);
   $('result').classList.add('on'); gameEl.classList.add('overlay');
+}
+/* v201, World 1: the results are written on a scroll laid over the battle board (no page turn, no blank page). The stars are
+   stamped as wax seals, the coins sit on the scroll, and when a boon is due it is chosen right here, so one tap of "Next page"
+   turns straight onto the next level. */
+function paResult(won) {
+  if (!$('resStars').querySelector('img')) [...$('resStars').querySelectorAll('svg')].forEach((s, i) => { const im = document.createElement('img'); im.src = 'models/paper/a/ui/' + (i === 1 ? 'seal' : 'seal_s') + '.webp'; im.alt = ''; im.draggable = false; im.className = 'seal'; s.after(im); }); // (each seal follows its star's "on")
+  $('resTitle').textContent = won ? 'Victory!' : $('resTitle').textContent === 'SO CLOSE!' ? 'So close!' : 'Overrun!';
+  $('collectBtn').textContent = won ? (G.level < WORLD_LEN && !G.practice ? 'Next page ›' : 'Collect') : 'Upgrade & retry';
+  if (won && !G.practice && boonDue(G.level)) { // a boon is on offer: three painted cards on the scroll; nothing moves on until one is taken
+    const q = save.boonDue; G.rbNeed = true; $('result').classList.add('rbwait'); $('resBoons').hidden = false; const row = $('rbRow'); row.innerHTML = '';
+    q.ids.map(id => BOON_BY[id]).forEach((b, k) => { const el = document.createElement('button'); el.className = 'rb'; el.style.animationDelay = (.9 + k * .12) + 's';
+      el.innerHTML = `<em>${boonPic(b)}</em><b>${b.name}</b><span>${b.c === 'send' && !palReady() ? b.d.replace('Rowan', 'the Champion') : b.d}</span>`;
+      el.onclick = () => { if (G.rbDone) return; G.rbDone = true; boonTake(save, q.n, b.id); save.boonDue = null; persist(); audio(); smp('boon', .22, 0); buzz(30); el.classList.add('took'); for (const o of row.children) if (o !== el) o.classList.add('gone'); $('result').classList.remove('rbwait'); };
+      row.appendChild(el); });
+  }
 }
 // second chance after a loss: the vat is refilled, the enemies at the gate are wiped, and the battle picks up where it was
 function keepFighting() {
@@ -8288,10 +8463,16 @@ function collect(mult) {
   const unlock = !hadPal && palReady() && !G.practice; // the first captain has fallen: the Paladin joins you
   persist();
   const retry = G.mode === 'resultLose' && mult === 1;
-  const after = () => pageTurn(() => { showMenu(); coinFly(before, gained); if (retry) setTimeout(() => { if (G.mode === 'menu' && $('upSheet').hidden && $('menu').classList.contains('on')) openUp(true); }, 1300); // Upgrade & retry: the sheet opens as the last coin lands
+  const paNext = paperUI() && G.mode === 'resultWin' && !unlock && save.level <= WORLD_LEN; // v201: World 1 turns the page straight onto the next level
+  const after = paNext ? () => pageTurn(paNextLevel) : () => pageTurn(() => { showMenu(); coinFly(before, gained); if (retry) setTimeout(() => { if (G.mode === 'menu' && $('upSheet').hidden && $('menu').classList.contains('on')) openUp(true); }, 1300); // Upgrade & retry: the sheet opens as the last coin lands
     if (unlock) setTimeout(() => { if (G.mode === 'menu') showPalUnlock(); else G.palCardDue = true; }, 700); }); // (never over a battle the player already started)
-  const interstitial = G.mode === 'resultWin' && save.level > 3 && save.wins % 2 === 0 && mult === 1, due = G.mode === 'resultWin' && boonDue(save.level - 1), go = () => { if (interstitial) showAd('Interstitial · plays between levels', 2, after); else after(); };
+  const interstitial = G.mode === 'resultWin' && save.level > 3 && save.wins % 2 === 0 && mult === 1, due = G.mode === 'resultWin' && !G.rbDone && !(G.rbNeed && !save.boonDue) && boonDue(save.level - 1), go =() => { if (interstitial) showAd('Interstitial · plays between levels', 2, after); else after(); };
   if (due) { persist(); showBoons(go); } else go();
+}
+function paNextLevel() { // (the page underneath the turn: the next level, set up and running, with no stop at the title page)
+  if (PS.on) psEnd(); if (PA.on) paperScene(false); storyWarm();
+  $('result').classList.remove('on', 'rbwait'); $('boon').classList.remove('on'); gameEl.classList.remove('overlay', 'lostwash'); POST.mat.uniforms.uWash.value = 0; G.resBusy = false;
+  startPlay();
 }
 // coins fly from the middle of the screen into the wallet, which counts up as they land
 function coinFly(from, gained) {
@@ -8398,7 +8579,7 @@ $('mapBtn').onclick = () => pageTurn(() => { renderMap(); $('menu').classList.re
 $('mapClose').onclick = () => pageTurn(() => { $('map').classList.remove('on'); $('menu').classList.add('on'); });
 // the painting on the story card; the drawn emblem stays until it is here
 const STORY_ART = ['s_grimbald', 's_sekra', 's_hrimgar', 's_magmaw', 's_king'];
-function storyPic(k) { const im = $('storyArt'), c = im.parentNode; c.classList.remove('art'); im.onload = () => c.classList.add('art'); im.onerror = () => c.classList.remove('art'); const pa = PA.on && PAPER === 'a' && k === 's_grimbald'; c.classList.toggle('pa', pa); im.src = pa ? 'models/paper/a/gb_roar.webp' : 'models/art/' + k + '.webp'; if (im.complete && im.naturalWidth) c.classList.add('art'); }
+function storyPic(k) { const im = $('storyArt'), c = im.parentNode; c.classList.remove('art'); im.onload = () => c.classList.add('art'); im.onerror = () => c.classList.remove('art'); const pa = PA.on && PAPER === 'a' && k === 's_grimbald'; c.classList.toggle('pa', pa); im.src = pa ? 'models/paper/a/gb_roar.webp' : artDir(k) + k + '.webp'; if (im.complete && im.naturalWidth) c.classList.add('art'); }
 function storyWarm() { const n = save.level; if (n === 1 && !save.openSeen) artWarm('s_crown'); if (isBoss(n)) artWarm(onRoadLv(n) && worldOf(n) === HALLW ? 's_demoted' : STORY_ART[worldOf(n) % WORLDS.length]); if (n === CAP_AT) artWarm('s_rowan'); }
 // before a boss level, his story card (once per level); the battle waits behind it
 function maybeStory() {
@@ -8415,7 +8596,7 @@ function showPalUnlock() {
   loadPaladinArt();
   $('storyEmb').setAttribute('href', '#i-horse'); $('storyEmb').parentNode.setAttribute('viewBox', '0 0 48 44');
   storyPic('s_rowan'); $('storyName').textContent = 'ROWAN'; $('storyTitle').textContent = 'the Paladin joins your army';
-  $('storyTxt').textContent = 'Grimbald\'s captain is beaten, and Sir Rowan rides out on his white warhorse. Fill the meter and tap SEND: he tramples the horde and smashes the castle. New coats for his horse wait in the Stable.';
+  $('storyTxt').textContent = paperUI() ? 'At the river ford a knight in white rode out of the trees. "Grimbald was my captain once," said Sir Rowan. "Help me set him free." Fill the meter and tap SEND to ride with him.' : 'Grimbald\'s captain is beaten, and Sir Rowan rides out on his white warhorse. Fill the meter and tap SEND: he tramples the horde and smashes the castle. New coats for his horse wait in the Stable.';
   $('storyGo').textContent = 'Ride!'; G.unlockCard = true; $('story').classList.add('on'); gameEl.classList.add('overlay');
   audio(); smp('joins', .18, 0); buzz([30, 40, 60]);
 }
@@ -8668,8 +8849,8 @@ function dirTick(dt) {
   if (s.tick) s.tick(t, real, once); if (DIR.s === s && s.clips) clipTick(s, t); if (DIR.s === s && t >= s.len) dirStop(false);
 }
 function dirFilm(dt) { // the bars slide, the light of a scene comes and goes, fades to black
-  const on = DIR.s ? 1 : 0, to = on * .085; if (!on && DIR.bars < .0005 && DIR.amt < .01 && DIR.fade < .004 && !DIR.fadeTo) { if (DIR.live) { DIR.live = false; const u = POST.mat.uniforms; DIR.bars = DIR.amt = DIR.fade = 0; u.uFilm.value = u.uBars.value = u.uFade.value = u.uFocB.value = 0; } return; }
-  const r = dt / (DIR.s ? DIR.speed : 1), k = Math.min(1, r * 8); DIR.live = true; DIR.bars += (to - DIR.bars) * k; DIR.amt += (on - DIR.amt) * (on ? 1 : Math.min(1, r * 6)); DIR.fade += clamp(DIR.fadeTo - DIR.fade, -r * 2.6, r * 3.4);
+  const on = DIR.s ? 1 : 0, to = on * (PA.on && PAPER === 'a' ? 0 : .085); /* (v201: no black bars on the storybook: Sterling) */ if (!on && DIR.bars < .0005 && DIR.amt < .01 && DIR.fade < .004 && !DIR.fadeTo) { if (DIR.live) { DIR.live = false; const u = POST.mat.uniforms; DIR.bars = DIR.amt = DIR.fade = 0; u.uFilm.value = u.uBars.value = u.uFade.value = u.uFocB.value = 0; } return; }
+  const r = dt / (DIR.s ? DIR.speed : 1), k = Math.min(1, r * 8); DIR.live = true; DIR.bars += (to - DIR.bars) * k; { const fa = on * (PA.on && PAPER === 'a' ? .35 : 1); DIR.amt += (fa - DIR.amt) * (on ? 1 : Math.min(1, r * 6)); } /* (v201: the film's haze is light on paper) */ DIR.fade += clamp(DIR.fadeTo - DIR.fade, -r * 2.6, r * 3.4);
   const u = POST.mat.uniforms; u.uBars.value = DIR.bars; u.uFilm.value = DIR.amt; u.uFade.value = DIR.fade; if (!on) u.uFocB.value = 0;
 }
 const _d3 = new THREE.Vector3();
@@ -8910,7 +9091,7 @@ function boonOffer(sv, n, rnd) { // three to choose from after winning level n: 
 }
 function boonTake(sv, n, id) { const w = boonWorld(n + 1); if (!sv.boons || sv.boons.w !== w) sv.boons = { w, list: [] }; if (id && !sv.boons.list.includes(id)) sv.boons.list.push(id); }
 const BOON_VB = { 'i-crown': '0 0 40 24', 'i-horse': '0 0 48 44' }, BOON_CH = { eager: 1, horn: 1 }, boonNoArt = {};
-const boonSrc = b => 'models/boon/' + b.id + (BOON_CH[b.id] && !palReady() ? 'C' : '') + '.webp', boonIco = b => `<svg viewBox="${BOON_VB[b.ico] || '0 0 24 24'}"><use href="#${b.ico}"/></svg>`;
+const boonSrc = b => (paperUI() ? 'models/paper/a/boon/' : 'models/boon/') + b.id + (BOON_CH[b.id] && !palReady() ? 'C' : '') + '.webp', boonIco = b => `<svg viewBox="${BOON_VB[b.ico] || '0 0 24 24'}"><use href="#${b.ico}"/></svg>`;
 const boonPic = b => boonNoArt[b.id] ? boonIco(b) : `<img src="${boonSrc(b)}" alt="" draggable="false" data-boon="${b.id}">`;
 document.addEventListener('error', e => { const k = e.target.dataset && e.target.dataset.art; if (k) { artNo[k] = 1; e.target.outerHTML = artFb[k] || ''; return; } const id = e.target.dataset && e.target.dataset.boon; if (id) { boonNoArt[id] = 1; e.target.outerHTML = boonIco(BOON_BY[id]); } }, true);
 function boonDue(n) { // won level n: what is on offer is kept, so closing the game doesn't lose or change it
@@ -8959,12 +9140,18 @@ function startCine(full) {
   if (long) shots.push({ t: [T.r, T.k], pos: [[-2.7, .7, -5.0], [-2.1, 1.0, -6.0]], at: [[.45, 3.3, -13], [.45, 4.0, -13]], fov: [44, 39], foc: [.5, .42, .75, 1.2], blur: .8, grade: 'dawn', flare: { x: .82, y: .16, r: .7, k: .42, c: '#ffd08a' } });
   shots.push({ t: [T.k, T.x], pos: [[2.2, .6, -10.8], [1.75, .75, -10.1]], at: [[0, 1.5, -5.4], [.05, 1.7, -5.4]], fov: [46, 43], foc: [.45, .5, .7, 1.15], blur: .8, grade: 'dawn', vig: .6, flare: { x: .5, y: .12, r: .7, k: .35, c: '#ffd08a' } },
     { t: [T.x, T.end], pos: [[2.0, 1.2, -9.5], [1.8, 2.6, -14], [0, 7.2, -15.5]], at: [[-.6, 1.5, -20], [0, 1.0, -26]], fov: [54, 52], grade: 'storm', gk: .4, vig: .6 });
+  const desk = pa && G.fromDesk, P0 = desk ? 3.6 : 0; G.fromDesk = false; puReset(); if (desk) { if (long) Object.assign(T, { c: 0, e: 1.8, h: 3.6, r: 5, k: 5, x: 6.4, end: 8.2 }); for (const q in T) T[q] += P0; if (!long) { T.end = P0 + .25; } } // (v201: after the dive from the desk, the page is seen from straight above first)
   if (pa) { shots.length = 0; const GB = [0, 7.1, -43.6], dawn = { x: .82, y: .16, r: .7, k: .42, c: '#ffd08a' };
+    if (desk) { const a = VIEW.w / VIEW.h, tn = Math.tan(50 * Math.PI / 360), PH = 33 * PAGE_H / PAGE_W, PZ = -50 + PH / 2, Hc = a < 33 / PH ? (PH / 2) / tn : (33 / 2) / (tn * a); // exactly the picture the book page showed, full screen
+      shots.push({ t: [0, 1.5], pos: [[0, Hc, PZ + .05], [0, Hc, PZ + .05]], at: [[0, 0, PZ], [0, 0, PZ]], fov: [50, 50] }, { t: [1.5, P0], pos: [[0, Hc, PZ + .05], [0, Hc * .62, PZ + 22], long ? [0, 11.5, 4.5] : [CAM.x, CAM.y, CAM.z]], at: [[0, 0, PZ], [0, 0, PZ - 3], long ? [0, 2.4, -28] : [LOOK.x, LOOK.y, LOOK.z]], fov: [50, long ? 52 : camera.fov] }); } /* (the short one lands on the battle camera itself) */
+  }
+  if (pa && (long || !desk)) { const GB = [0, 7.1, -43.6], dawn = { x: .82, y: .16, r: .7, k: .42, c: '#ffd08a' }; if (!desk) shots.length = 0;
     if (long) shots.push({ t: [T.c, T.e], pos: [[2.8, 5.0, -24.5], [1.0, 5.6, -27]], at: [[0, GB[1] - .8, GB[2]], [0, GB[1] - .5, GB[2]]], fov: [40, 35], foc: [.5, .45, .5], grade: 'storm', vig: .8, flare: { x: .3, y: .3, r: .42, k: () => .2 + .15 * Math.sin(DIR.t * 2.2), c: '#ffe9a0' } }); /* Grimbald on his gate */
-    shots.push({ t: [T.e, T.h], pos: [[-1.4, 6.6, -33.4], [-.8, 6.9, -34.6]], at: [[0, GB[1] + .2, GB[2]], [0, GB[1] + .4, GB[2]]], fov: [32, 28], foc: [.5, .45, .5], grade: 'storm', vig: .85 }, /* he roars */
+    shots.push({ t: [T.e, T.h], pos: [[-1.6, 6.4, -29.6], [-.9, 6.8, -31]], at: [[0, GB[1] + .2, GB[2]], [0, GB[1] + .4, GB[2]]], fov: [40, 36], /* (v201: wider; at 28 the cut-out went soft) */ foc: [.5, .45, .5], grade: 'storm', vig: .85 }, /* he roars */
       { t: [T.h, T.k], pos: [[1.9, .8, -25.2], [.7, 1.05, -23.2]], at: [[-.5, 3.0, -38], [0, 3.5, -38]], fov: [46, 49], foc: [.5, .4, .8, 1.15], blur: .8, grade: 'storm', vig: .75 }, /* the horde marches on the road */
       { t: [T.k, T.x], pos: [[1.7, 1.5, -.4], [1.05, 1.9, -1.9]], at: [[0, 2.2, -22], [0, 2.5, -24]], fov: [50, 46], foc: [.5, .45, .75, 1.15], blur: .6, grade: 'dawn', vig: .6, flare: dawn }, /* over the cannon's shoulder as it opens fire */
       { t: [T.x, T.end], pos: [[2.0, 1.4, -6.5], [1.8, 3.0, -11], [0, 7.6, -13.5]], at: [[-.6, 1.6, -20], [0, 1.0, -27]], fov: [54, 52], grade: 'storm', gk: .4, vig: .6 }); } /* the charge */
+  if (pa) for (const sh of shots) { delete sh.foc; delete sh.blur; sh.vig = Math.min(sh.vig || 0, .35); if (sh.grade === 'storm') sh.gk = .25; } // (v201: on paper no focus blur and a light grade: the cut-outs stay crisp)
   const orbit = v => { if (HOLD.b && HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = v; };
   const s = { len: T.end, freeze: false, fadeIn: !PT.on, shots, foeZ: -27, cine: true, start: () => { if (long) { pad([49, 73.4, 98], 9, .03, 500); } else pad([49, 98], 4, .02, 500); hold(T.end); cineEyes(2); orbit(false); },
     tick: (t, dt, once) => {
@@ -8979,12 +9166,77 @@ function startCine(full) {
       if (once('gun', T.k)) { endCap(''); if (palRig) headTurn(0); paladin.visible = false; paladin.scale.setScalar(PAL_S); paladin.rotation.y = Math.PI; for (const o of paladin.children) if (o.isSprite) o.visible = true; noise(.35, .06, 'highpass', 2600, 5200); }
       if (t > T.k + .25) { G.firing = true; G.lx = t < T.x ? 0 : Math.sin((t - T.x) * 1.6) * 1.8; }
       if (once('cheer', T.x)) { beetles.n = 0; clearBones(); spawnHorde(170); for (let j = 0; j < beetles.n; j++) { beetles.kind[j] = 0; beetles.z[j] += 6; } s.foeZ = undefined; brass(196, .34, .07); brass(294, .6, .075, .16); brass(392, .9, .06, .36); swell(1.6, .12, 240, 2800); }
-      if (once('ptEnd', T.end - .05)) { pageTurn(() => dirStop(false)); return; } if (once('clash', T.end - .65)) { cineFlash(1, 560); hitBoom(1.1); noise(.7, .16, 'lowpass', 2400, 150); buzz(60); }
+      if (desk) { puTick(t, 1.6); if (s.noFoes && t > 2.2) s.noFoes = false; } /* the cut-outs spring up as the camera tilts down; the horde joins them */
+      if (once('ptEnd', T.end - .05)) { if (desk && !long) dirStop(false); else pageTurn(() => dirStop(false)); return; } if (once('clash', T.end - .65)) { cineFlash(1, 560); hitBoom(1.1); noise(.7, .16, 'lowpass', 2400, 150); buzz(60); }
     } };
-  const back = () => { PA.poseHold = null; orbit(true); G.cine = null; G.firing = false; cineEyes(false); if (palRig) headTurn(0); if (HOLD.b) rxGlow(HOLD.b, 0); paladin.visible = false; paladin.scale.setScalar(PAL_S); paladin.rotation.y = Math.PI; for (const o of paladin.children) if (o.isSprite) o.visible = true; };
+  if (desk) { s.fadeIn = false; s.noFoes = true; s.start0 = s.start; s.start = () => { s.start0(); puTick(0, 1.6); }; } // (the cut-outs begin with no height: from straight above, only the painted page shows)
+  const back = () => { puReset(); PA.poseHold = null; orbit(true); G.cine = null; G.firing = false; cineEyes(false); if (palRig) headTurn(0); if (HOLD.b) rxGlow(HOLD.b, 0); paladin.visible = false; paladin.scale.setScalar(PAL_S); paladin.rotation.y = Math.PI; for (const o of paladin.children) if (o.isSprite) o.visible = true; };
+  if (desk) { s.done = () => { back(); DIR.fade = 0; if (G.practice) { if (G.practiceKeep) save = JSON.parse(G.practiceKeep); G.practice = false; G.practiceKeep = null; } save.introDay = today(); save.openSeen = 1; persist(); G.chapterTitle = true; paNextLevel(); }; s.abort = back; dirStart(s); return; } // (v201: from the desk, straight into the bookmarked level)
   s.done = () => { back(); DIR.fade = 0; showMenu(); save.introDay = today(); save.openSeen = 1; persist(); /* the real save is back; the day is marked so it plays once */ $('menu').classList.add('slam'); setTimeout(() => $('menu').classList.remove('slam'), 1000); setTimeout(() => { tone(70, .5, 'sine', .22, .5); noise(.3, .1, 'lowpass', 1500, 200); }, 250); };
   s.abort = back; dirStart(s);
 }
+/* ---------------- v201: the desk and the book (World 1) ----------------
+   The tap screen is a candlelit desk with the storybook on it. Tapped, the cover swings open on its spine; the first page shows
+   the crown and the tale writes itself in; one page turns onto the Meadow Road; the camera dives until that painting fills the
+   screen. It is the very picture the battle board is painted on, seen from straight above, so the hand-off to the 3D page
+   (startCine with G.fromDesk) shows no seam. There the cut-outs spring up off the page as the camera tilts down to the road. */
+const DK = { el: null, on: false, t0: 0, long: true, cine: false, raf: 0 }; window.__DK = DK; // (the test hook reads its clock)
+const DK_TALE = 'Once upon a time, the Bone King found a crown that commands the dead. One by one, the realm’s old heroes fell under its spell.';
+function dkBuild() {
+  const d = document.createElement('div'); d.id = 'dk';
+  d.innerHTML = '<div class="dk-world"><div class="dk-desk"></div><div class="dk-book"><div class="dk-block"></div>'
+    + '<div class="dk-page dk-p2"><i class="dk-gilt"></i></div>'
+    + '<div class="dk-leaf dk-p1"><div class="dk-face dk-tale"><div class="dk-pic"></div><p class="dk-txt"></p></div><div class="dk-face dk-back dk-paper"></div></div>'
+    + '<div class="dk-leaf dk-cover"><div class="dk-face dk-front"><div class="dk-emb"></div><img class="dk-logo" src="models/paper/a/ui/logo.webp" alt="Bone Siege" draggable="false"></div><div class="dk-face dk-back dk-endp"></div></div>'
+    + '</div><div class="dk-glow"></div></div><span class="dk-hint">Tap the book to open it</span>';
+  gameEl.appendChild(d); DK.el = d; return d;
+}
+const dkE = (u, k = 3) => u <= 0 ? 0 : u >= 1 ? 1 : u < .5 ? Math.pow(2 * u, k) / 2 : 1 - Math.pow(-2 * u + 2, k) / 2; // ease in and out
+function dkOpen(long) {
+  const d = DK.el || dkBuild(); DK.on = true; DK.long = long; DK.cine = false; d.classList.add('go'); const tale = d.querySelector('.dk-txt'); tale.textContent = '';
+  if (!long) d.querySelector('.dk-p1').style.display = 'none';
+  const T = long ? { wig: .35, cov: [.35, 1.65], txt: [1.9, 4.1], pg: [4.25, 5.45], dive: [5.45, 6.75], cine: 5.35, fade: 6.75, end: 7.15 } : { wig: .25, cov: [.25, 1.3], txt: [9, 9], pg: [9, 9], dive: [1.35, 2.5], cine: 1.2, fade: 2.5, end: 2.85 };
+  const world = d.querySelector('.dk-world'), cover = d.querySelector('.dk-cover'), p1 = d.querySelector('.dk-p1'), glow = d.querySelector('.dk-glow'), gilt = d.querySelector('.dk-gilt'), book = d.querySelector('.dk-book');
+  psLoad('turn'); let sndC = false, sndP = false; DK.t0 = performance.now();
+  const k = gameEl.clientWidth / book.offsetWidth; // the scale at which the page fills the screen (the book has the screen's shape)
+  const step = now => {
+    if (!DK.on) return; const t = (now - DK.t0) / 1000;
+    const w = t < T.wig ? Math.sin(t / T.wig * Math.PI) : 0; // the book gives a little hop, as if it wants to be opened
+    const cu = dkE((t - T.cov[0]) / (T.cov[1] - T.cov[0])), pu = dkE((t - T.pg[0]) / (T.pg[1] - T.pg[0])), du = dkE((t - T.dive[0]) / (T.dive[1] - T.dive[0]), 2.4);
+    if (cu > 0 && !sndC) { sndC = true; psSnd('turn', .45); } if (pu > 0 && !sndP) { sndP = true; psSnd('turn', .4); }
+    cover.style.transform = `rotateY(${(-172 * cu).toFixed(2)}deg)`; p1.style.transform = `rotateY(${(-174 * pu).toFixed(2)}deg)`;
+    const tilt = 24 * (1 - du), sc = 1 + (k - 1) * du + .035 * w;
+    world.style.transform = `rotateX(${tilt.toFixed(2)}deg) translateY(${(-1.5 * w - 2 * (1 - du)).toFixed(2)}%) scale(${sc.toFixed(4)})`;
+    glow.style.opacity = (Math.sin(clamp((t - T.cov[0]) / (T.cov[1] - T.cov[0] + .5), 0, 1) * Math.PI) * .8).toFixed(3); gilt.style.opacity = (1 - du).toFixed(3);
+    if (long && t > T.txt[0]) { const n = Math.min(DK_TALE.length, Math.floor((t - T.txt[0]) / (T.txt[1] - T.txt[0]) * DK_TALE.length)); if (tale.textContent.length !== n) tale.textContent = DK_TALE.slice(0, n); }
+    if (!DK.cine && t > T.cine) { DK.cine = true; G.fromDesk = true; try { startCine(long); } catch (e) { console.error(e); } }
+    d.style.opacity = t < T.fade ? 1 : Math.max(0, 1 - (t - T.fade) / (T.end - T.fade)).toFixed(3);
+    if (t >= T.end) { dkClose(); return; } DK.raf = requestAnimationFrame(step);
+  };
+  DK.raf = requestAnimationFrame(step);
+}
+function dkClose() { DK.on = false; cancelAnimationFrame(DK.raf); if (DK.el) { DK.el.remove(); DK.el = null; } }
+function dkSkip() { // a tap during the desk part: straight into the level (the opening is marked as seen)
+  if (!DK.on) return; const started = DK.cine; dkClose(); if (started) { if (DIR.s) dirStop(true); return; }
+  save.introDay = today(); save.openSeen = 1; persist(); paNextLevel();
+}
+// the pop-up: every cut-out on the page starts with no height and springs up, nearest first, while the camera tilts down
+const PU = { list: null };
+function puTick(t, t0) {
+  if (!PA.g) return; if (!PU.list) { PU.list = []; for (const c of PA.g.children) if (c.isMesh && c.material && c.material.map && c.rotation.x > -1.2 && c.rotation.x < -.01) PU.list.push({ c, b: c.rotation.x, s: c.scale.y, d: clamp(-c.position.z / 70, 0, 1) * .85 });
+    for (const g of G.gates || []) if (g.mesh) PU.list.push({ c: g.mesh, b: g.mesh.rotation.x, s: g.mesh.scale.y, d: clamp(-g.mesh.position.z / 70, 0, 1) * .85 }); } // (the gate signs fold up too)
+  for (const p of PU.list) { const u = clamp((t - t0 - p.d) / .6, 0, 1), e = u <= 0 ? 0 : 1 + 2.2 * Math.pow(u - 1, 3) + 1.2 * Math.pow(u - 1, 2), k = Math.max(.0001, Math.min(1, e)); // lying flat, printed on the page, then folding up (a little past upright, and back)
+    p.c.scale.y = p.s; p.c.rotation.x = -Math.PI / 2 + (p.b + Math.PI / 2) * e; if (p.c.userData.sh) p.c.userData.sh.scale.set(k, k, 1); }
+}
+function puSnapshot() { // the 3D page from straight above with every cut-out lying flat: the book's last page is this picture, so the dive lands on it exactly
+  try { const a = VIEW.w / VIEW.h, tn = Math.tan(50 * Math.PI / 360), PH = 33 * PAGE_H / PAGE_W, PZ = -50 + PH / 2, Hc = a < 33 / PH ? (PH / 2) / tn : (33 / 2) / (tn * a);
+    const p0 = camera.position.clone(), q0 = camera.quaternion.clone(), f0 = camera.fov, m0 = G.mode; puTick(0, 99); G.mode = 'play';
+    G.camOverride = () => { camera.position.set(0, Hc, PZ + .05); camera.lookAt(0, 0, PZ); if (camera.fov !== 50) { camera.fov = 50; camera.updateProjectionMatrix(); } };
+    const bn = beetles.n, an = ants.n; beetles.n = ants.n = 0; render(); beetles.n = bn; ants.n = an; const cv = renderer.domElement, s = document.createElement('canvas'); /* (no horde on the printed page: it springs up with the rest) */ s.width = cv.width; s.height = cv.height; s.getContext('2d').drawImage(cv, 0, 0);
+    G.camOverride = null; G.mode = m0; camera.position.copy(p0); camera.quaternion.copy(q0); camera.fov = f0; camera.updateProjectionMatrix(); puReset(); return s.toDataURL('image/jpeg', .9);
+  } catch (e) { console.error(e); G.camOverride = null; puReset(); return null; }
+}
+function puReset() { if (PU.list) for (const p of PU.list) { p.c.scale.y = p.s; p.c.rotation.x = p.b; if (p.c.userData.sh) p.c.userData.sh.scale.set(1, 1, 1); } PU.list = null; }
 $('film').addEventListener('pointerdown', e => e.stopPropagation());
 $('film').addEventListener('click', e => { e.stopPropagation(); if (FILM.on && performance.now() - FILM.t0 > 700) filmEnd(true); });
 addEventListener('keydown', e => { if (FILM.on) { e.stopPropagation(); if (/^(Escape|Enter| )$/.test(e.key) && performance.now() - FILM.t0 > 700) filmEnd(true); } }, true);
@@ -8993,7 +9245,7 @@ function endCine() { if (DIR.s && DIR.s.cine) dirStop(true); }
 const ROAR = ['', 'Wake up, Sek-Ra!', 'Stop them, Hrimgar!', 'Magmaw! They’re at my door!', 'Guards! Hold the bridge!'];
 function arrival() {
   const n = G.level, k = (n - 1) % WORLD_LEN, w = worldOf(n), road = onRoadLv(n), key = 'a' + n; save.scenes = save.scenes || {};
-  if (G.sim || G.practice || G.fin || G.worldOverride != null || G.paused || G.lowQ || save.scenes[key]) return false; if (!(n === 46 || n === LAP_LEN + 1 || (!road && k === 0) || (road && k % 5 === 0))) return false;
+  if (G.sim || G.practice || G.fin || G.worldOverride != null || G.paused || G.lowQ || save.scenes[key]) return false; if (n === 1 && PAPER === 'a' && save.openSeen) return false; /* (v201: the opening already showed him on his gate) */ if (!(n === 46 || n === LAP_LEN + 1 || (!road && k === 0) || (road && k % 5 === 0))) return false;
   const [cz, up] = citAt(), shots = [], ev = [], cl = [], hallIn = inHall(), far = !road && k === 0 && w > 0 && w < HALLW && kingRig, onW = HOLD.b && HOLD.b.fx.head; let t0 = 0; const at = (t, f) => ev.push([t, f]);
   king.updateMatrixWorld(true); const kz = cz + 4.6, ky = 9.4 + up, gr = road ? 'storm' : WGRADE[w];
   if (far) { const KH = ky + 2.9, KE = KH + 1.4; shots.push({ t: [0, 2.3], pos: [[3.6, KE - 4.2, kz + 17], [2.2, KE - 2.6, kz + 12.6]], at: [[0, KE - 1.2, kz], [0, KE - .6, kz]], fov: [42, 37], foc: [.5, .45, .75, 1.2], blur: .8, grade: 'storm', vig: .75 });
@@ -9265,7 +9517,9 @@ function boot() {
     setupLevel(save.level); prewarm(); render(); requestAnimationFrame(frame); setTimeout(smpPrep, 400); const l = $('loading');
     if (!l) { filmOrCine(); return; }
     const book = PAPER === 'a'; if (book && save.level <= WORLD_LEN) { paPre(); if (!PA.g) { paBuild(); paExtras(); } }
-    Promise.all([book && save.level <= WORLD_LEN ? paWait() : null, book ? imgWait(['models/paper/a/cover_frame.webp', 'models/paper/a/cover_emblem.webp', 'models/paper/a/title_frame.webp', 'models/paper/a/title_vignette.webp']) : null]).then(() => { // (the paper pieces and the cover are in hand before the tap)
+    const w1 = book && save.level <= WORLD_LEN; // (v201) World 1: the desk and the book
+    Promise.all([w1 ? paWait() : null, book ? imgWait(['models/paper/a/cover_frame.webp', 'models/paper/a/cover_emblem.webp', 'models/paper/a/title_frame.webp', 'models/paper/a/title_vignette.webp'].concat(w1 ? ['models/paper/a/open/desk.webp', 'models/paper/a/ui/logo.webp', 'models/paper/a/open/crown.webp', 'models/paper/a/page.webp'] : [])) : null]).then(() => { // (the paper pieces and the cover are in hand before the tap)
+      if (w1) { ptSizes(); const d = dkBuild(); d.classList.add('in'); { const pg = puSnapshot(); if (pg) { const e = d.querySelector('.dk-p2'); e.style.backgroundImage = `url(${pg})`; e.style.backgroundSize = '100% 100%'; } } setTimeout(() => l.remove(), 600); d.addEventListener('click', () => { audio(); if (!DK.on) { d.classList.remove('in'); dkOpen(!save.openSeen); } else dkSkip(); }); return; }
       ptSizes(); l.classList.add('tapgo'); if (book) { l.classList.add('book'); l.innerHTML = '<div class="bk-emb"></div><b>BONE<i>SIEGE</i></b><span>Tap to open</span>'; } else l.innerHTML = '<svg viewBox="0 0 48 52"><use href="#i-king"/></svg><b>BONE SIEGE</b><span>Tap to begin</span>';
       l.addEventListener('click', () => { audio(); pageTurn(() => { l.remove(); filmOrCine(); }); }, { once: true }); /* the cover turns onto the opening */ // (click, not pointerdown: an iPhone only lets sound start on the finger's way up)
     }); return;
