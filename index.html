@@ -652,7 +652,7 @@ svg.ico.sm{width:18px;height:18px}
 .dk-back{transform:rotateY(180deg)}
 .dk-paper,.dk-tale{background:#f6ecd4 var(--ptgrain)}
 .dk-tale{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5%;padding:9% 10%;box-shadow:inset 0 0 0 7px #f6ecd4,inset 0 0 0 9px #c99232,inset -14px 0 22px -14px rgba(90,55,20,.35)}
-.dk-pic{width:74%;aspect-ratio:4/5;border-radius:50%;background:url(models/paper/a/open/crown.webp) 50% 30%/cover;box-shadow:0 0 0 3px #c99232,0 0 0 6px #f6ecd4,0 0 0 8px #8a5a2a}
+.dk-pic{width:74%;aspect-ratio:4/5;border-radius:50%;background:50% 30%/cover no-repeat;box-shadow:0 0 0 3px #c99232,0 0 0 6px #f6ecd4,0 0 0 8px #8a5a2a}
 .dk-txt{margin:0;min-height:7.5em;font-family:var(--pk-fell);font-size:clamp(15px,4.9vw,21px);line-height:1.38;color:var(--pk-ink);text-align:left}
 .dk-txt::first-letter{float:left;font-size:3.1em;line-height:.82;padding:.04em .08em 0 0;color:#8e1f24}
 .dk-front{overflow:visible;background:#8f1d1c;border-style:solid;border-width:calc(var(--bkt,90px) * .74) calc(var(--bks,80px) * .74);border-image:url(models/paper/a/cover_frame.webp) 14% 22% 14% 22% fill;border-image-width:calc(var(--bkt,90px) * .74) calc(var(--bks,80px) * .74);box-sizing:border-box}
@@ -667,11 +667,16 @@ svg.ico.sm{width:18px;height:18px}
 .dk-front{background:url(models/paper/a/open/cover.webp) center/100% 100% no-repeat!important;border:0!important;border-image:none!important;border-radius:6px 10px 10px 6px}
 .dk-emb{display:none}
 .dk-endp{background:radial-gradient(circle at 30% 20%,#e64a3e,transparent 45%),radial-gradient(circle at 70% 75%,#a51616,transparent 50%),#c62222!important;border-radius:6px 10px 10px 6px}
-.dk-logo{top:6.5%;width:90%}
+.dk-logo{top:6.5%;width:88%;left:53.5%} /* (centred on the face of the cover, not over the spine) */
 .dk-desk{inset:-24% -22%}
 .dk-hint{color:#5a2e0e;text-shadow:0 1px 0 rgba(255,244,214,.8),0 0 8px rgba(255,236,190,.7)}
 #loading{background:#1a0e07;perspective:1150px;perspective-origin:50% 38%;overflow:hidden;color:#5a2e0e;text-shadow:0 1px 0 rgba(255,244,214,.8),0 0 8px rgba(255,236,190,.7)} /* (the desk and the closed book, drawn the same way as the opening so the hand-off is seamless) */
 #loading .ld-t{position:absolute;z-index:1;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 4.5%);text-align:center;font-size:21px}
+#dk .dk-pic{width:112%;margin:0 -6%;flex:none;aspect-ratio:4/5;max-height:60%;border-radius:0;background-position:center;background-size:128% auto;background-repeat:no-repeat;box-shadow:none;mix-blend-mode:multiply} /* v202g: the tale is drawn straight onto the page */
+#dk .dk-tale{justify-content:center;gap:2%;padding:8% 9% 9%}
+#dk .dk-txt{font-size:clamp(16px,5.3vw,23px);min-height:6.2em}
+.dk-skip{display:none;position:absolute;z-index:3;top:calc(env(safe-area-inset-top) + 12px);right:12px;padding:6px 14px;border-radius:999px;border:2px solid #8a5a2a;background:linear-gradient(170deg,#fffaea,#f1e0b8);box-shadow:0 3px 0 #8a5a2a;font-family:var(--disp);font-size:15px;color:#4a2c14;cursor:pointer}
+#dk.tale .dk-skip{display:block}
 #loading.book .dk-world,#loading.tapgo .dk-world{display:none}
 /* v202f: toy-medieval menus. Type: Fraunces (soft) for headings, Lilita One for item names and buttons, Fredoka for text */
 .paper #result .res-title,.paper .pause-card .res-title,#game.papermenu #map .map-title,#game.papermenu #rewards>.map-title,#game.papermenu .rw-head,#game.papermenu .boon-h,.paper .boon-h,.rb-h,#game.papermenu #map .mcard b,#game.papermenu .sheet-head b{font-family:var(--pk-fell)!important;font-weight:800!important;letter-spacing:.2px}
@@ -691,6 +696,19 @@ svg.ico.sm{width:18px;height:18px}
 #game.papermenu .pill-btn:active,#game.papermenu .uptoggle:active{transform:translateY(3px);box-shadow:inset 0 2px 0 rgba(255,255,255,.9),0 1px 0 #8a5a2a!important}
 #game.papermenu .uptoggle svg{fill:#f2b632!important;stroke:#6b4426;stroke-width:1.8px;paint-order:stroke;filter:none!important}
 #game.papermenu .menu-pills{gap:8px}
+#game.papermenu #rewards{padding-left:calc(var(--tps,80px) * .3)!important;padding-right:calc(var(--tps,80px) * .3)!important}
+#game.papermenu .rw-sec{width:100%!important;max-width:440px}
+#game.papermenu #rwBack{margin-bottom:calc(env(safe-area-inset-bottom) + var(--tps,80px) * .45)!important}
+#game.papermenu #menu::after,#game.paper #result::after,#game.papermenu #rewards::after{border-width:calc(var(--tps,80px) * .66)!important;border-image-slice:12% 20% 12% 20% fill!important;border-image-width:calc(var(--tps,80px) * .66)!important} /* v202g: the toy frame, its round corners kept round */
+.screen.sw-in{animation:swIn .28s cubic-bezier(.2,.8,.3,1) both;z-index:6}
+.screen.sw-out{animation:swOut .23s ease-in both;z-index:6}
+@keyframes swIn{from{opacity:0;transform:translateY(22px) scale(.985)}}
+@keyframes swOut{to{opacity:0;transform:translateY(22px) scale(.985)}}
+#game.papermenu #map #mapClose.btn.big,#game.papermenu #rewards #rwBack.btn.big{border-image-source:url(models/paper/a/ui/btn_cream.webp)!important;color:var(--pk-ink)!important;-webkit-text-stroke:0!important;text-shadow:none!important} /* (Back is the second choice: cream, the blue is kept for going on) */
+.bt-t{visibility:hidden}
+.bt{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none;filter:drop-shadow(0 2px 0 rgba(90,16,16,.85))}
+.bt text{fill:currentColor;stroke:#6e1212;paint-order:stroke;stroke-linejoin:round;-webkit-text-stroke:0;font-family:inherit;font-weight:inherit;letter-spacing:inherit}
+#game.papermenu #map .map-title,#game.papermenu #rewards>.map-title{position:relative}
 #game.papermenu .menu-pills .pill-btn,#game.papermenu .menu-pills .uptoggle{display:inline-flex;align-items:center;white-space:nowrap;padding:6px clamp(8px,2.8vw,13px)!important;font-size:clamp(13.5px,4vw,16.5px)!important}
 #game.papermenu .pill-btn img.pi,#game.papermenu .uptoggle img.pi{width:24px;height:24px;vertical-align:0;margin-right:4px}
 #game.papermenu .sheet-card{border:3px solid #8a5a2a!important;border-radius:26px!important;box-shadow:inset 0 2px 0 rgba(255,255,255,.8),0 6px 0 #8a5a2a,0 14px 24px rgba(40,20,5,.35)!important}
@@ -6287,6 +6305,20 @@ function psEnd() {
 const PT = { on: false, N: 10, set: null, fin: null };
 function ptSnap() { try { render(); if (GHUD && G.mode !== 'menu') GHUD.draw(); } catch (e) {} const cv = renderer.domElement, s = document.createElement('canvas'); s.width = cv.width; s.height = cv.height; s.getContext('2d').drawImage(cv, 0, 0); return s; }
 function ptSizes() { const W = gameEl.clientWidth || 390; gameEl.style.setProperty('--tps', (.21 * W).toFixed(1) + 'px'); gameEl.style.setProperty('--tpt', (.231 * W).toFixed(1) + 'px'); gameEl.style.setProperty('--bks', (.22 * W).toFixed(1) + 'px'); gameEl.style.setProperty('--bkt', (.249 * W).toFixed(1) + 'px'); } /* the gold frames keep their corners whatever the screen's shape */
+/* v202g: the words on the painted red ribbons follow its arch (the band's centre runs from 46% of its height at the
+   folds up to 29% in the middle). The plain text stays in the box, hidden, so the box keeps its size. */
+const BEND = { ro: null, n: 0, cx: null };
+function bendTitle(el) {
+  if (!el || !paperUI()) return; const keep = el.querySelector(':scope > .bt-t'), txt = (keep ? keep.textContent : el.textContent).trim(); if (!txt) return;
+  const w = el.clientWidth, h = el.clientHeight; if (!w || !h) { if ((el._btTry = (el._btTry || 0) + 1) < 30) setTimeout(() => bendTitle(el), 150); return; } el._btTry = 0; // (not on screen yet: look again shortly)
+  if (keep && el.dataset.bw === w + 'x' + h + txt) return; el.dataset.bw = w + 'x' + h + txt;
+  const cs = getComputedStyle(el); let fs = parseFloat(cs.fontSize); const x = BEND.cx || (BEND.cx = document.createElement('canvas').getContext('2d'));
+  x.font = `${cs.fontWeight} ${fs}px ${cs.fontFamily}`; const tw = x.measureText(txt).width + txt.length * (parseFloat(cs.letterSpacing) || 0), room = w * .6; if (tw > room) fs *= room / tw;
+  const b = fs * .34, y0 = (h * .46 + b).toFixed(1), yc = (h * .12 + b).toFixed(1), id = 'btp' + (++BEND.n), esc = txt.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  el.innerHTML = `<span class="bt-t">${esc}</span><svg class="bt" viewBox="0 0 ${w} ${h}" aria-hidden="true"><path id="${id}" d="M${(w * .14).toFixed(1)} ${y0} Q${(w / 2).toFixed(1)} ${yc} ${(w * .86).toFixed(1)} ${y0}" fill="none"/><text style="font-size:${fs.toFixed(1)}px;stroke-width:${(fs * .09).toFixed(1)}px"><textPath href="#${id}" startOffset="50%" text-anchor="middle">${esc}</textPath></text></svg>`;
+}
+function bendWatch(el) { if (!el) return; if (!BEND.ro) BEND.ro = new ResizeObserver(es => es.forEach(e => bendTitle(e.target))); BEND.ro.observe(el); bendTitle(el); }
+for (const el of document.querySelectorAll('#map .map-title, #rewards > .map-title, #resTitle')) bendWatch(el); if (document.fonts) document.fonts.ready.then(() => document.querySelectorAll('.map-title, #resTitle').forEach(el => { el.dataset.bw = ''; bendTitle(el); }));
 function pageTurn(change, o = {}) { // o.back: the previous page swings back in from the left over the current one (going back)
   if (PT.on || G.sim || document.hidden || !gameEl.clientWidth) { change(); return; }
   const W = gameEl.clientWidth, N = PT.N, sw = W / N;
@@ -8489,6 +8521,7 @@ function showResult(won) {
 function paResult(won) {
   if (!$('resStars').querySelector('img')) [...$('resStars').querySelectorAll('svg')].forEach((s, i) => { const im = document.createElement('img'); im.src = 'models/paper/a/ui/' + (i === 1 ? 'seal' : 'seal_s') + '.webp'; im.alt = ''; im.draggable = false; im.className = 'seal'; s.after(im); }); // (each seal follows its star's "on")
   $('resTitle').textContent = won ? 'Victory!' : $('resTitle').textContent === 'SO CLOSE!' ? 'So close!' : 'Overrun!';
+  bendTitle($('resTitle'));
   $('collectBtn').textContent = won ? (G.level < WORLD_LEN && !G.practice ? 'Next page ›' : 'Collect') : 'Upgrade & retry';
   if (won && !G.practice && boonDue(G.level)) { // a boon is on offer: three painted cards on the scroll; nothing moves on until one is taken
     const q = save.boonDue; G.rbNeed = true; $('result').classList.add('rbwait'); $('resBoons').hidden = false; const row = $('rbRow'); row.innerHTML = '';
@@ -8630,8 +8663,10 @@ function renderMap() {
   $('mapPath').innerHTML = rows.join(''); $('mapNg').textContent = '';
 }
 const mapTone = () => { const m = $('map'), p = $('mapPath'); if (!m.classList.contains('on')) return; const L = [...p.querySelectorAll('.mcard.locked')].pop(); m.style.setProperty('--lk', (L ? p.offsetTop + L.offsetTop + L.offsetHeight : 0) + 'px'); }; addEventListener('resize', mapTone);
-$('mapBtn').onclick = () => pageTurn(() => { renderMap(); $('menu').classList.remove('on'); $('map').classList.add('on'); mapTone(); });
-$('mapClose').onclick = () => pageTurn(() => { $('map').classList.remove('on'); $('menu').classList.add('on'); }, { back: true });
+function swapIn(el, after) { psLoad('turn').then(() => psSnd('turn', .18)); el.classList.add('on', 'sw-in'); setTimeout(() => { el.classList.remove('sw-in'); if (after) after(); }, 280); } // v202g: a menu slides up over the one it opens from (the page turn is for the story moving on)
+function swapOut(el, under, after) { psLoad('turn').then(() => psSnd('turn', .14)); if (under) under.classList.add('on'); el.classList.add('sw-out'); setTimeout(() => { el.classList.remove('on', 'sw-out'); if (after) after(); }, 230); }
+$('mapBtn').onclick = () => { renderMap(); swapIn($('map'), () => $('menu').classList.remove('on')); mapTone(); bendTitle($('map').querySelector('.map-title')); };
+$('mapClose').onclick = () => swapOut($('map'), $('menu'));
 // the painting on the story card; the drawn emblem stays until it is here
 const STORY_ART = ['s_grimbald', 's_sekra', 's_hrimgar', 's_magmaw', 's_king'];
 function storyPic(k) { const im = $('storyArt'), c = im.parentNode; c.classList.remove('art'); im.onload = () => c.classList.add('art'); im.onerror = () => c.classList.remove('art'); const pa = PA.on && PAPER === 'a' && k === 's_grimbald'; c.classList.toggle('pa', pa); im.src = pa ? 'models/paper/a/gb_roar.webp' : artDir(k) + k + '.webp'; if (im.complete && im.naturalWidth) c.classList.add('art'); }
@@ -8707,8 +8742,8 @@ $('rwMissions').onclick = e => { const b = e.target.closest('[data-m]'); if (!b)
 $('rwStable').onclick = e => { const b = e.target.closest('[data-s]'); if (!b) return; const s = SKINS.find(q => q.id === b.dataset.s); save.skins = save.skins || ['snow'];
   if (!save.skins.includes(s.id)) { if (save.coins < s.cost) return; save.coins -= s.cost; save.skins.push(s.id); }
   save.skin = s.id; persist(); applySkin(); renderRewards(); };
-$('rewardsBtn').onclick = () => pageTurn(() => { rwGained = 0; rwBefore = save.coins; renderRewards(); $('menu').classList.remove('on'); $('rewards').classList.add('on'); });
-$('rwBack').onclick = () => pageTurn(() => { $('rewards').classList.remove('on'); $('chestFx').hidden = true; showMenu(); }, { back: true });
+$('rewardsBtn').onclick = () => { rwGained = 0; rwBefore = save.coins; renderRewards(); swapIn($('rewards'), () => $('menu').classList.remove('on')); bendTitle($('rewards').querySelector('.map-title')); };
+$('rwBack').onclick = () => { $('chestFx').hidden = true; swapOut($('rewards'), $('menu'), showMenu); };
 // the Paladin's coat: recolours his warhorse (coat, legs and the spirit-flame mane)
 function applySkin() { if (!horse || !horse.mats) return; const s = SKINS.find(q => q.id === (save.skin || 'snow')) || SKINS[0]; horse.mats.coat.color.copy(C(s.coat)); if (palArt) horse.mats.coat.color.multiplyScalar(s.id === 'gold' ? .62 : .86); /* (the sculpted coat takes the light more brightly than the old one) */ horse.mats.coatD.color.copy(C(s.dark)); horse.mats.spirit.color.copy(C(s.spirit)); }
 function lockSpoilers() { const tro = save.trophies || {}, seen = w => tro[w] || save.level > w * WORLD_LEN + WORLD_LEN; let any = false; document.querySelectorAll('#bossRow [data-w]').forEach(b => { b.hidden = !seen(+b.dataset.w - 1); any = any || !b.hidden; }); $('bossBtn').hidden = !any; if (!any) $('bossRow').hidden = true; $('finaleBtn').hidden = !(tro[4] || save.level > LAP_LEN); }
@@ -9237,37 +9272,50 @@ function startCine(full) {
    screen. It is the very picture the battle board is painted on, seen from straight above, so the hand-off to the 3D page
    (startCine with G.fromDesk) shows no seam. There the cut-outs spring up off the page as the camera tilts down to the road. */
 const DK = { el: null, on: false, t0: 0, long: true, cine: false, raf: 0 }; window.__DK = DK; // (the test hook reads its clock)
-const DK_TALE = 'Once upon a time, the Bone King found a crown that commands the dead. One by one, the realm’s old heroes fell under its spell.';
+const DK_TALE = [ // v202g: a few pages of the tale before the dive, each drawn straight onto the page
+  { pic: 'tale1', z: 1.28, txt: 'Once upon a time, the Bone King found a crown that commands the dead.' },
+  { pic: 'tale2', z: 1.02, txt: 'One by one, the realm’s old heroes fell under its spell, and their castles became his.' },
+  { pic: 'tale3', z: 1.1, txt: 'Only one little camp still stood: a cannon, a handful of brave soldiers… and you.' },
+  { pic: 'tale4', z: 1.1, txt: 'First comes Grimbald, the Meadow’s fallen hero. Grow your army. Storm the castle!' },
+];
 function dkBuild() {
   const d = document.createElement('div'); d.id = 'dk';
+  const leaves = DK_TALE.map((p, i) => `<div class="dk-leaf dk-tl${i ? '' : ' dk-p1'}" data-i="${i}"><div class="dk-face dk-tale"><div class="dk-pic" style="background-image:url(models/paper/a/open/${p.pic}.webp);background-size:${p.z * 100}% auto"></div><p class="dk-txt"></p></div><div class="dk-face dk-back dk-paper"></div></div>`).reverse().join(''); // (the first page on top)
   d.innerHTML = '<div class="dk-world"><div class="dk-desk"></div><div class="dk-book"><div class="dk-block"></div>'
-    + '<div class="dk-page dk-p2"><i class="dk-gilt"></i></div>'
-    + '<div class="dk-leaf dk-p1"><div class="dk-face dk-tale"><div class="dk-pic"></div><p class="dk-txt"></p></div><div class="dk-face dk-back dk-paper"></div></div>'
+    + '<div class="dk-page dk-p2"><i class="dk-gilt"></i></div>' + leaves
     + '<div class="dk-leaf dk-cover"><div class="dk-face dk-front"><div class="dk-emb"></div><img class="dk-logo" src="models/paper/a/ui/logo.webp" alt="Bone Siege" draggable="false"></div><div class="dk-face dk-back dk-endp"></div></div>'
-    + '</div><div class="dk-glow"></div></div><span class="dk-hint">Tap the book to open it</span>';
+    + '</div><div class="dk-glow"></div></div><span class="dk-hint">Tap the book to open it</span><button class="dk-skip" type="button">Skip ›</button>';
+  d.querySelector('.dk-skip').addEventListener('click', e => { e.stopPropagation(); audio(); dkSkip(); });
   gameEl.appendChild(d); DK.el = d; return d;
 }
 const dkE = (u, k = 3) => u <= 0 ? 0 : u >= 1 ? 1 : u < .5 ? Math.pow(2 * u, k) / 2 : 1 - Math.pow(-2 * u + 2, k) / 2; // ease in and out
 function dkOpen(long) {
-  const d = DK.el || dkBuild(); DK.on = true; DK.long = long; DK.cine = false; d.classList.add('go'); const tale = d.querySelector('.dk-txt'); tale.textContent = '';
-  if (!long) d.querySelector('.dk-p1').style.display = 'none';
-  const T = long ? { wig: .35, cov: [.35, 1.65], txt: [1.9, 4.1], pg: [4.25, 5.45], dive: [5.45, 6.75], cine: 5.35, fade: 6.75, end: 7.15 } : { wig: .25, cov: [.25, 1.3], txt: [9, 9], pg: [9, 9], dive: [1.35, 2.5], cine: 1.2, fade: 2.5, end: 2.85 };
-  const world = d.querySelector('.dk-world'), cover = d.querySelector('.dk-cover'), p1 = d.querySelector('.dk-p1'), glow = d.querySelector('.dk-glow'), gilt = d.querySelector('.dk-gilt'), book = d.querySelector('.dk-book');
-  psLoad('turn'); let sndC = false, sndP = false; DK.t0 = performance.now();
+  const d = DK.el || dkBuild(); DK.on = true; DK.long = long; DK.cine = false; d.classList.add('go'); if (long) d.classList.add('tale');
+  const leaves = [...d.querySelectorAll('.dk-tl')].sort((a, b) => a.dataset.i - b.dataset.i);
+  leaves.forEach(l => { l.querySelector('.dk-txt').textContent = ''; if (!long) l.style.display = 'none'; });
+  const world = d.querySelector('.dk-world'), cover = d.querySelector('.dk-cover'), glow = d.querySelector('.dk-glow'), gilt = d.querySelector('.dk-gilt'), book = d.querySelector('.dk-book');
+  psLoad('turn'); DK.t0 = performance.now();
   const k = gameEl.clientWidth / book.offsetWidth; // the scale at which the page fills the screen (the book has the screen's shape)
+  const COV = long ? [.35, 1.95] : [.25, 1.3], TURN = 1.9, HOLD = 2.2, CPS = 30, DIVE = long ? 1.6 : 1.2, N = long ? leaves.length : 0;
+  const S = DK.s = { i: 0, ph: 'cover', at: 0, hold: 0, full: false, turns: [], dive: 0 }; let sndC = false;
+  DK.next = () => { if (S.ph === 'type') S.full = true; else if (S.ph === 'hold') S.hold = 0; }; // a tap: finish the words, or turn the page now
   const step = now => {
     if (!DK.on) return; const t = (now - DK.t0) / 1000;
-    const w = t < T.wig ? Math.sin(t / T.wig * Math.PI) : 0; // the book gives a little hop, as if it wants to be opened
-    const cu = dkE((t - T.cov[0]) / (T.cov[1] - T.cov[0])), pu = dkE((t - T.pg[0]) / (T.pg[1] - T.pg[0])), du = dkE((t - T.dive[0]) / (T.dive[1] - T.dive[0]), 2.4);
-    if (cu > 0 && !sndC) { sndC = true; psSnd('turn', .45); } if (pu > 0 && !sndP) { sndP = true; psSnd('turn', .4); }
-    cover.style.transform = `rotateY(${(-172 * cu).toFixed(2)}deg)`; p1.style.transform = `rotateY(${(-174 * pu).toFixed(2)}deg)`;
+    if (S.ph === 'cover' && t >= COV[1]) { if (N) { S.ph = 'type'; S.at = t; } else { S.ph = 'dive'; S.dive = t + .05; } }
+    if (S.ph === 'type') { const txt = DK_TALE[S.i].txt, el = leaves[S.i].querySelector('.dk-txt'), n = S.full ? txt.length : Math.min(txt.length, Math.floor((t - S.at) * CPS)); if (el.textContent.length !== n) el.textContent = txt.slice(0, n); if (n >= txt.length) { S.ph = 'hold'; S.full = false; S.hold = t + HOLD; } }
+    if (S.ph === 'hold' && t >= S.hold) { S.ph = 'turn'; S.at = t; S.turns[S.i] = t; psSnd('turn', .4); }
+    if (S.ph === 'turn' && t >= S.at + TURN * .8) { S.i++; if (S.i < N) { S.ph = 'type'; S.at = t; } else { S.ph = 'dive'; S.dive = S.at + TURN; } } // the next page's words begin as this one settles
+    const w = t < COV[0] ? Math.sin(t / COV[0] * Math.PI) : 0; // the book gives a little hop, as if it wants to be opened
+    const cu = dkE((t - COV[0]) / (COV[1] - COV[0])), du = S.ph === 'dive' ? dkE((t - S.dive) / DIVE, 2.4) : 0;
+    if (cu > 0 && !sndC) { sndC = true; psSnd('turn', .45); }
+    cover.style.transform = `rotateY(${(-178 * cu).toFixed(2)}deg)`; // (each page turned later lies a hair higher on the left: it is seen on top)
+    leaves.forEach((l, i) => { const u = S.turns[i] === undefined ? 0 : dkE((t - S.turns[i]) / TURN); l.style.transform = `rotateY(${(-(177 - i) * u).toFixed(2)}deg)`; });
     const tilt = 24 * (1 - du), sc = 1 + (k - 1) * du + .035 * w;
     world.style.transform = `rotateX(${tilt.toFixed(2)}deg) translateY(${(-1.5 * w - 2 * (1 - du)).toFixed(2)}%) scale(${sc.toFixed(4)})`;
-    glow.style.opacity = (Math.sin(clamp((t - T.cov[0]) / (T.cov[1] - T.cov[0] + .5), 0, 1) * Math.PI) * .8).toFixed(3); gilt.style.opacity = (1 - du).toFixed(3);
-    if (long && t > T.txt[0]) { const n = Math.min(DK_TALE.length, Math.floor((t - T.txt[0]) / (T.txt[1] - T.txt[0]) * DK_TALE.length)); if (tale.textContent.length !== n) tale.textContent = DK_TALE.slice(0, n); }
-    if (!DK.cine && t > T.cine) { DK.cine = true; G.fromDesk = true; try { startCine(long); } catch (e) { console.error(e); } }
-    d.style.opacity = t < T.fade ? 1 : Math.max(0, 1 - (t - T.fade) / (T.end - T.fade)).toFixed(3);
-    if (t >= T.end) { dkClose(); return; } DK.raf = requestAnimationFrame(step);
+    glow.style.opacity = (Math.sin(clamp((t - COV[0]) / (COV[1] - COV[0] + .5), 0, 1) * Math.PI) * .8).toFixed(3); gilt.style.opacity = (1 - du).toFixed(3);
+    if (!DK.cine && S.ph === 'dive' && t > S.dive - .1) { DK.cine = true; d.classList.remove('tale'); G.fromDesk = true; try { startCine(long); } catch (e) { console.error(e); } }
+    const fade = S.ph === 'dive' ? S.dive + DIVE : 1e9; d.style.opacity = t < fade ? 1 : Math.max(0, 1 - (t - fade) / .4).toFixed(3);
+    if (t >= fade + .4) { dkClose(); return; } DK.raf = requestAnimationFrame(step);
   };
   DK.raf = requestAnimationFrame(step);
 }
@@ -9581,8 +9629,8 @@ function boot() {
     if (!l) { filmOrCine(); return; }
     const book = PAPER === 'a'; if (book && save.level <= WORLD_LEN) { paPre(); if (!PA.g) { paBuild(); paExtras(); } }
     const w1 = book && save.level <= WORLD_LEN; // (v201) World 1: the desk and the book
-    Promise.all([w1 ? paWait() : null, book ? imgWait((w1 ? ['models/paper/a/open/cover.webp'] : ['models/paper/a/cover_frame.webp', 'models/paper/a/cover_emblem.webp']).concat(['models/paper/a/title_frame.webp', 'models/paper/a/title_vignette.webp']).concat(w1 ? ['models/paper/a/open/desk.webp', 'models/paper/a/ui/logo.webp', 'models/paper/a/open/crown.webp', 'models/paper/a/page.webp'] : [])) : null]).then(() => { // (the paper pieces and the cover are in hand before the tap)
-      if (w1) { ptSizes(); const d = dkBuild(); d.classList.add('in'); { const pg = puSnapshot(); if (pg) { const e = d.querySelector('.dk-p2'); e.style.backgroundImage = `url(${pg})`; e.style.backgroundSize = '100% 100%'; } } setTimeout(() => l.remove(), 600); d.addEventListener('click', () => { audio(); if (!DK.on) { d.classList.remove('in'); dkOpen(!save.openSeen); } else dkSkip(); }); return; }
+    Promise.all([w1 ? paWait() : null, book ? imgWait((w1 ? ['models/paper/a/open/cover.webp'] : ['models/paper/a/cover_frame.webp', 'models/paper/a/cover_emblem.webp']).concat(['models/paper/a/title_frame.webp', 'models/paper/a/title_vignette.webp']).concat(w1 ? ['models/paper/a/open/desk.webp', 'models/paper/a/ui/logo.webp', 'models/paper/a/open/tale1.webp', 'models/paper/a/page.webp'] : [])) : null]).then(() => { // (the paper pieces and the cover are in hand before the tap)
+      if (w1) { ptSizes(); const d = dkBuild(); d.classList.add('in'); { const pg = puSnapshot(); if (pg) { const e = d.querySelector('.dk-p2'); e.style.backgroundImage = `url(${pg})`; e.style.backgroundSize = '100% 100%'; } } setTimeout(() => l.remove(), 600); d.addEventListener('click', () => { audio(); if (!DK.on) { d.classList.remove('in'); dkOpen(!save.openSeen); } else if (DK.s && (DK.s.ph === 'type' || DK.s.ph === 'hold')) DK.next(); else if (DK.s && DK.s.ph === 'dive') dkSkip(); }); return; }
       ptSizes(); l.classList.add('tapgo'); if (book) { l.classList.add('book'); l.innerHTML = '<div class="bk-emb"></div><b>BONE<i>SIEGE</i></b><span>Tap to open</span>'; } else l.innerHTML = '<svg viewBox="0 0 48 52"><use href="#i-king"/></svg><b>BONE SIEGE</b><span>Tap to begin</span>';
       l.addEventListener('click', () => { audio(); pageTurn(() => { l.remove(); filmOrCine(); }); }, { once: true }); /* the cover turns onto the opening */ // (click, not pointerdown: an iPhone only lets sound start on the finger's way up)
     }); return;
