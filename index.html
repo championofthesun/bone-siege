@@ -673,6 +673,7 @@ svg.ico.sm{width:18px;height:18px}
 #loading{background:#1a0e07;perspective:1150px;perspective-origin:50% 38%;overflow:hidden;color:#5a2e0e;text-shadow:0 1px 0 rgba(255,244,214,.8),0 0 8px rgba(255,236,190,.7)} /* (the desk and the closed book, drawn the same way as the opening so the hand-off is seamless) */
 #loading .ld-t{position:absolute;z-index:1;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 4.5%);text-align:center;font-size:21px}
 #dk .dk-pic{width:112%;margin:0 -6%;flex:none;aspect-ratio:4/5;max-height:60%;border-radius:0;background-position:center;background-size:128% auto;background-repeat:no-repeat;box-shadow:none;mix-blend-mode:normal;filter:drop-shadow(0 3px 3px rgba(60,30,8,.25))} /* v202n: the tale pictures are paper cut-outs laid on the page */
+#dk .dk-pic{transform-origin:50% 94%;transform:perspective(700px) rotateX(76deg)}#dk .dk-pic.pop{animation:dkPop 1.05s cubic-bezier(.25,.8,.35,1) both,dkSway 3.4s ease-in-out 1.05s infinite alternate}@keyframes dkPop{0%{transform:perspective(700px) rotateX(76deg)}58%{transform:perspective(700px) rotateX(-9deg)}78%{transform:perspective(700px) rotateX(4deg)}100%{transform:perspective(700px) rotateX(0)}}@keyframes dkSway{0%{transform:perspective(700px) rotateX(0) rotateZ(-.9deg) translateY(0)}100%{transform:perspective(700px) rotateX(2deg) rotateZ(.9deg) translateY(-3px)}} /* v202t: the tale cut-outs pop up and sway */
 #dk .dk-tale{justify-content:center;gap:2%;padding:8% 9% 9%}
 #dk .dk-txt{font-size:clamp(16px,5.3vw,23px);min-height:6.2em}
 .dk-skip{display:none;position:absolute;z-index:3;top:calc(env(safe-area-inset-top) + 12px);right:12px;padding:6px 14px;border-radius:999px;border:2px solid #8a5a2a;background:linear-gradient(170deg,#fffaea,#f1e0b8);box-shadow:0 3px 0 #8a5a2a;font-family:var(--disp);font-size:15px;color:#4a2c14;cursor:pointer}
@@ -6022,7 +6023,7 @@ function paBuild() {
     ['pines', 6.4, -17.8, -66], ['oak', 5, -17.4, -56.5], ['pines', 6, -16.6, -50.5], ['pines', 6.2, 17.8, -65, { flip: true }], ['oak', 5, 17.4, -55.5, { flip: true }], ['pines', 5.8, 16.6, -49.5, { flip: true }]]) paCard(n, h * (z > -46 ? .8 : 1), x, z, o); /* (v201b: the roadside pieces 0.8x, now the dolls are bigger) */
 }
 const paKeep = o => o === king || o.userData.holder || WL.built.some(b => b && b.g === o);
-function paHide() { world.visible = campWall.visible = hoard.visible = nest.visible = false; for (const o of fort.children) if (o.visible && !paKeep(o)) o.visible = false;
+function paHide() { world.visible = campWall.visible = hoard.visible = nest.visible = false; if (PA.can && PA.can.visible !== PA.on) PA.can.visible = PA.on; /* (v202t: the cannon card is always shown while the paper world is: a rebuilt card used to start hidden and stay so) */ for (const o of fort.children) if (o.visible && !paKeep(o)) o.visible = false;
   for (const b of WL.built) if (b && b.g) for (const c of b.g.children) if (c.visible) { c.visible = false; c.userData.paHid = true; } // the warlord's 3D (the paper puppet stands in for him)
   for (const c of launcher.children) if (c !== PA.can && c.visible && !c.isSprite) { c.visible = false; c.userData.paHid = true; } // the cannon model
   if (PAPER === 'a') { if (CAP.b) for (const c of CAP.b.g.children) if (c.visible) { c.visible = false; c.userData.paHid = true; }
@@ -9414,6 +9415,7 @@ function dkOpen(long) {
   DK.next = () => { if (S.ph === 'type') S.full = true; else if (S.ph === 'hold') S.hold = 0; }; // a tap: finish the words, or turn the page now
   const step = now => {
     if (!DK.on) return; const t = (now - DK.t0) / 1000;
+    for (let i = 0; i < N; i++) { const l = leaves[i]; if (l._pop) continue; const r = i ? (S.turns[i - 1] === undefined ? 1e9 : S.turns[i - 1] + TURN * .42) : COV[0] + (COV[1] - COV[0]) * .5; if (t >= r) { l._pop = true; const p = l.querySelector('.dk-pic'); if (p) p.classList.add('pop'); } } // v202t: each page's cut-out lies printed flat until its page opens, then folds up like a pop-up book and sways
     if (S.ph === 'cover' && t >= COV[1]) { if (N) { S.ph = 'type'; S.at = t; } else { S.ph = 'dive'; S.dive = t + .05; } }
     if (S.ph === 'type') { let done = true; leaves[S.i]._sp.forEach((s, j) => { const o = S.full ? 1 : clamp((t - S.at - j * WGAP) / WFADE, 0, 1); if (o < 1) done = false; s.style.opacity = o.toFixed(3); }); if (done) { S.ph = 'hold'; S.full = false; S.hold = t + HOLD; } } // one word after another, each fading up out of the paper
     if (S.ph === 'hold' && t >= S.hold) { S.ph = 'turn'; S.at = t; S.turns[S.i] = t; psSnd('turn', .4); }
