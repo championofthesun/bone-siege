@@ -4430,6 +4430,13 @@ function spriteCrowd(cap, mat) {
   m.visible = false; return m;
 }
 const allySprites = spriteCrowd(ACAP, spriteMat), foeSprites = spriteCrowd(BCAP, foeSpriteMat);
+/* (v202aj) World 1's Champion is drawn about twice a soldier's size, so from the sheet's 153x204 cells he came out soft and blocky. He has
+   his own strip at twice the detail (un/champion_hd.webp, 10 frames of 306x408), baked to the sheet's colour form and drawn by this mesh */
+const giantMat = spriteMat.clone(); giantMat.uniforms.uCell.value = new THREE.Vector2(.1, 1); giantMat.uniforms.uCols.value = 10; giantMat.uniforms.uTexel.value = new THREE.Vector2(1 / 3060, 1 / 408); giantMat.uniforms.uMap.value = null;
+const giantSprites = spriteCrowd(8, giantMat);
+function hdBake(t) { const rt = new THREE.WebGLRenderTarget(t.image.width, t.image.height, { format: THREE.RGBAFormat, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: true, depthBuffer: false });
+  const cc = renderer.getClearColor(new THREE.Color()), ca = renderer.getClearAlpha(); SPR.m.uniforms.uMap.value = t; renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(SPR.qs, SPR.qc);
+  renderer.setRenderTarget(null); renderer.setClearColor(cc, ca); SPR.m.uniforms.uMap.value = null; t.dispose(); return rt; }
 // which card a unit shows: its type's row, the frame of its run cycle (or the mid-air frame while flying)
 const FOE_TYPE = [UT.minion, UT.srogue, UT.smage, UT.warrior, UT.sbomb, UT.sarcher, UT.warrior, UT.sshield, UT.snecro], F_BOMB = 4, F_ARCH = 5, F_CAP = 6, F_SHLD = 7, F_NEC = 8; // a skeleton's tier is its look
 const unitType = (p, i) => p === ants ? (p.big[i] ? UT.champion : p.kind[i] ? UT.bomber : TIER_TYPE[p.tier[i]]) : (p.big[i] ? UT.warrior : FOE_TYPE[p.tier[i]]);
@@ -5960,6 +5967,8 @@ async function paUnits(on) { // the army's strips on the sprite sheet: paper dol
   const ts = await Promise.all(UNIT_TYPES.map(u => new THREE.TextureLoader().loadAsync(on ? 'models/paper/' + (PAPER || 'a') + '/un/' + u.id + '.webp' : sprFile(u, bakedLook)).then(t => { t.generateMipmaps = false; t.minFilter = t.magFilter = THREE.LinearFilter; return t; }, () => null)));
   if (tok !== PA.uTok) { ts.forEach(t => t && t.dispose()); return; }
   const cc = renderer.getClearColor(new THREE.Color()), ca = renderer.getClearAlpha(); UNIT_TYPES.forEach((u, k) => { if (ts[k]) sprBake(u, ts[k]); }); renderer.setRenderTarget(null); renderer.setClearColor(cc, ca);
+  if (on && PAPER === 'a' && !giantMat.uniforms.uMap.value) { const t = await new THREE.TextureLoader().loadAsync('models/paper/a/un/champion_hd.webp').then(t => { t.generateMipmaps = false; t.minFilter = t.magFilter = THREE.LinearFilter; return t; }, () => null);
+    if (t && tok === PA.uTok && SPR.m) giantMat.uniforms.uMap.value = hdBake(t).texture; } // (v202aj) the Champion's own sharper strip
 }
 function paLabel(x, g, bx, by, bw, bh, st) { // the gate's number or weapon, lettered on the painted board
   const fam = 'Fraunces, Georgia, serif', arm = g.arm != null, red = g.k < 1 && !g.add && !arm, crew = arm && TIERS[g.arm].merge;
@@ -6141,7 +6150,7 @@ function paperScene(on) { // the storybook level in place of the 3D land, castle
   if (on && !PA.g) { if (PAPER === 'b') pbBuild(); else paBuild(); paExtras(); } if (!PA.g || on === PA.on) return; PA.on = on; PA.g.visible = on; PA.can.visible = on;
   POST.mat.uniforms.uPaper.value = on && PAPER === 'a' ? 1 : 0; paUnits(on);
   { const cm = partMeshes[PK.COIN], u = cm.userData; if (!u.g0) { u.g0 = cm.geometry; u.m0 = cm.material; } if (on && PAPER === 'a' && !u.pg) { u.pg = new THREE.PlaneGeometry(.24, .24); u.pm = new THREE.MeshBasicMaterial({ map: paTex('ui/coin'), alphaTest: .4, side: THREE.DoubleSide, toneMapped: false }); } cm.geometry = on && u.pg ? u.pg : u.g0; cm.material = on && u.pm ? u.pm : u.m0; } // v202k: in the storybook the coins are the painted coin, cut out of paper
-  for (const [m, e] of [[spriteMat, '#0c1a3e'], [foeSpriteMat, '#2a0a30']]) { m.uniforms.uEdge.value.set(on ? (PAPER === 'b' ? '#8d8a96' : '#3a2010') : e); m.uniforms.uOut.value = on ? (PAPER === 'b' ? 1 : 1.2) : 1.3; m.uniforms.uDoll.value = on ? 1 : 0; m.uniforms.uFoot.value = on && PAPER === 'a' ? .16 : SPRITE_FOOT; /* (v202ai: a paper strip's feet sit 31 of 204 px up its cell, not where the 3D bake put them (.256), so the dolls were sunk ~21 px into the page and lost their legs) */ m.uniforms.uQuad.value.set(BAKE_W * UNIT_K, BAKE_H * UNIT_K).multiplyScalar(on ? 1.95 : 1); } /* (v201: dolls 1.35x bigger, so the army reads as an army) */ // a thin brown cut line round each doll's paper edge; the dolls drawn bigger (looks only)
+  for (const [m, e] of [[spriteMat, '#0c1a3e'], [foeSpriteMat, '#2a0a30'], [giantMat, '#0c1a3e']]) { m.uniforms.uEdge.value.set(on ? (PAPER === 'b' ? '#8d8a96' : '#3a2010') : e); m.uniforms.uOut.value = on ? (PAPER === 'b' ? 1 : 1.2) : 1.3; m.uniforms.uDoll.value = on ? 1 : 0; m.uniforms.uFoot.value = on && PAPER === 'a' ? .16 : SPRITE_FOOT; /* (v202ai: a paper strip's feet sit 31 of 204 px up its cell, not where the 3D bake put them (.256), so the dolls were sunk ~21 px into the page and lost their legs) */ m.uniforms.uQuad.value.set(BAKE_W * UNIT_K, BAKE_H * UNIT_K).multiplyScalar(on ? 1.95 : 1); } /* (v201: dolls 1.35x bigger, so the army reads as an army) */ // a thin brown cut line round each doll's paper edge; the dolls drawn bigger (looks only)
   for (const p of puffs) { p.s.material.map = on ? (PAPER === 'b' ? PB.puff : paTex('puff')) : smokeTex; p.s.material.needsUpdate = true; } // paper smoke
   Object.assign(muzzleFlash.material, on ? { map: PAPER === 'b' ? PB.star : paTex('star'), blending: THREE.NormalBlending } : { map: glowTex, blending: THREE.AdditiveBlending }); muzzleFlash.material.color.set(on ? '#ffffff' : '#ffc860'); muzzleFlash.material.needsUpdate = true;
   if (on) PA.ft = FOE_TINT.clone(); else if (PA.ft) FOE_TINT.copy(PA.ft); paFx(on && PAPER === 'a');
@@ -7930,6 +7939,7 @@ const riseOf = (p, i) => { // v202k, the opening: the horde springs up one by on
 const nearLens = (p, i) => p === beetles && DIR.s.foeZ !== undefined && p.z[i] > DIR.s.foeZ - (p.big[i] || p.tier[i] >= F_BOMB ? 5.5 : 0); // (right by the camera of a scene they would fill the picture)
 function drawSprites(p, sm) {
   const cell = sm.geometry.attributes.aCell.array, party = G.boomed && p === ants;
+  const hd = p === ants && PA.on && PAPER === 'a' && !!giantMat.uniforms.uMap.value, gcell = giantSprites.geometry.attributes.aCell.array; let gn = 0; // (v202aj) the Champion goes to his own sharper mesh
   for (let i = 0; i < p.n; i++) {
     const s = p === beetles && p.tier[i] === F_CAP && CAP.b || DIR.s && nearLens(p, i) || party && PA.on && p.z[i] - camera.position.z > -8 ? .001 : /* (v201b: on the paper win camera, nobody stands in the lens) */ p.s[i] * US * (PA.on && PAPER === 'a' ? 1.18 : 1) * popOf(p, i) * riseOf(p, i), air = liftOf(p, i), flying = air > 0.05, t = unitType(p, i); // (the sculpted captain is drawn in place of his brute)
     const hopK = party ? Math.abs(Math.sin(G.t * 7 + p.ph[i])) : 0;
@@ -7939,7 +7949,9 @@ function drawSprites(p, sm) {
     cell[i] = t * FPT + f;
     _c.copy(p === beetles ? FOE_TINT : WHITE); if (p === beetles && p.tier[i] === F_CAP) _c.lerp(wc2.set(WARLORDS[CAP.w].col).convertSRGBToLinear(), .3).multiplyScalar(1.5); if (p === beetles && p.tier[i] === F_NEC) _c.setScalar(1.12); if (p.flash[i] > 0) _c.multiplyScalar(1 + p.flash[i] * 1.2); // skeletons get the world's tint (deeper on snow)
     sm.setColorAt(i, _c);
+    if (hd && p.big[i] && gn < 8) { giantSprites.setMatrixAt(gn, _m); gcell[gn] = f; giantSprites.setColorAt(gn, _c); gn++; _m.makeScale(.001, .001, .001); sm.setMatrixAt(i, _m); }
   }
+  if (p === ants) { giantSprites.count = gn; giantSprites.visible = gn > 0; if (gn) { giantSprites.instanceMatrix.needsUpdate = true; giantSprites.instanceColor.needsUpdate = true; giantSprites.geometry.attributes.aCell.needsUpdate = true; } }
   let nn = p.n; if (p === ants && LINE.on && G.mode !== 'won' && G.mode !== 'resultWin') { // the knights of your line, in the palace: ready, and at arms when a skeleton comes near
     const up = lineUp(); let near = -99; for (let j = 0; j < beetles.n; j++) if (beetles.hp[j] > 0 && beetles.z[j] > near) near = beetles.z[j];
     for (const q of LINE.men) { if (nn >= ACAP) break; if (q[3] >= up) continue; const s = US * .98, f = near > -8 && Math.sin(G.t * 7 + q[2]) > .35 ? ATK_F : 2; _m.makeScale(s, s, s); _m.setPosition(q[0], 0, q[1]); sm.setMatrixAt(nn, _m); cell[nn] = TIER_TYPE[0] * FPT + f; sm.setColorAt(nn, WHITE); nn++; }
@@ -8032,7 +8044,7 @@ function render() {
     const cf = G.mode !== 'play' || G.introT > 0 || G.grandT > 0 || !!G.cine || !!DIR.s; if (G.castFar !== cf || G.castN !== FAR_CAST.length) { G.castFar = cf; G.castN = FAR_CAST.length; for (const o of FAR_CAST) o.castShadow = cf; G.shadowDirty = G.shadowAll = true; }
     if (scm.right !== sW) { scm.left = -sW; scm.right = sW; scm.top = sH; scm.bottom = -sH; scm.updateProjectionMatrix(); G.shadowDirty = G.shadowAll = true; } }
   if ((G.frameN = (G.frameN || 0) + 1) % (G.shEvery || 3) === 0 || (G.mode === 'won' ? G.frameN % 2 === 0 : G.shadowDirty)) { renderer.shadowMap.needsUpdate = true; G.shadowDirty = false; }
-  spriteMat.uniforms.uSoft.value = foeSpriteMat.uniforms.uSoft.value = POST.on && !G.lowQ && POST.msaa ? 1 : 0; // soft, anti-aliased crowd edges only where there is multisampling to resolve them
+  spriteMat.uniforms.uSoft.value = foeSpriteMat.uniforms.uSoft.value = giantMat.uniforms.uSoft.value = POST.on && !G.lowQ && POST.msaa ? 1 : 0; // soft, anti-aliased crowd edges only where there is multisampling to resolve them
   trimUploads(); GLOW.draw(); if (FUSE) FUSE.tick();
   if (BACK) BACK.before();
   if (LEAN && POST.on && !G.lowQ) { // (the same buffers, only a smaller part of them used: nothing is rebuilt)
