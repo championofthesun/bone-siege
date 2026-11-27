@@ -5945,7 +5945,7 @@ const PA_BTINT = { gold: '#ffcf45', blue: '#8fb8ff', red: '#ff9484', purple: '#d
 const PA_BOARD = { gold: [.189, .811, .322, .716], blue: [.188, .812, .325, .715], red: [.189, .812, .327, .716], purple: [.189, .813, .327, .715] }; // each sign's empty board: x from, x to, y from, y to (y up from the foot)
 const PAGE_W = 2048, PAGE_H = 3065;
 const PA_GB_A = { idle: [1.0383, 732], wind: [.7242, 794], roar: [1.2185, 714], daze: [1.0653, 704] }; // Grimbald's poses: width / height, and height in pixels at one shared scale
-const PA_DIM_A = { hs_rogue: .7391, hs_warrior: .8873, hs_grunt: .8027, cleaver_t: .8516, cannon: .9203, puff: 1.0987, star: 1.0802, sign_gold: 1.3559, sign_blue: 1.3559, sign_red: 1.3559, sign_purple: 1.3531, oak: .9232, pines: .9429, bush: 1.2756, cottage: 1.2069, knight: .7901, skullrock: 1.2632, crownrock: 1.0909, lamp: .4555, bannerp: .3918, bannerb: .6034, fence: 1.8551, torch: .4097, castle: 1.5135, camp: 3.4115, back: 4.2227, hoard: 2.1955 }; // width / height of each card
+const PA_DIM_A = { hs_rogue: .7391, hs_warrior: .8873, hs_grunt: .8027, cleaver_t: .8516, cannon: .9125, puff: 1.0987, star: 1.0802, sign_gold: 1.3559, sign_blue: 1.3559, sign_red: 1.3559, sign_purple: 1.3531, oak: .9746, pines: .8649, bush: 1.3714, cottage: 1.1532, knight: .7901, skullrock: 1.2632, crownrock: 1.0909, lamp: .4555, bannerp: .3918, bannerb: .6034, fence: 1.8551, torch: .4097, castle: 1.5202, camp: 3.4115, back: 4.2227, hoard: 2.1955 }; // width / height of each card
 const PB_DIM = { statue: .6146, skullrock: 1.0756, crownskull: .8438, crystals: .9167, cottage: 1.219, barricade: 1.113, fence: 1.2973, torch: .4688, bannerp: .6172, bannerb: .651, bush: 1.0696, rockpile: 1.4328 };
 const PA_CP = { walk: [.8735, 601], swing: [.6973, 631], hit: [1.0265, 567], down: [1.1417, 515] }; // The Carver's poses: width / height, height in pixels
 const PB_GB = { idle: [.9363, 487], walk: [.8911, 496], wind: [.6147, 558], smash: [.7537, 475], roar: [1.1279, 477], daze: [1.0995, 422] };
@@ -6043,7 +6043,7 @@ function paCard(n, h, x, z, o = {}) { // a cut-out h tall standing on the page a
   if (o.u || o.v) { const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, u[0] + uv.getX(i) * (u[1] - u[0]), v[0] + uv.getY(i) * (v[1] - v[0])); } // just part of the picture
   const c = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: paTex(n), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }));
   c.position.set(x, o.y || 0, z); c.rotation.set(-(o.lean === undefined ? .3 : o.lean), o.ry || 0, 0); /* leaning back, like a pop-up page facing the reader's raised eye */ if (o.flip) c.scale.x = -1; PA.g.add(c);
-  if (n !== 'back') { const s = new THREE.Mesh(new THREE.PlaneGeometry(Math.max(w * 1.1, 1.6), Math.max(2.4, h * .8)), PA.sh); s.rotation.x = -Math.PI / 2; s.position.set(x, (o.y || 0) + .02, z + h * .3); /* (v202ab: at the card's foot and a little toward the reader, so it shows; it used to sit behind the card, hidden. Poles and banners get one too) */ s.renderOrder = 1; PA.g.add(s); c.userData.sh = s; } // its soft shadow on the paper
+  if (n !== 'back') { const sd = Math.max(1.1, h * .34), s = new THREE.Mesh(new THREE.PlaneGeometry(Math.max(w * .95, .9), sd), PA.shC); s.rotation.x = -Math.PI / 2; s.position.set(x, (o.y || 0) + .02, z - .12 + sd / 2); /* (v202ac) a pop-up's shadow: darkest along the fold where the card meets the page, fading toward the reader. Poles and banners get one too */ s.renderOrder = 1; PA.g.add(s); c.userData.sh = s; } // its soft shadow on the paper
   return c;
 }
 function paBuild() {
@@ -6051,6 +6051,8 @@ function paBuild() {
   PA.sh = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -8, vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
     fragmentShader: 'varying vec2 vUv; void main() { float d = length(vUv * 2.0 - 1.0); gl_FragColor = vec4(.15, .1, .06, .72 * (1.0 - smoothstep(.15, 1.0, d))); }' }); /* (v202ab) the soft shadow under each cut-out. These had never shown: the page won the depth test against a plane .03 above it
      at this grazing angle (so the polygon offset), and a soft blob that thin was all hidden behind its card (so it sits further forward) */
+  PA.shC = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -8, vertexShader: PA.sh.vertexShader,
+    fragmentShader: 'varying vec2 vUv; void main() { float side = 1.0 - smoothstep(.45, 1.0, abs(vUv.x * 2.0 - 1.0)); gl_FragColor = vec4(.12, .08, .05, .72 * pow(vUv.y, 1.4) * side); }' }); // (v202ac) the cut-outs' contact shadow: v = 1 is the card's foot
   const table = new THREE.Mesh(new THREE.PlaneGeometry(240, 240), new THREE.MeshBasicMaterial({ color: C('#5a2a34'), toneMapped: false, fog: false })); table.rotation.x = -Math.PI / 2; table.position.set(0, -.6, -40); g.add(table); // the book's cloth cover
   const PW = 33, PH = PW * PAGE_H / PAGE_W, PZ = -50 + PH / 2; // the painted road (0.314 of the page) is the game's road; the painted river runs just in front of the castle, a moat
   const under = new THREE.Mesh(new THREE.PlaneGeometry(PW + 1.2, PH + .8), new THREE.MeshBasicMaterial({ color: C('#e9dcc0'), toneMapped: false, fog: false })); under.rotation.x = -Math.PI / 2; under.position.set(0, -.04, PZ + .25); g.add(under); // the stack of pages under the top one
@@ -6076,9 +6078,9 @@ function paBuild() {
   { PA.castle = PA.castleF = paCard('castle', 10.2, 0, FORT_Z - 4.3, { lean: .22 }); PA.castle2 = null; } /* one card: Grimbald stands behind it, and it holds together from any camera */
   PA.camp = [paCard('camp', 4.1, -6.9, -3.7, { lean: .32, u: [0, .47] }), paCard('camp', 4.1, 6.9, -3.7, { lean: .32, u: [.53, 1] })]; // the camp wall's two halves either side of the cannon, where the 3D wall stood
   for (const [n, h, x, z, o] of [
-    ['pines', 5.6, -12.5, -44], ['oak', 4.4, -10.5, -33], ['bannerp', 4.2, -7.6, -30, { bare: true }], ['bush', 2.2, -13, -28], ['knight', 4, -9.4, -25],
+    ['pines', 5.6, -12.5, -44], ['oak', 4.4, -10.5, -39.2], ['bannerp', 4.2, -7.6, -30, { bare: true }], ['bush', 2.2, -13, -28], ['knight', 4, -9.4, -25],
     ['lamp', 3, -7.2, -19, { bare: true }], ['cottage', 4, -11.5, -18], ['fence', 1.8, -13, -12.5], ['oak', 3.8, -9.6, -10.5, { flip: true }], ['bannerb', 4, -7.4, -6.5, { bare: true }],
-    ['pines', 5.4, 12.5, -43, { flip: true }], ['bush', 2.2, 9.5, -36, { flip: true }], ['bannerp', 4.2, 7.6, -30, { bare: true, flip: true }], ['skullrock', 3.6, 10.5, -30], ['torch', 2.8, 7.2, -24, { bare: true }],
+    ['pines', 5.4, 12.5, -43, { flip: true }], ['bush', 2.2, 9.8, -39.6, { flip: true }], ['bannerp', 4.2, 7.6, -30, { bare: true, flip: true }], ['skullrock', 3.6, 10.5, -30], ['torch', 2.8, 7.2, -24, { bare: true }],
     ['crownrock', 4, 11, -22.5], ['lamp', 3, 7.2, -15, { bare: true }], ['pines', 5, 10.5, -15], ['oak', 4, 12, -8.5], ['bannerb', 4, 7.4, -6.5, { bare: true, flip: true }],
     ['pines', 5.6, -13, -71], ['oak', 4.4, -12.6, -60], ['bush', 2.2, -10.5, -66], ['pines', 5.4, 13, -70, { flip: true }], ['bush', 2.4, 12.6, -58, { flip: true }], ['oak', 4, 11, -66.5, { flip: true }],
     ['pines', 6.4, -17.8, -66], ['oak', 5, -17.4, -56.5], ['pines', 6, -16.6, -50.5], ['pines', 6.2, 17.8, -65, { flip: true }], ['oak', 5, 17.4, -55.5, { flip: true }], ['pines', 5.8, 16.6, -49.5, { flip: true }]]) paCard(n, h * (z > -46 ? .8 : 1), x, z, o); /* (v201b: the roadside pieces 0.8x, now the dolls are bigger) */
@@ -6102,7 +6104,7 @@ function paExtras() { // the cannon card (on the real cannon, so it slides and l
     PB.star = canvasTex(128, 128, (x, w, h) => { const st = (r1, r2, c) => { x.fillStyle = c; x.beginPath(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? r2 : r1; x.lineTo(64 + Math.cos(a) * r, 64 + Math.sin(a) * r); } x.fill(); }; st(60, 28, '#ffffff'); st(50, 21, '#ffb21e'); st(32, 13, '#ffe45a'); });
   } else { const ch = 3.6, can = PA.can = new THREE.Mesh(new THREE.PlaneGeometry(ch * PA_DIM.cannon, ch).translate(0, ch / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('cannon'), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }));
   can.position.set(0, 0, .3); launcher.add(can); can.visible = false;
-  { const cs = new THREE.Mesh(new THREE.PlaneGeometry(ch * PA_DIM.cannon * 1.15, 1.9), PA.sh); cs.rotation.x = -Math.PI / 2; cs.position.set(0, .02, .4); cs.renderOrder = 1; can.add(cs); } } // (v202ab) its shadow rides with it
+  { const cs = new THREE.Mesh(new THREE.PlaneGeometry(ch * PA_DIM.cannon * .95, 1.3), PA.shC); cs.rotation.x = -Math.PI / 2; cs.position.set(0, .02, -.12 + .65); cs.renderOrder = 1; can.add(cs); } } // (v202ab) its shadow rides with it
   const gb = PA.gb = { g: new THREE.Group(), m: {} }; PA.g.add(gb.g); gb.g.visible = false;
   for (const k in PA_GB) { const h = 6.6 * PA_GB[k][1] / PA_GB.idle[1], w = h * PA_GB[k][0], m = gb.m[k] = new THREE.Mesh(new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('gb_' + k), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }));
     m.rotation.x = -.28; m.visible = false; gb.g.add(m); }
