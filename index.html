@@ -731,8 +731,11 @@ svg.ico.sm{width:18px;height:18px}
 #game.papermenu #map .mcard i.lkp img{width:34px;height:34px;display:block;filter:drop-shadow(0 2px 2px rgba(40,20,5,.35))}
 #game.papermenu #map .mcard.locked i.lkp img{opacity:.92}
 #game.papermenu #map::after{-webkit-mask:linear-gradient(#000 calc(var(--lk,0px) - 36px),transparent calc(var(--lk,0px) + 36px))!important;mask:linear-gradient(#000 calc(var(--lk,0px) - 36px),transparent calc(var(--lk,0px) + 36px))!important}
-#game.papermenu #map .map-path{padding-bottom:calc(env(safe-area-inset-bottom) + 112px)!important}
-#game.papermenu #map #mapClose.btn.big,#game.papermenu #rewards #rwBack.btn.big{max-width:250px!important;width:62%!important;margin-left:auto;margin-right:auto}
+#game.papermenu #map .map-path{padding-bottom:calc(env(safe-area-inset-bottom) + 26px)!important}
+#game.papermenu #map #mapClose.btn.big{position:absolute!important;z-index:3;top:calc(env(safe-area-inset-top) + 10px);right:12px;left:auto;width:46px!important;max-width:none!important;height:46px!important;min-height:0!important;padding:0!important;margin:0!important;border:0!important;border-image:none!important;border-radius:50%!important;background:url(models/paper/a/ui/ring.webp) center/100% 100% no-repeat,radial-gradient(circle,#fbf1dc 58%,transparent 60%)!important;box-shadow:0 3px 4px rgba(60,30,8,.3)!important;font-size:0!important;color:transparent!important;animation:none!important} /* v202m: on the map, Back is a small close ring (like the Upgrades sheet), so the whole map shows */
+#game.papermenu #map #mapClose.btn.big::before,#game.papermenu #map #mapClose.btn.big::after{content:"";position:absolute;left:50%;top:50%;width:18px;height:3px;border-radius:2px;background:#4a2c14;transform:translate(-50%,-50%) rotate(45deg)}
+#game.papermenu #map #mapClose.btn.big::after{transform:translate(-50%,-50%) rotate(-45deg)}
+#game.papermenu #rewards #rwBack.btn.big{max-width:250px!important;width:62%!important;margin-left:auto;margin-right:auto}
 /* rewards: the title sits up top instead of floating mid-page */
 #game.papermenu #rewards>.map-title{margin-top:calc(env(safe-area-inset-top) + 34px)!important}
 #game.papermenu #map .mcard.here{cursor:pointer}
