@@ -696,6 +696,16 @@ svg.ico.sm{width:18px;height:18px}
 #game.papermenu .pill-btn:active,#game.papermenu .uptoggle:active{transform:translateY(3px);box-shadow:inset 0 2px 0 rgba(255,255,255,.9),0 1px 0 #8a5a2a!important}
 #game.papermenu .uptoggle svg{fill:#f2b632!important;stroke:#6b4426;stroke-width:1.8px;paint-order:stroke;filter:none!important}
 #game.papermenu .menu-pills{gap:8px}
+#game.papermenu #map .mcard.here{cursor:pointer}
+#game.papermenu #map .mcard.here i{background:linear-gradient(180deg,#5b8ee0,#3461b0)!important;border:2px solid #fffaea!important;box-shadow:0 0 0 1.5px #1d2f5a,0 3px 0 1.5px #1d2f5a!important;color:#fffaea!important;font-family:var(--disp);animation:herePulse 1.6s ease-in-out infinite}
+#game.papermenu #map .mcard.here:active i{transform:translateY(2px)}
+.mplay{width:9px;height:9px;margin-right:4px;vertical-align:0;filter:none!important}
+@keyframes herePulse{50%{transform:scale(1.07)}}
+@media (prefers-reduced-motion:reduce){#game.papermenu #map .mcard.here i{animation:none}}
+#game.papermenu .rw-m .btn .rw-c,#game.papermenu .rw-chest .btn .rw-c{width:16px;height:16px;margin-left:3px;vertical-align:-3px}
+@media (max-width:430px){#game.papermenu .trail{transform:scale(.94)}}
+@media (max-width:400px){#game.papermenu .trail{transform:scale(.88)}}
+@media (max-width:360px){#game.papermenu .trail{transform:scale(.82)}}
 #game.papermenu #rewards{padding-left:calc(var(--tps,80px) * .3)!important;padding-right:calc(var(--tps,80px) * .3)!important}
 #game.papermenu .rw-sec{width:100%!important;max-width:440px}
 #game.papermenu #rwBack{margin-bottom:calc(env(safe-area-inset-bottom) + var(--tps,80px) * .45)!important}
@@ -8652,13 +8662,13 @@ function renderMap() {
   const lap = Math.floor((save.level - 1) / (WORLD_LEN * WORLDS.length)), inLap = lap > 0 ? 999 : (save.level - 1) % (WORLD_LEN * WORLDS.length) + 1, tro = { ...(save.trophies || {}) };
   for (let w = 0; w < 5; w++) if (lap > 0 || inLap > (w + 1) * WORLD_LEN) tro[w] = 1; // progress made before trophies existed still counts
   const rows = [];
-  const ICO = { star: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>', lock: '<svg viewBox="0 0 24 24" style="opacity:.75"><use href="#i-lock"/></svg>', crown: '<svg viewBox="0 0 40 24" style="width:30px"><use href="#i-crown"/></svg>' }; // drawn, not emoji, so every phone shows the same thing
+  const ICO = { play: '<svg class="mplay" viewBox="0 0 10 10"><path d="M2 1l7 4-7 4z" fill="currentColor"/></svg>', star: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>', lock: '<svg viewBox="0 0 24 24" style="opacity:.75"><use href="#i-lock"/></svg>', crown: '<svg viewBox="0 0 40 24" style="width:30px"><use href="#i-crown"/></svg>' }; // drawn, not emoji, so every phone shows the same thing
   const card = (cls, wc, emb, name, sub, tag) => `<div class="mcard ${cls}" style="--wc:${wc}"><div class="emb e${emb}"><svg viewBox="0 0 48 ${emb === 4 ? 52 : 48}"><use href="#t-${emb}"/></svg></div><div><b>${name}</b><span>${sub}</span></div><i>${tag}</i></div>`;
-  if (lap > 0) rows.push(`<div class="mcard here" style="--wc:#d070ff"><div class="emb e4"><svg viewBox="0 0 48 52"><use href="#t-5"/></svg></div><div><b>The Endless Road</b><span>${WORLDS[worldOf(save.level)].name} · Rowan</span></div><i>${roadN(save.level)}</i></div>`);
+  if (lap > 0) rows.push(`<div class="mcard here" style="--wc:#d070ff"><div class="emb e4"><svg viewBox="0 0 48 52"><use href="#t-5"/></svg></div><div><b>The Endless Road</b><span>${WORLDS[worldOf(save.level)].name} · Rowan</span></div><i>${ICO.play}${roadN(save.level)}</i></div>`);
   for (let w = WORLDS.length - 1; w >= 0; w--) {
     const a = w * WORLD_LEN + 1, b = a + WORLD_LEN - 1, cls = (tro[w] ? 'won' : '') + (inLap >= a && inLap <= b ? ' here' : inLap < a && !tro[w] ? ' locked' : '');
     const wn = ['Grimbald', 'Sek-Ra', 'Hrimgar', 'Magmaw', 'The Bone King'][w];
-    rows.push(card(cls, WORLD_COL[w], w, WORLDS[w].name, 'Levels ' + a + '–' + b + ' · ' + wn, tro[w] ? ICO.star : inLap >= a && inLap <= b ? (inLap - a + 1) + '/' + WORLD_LEN : ICO.lock));
+    rows.push(card(cls, WORLD_COL[w], w, WORLDS[w].name, 'Levels ' + a + '–' + b + ' · ' + wn, inLap >= a && inLap <= b ? ICO.play + (inLap - a + 1) + '/' + WORLD_LEN : tro[w] ? ICO.star : ICO.lock));
   }
   $('mapPath').innerHTML = rows.join(''); $('mapNg').textContent = '';
 }
@@ -8667,6 +8677,7 @@ function swapIn(el, after) { psLoad('turn').then(() => psSnd('turn', .18)); el.c
 function swapOut(el, under, after) { psLoad('turn').then(() => psSnd('turn', .14)); if (under) under.classList.add('on'); el.classList.add('sw-out'); setTimeout(() => { el.classList.remove('on', 'sw-out'); if (after) after(); }, 230); }
 $('mapBtn').onclick = () => { renderMap(); swapIn($('map'), () => $('menu').classList.remove('on')); mapTone(); bendTitle($('map').querySelector('.map-title')); };
 $('mapClose').onclick = () => swapOut($('map'), $('menu'));
+$('mapPath').onclick = e => { if (!e.target.closest('.mcard.here') || PT.on) return; audio(); pageTurn(() => { $('map').classList.remove('on'); startPlay(); }); }; // v202h: the world you are on is a door: tap it to play its next level
 // the painting on the story card; the drawn emblem stays until it is here
 const STORY_ART = ['s_grimbald', 's_sekra', 's_hrimgar', 's_magmaw', 's_king'];
 function storyPic(k) { const im = $('storyArt'), c = im.parentNode; c.classList.remove('art'); im.onload = () => c.classList.add('art'); im.onerror = () => c.classList.remove('art'); const pa = PA.on && PAPER === 'a' && k === 's_grimbald'; c.classList.toggle('pa', pa); im.src = pa ? 'models/paper/a/gb_roar.webp' : artDir(k) + k + '.webp'; if (im.complete && im.naturalWidth) c.classList.add('art'); }
@@ -8723,7 +8734,7 @@ function rewardsReady() { const d = daily(); return !d.chest || d.ms.some(m => !
 let rwGained = 0, rwBefore = 0;
 function renderRewards() {
   const d = daily(); $('rwBox').innerHTML = art('r_chest', '🎁'); $('rwBox').className = 'rw-box' + (artNo.r_chest ? '' : ' pic') + (d.chest ? ' done' : ''); $('rwChestTxt').textContent = d.chest ? 'New chest in ' + untilTomorrow() : chestPay() + ' coins inside'; if (!RW.fly) $('rwCoinN').textContent = save.coins; $('rwChestBtn').disabled = d.chest; $('rwChestBtn').textContent = d.chest ? 'Opened' : 'Open';
-  $('rwMissions').innerHTML = d.ms.map((m, k) => `<div class="rw-m ${m.claimed ? 'done' : ''}"><div><b>${MISSIONS[m.id].txt(m.goal)}</b><span>${m.prog} / ${m.goal} · <svg class="rw-c"><use href="#i-coin"/></svg> ${missionPay()}</span><div class="rw-bar"><i style="width:${Math.round(100 * m.prog / m.goal)}%"></i></div></div><button class="btn violet sm" data-m="${k}" ${m.claimed || m.prog < m.goal ? 'disabled' : ''}>${m.claimed ? 'Done' : 'Claim'}</button></div>`).join('');
+  $('rwMissions').innerHTML = d.ms.map((m, k) => `<div class="rw-m ${m.claimed ? 'done' : ''}"><div><b>${MISSIONS[m.id].txt(m.goal)}</b><span>${m.prog} / ${m.goal}</span><div class="rw-bar"><i style="width:${Math.round(100 * m.prog / m.goal)}%"></i></div></div><button class="btn violet sm" data-m="${k}" ${m.claimed || m.prog < m.goal ? 'disabled' : ''}>${m.claimed ? 'Done' : (m.prog >= m.goal ? 'Claim ' : '') + `+${missionPay()}<svg class="rw-c"><use href="#i-coin"/></svg>`}</button></div>`).join('');
   const own = save.skins || ['snow'], cur = save.skin || 'snow';
   $('rwStable').innerHTML = !palReady() ? '<div class="rw-skin">' + (paperUI() ? '<div class="rw-swatch lk"><img class="lk" src="models/paper/a/art/lock.webp" alt="" draggable="false"></div>' : '<div class="rw-swatch" style="background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" style="width:22px;height:22px"><use href="#i-lock"/></svg></div>') + '<div><b>The Paladin</b><span>Beat Level ' + CAP_AT + ' to unlock him and his stable</span></div></div>' : SKINS.map(s => `<div class="rw-skin"><div class="rw-pic" style="box-shadow:0 0 10px ${s.spirit};background:radial-gradient(circle at 35% 30%,${s.coat},${s.dark})">${art('h_' + s.id, '')}</div><div><b>${s.name}</b><span>${own.includes(s.id) ? (cur === s.id ? 'Riding now' : 'In your stable') : s.cost + ' coins'}</span></div><button class="btn ${own.includes(s.id) ? 'green' : 'violet'} sm" data-s="${s.id}" ${cur === s.id || (!own.includes(s.id) && save.coins < s.cost) ? 'disabled' : ''}>${cur === s.id ? 'Riding' : own.includes(s.id) ? 'Ride' : 'Buy'}</button></div>`).join('');
   $('rewDot').classList.toggle('on', rewardsReady());
