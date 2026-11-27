@@ -7956,7 +7956,7 @@ function render() {
   trimUploads(); GLOW.draw(); if (FUSE) FUSE.tick();
   if (BACK) BACK.before();
   if (LEAN && POST.on && !G.lowQ) { // (the same buffers, only a smaller part of them used: nothing is rebuilt)
-    const u = G.introT > 0 ? Math.min(1, G.introT / .5) : 1, k = DIR.s || G.grandT > 0 || G.mode === 'won' || G.cine || G.end ? .78 : G.introT > 0 ? 1 - .22 * u * u * (3 - 2 * u) : 1, w = POST.rt.width, h = POST.rt.height, kw = Math.round(w * k), kh = Math.round(h * k);
+    const u = G.introT > 0 ? Math.min(1, G.introT / .5) : 1, k = (DIR.s && !DIR.s.ot) || G.grandT > 0 || G.mode === 'won' || G.cine || G.end ? .78 : G.introT > 0 ? 1 - .22 * u * u * (3 - 2 * u) : 1, w = POST.rt.width, h = POST.rt.height, kw = Math.round(w * k), kh = Math.round(h * k);
     POST.rt.viewport.set(0, 0, kw, kh); POST.rt.scissor.set(0, 0, kw, kh); POST.mat.uniforms.uS.value.set(kw / w, kh / h); POST.extract.uniforms.uS.value.copy(POST.mat.uniforms.uS.value); }
   if (POST.on && !G.lowQ) { renderer.setRenderTarget(POST.rt); renderer.render(scene, camera); if (BACK) BACK.after(); POST.run(); }
   else renderer.render(scene, camera);
@@ -9011,12 +9011,13 @@ function dirTick(dt) {
   if (s.tick) s.tick(t, real, once); if (DIR.s === s && s.clips) clipTick(s, t); if (DIR.s === s && t >= s.len) dirStop(false);
 }
 function dirFilm(dt) { // the bars slide, the light of a scene comes and goes, fades to black
-  const on = DIR.s ? 1 : 0, to = on * (PA.on && PAPER === 'a' ? 0 : .085); /* (v201: no black bars on the storybook: Sterling) */ if (!on && DIR.bars < .0005 && DIR.amt < .01 && DIR.fade < .004 && !DIR.fadeTo) { if (DIR.live) { DIR.live = false; const u = POST.mat.uniforms; DIR.bars = DIR.amt = DIR.fade = 0; u.uFilm.value = u.uBars.value = u.uFade.value = u.uFocB.value = 0; } return; }
+  const on = DIR.s && !DIR.s.noFilm ? 1 : 0, to = on * (PA.on && PAPER === 'a' ? 0 : .085); /* (v202p: a scene with noFilm keeps the plain picture, so nothing shifts when it ends) */ /* (v201: no black bars on the storybook: Sterling) */ if (!on && DIR.bars < .0005 && DIR.amt < .01 && DIR.fade < .004 && !DIR.fadeTo) { if (DIR.live) { DIR.live = false; const u = POST.mat.uniforms; DIR.bars = DIR.amt = DIR.fade = 0; u.uFilm.value = u.uBars.value = u.uFade.value = u.uFocB.value = 0; } return; }
   const r = dt / (DIR.s ? DIR.speed : 1), k = Math.min(1, r * 8); DIR.live = true; DIR.bars += (to - DIR.bars) * k; { const fa = on * (PA.on && PAPER === 'a' ? .35 : 1); DIR.amt += (fa - DIR.amt) * (on ? 1 : Math.min(1, r * 6)); } /* (v201: the film's haze is light on paper) */ DIR.fade += clamp(DIR.fadeTo - DIR.fade, -r * 2.6, r * 3.4);
   const u = POST.mat.uniforms; u.uBars.value = DIR.bars; u.uFilm.value = DIR.amt; u.uFade.value = DIR.fade; if (!on) u.uFocB.value = 0;
 }
 const _d3 = new THREE.Vector3();
 function dirCamera() {
+  if (DIR.s.cam) { DIR.s.cam(DIR.t); const u = POST.mat.uniforms; u.uAsp.value = 1 / camera.aspect; u.uFlare.value.w = 0; return; } // (v202p: a scene can fly its own unbroken path)
   const s = DIR.s, t = DIR.t; let q = s.shots[s.shots.length - 1]; for (const k of s.shots) if (t < k.t[1]) { q = k; break; }
   const v = clamp((t - q.t[0]) / (q.t[1] - q.t[0]), 0, 1), e = q.ease === 'lin' ? v : q.ease === 'out' ? 1 - (1 - v) * (1 - v) : q.ease === 'in' ? v * v : v * .35 + .65 * v * v * (3 - 2 * v);
   const mix = P => { const a = dP(P[0]); if (P.length < 2) return a; const b = dP(P[P.length - 1]); if (P.length === 3) { const c = dP(P[1]), n = 1 - e; return [0, 1, 2].map(i => n * n * a[i] + 2 * n * e * c[i] + e * e * b[i]); } return [0, 1, 2].map(i => a[i] + (b[i] - a[i]) * e); };
@@ -9298,16 +9299,26 @@ function oneTake() {
     { t: [0, T.hold], pos: [[0, Hc, PZ + .05], [0, Hc, PZ + .05]], at: [[0, 0, PZ], [0, 0, PZ]], fov: [50, 50] }, // exactly the picture on the book's page
     { t: [T.hold, T.down], pos: [[0, Hc, PZ + .05], [0, Hc * .55, PZ + 15], [.9, 6.3, -24.5]], at: [[0, 0, PZ], [0, 1.2, PZ - 3], [0, GB[1] - .3, GB[2]]], fov: [50, 45, 40] }, // down the road
     { t: [T.down, T.near], pos: [[.9, 6.3, -24.5], [.4, 6.8, -27.6]], at: [[0, GB[1] - .3, GB[2]], [0, GB[1] + .1, GB[2]]], fov: [40, 37] }, // Grimbald over his wall
-    { t: [T.near, T.back], pos: [[.4, 6.8, -27.6], [1.3, 8.8, -15], C], at: [[0, GB[1] + .1, GB[2]], [0, 3.2, -30], L], fov: [37, 46, F] }, // back over the road to your cannon
+    { t: [T.near, T.back], pos: [[.4, 6.8, -27.6], [1.3, 8.8, -15], C], at: [[0, GB[1] + .1, GB[2]], [0, 3.2, -30], L], fov: [37, 46, F], ease: 'out' }, // back over the road to your cannon, coming to rest on it (no jolt as play begins)
   ];
+  /* v202p: the shots above are flown as three moves of ONE take (down the road, in on Grimbald, back to your cannon). Each move eases in and
+     out of rest along its own curve, timed by distance travelled, so the speed only ever rises and falls once a move and nothing jolts where
+     two meet; the last settles on your cannon at exactly the lens play uses, with its pull easing too (so no thud as play begins). */
+  const ofs = f => a < .5874 ? Math.atan(Math.tan(f * Math.PI / 360) * Math.pow(.5874 / a, .62)) * 360 / Math.PI : a > .72 ? f * .86 : f;
+  const P0 = [0, Hc, PZ + .05], A0 = [0, 0, PZ], P3 = [.9, 6.3, -24.5], A3 = [0, GB[1] - .3, GB[2]], P4 = [.4, 6.8, -27.6], A4 = [0, GB[1] + .1, GB[2]];
+  const bz = (P, e) => P.length < 3 ? P[0].map((v, i) => v + (P[1][i] - v) * e) : P[0].map((v, i) => (1 - e) * (1 - e) * v + 2 * (1 - e) * e * P[1][i] + e * e * P[2][i]);
+  const mv = (t0, t1, p, at, f, e) => { const L = [0]; let q = p[0]; for (let i = 1; i <= 64; i++) { const r = bz(p, i / 64); L.push(L[i - 1] + Math.hypot(r[0] - q[0], r[1] - q[1], r[2] - q[2])); q = r; } return { t0, t1, p, at, f, e, L }; };
+  const MV = [mv(T.hold, T.down, [P0, [0, Hc * .55, PZ + 15], P3], [A0, [0, 1.2, PZ - 3], A3], [50, ofs(40)], 3), mv(T.down, T.near, [P3, P4], [A3, A4], [ofs(40), ofs(37)], 3), mv(T.near, T.back, [P4, [1.3, 8.8, -15], C], [A4, [0, 3.2, -30], L], [ofs(37), F], 5)];
+  const cam = t => { let o = [...P0, ...A0, 50]; for (const m of MV) if (t >= m.t0) { const v = clamp((t - m.t0) / (m.t1 - m.t0), 0, 1), w = m.e === 5 ? v * v * v * (10 - 15 * v + 6 * v * v) : v * v * (3 - 2 * v), d = w * m.L[64]; let i = 0; while (i < 63 && m.L[i + 1] < d) i++; const u = (i + clamp((d - m.L[i]) / (m.L[i + 1] - m.L[i] || 1), 0, 1)) / 64; o = [...bz(m.p, u), ...bz(m.at, u), m.f[0] + (m.f[1] - m.f[0]) * w]; }
+    camera.position.set(o[0], o[1], o[2]); camera.lookAt(_look.set(o[3], o[4], o[5])); if (Math.abs(camera.fov - o[6]) > .001) { camera.fov = o[6]; camera.updateProjectionMatrix(); } };
   const fin = () => { puReset(); G.foeRise = undefined; PA.poseHold = null; G.oneTake = false; gameEl.classList.remove('ot'); for (const g of G.gates) g.mesh.visible = true; if (laneWalls) laneWalls.visible = true; sawGroup.visible = true; };
-  const s = { len: T.back + .05, freeze: true, keepStage: true, cine: true, ot: true, noFoes: true, fadeIn: false, shots,
+  const s = { len: T.back + .05, freeze: true, keepStage: true, cine: true, ot: true, noFilm: true, noFoes: true, fadeIn: false, shots, cam,
     start: () => { stageClear(true); puTick(0, 1.6); },
     tick: (t, dt, once) => {
       toastTick(dt); puTick(t, 1.6); if (s.noFoes && t > 1.9) { s.noFoes = false; G.foeRise = DIR.t; } if (G.foeRise !== undefined && DIR.t - G.foeRise > 2) G.foeRise = undefined;
       if (once('ch', .55)) toastMsg('CHAPTER I', WORLDS[0].name, { name: true, fly: true });
       if (once('roar', T.roar)) { PA.poseHold = 'roar'; bossSay('roar', 0, .9); hitBoom(.7); buzz([20, 30, 60]); swell(.9, .08, 2400, 260); toastMsg(WARLORDS[0].title.toUpperCase(), 'GRIMBALD', { name: true }); }
-      if (once('calm', T.near - .1)) PA.poseHold = null;
+      if (once('calm', T.back - .9)) PA.poseHold = null; // (he lets the roar go once he is small in the distance: no pop)
       if (once('go', T.near + .4)) s.freeze = false; // the horde stirs as the camera pulls back
       if (once('board', T.back - 1.5)) { for (const g of G.gates) { g.mesh.visible = true; g.pulse = 1; } if (laneWalls) laneWalls.visible = true; sawGroup.visible = true; tone(660, .08, 'triangle', .04, 1); } // the gates set themselves out on the road
     },
