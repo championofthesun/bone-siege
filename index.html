@@ -701,6 +701,7 @@ svg.ico.sm{width:18px;height:18px}
 #game.papermenu .pill-btn:active,#game.papermenu .uptoggle:active{transform:translateY(3px);box-shadow:inset 0 2px 0 rgba(255,255,255,.9),0 1px 0 #8a5a2a!important}
 #game.papermenu .uptoggle svg{fill:#f2b632!important;stroke:#6b4426;stroke-width:1.8px;paint-order:stroke;filter:none!important}
 #game.papermenu .menu-pills{gap:8px}
+#game.ot #toast{visibility:visible!important} /* (v202o: the chapter and Grimbald's name come during the one-take) */
 /* v202k: the boon choices are paper cut-outs pasted on the scroll, each held by a strip of tape */
 .rb{position:relative;background:#fffdf6 var(--ptgrain)!important;border-radius:3px!important;box-shadow:0 1px 0 rgba(90,55,20,.28),0 5px 9px rgba(60,30,8,.22)!important;padding:8px 5px 9px!important;transform:rotate(var(--tilt,0deg));transition:transform .25s cubic-bezier(.3,1.5,.5,1),box-shadow .25s,opacity .25s}
 .rb:nth-child(1){--tilt:-2.2deg}.rb:nth-child(2){--tilt:1.5deg}.rb:nth-child(3){--tilt:-1deg}
@@ -8480,13 +8481,13 @@ const wlName = (d = WL.def) => d.name;
 function startPlay() {
   audio(); $('menu').classList.remove('on'); gameEl.classList.remove('overlay');
   setupLevel(save.level); G.mode = 'play'; G.hintT = save.level <= 2 ? 6 : 0; G.introT = G.sim ? 0 : INTRO_T; G.grandT = 0; { const w0 = [G.waveT, G.kingT, G.chT]; G.waveT += G.introT; G.kingT += G.introT; G.chT += G.introT; G.film = () => { [G.waveT, G.kingT, G.chT] = w0; G.introT = 0; }; } /* (the first brute charge came during the opening swoop) */
-  maybeStory(); const film = arrival(); if (film || G.chapterTitle) G.film(); G.film = null; /* (v202k: after the opening the camera is already in place: no second swoop) */
+  maybeStory(); const film = G.oneTake ? false : arrival(); if (film || G.chapterTitle || G.oneTake) G.film(); G.film = null; /* (v202k: after the opening the camera is already in place: no second swoop) */
   $('lvlPill').textContent = G.cfg.boss ? 'Boss · ' + (save.level > LAP_LEN ? 'Road ' + roadN(save.level) : save.level) : lvName(save.level); $('lvlPill').classList.toggle('boss', G.cfg.boss);
   if (G.worldOverride != null) toastMsg('PREVIEW', WORLDS[worldIdx].name, { name: true, fly: true });
-  else if (!film && PAPER === 'a' && save.level <= WORLD_LEN && (save.level === 1 || G.chapterTitle)) toastMsg('CHAPTER I', save.level === 1 ? WORLDS[0].name : WORLDS[0].name + ' · ' + lvName(save.level), { name: true, fly: true }), G.chapterTitle = false; /* (v201: the storybook's chapter ribbon) */
-  else if (!film && (save.level - 1) % (save.level > LAP_LEN ? 5 : WORLD_LEN) === 0) toastMsg(save.level > LAP_LEN ? 'THE ENDLESS ROAD' : 'WORLD ' + (Math.floor((save.level - 1) / WORLD_LEN) + 1), WORLDS[worldIdx].name, { name: true, fly: true });
+  else if (!film && !G.oneTake && PAPER === 'a' && save.level <= WORLD_LEN && (save.level === 1 || G.chapterTitle)) toastMsg('CHAPTER I', save.level === 1 ? WORLDS[0].name : WORLDS[0].name + ' · ' + lvName(save.level), { name: true, fly: true }), G.chapterTitle = false; /* (v201: the storybook's chapter ribbon) */
+  else if (!film && !G.oneTake && (save.level - 1) % (save.level > LAP_LEN ? 5 : WORLD_LEN) === 0) toastMsg(save.level > LAP_LEN ? 'THE ENDLESS ROAD' : 'WORLD ' + (Math.floor((save.level - 1) / WORLD_LEN) + 1), WORLDS[worldIdx].name, { name: true, fly: true });
   if (G.cfg.boss && !$('story').classList.contains('on')) { const wd = WARLORDS[worldOf(save.level) % WARLORDS.length]; toastMsg('BOSS LEVEL', wlName(wd, Math.floor((save.level - 1) / LAP_LEN)) + (worldOf(save.level) === HALLW ? ' is waiting' : ' has nowhere left to run'), { snd: 1 }); } // (his story card says it the first time)
-  if (!film && !G.practice && G.worldOverride == null && save.level <= LAP_LEN) { const w = worldOf(save.level), k = (save.level - 1) % WORLD_LEN; if (save.level === 1) toastMsg(WARLORDS[0].title.toUpperCase(), 'GRIMBALD', { name: true }); else if (k === 0 && w) toastMsg('THE BONE KING', ['', 'WAKE UP, SEK-RA!', 'STOP THEM, HRIMGAR!', 'MAGMAW, THEY\'RE AT MY DOOR!', 'GUARDS! HOLD THE BRIDGE!'][w], { fly: true }); else if (save.level === 46) toastMsg('YOU ARE INSIDE', 'THE THRONE ROOM', { name: true }); }
+  if (!film && !G.practice && G.worldOverride == null && save.level <= LAP_LEN) { const w = worldOf(save.level), k = (save.level - 1) % WORLD_LEN; if (save.level === 1) { if (!G.oneTake) toastMsg(WARLORDS[0].title.toUpperCase(), 'GRIMBALD', { name: true }); } else if (k === 0 && w) toastMsg('THE BONE KING', ['', 'WAKE UP, SEK-RA!', 'STOP THEM, HRIMGAR!', 'MAGMAW, THEY\'RE AT MY DOOR!', 'GUARDS! HOLD THE BRIDGE!'][w], { fly: true }); else if (save.level === 46) toastMsg('YOU ARE INSIDE', 'THE THRONE ROOM', { name: true }); }
   if (!film && !G.practice && G.worldOverride == null && save.level === LAP_LEN + 1) toastMsg('NOW ON THE WALL', 'ROWAN', { name: true });
   if (G.cfg.feat && TWISTS[G.cfg.feat]) { const f = G.cfg.feat; save.featTold = save.featTold || {}; if (save.level > LAP_LEN || !save.featTold[f]) toastMsg(TWISTS[f][0], TWISTS[f][1], { snd: 1, on: () => { save.featTold[f] = 1; persist(); } }); } // the world's new thing the first time; on the Endless Road, this level's twist
   if (isGold(save.level)) toastMsg('GOLD RUSH', 'Double coins on this level', { snd: 1 });
@@ -9284,7 +9285,37 @@ function cineEyes(on) { // the eyes blaze magenta: emissive, so the bloom catche
 }
 function cineFlash(peak, ms) { const f = document.querySelector('#cine .cine-flash'); f.style.transition = 'none'; f.style.opacity = peak; void f.offsetWidth; f.style.transition = `opacity ${ms}ms ease-out`; f.style.opacity = 0; }
 const thunderClap = (v = .55) => { cineFlash(.5, 180); setTimeout(() => cineFlash(.3, 140), 160); smp('thunder', v * .75, 0); };
+/* v202o: from the book's last page to the battle in one unbroken move. The page from straight above, the cut-outs and the
+   horde spring up, the camera glides down the road to Grimbald, who roars over his wall, then pulls back over the road and
+   settles on the battle camera behind your cannon as the gates set themselves out. It runs on the real level (started first,
+   held still), so nothing is set up again at the end: no page turn, no crossfade, no second swoop. */
+function oneTake() {
+  G.fromDesk = false; save.introDay = today(); save.openSeen = 1; persist();
+  G.oneTake = true; startPlay(); gameEl.classList.add('ot'); // (startPlay holds its banners back while G.oneTake: they come in the shot)
+  const a = VIEW.w / VIEW.h, tn = Math.tan(50 * Math.PI / 360), PH = 33 * PAGE_H / PAGE_W, PZ = -50 + PH / 2, Hc = a < 33 / PH ? (PH / 2) / tn : (33 / 2) / (tn * a);
+  const GB = [0, 7.1, -43.6], C = [CAM.x, CAM.y, CAM.z], L = [LOOK.x, LOOK.y, LOOK.z], F = camera.fov, T = { hold: 1.4, down: 4.3, roar: 4.6, near: 6.5, back: 9.8 };
+  const shots = [
+    { t: [0, T.hold], pos: [[0, Hc, PZ + .05], [0, Hc, PZ + .05]], at: [[0, 0, PZ], [0, 0, PZ]], fov: [50, 50] }, // exactly the picture on the book's page
+    { t: [T.hold, T.down], pos: [[0, Hc, PZ + .05], [0, Hc * .55, PZ + 15], [.9, 6.3, -24.5]], at: [[0, 0, PZ], [0, 1.2, PZ - 3], [0, GB[1] - .3, GB[2]]], fov: [50, 45, 40] }, // down the road
+    { t: [T.down, T.near], pos: [[.9, 6.3, -24.5], [.4, 6.8, -27.6]], at: [[0, GB[1] - .3, GB[2]], [0, GB[1] + .1, GB[2]]], fov: [40, 37] }, // Grimbald over his wall
+    { t: [T.near, T.back], pos: [[.4, 6.8, -27.6], [1.3, 8.8, -15], C], at: [[0, GB[1] + .1, GB[2]], [0, 3.2, -30], L], fov: [37, 46, F] }, // back over the road to your cannon
+  ];
+  const fin = () => { puReset(); G.foeRise = undefined; PA.poseHold = null; G.oneTake = false; gameEl.classList.remove('ot'); for (const g of G.gates) g.mesh.visible = true; if (laneWalls) laneWalls.visible = true; sawGroup.visible = true; };
+  const s = { len: T.back + .05, freeze: true, keepStage: true, cine: true, ot: true, noFoes: true, fadeIn: false, shots,
+    start: () => { stageClear(true); puTick(0, 1.6); },
+    tick: (t, dt, once) => {
+      toastTick(dt); puTick(t, 1.6); if (s.noFoes && t > 1.9) { s.noFoes = false; G.foeRise = DIR.t; } if (G.foeRise !== undefined && DIR.t - G.foeRise > 2) G.foeRise = undefined;
+      if (once('ch', .55)) toastMsg('CHAPTER I', WORLDS[0].name, { name: true, fly: true });
+      if (once('roar', T.roar)) { PA.poseHold = 'roar'; bossSay('roar', 0, .9); hitBoom(.7); buzz([20, 30, 60]); swell(.9, .08, 2400, 260); toastMsg(WARLORDS[0].title.toUpperCase(), 'GRIMBALD', { name: true }); }
+      if (once('calm', T.near - .1)) PA.poseHold = null;
+      if (once('go', T.near + .4)) s.freeze = false; // the horde stirs as the camera pulls back
+      if (once('board', T.back - 1.5)) { for (const g of G.gates) { g.mesh.visible = true; g.pulse = 1; } if (laneWalls) laneWalls.visible = true; sawGroup.visible = true; tone(660, .08, 'triangle', .04, 1); } // the gates set themselves out on the road
+    },
+    done: fin, abort: fin };
+  dirStart(s);
+}
 function startCine(full) {
+  if (PAPER === "a" && G.fromDesk && (full || !save.openSeen) && save.level <= WORLD_LEN) return oneTake(); // v202o: the long opening from the desk is one unbroken shot
   const long = full || !save.openSeen; if (long && !palArt) loadPaladinArt();
   G.practiceKeep = JSON.stringify(save); G.practice = true; $('menu').classList.remove('on'); gameEl.classList.remove('overlay');
   if (save.level <= LAP_LEN && worldOf(save.level) === HALLW && (save.level - 1) % WORLD_LEN > 4) save.level -= 5; // (the throne room has no castle to charge: his bridge does)
@@ -9445,7 +9476,7 @@ function arrival() {
   s.done = () => { tidy(); save.scenes[key] = 1; persist(); }; s.abort = tidy; dirStart(s); return true;
 }
 // ---- a captain marches out: a second and a half
-$('cine').addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); if (DIR.s) { if (DIR.t > .45) { if (DIR.s.cine) pageTurn(() => dirStop(true)); else dirStop(true); } } else if (G.fin && G.fin.t > .4) endFinale(); });
+$('cine').addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); if (DIR.s) { if (DIR.t > .45) { if (DIR.s.cine && !DIR.s.ot) pageTurn(() => dirStop(true)); else dirStop(true); } } else if (G.fin && G.fin.t > .4) endFinale(); });
 
 /* ---------------- level 50 and the ending ----------------
    Shades of the four warlords, then the Bone King. Beaten, he drops to one knee and SEND lights up: the player strikes the last
