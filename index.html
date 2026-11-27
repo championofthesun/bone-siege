@@ -504,7 +504,7 @@ svg.ico.sm{width:18px;height:18px}
 #game.papermenu .trail b.boss{background:radial-gradient(circle at 40% 35%,#d0563c,#8e2a1c);border-color:#fffaea;box-shadow:0 0 0 1.5px #6b4426}
 #game.papermenu .trail b.boss.done{background:radial-gradient(circle at 40% 35%,#f2c25a,#c58a22)}
 #game.papermenu .trail i{background:#c9a77a}#game.papermenu .trail i.done{background:#5e9a4c}
-#game.papermenu .trail b s{color:#c58a22;text-shadow:0 1px 0 #fffaea}
+#game.papermenu .trail b s{color:#c58a22;text-shadow:0 1px 0 #fffaea;margin-top:5px;font-size:10px;letter-spacing:0} /* (v202k: clear of the ring round the number) */
 #game.papermenu .uptoggle,#game.papermenu .pill-btn,#game.papermenu #menu .pill.wallet,#game.papermenu.overlay #audBtns button,#game.papermenu #gearBtn{background:linear-gradient(170deg,#fffaea,#f1e0b8)!important;color:#4a2c14!important;border:2px solid #8a5a2a!important;box-shadow:0 3px 0 rgba(90,55,20,.35)!important;text-shadow:none!important}
 #game.papermenu .uptoggle svg,#game.papermenu.overlay #audBtns svg,#game.papermenu #gearBtn svg{filter:brightness(.2) sepia(1) saturate(2.4)}
 #game.papermenu .btn.big,#game.papermenu #map .btn.big,#game.papermenu #rewards .btn.big{color:#fffaea!important;border:3px solid #fffaea!important;box-shadow:0 0 0 2.5px #6b4426,0 7px 0 2.5px #6b4426,0 12px 18px rgba(40,20,5,.35)!important;text-shadow:-2px -2px 0 #4a2c14,2px -2px 0 #4a2c14,-2px 2px 0 #4a2c14,2px 2px 0 #4a2c14,0 3px 0 #4a2c14!important;background:var(--ptgrain),linear-gradient(180deg,#86b4e6,#4d7ec2)!important;background-blend-mode:multiply,normal!important}
@@ -701,6 +701,22 @@ svg.ico.sm{width:18px;height:18px}
 #game.papermenu .pill-btn:active,#game.papermenu .uptoggle:active{transform:translateY(3px);box-shadow:inset 0 2px 0 rgba(255,255,255,.9),0 1px 0 #8a5a2a!important}
 #game.papermenu .uptoggle svg{fill:#f2b632!important;stroke:#6b4426;stroke-width:1.8px;paint-order:stroke;filter:none!important}
 #game.papermenu .menu-pills{gap:8px}
+/* v202k: the boon choices are paper cut-outs pasted on the scroll, each held by a strip of tape */
+.rb{position:relative;background:#fffdf6 var(--ptgrain)!important;border-radius:3px!important;box-shadow:0 1px 0 rgba(90,55,20,.28),0 5px 9px rgba(60,30,8,.22)!important;padding:8px 5px 9px!important;transform:rotate(var(--tilt,0deg));transition:transform .25s cubic-bezier(.3,1.5,.5,1),box-shadow .25s,opacity .25s}
+.rb:nth-child(1){--tilt:-2.2deg}.rb:nth-child(2){--tilt:1.5deg}.rb:nth-child(3){--tilt:-1deg}
+.rb::before{content:'';position:absolute;z-index:1;top:-7px;left:50%;width:40px;height:13px;transform:translateX(-50%) rotate(-4deg);background:rgba(236,224,186,.82);box-shadow:0 1px 1px rgba(60,30,8,.18);pointer-events:none}
+.rb:nth-child(2)::before{transform:translateX(-50%) rotate(3deg)}
+.rb.took{transform:rotate(0deg) translateY(-4px) scale(1.06)!important;box-shadow:0 0 0 2.5px #c99232,0 9px 14px rgba(60,30,8,.3)!important}
+.rb.gone{opacity:.35!important;transform:rotate(var(--tilt,0deg)) scale(.95)!important}
+/* the pause list: each boon a clear round picture, cropped inside its painted ring */
+.paper #pauseBoons em{width:52px!important;height:52px!important;border-radius:50%!important;background:#fffaf0!important;box-shadow:0 0 0 2px #c99232,0 2px 4px rgba(60,30,8,.3)!important;overflow:hidden}
+.paper #pauseBoons em img{transform:scale(1.32);object-fit:cover}
+.paper #pauseBoons div{gap:13px!important;font-size:14px!important}
+.paper #pauseBoons b{font-size:17px!important;margin-bottom:1px}
+.paper #giant .in{overflow:visible!important}
+.paper #giant .hero{position:absolute!important;inset:0!important;width:auto!important;height:auto!important;margin:0!important;border-radius:50%;overflow:hidden;background:#3e2c1e}
+.paper #giant .hero svg{background-size:145%!important;background-position:center!important;border-radius:0!important} /* v202k: the portrait fills the button */
+.paper #giant #giantTxt{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);z-index:2;padding:0 9px;border-radius:8px;background:linear-gradient(#7a4e2a,#4a2c14);border:1.5px solid #e3c48a;color:#fff6df;font-size:12px;line-height:16px;white-space:nowrap}
 /* v202j: the title page's picture takes only the room between the level trail and the buttons, so nothing sits on it */
 #game.papermenu #menu::before{position:relative!important;left:auto!important;bottom:auto!important;transform:none!important;order:1;flex:1 1 0;min-height:0;width:min(92%,460px);aspect-ratio:auto!important;margin:4px auto -26px;background-position:center bottom!important;z-index:0!important}
 #game.papermenu #menu>.dock{order:2;position:relative;z-index:1}
@@ -6033,6 +6049,7 @@ function paFx(on) { // the paper round's effects and its parchment HUD (and back
 function paperScene(on) { // the storybook level in place of the 3D land, castle and camp wall (and back again)
   if (on && !PA.g) { if (PAPER === 'b') pbBuild(); else paBuild(); paExtras(); } if (!PA.g || on === PA.on) return; PA.on = on; PA.g.visible = on; PA.can.visible = on;
   POST.mat.uniforms.uPaper.value = on && PAPER === 'a' ? 1 : 0; paUnits(on);
+  { const cm = partMeshes[PK.COIN], u = cm.userData; if (!u.g0) { u.g0 = cm.geometry; u.m0 = cm.material; } if (on && PAPER === 'a' && !u.pg) { u.pg = new THREE.PlaneGeometry(.24, .24); u.pm = new THREE.MeshBasicMaterial({ map: paTex('ui/coin'), alphaTest: .4, side: THREE.DoubleSide, toneMapped: false }); } cm.geometry = on && u.pg ? u.pg : u.g0; cm.material = on && u.pm ? u.pm : u.m0; } // v202k: in the storybook the coins are the painted coin, cut out of paper
   for (const [m, e] of [[spriteMat, '#0c1a3e'], [foeSpriteMat, '#2a0a30']]) { m.uniforms.uEdge.value.set(on ? (PAPER === 'b' ? '#8d8a96' : '#3a2010') : e); m.uniforms.uOut.value = on ? (PAPER === 'b' ? 1 : 1.2) : 1.3; m.uniforms.uDoll.value = on ? 1 : 0; m.uniforms.uQuad.value.set(BAKE_W * UNIT_K, BAKE_H * UNIT_K).multiplyScalar(on ? 1.95 : 1); } /* (v201: dolls 1.35x bigger, so the army reads as an army) */ // a thin brown cut line round each doll's paper edge; the dolls drawn bigger (looks only)
   for (const p of puffs) { p.s.material.map = on ? (PAPER === 'b' ? PB.puff : paTex('puff')) : smokeTex; p.s.material.needsUpdate = true; } // paper smoke
   Object.assign(muzzleFlash.material, on ? { map: PAPER === 'b' ? PB.star : paTex('star'), blending: THREE.NormalBlending } : { map: glowTex, blending: THREE.AdditiveBlending }); muzzleFlash.material.color.set(on ? '#ffffff' : '#ffc860'); muzzleFlash.material.needsUpdate = true;
@@ -7899,7 +7916,7 @@ function render() {
       _m.setPosition(_v);
     } else if (solid) { const r = P.rot[i]; _q.setFromEuler(_e.set(r, r * .6, r * 1.3)); _m.compose(_v, _q, _s.set(k, k, k)); }
     else { _m.makeScale(k, k, k); _m.setPosition(_v); }
-    mesh.setMatrixAt(pc[pk], _m); mesh.setColorAt(pc[pk]++, P.col[i]);
+    mesh.setMatrixAt(pc[pk], _m); mesh.setColorAt(pc[pk]++, pk === PK.COIN && PA.on ? WHITE : P.col[i]); // (a painted coin keeps its own colours)
   }
   partMeshes.forEach((m, j) => { m.count = pc[j]; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; });
 
@@ -8151,26 +8168,26 @@ const GHUD = (() => {
   const nine = (c, im, w, h, T = 15, B = 18, L = 17, R = 17) => { const iw = im.width, ih = im.height, st = ih * .276, sb = ih * .337, sl = iw * .056, sr = iw * .056, xs = [0, sl, iw - sr, iw], ys = [0, st, ih - sb, ih], dx = [-L, 0, w, w + R], dy = [-T, 0, h, h + B];
     for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) c.drawImage(im, xs[i], ys[j], xs[i + 1] - xs[i], ys[j + 1] - ys[j], dx[i], dy[j], dx[i + 1] - dx[i], dy[j + 1] - dy[j]); };
   // a piece on the sheet: w x h in page pixels (with room round it), drawn once
-  function cell(key, w, h, pad, draw) {
-    const pw = Math.ceil((w + pad * 2) * S) + 2, ph = Math.ceil((h + pad * 2) * S) + 2; if (pen.x + pw > AW) { pen.x = 1; pen.y += pen.h + 1; pen.h = 0; } if (pen.y + ph > AH) return cells[key] = null;
-    X.save(); X.beginPath(); X.rect(pen.x, pen.y, pw, ph); X.clip(); X.translate(pen.x + 1, pen.y + 1); X.scale(S, S); X.translate(pad, pad); if (!live) { draw(X); X.restore(); } else { X.restore(); const tc = document.createElement('canvas'); tc.width = pw; tc.height = ph; const c2 = tc.getContext('2d'); c2.translate(1, 1); c2.scale(S, S); c2.translate(pad, pad); draw(c2); const gl = renderer.getContext(), st = renderer.state; st.activeTexture(gl.TEXTURE0); st.bindTexture(gl.TEXTURE_2D, renderer.properties.get(tex).__webglTexture); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4); gl.texSubImage2D(gl.TEXTURE_2D, 0, pen.x, pen.y, gl.RGBA, gl.UNSIGNED_BYTE, tc); }
-    const c = cells[key] = { u: (pen.x + 1) / AW, v: (pen.y + 1) / AH, du: (w + pad * 2) * S / AW, dv: (h + pad * 2) * S / AH, w, h, pad }; pen.x += pw + 1; pen.h = Math.max(pen.h, ph); if (!live) tex.needsUpdate = true; return c;
+  function cell(key, w, h, pad, draw, os = 1) { // (os: drawn sharper than the screen, for pieces that are shown enlarged, like the lettering)
+    const SS = S * os, pw = Math.ceil((w + pad * 2) * SS) + 2, ph = Math.ceil((h + pad * 2) * SS) + 2; if (pen.x + pw > AW) { pen.x = 1; pen.y += pen.h + 1; pen.h = 0; } if (pen.y + ph > AH) return cells[key] = null;
+    X.save(); X.beginPath(); X.rect(pen.x, pen.y, pw, ph); X.clip(); X.translate(pen.x + 1, pen.y + 1); X.scale(SS, SS); X.translate(pad, pad); if (!live) { draw(X); X.restore(); } else { X.restore(); const tc = document.createElement('canvas'); tc.width = pw; tc.height = ph; const c2 = tc.getContext('2d'); c2.translate(1, 1); c2.scale(SS, SS); c2.translate(pad, pad); draw(c2); const gl = renderer.getContext(), st = renderer.state; st.activeTexture(gl.TEXTURE0); st.bindTexture(gl.TEXTURE_2D, renderer.properties.get(tex).__webglTexture); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4); gl.texSubImage2D(gl.TEXTURE_2D, 0, pen.x, pen.y, gl.RGBA, gl.UNSIGNED_BYTE, tc); }
+    const c = cells[key] = { u: (pen.x + 1) / AW, v: (pen.y + 1) / AH, du: (w + pad * 2) * SS / AW, dv: (h + pad * 2) * SS / AH, w, h, pad }; pen.x += pw + 1; pen.h = Math.max(pen.h, ph); if (!live) tex.needsUpdate = true; return c;
   }
   const rr = (c, x, y, w, h, r) => { r = Math.min(r, h / 2, w / 2); c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); };
   const grad = (c, x0, y0, x1, y1, a, b) => { const g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, a); g.addColorStop(1, b); return g; };
   // letter styles: [size, spacing, how a letter's back (outline, shadow) and front are drawn]
   const ST = {
-    label: { px: 16, ls: .6, back: (c, t) => { if (HUDP.ink) { c.lineJoin = 'round'; c.lineWidth = 4.5; c.strokeStyle = c.fillStyle = HUDP.ink; c.strokeText(t, 0, 0); c.fillText(t, 0, 2); } else { c.fillStyle = 'rgba(8,14,40,.55)'; c.fillText(t, 0, 2); } }, pad: 4 },
-    num: { px: 20, ls: .5, pad: 2 }, par: { px: 15, ls: .4, pad: 2 }, pct: { px: 13, ls: .5, pad: 2 },
+    label: { px: 16, ls: .6, os: 1.4, back: (c, t) => { if (HUDP.ink) { c.lineJoin = 'round'; c.lineWidth = 4.5; c.strokeStyle = c.fillStyle = HUDP.ink; c.strokeText(t, 0, 0); c.fillText(t, 0, 2); } else { c.fillStyle = 'rgba(8,14,40,.55)'; c.fillText(t, 0, 2); } }, pad: 4 },
+    num: { px: 20, ls: .5, pad: 2, os: 1.4 }, par: { px: 15, ls: .4, pad: 2, os: 1.4 }, pct: { px: 13, ls: .5, pad: 2, os: 1.4 }, // (v202k os: lettering is drawn 1.4x sharper, so it stays crisp when the HUD or a pop enlarges it)
     star: { px: 15, ls: .4, pad: 2, back: (c, t) => { c.strokeStyle = '#6a4300'; c.lineWidth = 1; c.strokeText(t, 0, 0); }, over: 1 },
-    float: { px: 34, ls: .5, pad: 10, back: (c, t) => { c.lineJoin = 'round'; if (HUDP.k) { c.lineWidth = 11; c.strokeStyle = 'rgba(74,44,20,.4)'; c.strokeText(t, 0, 4); c.strokeStyle = '#4a2c14'; c.strokeText(t, 0, 0); c.lineWidth = 6.5; c.strokeStyle = '#fffaea'; c.strokeText(t, 0, 0); return; } c.lineWidth = 6; c.fillStyle = c.strokeStyle = 'rgba(8,14,40,1)'; c.globalAlpha = .4; c.strokeText(t, 0, 4); c.globalAlpha = 1; c.strokeStyle = '#fff'; c.strokeText(t, 0, 0); } }
+    float: { px: 34, ls: .5, pad: 10, os: 1.35, back: (c, t) => { c.lineJoin = 'round'; if (HUDP.k) { c.lineWidth = 11; c.strokeStyle = 'rgba(74,44,20,.4)'; c.strokeText(t, 0, 4); c.strokeStyle = '#4a2c14'; c.strokeText(t, 0, 0); c.lineWidth = 6.5; c.strokeStyle = '#fffaea'; c.strokeText(t, 0, 0); return; } c.lineWidth = 6; c.fillStyle = c.strokeStyle = 'rgba(8,14,40,1)'; c.globalAlpha = .4; c.strokeText(t, 0, 4); c.globalAlpha = 1; c.strokeStyle = '#fff'; c.strokeText(t, 0, 0); } }
   };
   const glyph = (st, ch, back) => { const k = st + (back ? '<' : '>') + ch; if (cells[k] !== undefined) return cells[k]; const d = ST[st]; X.font = d.px + 'px ' + FONT; const w = Math.max(1, X.measureText(ch).width), asc = d.px, h = d.px * 1.3;
-    return cell(k, w, h, d.pad, c => { c.font = d.px + 'px ' + FONT; c.textBaseline = 'alphabetic'; c.translate(0, asc); if (back) d.back(c, ch); else { c.fillStyle = '#fff'; c.fillText(ch, 0, 0); } }); };
+    return cell(k, w, h, d.pad, c => { c.font = d.px + 'px ' + FONT; c.textBaseline = 'alphabetic'; c.translate(0, asc); if (back) d.back(c, ch); else { c.fillStyle = '#fff'; c.fillText(ch, 0, 0); } }, d.os || 1); };
   const lays = new Map();
   function lay(st, t) { const k = st + t; let L = lays.get(k); if (L) return L; const d = ST[st]; X.font = d.px + 'px ' + FONT; const m = X.measureText('Hg'), asc = m.fontBoundingBoxAscent || d.px * .93, desc = m.fontBoundingBoxDescent || d.px * .22, xs = []; for (let i = 0; i < t.length; i++) xs.push(X.measureText(t.slice(0, i)).width + i * d.ls); L = { t, xs, w: X.measureText(t).width + t.length * d.ls, asc, desc }; if (lays.size > 300) lays.clear(); lays.set(k, L); return L; }
   function build() {
-    S = Math.max(2, pixelRatio); live = false; AW = Math.max(1536, Math.ceil((box.fort.w + 12) * S) + 4); AH = Math.min(4096, Math.ceil(1780 * S * S / 4 * 1.45) + 64); /* (v201: room for the painted bar frames too) */ cv.width = AW; cv.height = AH; X.imageSmoothingQuality = 'high'; cells = {}; lays.clear(); pen = { x: 1, y: 1, h: 0 };
+    S = Math.max(2, pixelRatio); live = false; AW = Math.max(S >= 2.8 ? 2560 : S >= 2.4 ? 2048 : 1536, Math.ceil((box.fort.w + 12) * S) + 4); AH = Math.min(4096, Math.ceil(1780 * S * S / 4 * 1.45) + 64); /* (v201: room for the painted bar frames too) */ cv.width = AW; cv.height = AH; X.imageSmoothingQuality = 'high'; cells = {}; lays.clear(); pen = { x: 1, y: 1, h: 0 };
     if (tex) tex.dispose(); tex = new THREE.CanvasTexture(cv); tex.flipY = false; tex.premultiplyAlpha = true; tex.generateMipmaps = false; tex.minFilter = tex.magFilter = THREE.LinearFilter; mat.uniforms.uMap.value = tex;
     cell('white', 4, 4, 0, c => { c.fillStyle = '#fff'; c.fillRect(-2, -2, 8, 8); });
     for (const [k, w, glow] of [['fort', box.fort.w, ''], ['wl', box.fort.w, 'rgba(255,80,60,.55)'], ['nest', box.nest.w, '']]) {
@@ -8186,10 +8203,12 @@ const GHUD = (() => {
     cell('icrowd', 24, 22, 1, c => { if (icons.crowd) c.drawImage(icons.crowd, 0, 0, 24, 22); });
     cell('gbase', 82, 82, 6, c => { if (HUDP.k) { c.fillStyle = 'rgba(90,55,20,.4)'; c.beginPath(); c.arc(41, 45, 41, 0, 7); c.fill(); c.fillStyle = '#6b4426'; c.beginPath(); c.arc(41, 41, 41, 0, 7); c.fill(); c.fillStyle = '#e9dcc0'; c.beginPath(); c.arc(41, 41, 38.5, 0, 7); c.fill(); paGrain(c, 82, 82, 160); return; } c.fillStyle = 'rgba(87,162,255,.2)'; c.beginPath(); c.arc(41, 41, 44, 0, 7); c.fill(); c.fillStyle = '#141b3e'; c.beginPath(); c.arc(41, 44, 41, 0, 7); c.fill(); c.globalCompositeOperation = 'destination-out'; c.beginPath(); c.arc(41, 41, 40.5, 0, 7); c.fill(); c.globalCompositeOperation = 'source-over'; c.fillStyle = 'rgba(10,18,44,.6)'; c.beginPath(); c.arc(41, 41, 39, 0, 7); c.fill(); });
     const hero = (c, im, a) => { c.globalAlpha = a; if (im) { const k = Math.min(42 / im.width, 38 / im.height); c.drawImage(im, (42 - im.width * k) / 2, (38 - im.height * k) / 2, im.width * k, im.height * k); } c.globalAlpha = 1; };
+    const fillP = (c, im, x, y, r, a = 1) => { c.save(); c.beginPath(); c.arc(x, y, r, 0, 7); c.clip(); if (im) { const D = r * 2.9; c.globalAlpha = a; c.drawImage(im, x - D / 2, y - D / 2, D, D); } c.restore(); }; // v202k: the portrait fills the button, its medallion ring cropped away by the button's own
     for (const [k, im] of [['horse', HUDP.k && icons.pHorse || icons.horse], ['champ', HUDP.k && icons.pChamp || icons.champ]]) { // (v201b: painted portraits on paper)
-      cell('gtop' + k, 82, 82, 1, c => { if (HUDP.k) { c.fillStyle = '#6b4426'; c.beginPath(); c.arc(41, 41, 32.5, 0, 7); c.fill(); const g = c.createRadialGradient(31, 22, 0, 31, 22, 66); g.addColorStop(0, '#93b9e6'); g.addColorStop(1, '#4570b0'); c.fillStyle = g; c.beginPath(); c.arc(41, 41, 30.5, 0, 7); c.fill(); paGrain(c, 82, 82, 140); c.translate(20, 14); hero(c, im, .3); return; } c.strokeStyle = '#ffe7a8'; c.lineWidth = 3; c.beginPath(); c.arc(41, 41, 39.5, 0, 7); c.stroke(); const g = c.createRadialGradient(31.1, 21.2, 0, 31.1, 21.2, 70); g.addColorStop(0, '#428afa'); g.addColorStop(1, '#152352'); c.fillStyle = g; c.beginPath(); c.arc(41, 41, 33, 0, 7); c.fill(); c.translate(20, 14); hero(c, im, .3); });
-      cell('g' + k, 42, 38, 0, c => hero(c, im, 1));
+      cell('gtop' + k, 82, 82, 1, c => { if (HUDP.k) { c.fillStyle = '#6b4426'; c.beginPath(); c.arc(41, 41, 32.5, 0, 7); c.fill(); const g = c.createRadialGradient(31, 22, 0, 31, 22, 66); g.addColorStop(0, '#93b9e6'); g.addColorStop(1, '#4570b0'); c.fillStyle = '#3e2c1e'; c.beginPath(); c.arc(41, 41, 30.5, 0, 7); c.fill(); fillP(c, im, 41, 41, 30.5, .38); return; } c.strokeStyle = '#ffe7a8'; c.lineWidth = 3; c.beginPath(); c.arc(41, 41, 39.5, 0, 7); c.stroke(); const g = c.createRadialGradient(31.1, 21.2, 0, 31.1, 21.2, 70); g.addColorStop(0, '#428afa'); g.addColorStop(1, '#152352'); c.fillStyle = g; c.beginPath(); c.arc(41, 41, 33, 0, 7); c.fill(); c.translate(20, 14); hero(c, im, .3); });
+      cell('g' + k, HUDP.k ? 62 : 42, HUDP.k ? 62 : 38, 0, c => HUDP.k ? fillP(c, im, 31, 31, 30.5) : hero(c, im, 1));
     }
+    cell('gplate', 56, 18, 2, c => { c.fillStyle = 'rgba(40,20,5,.35)'; rr(c, 0, 2, 56, 16, 8); c.fill(); const g = c.createLinearGradient(0, 0, 0, 16); g.addColorStop(0, '#7a4e2a'); g.addColorStop(1, '#4a2c14'); c.fillStyle = g; rr(c, 0, 0, 56, 16, 8); c.fill(); c.strokeStyle = '#e3c48a'; c.lineWidth = 1.5; rr(c, .75, .75, 54.5, 14.5, 7.25); c.stroke(); }); // the nameplate SEND sits on
     cell('gglow', 140, 140, 0, c => { const g = c.createRadialGradient(70, 70, 36, 70, 70, 70); g.addColorStop(0, 'rgba(255,198,43,.7)'); g.addColorStop(.26, 'rgba(255,198,43,.62)'); g.addColorStop(.3, 'rgba(255,198,43,.4)'); g.addColorStop(.6, 'rgba(255,198,43,.15)'); g.addColorStop(1, 'rgba(255,198,43,0)'); c.fillStyle = g; c.fillRect(0, 0, 140, 140); });
     for (const ch of new Set('Your CampBoneCastleWallof0123456789·ABCDEFGHIJKLMNOPRSTUVWXYZ-')) { glyph('label', ch, 1); glyph('label', ch, 0); }
     for (const ch of '0123456789') { glyph('num', ch, 0); glyph('par', ch, 0); glyph('pct', ch, 0); } glyph('par', ':', 0); for (const ch of '%SEND!') glyph('pct', ch, 0); glyph('star', '★', 1); glyph('star', '★', 0);
@@ -8232,8 +8251,8 @@ const GHUD = (() => {
       if (!$('giant').classList.contains('last')) { const g = box.giant, p = clamp(_hud.gp || 0, 0, 100), rd = $('giant').classList.contains('ready'), cx = g.x + 41, cy = g.y + 41, hk = _hud.ch ? 'champ' : 'horse'; if (rd && !H.rdyAt) H.rdyAt = now; if (!rd) H.rdyAt = 0;
         if (rd) { const s = now - H.rdyAt; tf(1 + .05 * (1 - Math.cos(s * Math.PI / .6)), cx, cy); put(cells.gglow, cx - 70, cy - 70, .95); }
         put(cells.gbase, g.x, g.y); const N = Math.ceil(p / 100 * 48); { const w = cells.white, u = w.u + w.du / 2, v = w.v + w.dv / 2; for (let i = 0; i < N; i++) { const a0 = i / 48 * 6.28319, a1 = Math.min((i + 1) / 48, p / 100) * 6.28319, s0 = Math.sin(a0), c0 = -Math.cos(a0), s1 = Math.sin(a1), c1 = -Math.cos(a1); quad(cx + s0 * 31.5, cy + c0 * 31.5, cx + s0 * 39.5, cy + c0 * 39.5, cx + s1 * 39.5, cy + c1 * 39.5, cx + s1 * 31.5, cy + c1 * 31.5, u, v, u, v, HUDP.k ? rgb('#e3a536') : GOLD, 1); } }
-        put(cells['gtop' + hk], g.x, g.y); const f = p / 100, c = cells['g' + hk]; if (rd) { const s = Math.min(1, (now - H.rdyAt) / .35), k0 = K, b = .3 + .7 * back(s); const ox = K; tf(ox * b, cx, cy); put(c, g.x + 20, g.y + 14); tf(ox, cx, cy); } else if (f > 0) put(c, g.x + 20, g.y + 14, 1, W1, 0, 1, 1 - f, 1);
-        text('pct', _hud.giantTxt || '', cx, g.y + 60.5, .5); tf(1, 0, 0); }
+        put(cells['gtop' + hk], g.x, g.y); const f = p / 100, c = cells['g' + hk], gx = g.x + (HUDP.k ? 10 : 20), gy = g.y + (HUDP.k ? 10 : 14); if (rd) { const s = Math.min(1, (now - H.rdyAt) / .35), k0 = K, b = (HUDP.k ? .82 : .3) + (HUDP.k ? .18 : .7) * back(s); const ox = K; tf(ox * b, cx, cy); put(c, gx, gy); tf(ox, cx, cy); } else if (f > 0) put(c, gx, gy, 1, W1, 0, 1, 1 - f, 1);
+        if (HUDP.k) { put(cells.gplate, cx - 28, g.y + 62); text('pct', _hud.giantTxt || '', cx, g.y + 70, .5); } else text('pct', _hud.giantTxt || '', cx, g.y + 60.5, .5); tf(1, 0, 0); }
       const cr = H.crowd; if (cr.on) { const t = String(_hud.crowdN == null ? '' : _hud.crowdN), L = lay('num', t), w = 2 + 6 + 24 + 4 + L.w + 12 + 2, x = cr.x - 40, y = cr.y - 46, h = box.crowdH; stretch(cells.pcrowd, x, y, w); put(cells.icrowd, x + 8, y + (h - 22) / 2); cr.pop = Math.max(0, cr.pop - dt / .35); if (cr.pop > 0) { const u = back(1 - cr.pop); tf(1.7 - .7 * u, x + 36 + L.w / 2, y + h / 2); } text('num', t, x + 36, y + h / 2, 0, cr.pop > 0 && !HUDP.ink ? [1, .89 + .11 * (1 - cr.pop), .48 + .52 * (1 - cr.pop)] : HUDP.txt); tf(1, 0, 0); }
     }
     A = H.fl; for (const f of floats) if (f.t > 0 && f.sx !== undefined) { const el = f.el, gate = el.classList.contains('gate'), bmp = el.classList.contains('bump'); if (f.wasB !== bmp) { if (f.wasB !== undefined) f.pb = 1; f.wasB = bmp; } f.pb = Math.max(0, (f.pb || 0) - dt / .22); const k = f.sk * (gate ? 25 / 34 : 1) * (f.pb > 0 ? 1.35 - .35 * back(1 - f.pb) : 1); { const s = String(el.textContent), w = lay('float', s).w, kk = Math.min(k, (VIEW.w - 20) / w), hw = w * kk / 2 + 8, fx = clamp(f.sx, Math.min(hw, VIEW.w / 2), Math.max(VIEW.w - hw, VIEW.w / 2)); /* (a long line fits the screen) */ tf(kk, fx, f.sy); text('float', s, fx, f.sy - 2, .5, rgb(el.style.color), f.so); } } tf(1, 0, 0);
@@ -8242,7 +8261,7 @@ const GHUD = (() => {
   };
   H.prep = () => { if (!ready) return; try { const c = gameEl.classList, o = ['overlay', 'cinema'].filter(k => c.contains(k)); c.remove(...o); measure(); c.add(...o); renderer.compile(scn, cam); } catch (e) {} };
   load.then(() => setTimeout(H.prep, 400)); // the sheet is ready before the first battle
-  H.cells = () => cells; H.sheet = cv; H.load = load; H.rebuild = () => { boxAt = ''; }; // (a new look: the sheet is drawn again)
+  H.fill = () => pen ? +((pen.y + pen.h) / AH).toFixed(3) : 0; H.miss = () => Object.keys(cells).filter(k => cells[k] === null); H.cells = () => cells; H.sheet = cv; H.load = load; H.rebuild = () => { boxAt = ''; }; // (a new look: the sheet is drawn again)
   return H;
 })();
 /* ---- the kept backdrop (phones) ----
@@ -8894,7 +8913,7 @@ function frame(now) {
 
 /* debug hooks for automated playtests */
 window.__CR = {
-  G, ants, beetles, get save() { return save; }, get PA() { return PA; }, get DIR() { return DIR; }, pause: () => pauseGame(), musicProbe, winProbe, start: startPlay, menu: showMenu,
+  G, ants, beetles, get save() { return save; }, get PA() { return PA; }, get DIR() { return DIR; }, get GHUD() { return GHUD; }, pause: () => pauseGame(), musicProbe, winProbe, start: startPlay, menu: showMenu,
   step(sec, opts = {}) { const n = Math.round(sec * 60); for (let i = 0; i < n; i++) { if (opts.aim) G.lx = opts.aim(G); if (opts.fire !== undefined) G.firing = opts.fire; if (opts.giant) sendGiant(); update(1 / 60); } render(); return { mode: G.mode, ants: ants.n, beetles: beetles.n, fort: Math.ceil(G.fortHp), nest: Math.ceil(G.nestHp), t: +G.t.toFixed(1) }; },
   boonAfter(C) { const sv = { boons: { w: boonWorld(C.lv), list: C.boons } }; if (C.lv < 2) return; boonTake(sv, C.lv, null); const ids = boonOffer(sv, C.lv, Math.random); boonTake(sv, C.lv, ids[(Math.random() * ids.length) | 0]); C.boons = sv.boons.list; },
   UPG, upCost, freshSave, levelCfg, coinFly, TIERS, get world() { return world; }, get KK() { return KK; },
