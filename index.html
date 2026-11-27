@@ -666,7 +666,7 @@ svg.ico.sm{width:18px;height:18px}
 /* v202e: the toy-medieval cover (one painted piece: spine, corners and crown medallion) */
 .dk-front{background:url(models/paper/a/open/cover.webp) center/100% 100% no-repeat!important;border:0!important;border-image:none!important;border-radius:6px 10px 10px 6px}
 .dk-emb{display:none}
-.dk-endp{background:radial-gradient(circle at 30% 20%,#e64a3e,transparent 45%),radial-gradient(circle at 70% 75%,#a51616,transparent 50%),#c62222!important;border-radius:6px 10px 10px 6px}
+.dk-endp{background:radial-gradient(circle at 30% 20%,#c4423a,transparent 45%),radial-gradient(circle at 70% 75%,#86171a,transparent 50%),#a8241f!important;border-radius:6px 10px 10px 6px}
 .dk-logo{top:6.5%;width:88%;left:53.5%} /* (centred on the face of the cover, not over the spine) */
 .dk-desk{inset:-24% -22%}
 .dk-hint{color:#5a2e0e;text-shadow:0 1px 0 rgba(255,244,214,.8),0 0 8px rgba(255,236,190,.7)}
@@ -677,6 +677,11 @@ svg.ico.sm{width:18px;height:18px}
 #dk .dk-txt{font-size:clamp(16px,5.3vw,23px);min-height:6.2em}
 .dk-skip{display:none;position:absolute;z-index:3;top:calc(env(safe-area-inset-top) + 12px);right:12px;padding:6px 14px;border-radius:999px;border:2px solid #8a5a2a;background:linear-gradient(170deg,#fffaea,#f1e0b8);box-shadow:0 3px 0 #8a5a2a;font-family:var(--disp);font-size:15px;color:#4a2c14;cursor:pointer}
 #dk.tale .dk-skip{display:block}
+#dk .dk-hint{display:none!important}
+#dk .dk-txt{text-wrap:pretty}
+#dk .dk-txt span{transition:none}
+#dk .dk-orn{display:block;flex:none;width:34%;height:9px;margin:2% auto 0;background:radial-gradient(circle,#c99232 0 2.5px,transparent 3px) center/9px 9px no-repeat,linear-gradient(90deg,transparent,#c99232 30%,transparent 46%,transparent 54%,#c99232 70%,transparent) center/100% 1.5px no-repeat;opacity:.85}
+#dk .dk-num{position:absolute;left:0;right:0;bottom:5.5%;text-align:center;font-family:var(--pk-fell);font-style:italic;font-size:14px;color:#8a6a44}
 #loading.book .dk-world,#loading.tapgo .dk-world{display:none}
 /* v202f: toy-medieval menus. Type: Fraunces (soft) for headings, Lilita One for item names and buttons, Fredoka for text */
 .paper #result .res-title,.paper .pause-card .res-title,#game.papermenu #map .map-title,#game.papermenu #rewards>.map-title,#game.papermenu .rw-head,#game.papermenu .boon-h,.paper .boon-h,.rb-h,#game.papermenu #map .mcard b,#game.papermenu .sheet-head b{font-family:var(--pk-fell)!important;font-weight:800!important;letter-spacing:.2px}
@@ -726,7 +731,7 @@ svg.ico.sm{width:18px;height:18px}
 #game.papermenu #playBtn::after{top:-8px;bottom:-8px;left:-22px;right:-22px;width:auto;transform:none;border-radius:14px;background:linear-gradient(100deg,transparent 40%,rgba(255,255,255,.42) 50%,transparent 60%) no-repeat;background-size:60% 100%;background-position:-120% 0;animation:playShineP 3.4s ease-in-out infinite}
 @keyframes playShineP{0%,62%{background-position:-120% 0}100%{background-position:220% 0}}
 @media (prefers-reduced-motion:reduce){#game.papermenu #playBtn::after{animation:none}}
-.dk-book::before{background:linear-gradient(90deg,#8e1414,#c42222 10%,#a81a1a);border-radius:6px 12px 12px 6px}
+.dk-book::before{background:linear-gradient(90deg,#6e1411,#a3231d 10%,#8a1b17);border-radius:6px 12px 12px 6px}
 #game.lean #parPill.miss{filter:none}
 #game.glhud #fortBar,#game.glhud #nestBar,#game.glhud #crowd,#game.glhud #floats,#game.glhud #parPill{visibility:hidden} /* drawn inside the picture instead: see GHUD */
 #game.glhud #giant:not(.last){opacity:0;animation:none;box-shadow:none;background:none}
@@ -9291,7 +9296,7 @@ const DK_TALE = [ // v202g: a few pages of the tale before the dive, each drawn 
 ];
 function dkBuild() {
   const d = document.createElement('div'); d.id = 'dk';
-  const leaves = DK_TALE.map((p, i) => `<div class="dk-leaf dk-tl${i ? '' : ' dk-p1'}" data-i="${i}"><div class="dk-face dk-tale"><div class="dk-pic" style="background-image:url(models/paper/a/open/${p.pic}.webp);background-size:${p.z * 100}% auto"></div><p class="dk-txt"></p></div><div class="dk-face dk-back dk-paper"></div></div>`).reverse().join(''); // (the first page on top)
+  const leaves = DK_TALE.map((p, i) => `<div class="dk-leaf dk-tl${i ? '' : ' dk-p1'}" data-i="${i}"><div class="dk-face dk-tale"><div class="dk-pic" style="background-image:url(models/paper/a/open/${p.pic}.webp);background-size:${p.z * 100}% auto"></div><p class="dk-txt">${p.txt.split(' ').map(w => '<span>' + w + '</span>').join(' ')}</p><i class="dk-orn"></i><span class="dk-num">${i + 1}</span></div><div class="dk-face dk-back dk-paper"></div></div>`).reverse().join(''); // (the first page on top)
   d.innerHTML = '<div class="dk-world"><div class="dk-desk"></div><div class="dk-book"><div class="dk-block"></div>'
     + '<div class="dk-page dk-p2"><i class="dk-gilt"></i></div>' + leaves
     + '<div class="dk-leaf dk-cover"><div class="dk-face dk-front"><div class="dk-emb"></div><img class="dk-logo" src="models/paper/a/ui/logo.webp" alt="Bone Siege" draggable="false"></div><div class="dk-face dk-back dk-endp"></div></div>'
@@ -9303,17 +9308,17 @@ const dkE = (u, k = 3) => u <= 0 ? 0 : u >= 1 ? 1 : u < .5 ? Math.pow(2 * u, k) 
 function dkOpen(long) {
   const d = DK.el || dkBuild(); DK.on = true; DK.long = long; DK.cine = false; d.classList.add('go'); if (long) d.classList.add('tale');
   const leaves = [...d.querySelectorAll('.dk-tl')].sort((a, b) => a.dataset.i - b.dataset.i);
-  leaves.forEach(l => { l.querySelector('.dk-txt').textContent = ''; if (!long) l.style.display = 'none'; });
+  leaves.forEach(l => { l._sp = [...l.querySelectorAll('.dk-txt span')]; l._sp.forEach(s => { s.style.opacity = 0; }); if (!long) l.style.display = 'none'; }); // (v202h: every word is set from the start and fades in, so nothing reflows)
   const world = d.querySelector('.dk-world'), cover = d.querySelector('.dk-cover'), glow = d.querySelector('.dk-glow'), gilt = d.querySelector('.dk-gilt'), book = d.querySelector('.dk-book');
   psLoad('turn'); DK.t0 = performance.now();
   const k = gameEl.clientWidth / book.offsetWidth; // the scale at which the page fills the screen (the book has the screen's shape)
-  const COV = long ? [.35, 1.95] : [.25, 1.3], TURN = 1.9, HOLD = 2.2, CPS = 30, DIVE = long ? 1.6 : 1.2, N = long ? leaves.length : 0;
+  const COV = long ? [.35, 1.95] : [.25, 1.3], TURN = 1.9, HOLD = 2.4, WGAP = .17, WFADE = .55, DIVE = long ? 1.6 : 1.2, N = long ? leaves.length : 0;
   const S = DK.s = { i: 0, ph: 'cover', at: 0, hold: 0, full: false, turns: [], dive: 0 }; let sndC = false;
   DK.next = () => { if (S.ph === 'type') S.full = true; else if (S.ph === 'hold') S.hold = 0; }; // a tap: finish the words, or turn the page now
   const step = now => {
     if (!DK.on) return; const t = (now - DK.t0) / 1000;
     if (S.ph === 'cover' && t >= COV[1]) { if (N) { S.ph = 'type'; S.at = t; } else { S.ph = 'dive'; S.dive = t + .05; } }
-    if (S.ph === 'type') { const txt = DK_TALE[S.i].txt, el = leaves[S.i].querySelector('.dk-txt'), n = S.full ? txt.length : Math.min(txt.length, Math.floor((t - S.at) * CPS)); if (el.textContent.length !== n) el.textContent = txt.slice(0, n); if (n >= txt.length) { S.ph = 'hold'; S.full = false; S.hold = t + HOLD; } }
+    if (S.ph === 'type') { let done = true; leaves[S.i]._sp.forEach((s, j) => { const o = S.full ? 1 : clamp((t - S.at - j * WGAP) / WFADE, 0, 1); if (o < 1) done = false; s.style.opacity = o.toFixed(3); }); if (done) { S.ph = 'hold'; S.full = false; S.hold = t + HOLD; } } // one word after another, each fading up out of the paper
     if (S.ph === 'hold' && t >= S.hold) { S.ph = 'turn'; S.at = t; S.turns[S.i] = t; psSnd('turn', .4); }
     if (S.ph === 'turn' && t >= S.at + TURN * .8) { S.i++; if (S.i < N) { S.ph = 'type'; S.at = t; } else { S.ph = 'dive'; S.dive = S.at + TURN; } } // the next page's words begin as this one settles
     const w = t < COV[0] ? Math.sin(t / COV[0] * Math.PI) : 0; // the book gives a little hop, as if it wants to be opened
@@ -9641,7 +9646,7 @@ function boot() {
     const book = PAPER === 'a'; if (book && save.level <= WORLD_LEN) { paPre(); if (!PA.g) { paBuild(); paExtras(); } }
     const w1 = book && save.level <= WORLD_LEN; // (v201) World 1: the desk and the book
     Promise.all([w1 ? paWait() : null, book ? imgWait((w1 ? ['models/paper/a/open/cover.webp'] : ['models/paper/a/cover_frame.webp', 'models/paper/a/cover_emblem.webp']).concat(['models/paper/a/title_frame.webp', 'models/paper/a/title_vignette.webp']).concat(w1 ? ['models/paper/a/open/desk.webp', 'models/paper/a/ui/logo.webp', 'models/paper/a/open/tale1.webp', 'models/paper/a/page.webp'] : [])) : null]).then(() => { // (the paper pieces and the cover are in hand before the tap)
-      if (w1) { ptSizes(); const d = dkBuild(); d.classList.add('in'); { const pg = puSnapshot(); if (pg) { const e = d.querySelector('.dk-p2'); e.style.backgroundImage = `url(${pg})`; e.style.backgroundSize = '100% 100%'; } } setTimeout(() => l.remove(), 600); d.addEventListener('click', () => { audio(); if (!DK.on) { d.classList.remove('in'); dkOpen(!save.openSeen); } else if (DK.s && (DK.s.ph === 'type' || DK.s.ph === 'hold')) DK.next(); else if (DK.s && DK.s.ph === 'dive') dkSkip(); }); return; }
+      if (w1) { ptSizes(); const d = dkBuild(); d.classList.add('in'); { const pg = puSnapshot(); if (pg) { const e = d.querySelector('.dk-p2'); e.style.backgroundImage = `url(${pg})`; e.style.backgroundSize = '100% 100%'; } } setTimeout(() => l.remove(), 600); d.addEventListener('click', () => { audio(); if (!DK.on) { d.classList.remove('in'); dkOpen(!save.openSeen); } else if (DK.s && (DK.s.ph === 'type' || DK.s.ph === 'hold')) DK.next(); else if (DK.s && DK.s.ph === 'dive') dkSkip(); }); setTimeout(() => { if (DK.el === d && !DK.on) { d.classList.remove('in'); dkOpen(!save.openSeen); } }, 1300); /* v202h: the book opens by itself (a tap still turns the pages) */ return; }
       ptSizes(); l.classList.add('tapgo'); if (book) { l.classList.add('book'); l.innerHTML = '<div class="bk-emb"></div><b>BONE<i>SIEGE</i></b><span>Tap to open</span>'; } else l.innerHTML = '<svg viewBox="0 0 48 52"><use href="#i-king"/></svg><b>BONE SIEGE</b><span>Tap to begin</span>';
       l.addEventListener('click', () => { audio(); pageTurn(() => { l.remove(); filmOrCine(); }); }, { once: true }); /* the cover turns onto the opening */ // (click, not pointerdown: an iPhone only lets sound start on the finger's way up)
     }); return;
