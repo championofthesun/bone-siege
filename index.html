@@ -5964,10 +5964,22 @@ const PA = { g: null, on: false, was: null, tex: {}, img: {}, uTok: 0, rec: 0, f
 const PA_WORLDS = 2; // worlds drawn as the pop-up book: Meadow Road, Sunscorch Dunes
 const PA_WD = ['', 'w2/', 'w3/', 'w4/', 'w5/'];
 const PA_WOWN = ['page', 'far', 'castle', 'back', 'oak', 'pines', 'bush', 'cottage', 'knight', 'lamp', 'fence', 'torch', 'bannerp', 'gb_idle', 'gb_wind', 'gb_roar', 'gb_daze', 'cp_walk', 'cp_swing', 'cp_hit', 'cp_down'];
-const PA_WKEYS = [null, new Set(PA_WOWN)];
-const PA_DIM_W = [null, { castle: 1.5054, oak: .7417, pines: .845, bush: 1.7241, cottage: 1.3363, knight: 1.1719, lamp: .59, fence: 1.9544, torch: .575, bannerp: .6767 }];
+const PA_WKEYS = [null, new Set(['page', 'far', 'castle', 'back', 'torch', 'bannerp', 'gb_idle', 'gb_wind', 'gb_roar', 'gb_daze', 'cp_walk', 'cp_swing', 'cp_hit', 'cp_down', // (v202al) the names each world takes from its own folder: World 1's that it replaces, then its own pieces
+  'palm', 'palms', 'shrub', 'house', 'sphinx', 'brazier', 'ruin', 'obelisk', 'pyr1', 'pyr2', 'colossus', 'tomb', 'saguaro', 'prickly', 'tent', 'butte', 'columns', 'skullrk', 'bones', 'pots', 'well'])];
+const PA_DIM_W = [null, { castle: 1.6298, torch: .575, bannerp: .6767, palm: .7417, palms: .845, shrub: 1.7241, house: 1.3363, sphinx: 1.1719, brazier: .59, ruin: 1.9544, obelisk: .7717,
+  pyr1: 1.2766, pyr2: 1.2371, colossus: .8433, tomb: 1.227, saguaro: .7517, prickly: 1.0947, tent: 1.107, butte: 1.0714, columns: 1.0345, skullrk: 1.1811, bones: 1.0989, pots: 1.3158, well: 1.1696 }];
 const PA_GB_W = [null, { idle: [.7432, 732], wind: [.6781, 730], roar: [1.0594, 690], daze: [.9833, 660] }], PA_CP_W = [null, { walk: [.6755, 601], swing: [.75, 600], hit: [.9319, 587], down: [.9125, 514] }]; // each warlord's and captain's poses (width / height, height in pixels): Sek-Ra, the Embalmer
 const PA_LOOK = [{ sky: ['#a9cbe6', '#d9e8ef', '#f4ead2'], cloth: '#5a2a34' }, { sky: ['#e9c58e', '#f4dcb0', '#fbefd8'], cloth: '#2a3a6a' }]; // the sky behind the book and its cloth cover
+const PA_SCENE = [null, [ // (v202al) each world's own scenery: [name, height, x, z, options]; World 1's is PA_SC0 in paBuild. World 2 follows the 3D Dunes:
+  // pyramids either side behind Sek-Ra's gate, his colossus beside it, his tomb thrown open by the road, obelisks and cacti, a camp of striped tents by your walls
+  ['pyr1', 9.5, -13.5, -57], ['pyr2', 8.5, 13.8, -59, { flip: true }], ['skullrk', 4.2, 10.8, -50.5], ['saguaro', 4.4, -10.8, -65.5], ['saguaro', 4, 11.6, -66.5, { flip: true }],
+  ['butte', 6.2, -17.8, -66], ['butte', 5.6, 17.6, -67.5, { flip: true }], ['palms', 6.2, -17.4, -52], ['palm', 5.2, 17.4, -51.5, { flip: true }], ['palms', 5.8, 16.8, -59, { flip: true }],
+  ['colossus', 7.5, -10.8, -43], ['palms', 5.4, 12.6, -43, { flip: true }], ['saguaro', 4, 10.6, -38.8], ['prickly', 2.4, -13.2, -38.8],
+  ['bannerp', 4.2, -7.6, -30, { bare: true }], ['bannerp', 4.2, 7.6, -30, { bare: true, flip: true }], ['bones', 2.4, 12.8, -28.5],
+  ['tomb', 5, -10, -25], ['obelisk', 5.2, 8.4, -25.5], ['obelisk', 4.6, 9.8, -20.5, { flip: true }], ['prickly', 2.2, -8.6, -20], ['torch', 2.8, -7.2, -17, { bare: true }], ['saguaro', 3.8, -12.8, -18],
+  ['brazier', 3, 7.2, -15.5, { bare: true }], ['tent', 4, 10.2, -14.5], ['tent', 3.6, 11, -9.8, { flip: true }], ['pots', 1.8, 8.4, -11.2],
+  ['columns', 3, -10, -13], ['well', 2.6, -10.2, -8.4], ['palm', 4.2, -12.4, -11, { flip: true }],
+  ['bannerb', 4, -7.4, -6.5, { bare: true }], ['bannerb', 4, 7.4, -6.5, { bare: true, flip: true }]]];
 const PA_BASE = { dim: Object.assign({}, PA_DIM), gb: Object.assign({}, PA_GB), cp: Object.assign({}, PA_CP) };
 const paW = () => Math.max(0, Math.min(PA_WORLDS - 1, Math.floor(((G.level || 1) - 1) / WORLD_LEN)));
 function paSetWorld(w) { PA.w = w; Object.assign(PA_DIM, PA_BASE.dim, PA_DIM_W[w] || {}); Object.assign(PA_GB, PA_BASE.gb, PA_GB_W[w] || {}); Object.assign(PA_CP, PA_BASE.cp, PA_CP_W[w] || {}); }
@@ -6119,13 +6131,13 @@ function paBuild() {
    // the whole castle as one piece of card, for the fall
   { PA.castle = PA.castleF = paCard('castle', 10.2, 0, FORT_Z - 4.3, { lean: .22 }); PA.castle2 = null; } /* one card: Grimbald stands behind it, and it holds together from any camera */
   PA.camp = [paCard('camp', 4.1, -6.9, -3.7, { lean: .32, u: [0, .47] }), paCard('camp', 4.1, 6.9, -3.7, { lean: .32, u: [.53, 1] })]; // the camp wall's two halves either side of the cannon, where the 3D wall stood
-  for (const [n, h, x, z, o] of [
+  const PA_SC0 = [ // World 1's scenery (v202al: a world with its own list in PA_SCENE uses that instead)
     ['pines', 5.6, -12.5, -44], ['oak', 4.4, -10.5, -39.2], ['bannerp', 4.2, -7.6, -30, { bare: true }], ['bush', 2.2, -13, -28], ['knight', 4, -9.4, -25],
     ['lamp', 3, -7.2, -19, { bare: true }], ['cottage', 4, -11.5, -18], ['fence', 1.8, -13, -12.5], ['oak', 3.8, -9.6, -10.5, { flip: true }], ['bannerb', 4, -7.4, -6.5, { bare: true }],
     ['pines', 5.4, 12.5, -43, { flip: true }], ['bush', 2.2, 9.8, -39.6, { flip: true }], ['bannerp', 4.2, 7.6, -30, { bare: true, flip: true }], ['skullrock', 3.6, 10.5, -30], ['torch', 2.8, 7.2, -24, { bare: true }],
     ['crownrock', 4, 11, -22.5], ['lamp', 3, 7.2, -15, { bare: true }], ['pines', 5, 10.5, -15], ['oak', 4, 12, -8.5], ['bannerb', 4, 7.4, -6.5, { bare: true, flip: true }],
     ['pines', 5.6, -13, -71], ['oak', 4.4, -12.6, -60], ['bush', 2.2, -10.5, -66], ['pines', 5.4, 13, -70, { flip: true }], ['bush', 2.4, 12.6, -58, { flip: true }], ['oak', 4, 11, -66.5, { flip: true }],
-    ['pines', 6.4, -17.8, -66], ['oak', 5, -17.4, -56.5], ['pines', 6, -16.6, -50.5], ['pines', 6.2, 17.8, -65, { flip: true }], ['oak', 5, 17.4, -55.5, { flip: true }], ['pines', 5.8, 16.6, -49.5, { flip: true }]]) paCard(n, h * (z > -46 ? .8 : 1), x, z, o); /* (v201b: the roadside pieces 0.8x, now the dolls are bigger) */
+    ['pines', 6.4, -17.8, -66], ['oak', 5, -17.4, -56.5], ['pines', 6, -16.6, -50.5], ['pines', 6.2, 17.8, -65, { flip: true }], ['oak', 5, 17.4, -55.5, { flip: true }], ['pines', 5.8, 16.6, -49.5, { flip: true }]]; for (const [n, h, x, z, o] of (PA_SCENE[PA.w] || PA_SC0)) paCard(n, h * (z > -46 ? .8 : 1), x, z, o); /* (v201b: the roadside pieces 0.8x, now the dolls are bigger) */
 }
 const paKeep = o => o === king || o.userData.holder || WL.built.some(b => b && b.g === o);
 function paHide() { world.visible = campWall.visible = hoard.visible = nest.visible = false; if (PA.can && PA.can.visible !== PA.on) PA.can.visible = PA.on; /* (v202t: the cannon card is always shown while the paper world is: a rebuilt card used to start hidden and stay so) */ for (const o of fort.children) if (o.visible && !paKeep(o)) o.visible = false;
