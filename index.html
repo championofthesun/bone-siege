@@ -4352,7 +4352,7 @@ function bakeCrowd() {
     if (u.build || KK[u.model]) bakeStrip(u, u.foe ? bakedLook : null);
   }
   renderer.setRenderTarget(null); renderer.setClearColor(cc, ca);
-  spriteMat.uniforms.uMap.value = crowdAtlas.texture; crowdReady = true;
+  CROWD_U.value = crowdAtlas.texture; crowdReady = true; /* (v202ap: the shared sheet, even while the book has an army on its own) */
   for (const m of [antMesh, beetleMesh, crownMesh, helmetMesh]) m.visible = false;
   allySprites.visible = foeSprites.visible = true;
 }
@@ -4434,24 +4434,27 @@ const allySprites = spriteCrowd(ACAP, spriteMat), foeSprites = spriteCrowd(BCAP,
    his own strip at twice the detail (un/champion_hd.webp, 10 frames of 306x408), baked to the sheet's colour form and drawn by this mesh */
 const giantMat = spriteMat.clone(); giantMat.uniforms.uCell.value = new THREE.Vector2(.1, 1); giantMat.uniforms.uCols.value = 10; giantMat.uniforms.uTexel.value = new THREE.Vector2(1 / 3060, 1 / 408); giantMat.uniforms.uMap.value = null;
 const giantSprites = spriteCrowd(8, giantMat);
-/* (v202ao) the horde on paper draws from its own sheet at twice the detail (each skeleton's strip cut from the source art at 306 x 408 a frame,
-   as the Champion's is): on the shared crowd sheet a frame is 153 x 204, and near the camera its edges showed the pixels */
-const FHD = { ids: ['minion', 'srogue', 'warrior', 'smage', 'sbomb', 'sarcher', 'sshield', 'snecro'], row: {}, rt: null, u: null, on: false, busy: null, CW: 306, CH: 408 };
-function paFoesHD() {
-  if (FHD.rt) return Promise.resolve(FHD.rt); if (FHD.busy) return FHD.busy; if (renderer.capabilities.maxTextureSize < 4096 || !SPR.m) return Promise.resolve(null);
-  return FHD.busy = Promise.all(FHD.ids.map(id => new THREE.TextureLoader().loadAsync('models/paper/a/un/' + id + '_hd.webp').then(t => { t.generateMipmaps = false; t.minFilter = t.magFilter = THREE.LinearFilter; return t; }, () => null))).then(ts => {
-    FHD.busy = null; if (ts.some(t => !t)) { ts.forEach(t => t && t.dispose()); return null; }
-    const W = FHD.CW * 10, H = FHD.CH * ts.length, rt = new THREE.WebGLRenderTarget(W, H, { format: THREE.RGBAFormat, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: true, depthBuffer: false });
+/* (v202ao) on paper both armies draw from sheets of their own at twice the detail (each strip cut from the source art at 306 x 408 a frame,
+   as the Champion's is): on the shared crowd sheet a frame is 153 x 204, and near the camera its edges showed the pixels. v202ap: your army too */
+const CROWD_U = spriteMat.uniforms.uMap; // the shared crowd sheet's uniform (both materials point back at it when the book closes)
+const HDS = { foe: { ids: ['minion', 'srogue', 'warrior', 'smage', 'sbomb', 'sarcher', 'sshield', 'snecro'], mat: foeSpriteMat }, ally: { ids: ['recruit', 'knight', 'archer', 'mage', 'champion', 'bomber', 'cannon'], mat: spriteMat } };
+for (const k in HDS) Object.assign(HDS[k], { row: {}, rt: null, u: null, on: false, busy: null }); const HD_CW = 306, HD_CH = 408;
+function paHDSheet(S) {
+  if (S.rt) return Promise.resolve(S.rt); if (S.busy) return S.busy; if (renderer.capabilities.maxTextureSize < 4096 || !SPR.m) return Promise.resolve(null);
+  return S.busy = Promise.all(S.ids.map(id => new THREE.TextureLoader().loadAsync('models/paper/a/un/' + id + '_hd.webp').then(t => { t.generateMipmaps = false; t.minFilter = t.magFilter = THREE.LinearFilter; return t; }, () => null))).then(ts => {
+    S.busy = null; if (ts.some(t => !t) || !SPR.m) { ts.forEach(t => t && t.dispose()); return null; }
+    const W = HD_CW * 10, H = HD_CH * ts.length, rt = new THREE.WebGLRenderTarget(W, H, { format: THREE.RGBAFormat, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: true, depthBuffer: false });
     const cc = renderer.getClearColor(new THREE.Color()), ca = renderer.getClearAlpha(); rt.viewport.set(0, 0, W, H); renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear();
-    ts.forEach((t, k) => { SPR.m.uniforms.uMap.value = t; rt.viewport.set(0, k * FHD.CH, W, FHD.CH); rt.scissor.set(0, k * FHD.CH, W, FHD.CH); rt.scissorTest = true; renderer.setRenderTarget(rt); renderer.render(SPR.qs, SPR.qc); FHD.row[FHD.ids[k]] = k; t.dispose(); });
+    ts.forEach((t, k) => { SPR.m.uniforms.uMap.value = t; rt.viewport.set(0, k * HD_CH, W, HD_CH); rt.scissor.set(0, k * HD_CH, W, HD_CH); rt.scissorTest = true; renderer.setRenderTarget(rt); renderer.render(SPR.qs, SPR.qc); S.row[S.ids[k]] = k; t.dispose(); });
     rt.scissorTest = false; rt.viewport.set(0, 0, W, H); SPR.m.uniforms.uMap.value = null; renderer.setRenderTarget(null); renderer.setClearColor(cc, ca);
-    FHD.rt = rt; FHD.u = { value: rt.texture }; return rt; });
+    S.rt = rt; S.u = { value: rt.texture }; return rt; });
 }
-function paFoesUse(on) { // point the horde's material at that sheet, or back at the crowd sheet
-  const U = foeSpriteMat.uniforms; on = on && !!FHD.rt; if (on === FHD.on) return; FHD.on = on;
-  if (on) { U.uMap = FHD.u; U.uCell.value.set(.1, 1 / FHD.ids.length); U.uCols.value = 10; U.uTexel.value.set(1 / (FHD.CW * 10), 1 / (FHD.CH * FHD.ids.length)); }
-  else { U.uMap = spriteMat.uniforms.uMap; U.uCell.value.set(CELL_W / ATLAS_W, CELL_H / ATLAS_H); U.uCols.value = ATLAS_COLS; U.uTexel.value.set(1 / ATLAS_W, 1 / ATLAS_H); }
+function paHDUse(S, on) { // point an army's material at its sheet, or back at the crowd sheet
+  const U = S.mat.uniforms; on = on && !!S.rt; if (on === S.on) return; S.on = on;
+  if (on) { U.uMap = S.u; U.uCell.value.set(.1, 1 / S.ids.length); U.uCols.value = 10; U.uTexel.value.set(1 / (HD_CW * 10), 1 / (HD_CH * S.ids.length)); }
+  else { U.uMap = CROWD_U; U.uCell.value.set(CELL_W / ATLAS_W, CELL_H / ATLAS_H); U.uCols.value = ATLAS_COLS; U.uTexel.value.set(1 / ATLAS_W, 1 / ATLAS_H); }
 }
+const hdCell = (S, t, f) => S.on ? (S.row[UNIT_TYPES[t].id] || 0) * FPT + f : t * FPT + f; // a unit's frame on whichever sheet its army is drawing from
 function hdBake(t) { const rt = new THREE.WebGLRenderTarget(t.image.width, t.image.height, { format: THREE.RGBAFormat, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: true, depthBuffer: false });
   const cc = renderer.getClearColor(new THREE.Color()), ca = renderer.getClearAlpha(); SPR.m.uniforms.uMap.value = t; renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(SPR.qs, SPR.qc);
   renderer.setRenderTarget(null); renderer.setClearColor(cc, ca); SPR.m.uniforms.uMap.value = null; t.dispose(); return rt; }
@@ -6070,7 +6073,7 @@ async function paUnits(on) { // the army's strips on the sprite sheet: paper dol
   const cc = renderer.getClearColor(new THREE.Color()), ca = renderer.getClearAlpha(); UNIT_TYPES.forEach((u, k) => { if (ts[k]) sprBake(u, ts[k]); }); renderer.setRenderTarget(null); renderer.setClearColor(cc, ca);
   if (on && PAPER === 'a' && !giantMat.uniforms.uMap.value) { const t = await new THREE.TextureLoader().loadAsync('models/paper/a/un/champion_hd.webp').then(t => { t.generateMipmaps = false; t.minFilter = t.magFilter = THREE.LinearFilter; return t; }, () => null);
     if (t && tok === PA.uTok && SPR.m) giantMat.uniforms.uMap.value = hdBake(t).texture; } // (v202aj) the Champion's own sharper strip
-  if (on && PAPER === 'a') paFoesHD(); // (v202ao) and the horde's
+  if (on && PAPER === 'a') { paHDSheet(HDS.ally); paHDSheet(HDS.foe); } // (v202ao/ap) and both armies'
 }
 function paLabel(x, g, bx, by, bw, bh, st) { // the gate's number or weapon, lettered on the painted board
   const fam = 'Fraunces, Georgia, serif', arm = g.arm != null, red = g.k < 1 && !g.add && !arm, crew = arm && TIERS[g.arm].merge;
@@ -8047,14 +8050,14 @@ const nearLens = (p, i) => p === beetles && DIR.s.foeZ !== undefined && p.z[i] >
 function drawSprites(p, sm) {
   const cell = sm.geometry.attributes.aCell.array, party = G.boomed && p === ants;
   const hd = p === ants && PA.on && PAPER === 'a' && !!giantMat.uniforms.uMap.value, gcell = giantSprites.geometry.attributes.aCell.array; let gn = 0;
-  if (p === beetles) paFoesUse(PA.on && PAPER === 'a'); const fhd = p === beetles && FHD.on; // (v202ao) the horde's sharper sheet // (v202aj) the Champion goes to his own sharper mesh
+  const HS = p === beetles ? HDS.foe : HDS.ally; paHDUse(HS, PA.on && PAPER === 'a'); // (v202ao) the horde's sharper sheet // (v202aj) the Champion goes to his own sharper mesh
   for (let i = 0; i < p.n; i++) {
     const s = p === beetles && p.tier[i] === F_CAP && CAP.b || DIR.s && nearLens(p, i) || party && PA.on && p.z[i] - camera.position.z > -8 ? .001 : /* (v201b: on the paper win camera, nobody stands in the lens) */ p.s[i] * US * (PA.on && PAPER === 'a' ? 1.18 : 1) * popOf(p, i) * riseOf(p, i), air = liftOf(p, i), flying = air > 0.05, t = unitType(p, i); // (the sculpted captain is drawn in place of his brute)
     const hopK = party ? Math.abs(Math.sin(G.t * 7 + p.ph[i])) : 0;
     let f = p === beetles && p.tier[i] === F_NEC ? p.atk[i] > 0 ? ATK_F : JUMP_F : flying || hopK > .35 || (p === beetles && p.kind[i] && !(p.atk[i] > 0)) ? JUMP_F : p.atk[i] > 0 ? ATK_F : Math.floor(((G.t * (p.big[i] ? 1.1 : 1.55) + p.ph[i] * .16) % 1) * RUN_FRAMES);
     _m.makeScale(s, s, s); _m.setPosition(p.x[i], air + hopK * .55 * s, p.z[i]);
     sm.setMatrixAt(i, _m); // powder kegs are sappers in the sprite sheet now
-    cell[i] = fhd ? (FHD.row[UNIT_TYPES[t].id] || 0) * FPT + f : t * FPT + f;
+    cell[i] = hdCell(HS, t, f);
     _c.copy(p === beetles ? FOE_TINT : WHITE); if (p === beetles && p.tier[i] === F_CAP) _c.lerp(wc2.set(WARLORDS[CAP.w].col).convertSRGBToLinear(), .3).multiplyScalar(1.5); if (p === beetles && p.tier[i] === F_NEC) _c.setScalar(1.12); if (p.flash[i] > 0) _c.multiplyScalar(1 + p.flash[i] * 1.2); // skeletons get the world's tint (deeper on snow)
     sm.setColorAt(i, _c);
     if (hd && p.big[i] && gn < 8) { giantSprites.setMatrixAt(gn, _m); gcell[gn] = f; giantSprites.setColorAt(gn, _c); gn++; _m.makeScale(.001, .001, .001); sm.setMatrixAt(i, _m); }
@@ -8062,8 +8065,8 @@ function drawSprites(p, sm) {
   if (p === ants) { giantSprites.count = gn; giantSprites.visible = gn > 0; if (gn) { giantSprites.instanceMatrix.needsUpdate = true; giantSprites.instanceColor.needsUpdate = true; giantSprites.geometry.attributes.aCell.needsUpdate = true; } }
   let nn = p.n; if (p === ants && LINE.on && G.mode !== 'won' && G.mode !== 'resultWin') { // the knights of your line, in the palace: ready, and at arms when a skeleton comes near
     const up = lineUp(); let near = -99; for (let j = 0; j < beetles.n; j++) if (beetles.hp[j] > 0 && beetles.z[j] > near) near = beetles.z[j];
-    for (const q of LINE.men) { if (nn >= ACAP) break; if (q[3] >= up) continue; const s = US * .98, f = near > -8 && Math.sin(G.t * 7 + q[2]) > .35 ? ATK_F : 2; _m.makeScale(s, s, s); _m.setPosition(q[0], 0, q[1]); sm.setMatrixAt(nn, _m); cell[nn] = TIER_TYPE[0] * FPT + f; sm.setColorAt(nn, WHITE); nn++; }
-    if (save.up.turret > 0 && LINE.perch && nn < ACAP) { const s = US * 1.35; _m.makeScale(s, s, s); _m.setPosition(LINE.perch.position.x, LINE.py, TOWER_Z); sm.setMatrixAt(nn, _m); cell[nn] = TIER_TYPE[2] * FPT + (turretGap(save.up.turret) - G.turT < .24 ? ATK_F : 2); sm.setColorAt(nn, WHITE); nn++; } }
+    for (const q of LINE.men) { if (nn >= ACAP) break; if (q[3] >= up) continue; const s = US * .98, f = near > -8 && Math.sin(G.t * 7 + q[2]) > .35 ? ATK_F : 2; _m.makeScale(s, s, s); _m.setPosition(q[0], 0, q[1]); sm.setMatrixAt(nn, _m); cell[nn] = hdCell(HS, TIER_TYPE[0], f); sm.setColorAt(nn, WHITE); nn++; }
+    if (save.up.turret > 0 && LINE.perch && nn < ACAP) { const s = US * 1.35; _m.makeScale(s, s, s); _m.setPosition(LINE.perch.position.x, LINE.py, TOWER_Z); sm.setMatrixAt(nn, _m); cell[nn] = hdCell(HS, TIER_TYPE[2], turretGap(save.up.turret) - G.turT < .24 ? ATK_F : 2); sm.setColorAt(nn, WHITE); nn++; } }
   sm.count = nn; sm.instanceMatrix.needsUpdate = true; sm.instanceColor.needsUpdate = true; sm.geometry.attributes.aCell.needsUpdate = true;
   if (p === ants) bombMesh.count = 0; // (the 3D keg is only for the fallback crowd: in the sprite sheet kegs are sappers)
 }
