@@ -5961,23 +5961,30 @@ const PA = { g: null, on: false, was: null, tex: {}, img: {}, uTok: 0, rec: 0, f
 /* (v202ak) the storybook, world by world. A world past the first keeps its own pictures in models/paper/a/w<N>/ under the SAME names as
    World 1's (its palm stands in the oak's place, its sphinx in the statue's), so the layout, the puppets and the boss banners need no
    changes; only the names listed for it are taken from its folder, the rest (signs, units, cannon, camp, UI) are shared */
-const PA_WORLDS = 4; // worlds drawn as the pop-up book: Meadow Road, Sunscorch Dunes, Frostbite Peaks, Ember Hollow
-const PA_WD = ['', 'w2/', 'w3/', 'w4/', 'w5/'];
+const PA_WORLDS = 5; // worlds drawn as the pop-up book: Meadow Road, Sunscorch Dunes, Frostbite Peaks, Ember Hollow, the Citadel (two books: 4 his bridge, 5 his throne hall)
+const PA_WD = ['', 'w2/', 'w3/', 'w4/', 'w5/', 'w5h/'];
 const PA_WOWN = ['page', 'far', 'castle', 'back', 'oak', 'pines', 'bush', 'cottage', 'knight', 'lamp', 'fence', 'torch', 'bannerp', 'gb_idle', 'gb_wind', 'gb_roar', 'gb_daze', 'cp_walk', 'cp_swing', 'cp_hit', 'cp_down'];
 const PA_WKEYS = [null, new Set(['page', 'far', 'castle', 'back', 'torch', 'bannerp', 'gb_idle', 'gb_wind', 'gb_roar', 'gb_daze', 'cp_walk', 'cp_swing', 'cp_hit', 'cp_down', // (v202al) the names each world takes from its own folder: World 1's that it replaces, then its own pieces
   'palm', 'palms', 'shrub', 'house', 'sphinx', 'brazier', 'ruin', 'obelisk', 'pyr1', 'pyr2', 'colossus', 'tomb', 'saguaro', 'prickly', 'tent', 'butte', 'columns', 'skullrk', 'bones', 'pots', 'well']),
   new Set(['page', 'far', 'castle', 'back', 'torch', 'bannerp', 'gb_idle', 'gb_wind', 'gb_roar', 'gb_daze', 'cp_walk', 'cp_swing', 'cp_hit', 'cp_down', 'pines', 'bush', // (v202am) Frostbite Peaks
     'icetower', 'icecabin', 'throne', 'longhouse', 'pine', 'birch', 'igloo', 'snowman', 'logs', 'icecrys', 'skullrk']),
   new Set(['page', 'far', 'castle', 'back', 'torch', 'bannerp', 'gb_idle', 'gb_wind', 'gb_roar', 'gb_daze', 'cp_walk', 'cp_swing', 'cp_hit', 'cp_down', // Ember Hollow
-    'volcano', 'forge', 'crypt', 'crownskull', 'deadtree', 'deadtrees', 'crystals', 'shrooms', 'boulders', 'ruinwall', 'lavapool', 'bones', 'cauldron'])];
+    'volcano', 'forge', 'crypt', 'crownskull', 'deadtree', 'deadtrees', 'crystals', 'shrooms', 'boulders', 'ruinwall', 'lavapool', 'bones', 'cauldron']),
+  new Set(['page', 'far', 'castle', 'back', 'torch', 'bannerp', 'gb_idle', 'gb_wind', 'gb_roar', 'gb_daze', 'cp_walk', 'cp_swing', 'cp_hit', 'cp_down', // (v202an) the Citadel: his bridge
+    'throne', 'pillar', 'gold', 'statue', 'floatrk', 'bonespk', 'crystals', 'skulls', 'stump', 'urn', 'obelisk', 'chains', 'crag']),
+  new Set(['page', 'far', 'castle', 'back'])]; // his throne hall: its own floor, dais, wall of bone and end wall; everything else from the bridge's folder (paTex)
 const PA_DIM_W = [null, { castle: 1.6298, torch: .575, bannerp: .6767, palm: .7417, palms: .845, shrub: 1.7241, house: 1.3363, sphinx: 1.1719, brazier: .59, ruin: 1.9544, obelisk: .7717,
   pyr1: 1.2766, pyr2: 1.2371, colossus: .8433, tomb: 1.227, saguaro: .7517, prickly: 1.0947, tent: 1.107, butte: 1.0714, columns: 1.0345, skullrk: 1.1811, bones: 1.0989, pots: 1.3158, well: 1.1696 },
   { castle: 1.5301, torch: .5283, bannerp: .595, icetower: .915, icecabin: 1.2295, throne: .9517, longhouse: 1.6129, pine: .7317, pines: .8917, birch: .7433, bush: 1.5075, igloo: 1.4218, snowman: .9167, logs: 1.6667, icecrys: 1.1627, skullrk: 1.2766 },
-  { castle: 1.5625, torch: .585, bannerp: .7133, volcano: 1.2397, forge: 1.1538, crypt: 1.0526, crownskull: 1.2024, deadtree: .8667, deadtrees: .905, crystals: .9816, shrooms: 1.0821, boulders: 1.8182, ruinwall: 1.222, lavapool: 1.8634, bones: 1.4815, cauldron: 1.1632 }];
-const PA_GB_W = [null, { idle: [.7432, 732], wind: [.6781, 730], roar: [1.0594, 690], daze: [.9833, 660] }, { idle: [.9276, 732], wind: [.696, 806], roar: [1.0592, 743], daze: [1.1641, 713] }, { idle: [1.041, 732], wind: [.7849, 809], roar: [1.1959, 730], daze: [1.0794, 743] }],
-  PA_CP_W = [null, { walk: [.6755, 601], swing: [.75, 600], hit: [.9319, 587], down: [.9125, 514] }, { walk: [.9268, 601], swing: [.7605, 618], hit: [1.0387, 594], down: [1.3057, 494] }, { walk: [.9002, 601], swing: [.7592, 623], hit: [1.0214, 607], down: [1.1127, 559] }]; // each warlord's and captain's poses (width / height, height in pixels): Sek-Ra, the Embalmer; Hrimgar, the Huscarl; Magmaw, the Bellows
+  { castle: 1.5625, torch: .585, bannerp: .7133, volcano: 1.2397, forge: 1.1538, crypt: 1.0526, crownskull: 1.2024, deadtree: .8667, deadtrees: .905, crystals: .9816, shrooms: 1.0821, boulders: 1.8182, ruinwall: 1.222, lavapool: 1.8634, bones: 1.4815, cauldron: 1.1632 },
+  { castle: 1.5152, torch: .5502, bannerp: .535, throne: 1.0889, pillar: .5483, gold: 2.0202, statue: .725, floatrk: .8467, bonespk: 1.0811, crystals: .9862, skulls: 1.6949, stump: 1.1858, urn: .8656, obelisk: .7467, chains: 1.3889, crag: 1.3453 }];
+PA_DIM_W[5] = Object.assign({}, PA_DIM_W[4], { castle: 2.1053 }); // the wall of bone in the gate's place
+const PA_GB_W = [null, { idle: [.7432, 732], wind: [.6781, 730], roar: [1.0594, 690], daze: [.9833, 660] }, { idle: [.9276, 732], wind: [.696, 806], roar: [1.0592, 743], daze: [1.1641, 713] }, { idle: [1.041, 732], wind: [.7849, 809], roar: [1.1959, 730], daze: [1.0794, 743] }, { idle: [1.0369, 732], wind: [.7978, 821], roar: [1.1413, 729], daze: [1.1232, 714] }],
+  PA_CP_W = [null, { walk: [.6755, 601], swing: [.75, 600], hit: [.9319, 587], down: [.9125, 514] }, { walk: [.9268, 601], swing: [.7605, 618], hit: [1.0387, 594], down: [1.3057, 494] }, { walk: [.9002, 601], swing: [.7592, 623], hit: [1.0214, 607], down: [1.1127, 559] }, { walk: [.8918, 601], swing: [.7836, 587], hit: [1.0794, 567], down: [1.2962, 476] }];
+PA_GB_W[5] = PA_GB_W[4]; PA_CP_W[5] = PA_CP_W[4]; // the Bone King, his Royal Guard // each warlord's and captain's poses (width / height, height in pixels): Sek-Ra, the Embalmer; Hrimgar, the Huscarl; Magmaw, the Bellows; the Bone King, the Royal Guard
 const PA_LOOK = [{ sky: ['#a9cbe6', '#d9e8ef', '#f4ead2'], cloth: '#5a2a34' }, { sky: ['#e9c58e', '#f4dcb0', '#fbefd8'], cloth: '#2a3a6a' },
-  { sky: ['#a9c6e4', '#dbe8f3', '#f5f3ee'], cloth: '#284a40' }, { sky: ['#93463a', '#d98d5e', '#f5c78e'], cloth: '#24202a' }]; // the sky behind the book and its cloth cover
+  { sky: ['#a9c6e4', '#dbe8f3', '#f5f3ee'], cloth: '#284a40' }, { sky: ['#93463a', '#d98d5e', '#f5c78e'], cloth: '#24202a' },
+  { sky: ['#4c2c70', '#9478bc', '#e4d6ee'], cloth: '#1e1430' }, { sky: ['#3e2456', '#7c5c9e', '#d6c4e4'], cloth: '#40101e' }]; // the sky behind the book and its cloth cover
 const PA_SCENE = [null, [ // (v202al) each world's own scenery: [name, height, x, z, options]; World 1's is PA_SC0 in paBuild. World 2 follows the 3D Dunes:
   // pyramids either side behind Sek-Ra's gate, his colossus beside it, his tomb thrown open by the road, obelisks and cacti, a camp of striped tents by your walls
   ['pyr1', 9.5, -13.5, -57], ['pyr2', 8.5, 13.8, -59, { flip: true }], ['skullrk', 4.2, 10.8, -50.5], ['saguaro', 4.4, -10.8, -65.5], ['saguaro', 4, 11.6, -66.5, { flip: true }],
@@ -6007,14 +6014,32 @@ const PA_SCENE = [null, [ // (v202al) each world's own scenery: [name, height, x
   ['forge', 4.8, 10.5, -24.5], ['cauldron', 2.6, -9.8, -23.5], ['torch', 2.8, -7.2, -17, { bare: true }], ['shrooms', 2.6, -12.4, -18], ['boulders', 2.1, 9.8, -19.8],
   ['torch', 2.8, 7.2, -15.5, { bare: true }], ['ruinwall', 3, -10.6, -12.5, { flip: true }], ['deadtree', 4.4, 11.8, -12, { flip: true }], ['lavapool', 1.6, 9, -9.4],
   ['bones', 1.7, -9.8, -8.2, { flip: true }], ['deadtrees', 4, -13, -9, { flip: true }],
+  ['bannerb', 4, -7.4, -6.5, { bare: true }], ['bannerb', 4, 7.4, -6.5, { bare: true, flip: true }]],
+  [ // (v202an) the Citadel, 41-45: the causeway to his gatehouse over the abyss, after the 3D one: rocks floating over the drop, bone spikes and crystals,
+    // his obelisks behind the gate, black pillars of violet fire flanking it, a stone knight and his banners along the road
+  ['obelisk', 6.6, -13.5, -57], ['obelisk', 6.2, 13.8, -58.5, { flip: true }], ['bonespk', 4, 10.8, -51], ['crystals', 4, -10.8, -65.5], ['skulls', 2.4, 11.6, -66.5],
+  ['crag', 6.2, -17.8, -66], ['crag', 5.6, 17.6, -67.5, { flip: true }], ['floatrk', 5, -17.4, -53, { y: 3 }], ['floatrk', 4.4, 17.4, -52.5, { y: 3.4, flip: true }], ['bonespk', 5, 16.8, -59, { flip: true }],
+  ['pillar', 6.4, -11.4, -42.5], ['pillar', 6.4, 11.4, -42.5, { flip: true }], ['floatrk', 3.6, -13.6, -36, { y: 2.2 }], ['floatrk', 3, 14, -33.5, { y: 2.6, flip: true }],
+  ['crystals', 2.6, -9.6, -32.5], ['bonespk', 3, 12.4, -30], ['bannerp', 4.2, -7.6, -30, { bare: true }], ['bannerp', 4.2, 7.6, -30, { bare: true, flip: true }], ['skulls', 2, -12.8, -28],
+  ['statue', 4.6, -10.6, -23.5], ['obelisk', 4.4, 10.8, -24.5, { flip: true }], ['torch', 2.8, -7.2, -17, { bare: true }], ['crag', 3, -12.4, -18], ['urn', 2.4, 9.8, -19.8],
+  ['torch', 2.8, 7.2, -15.5, { bare: true }], ['chains', 2.4, -10.2, -12.5], ['stump', 2.4, 10.6, -12], ['bonespk', 2.6, 9.2, -9.4, { flip: true }], ['crystals', 2.2, -9.8, -8.6, { flip: true }],
+  ['crag', 3.4, -13, -9, { flip: true }], ['floatrk', 2.6, 13.4, -10, { y: 2, flip: true }],
+  ['bannerb', 4, -7.4, -6.5, { bare: true }], ['bannerb', 4, 7.4, -6.5, { bare: true, flip: true }]],
+  [ // 46-50, his throne hall: rows of black pillars of violet fire down both sides, stone knights, his gold heaped on the floor; his throne (paBuild) comes nearer level by level
+  ['pillar', 8, -17.6, -54], ['pillar', 8, 17.6, -54, { flip: true }], ['pillar', 8, -14, -62], ['pillar', 8, 14, -62, { flip: true }], ['gold', 4, -11.4, -56], ['gold', 3.6, 11.8, -57, { flip: true }],
+  ['statue', 6, -11, -66], ['statue', 6, 11, -66, { flip: true }], ['urn', 3, -17.6, -66], ['urn', 3, 17.6, -66.5, { flip: true }],
+  ['pillar', 7, -12, -44], ['pillar', 7, 12, -44, { flip: true }], ['statue', 4.8, -10.6, -36], ['statue', 4.8, 10.6, -36, { flip: true }],
+  ['bannerp', 4.2, -7.6, -30, { bare: true }], ['bannerp', 4.2, 7.6, -30, { bare: true, flip: true }], ['gold', 2.6, -12.4, -29], ['skulls', 2, 12.6, -28.5],
+  ['pillar', 6.4, -11.4, -22], ['pillar', 6.4, 11.4, -22, { flip: true }], ['urn', 2.4, -8.8, -18.5], ['urn', 2.4, 8.8, -18.5, { flip: true }],
+  ['gold', 2.4, 10.4, -12], ['statue', 4, -11.6, -11], ['pillar', 5.8, -13.4, -8.6], ['pillar', 5.8, 13.4, -8.6, { flip: true }],
   ['bannerb', 4, -7.4, -6.5, { bare: true }], ['bannerb', 4, 7.4, -6.5, { bare: true, flip: true }]]];
 const PA_BASE = { dim: Object.assign({}, PA_DIM), gb: Object.assign({}, PA_GB), cp: Object.assign({}, PA_CP) };
-const paW = () => Math.max(0, Math.min(PA_WORLDS - 1, Math.floor(((G.level || 1) - 1) / WORLD_LEN)));
+const paWOf = n => { const w = Math.max(0, Math.min(PA_WORLDS - 1, Math.floor((n - 1) / WORLD_LEN))); return w === HALLW && citK(n) > 5 ? 5 : w; }, paW = () => paWOf(G.level || 1); // (v202an) the Citadel's second half is the throne hall's book
 function paSetWorld(w) { PA.w = w; Object.assign(PA_DIM, PA_BASE.dim, PA_DIM_W[w] || {}); Object.assign(PA_GB, PA_BASE.gb, PA_GB_W[w] || {}); Object.assign(PA_CP, PA_BASE.cp, PA_CP_W[w] || {}); }
 function paTeardown() { // one world's book is put away before another's is built (only while it is off)
   scene.remove(PA.g); PA.g.traverse(o => { if (o.geometry) o.geometry.dispose(); }); if (PA.can && PA.can.parent) PA.can.parent.remove(PA.can);
   for (const k of Object.keys(PA.tex)) if (PA_WD.some(d => d && k.startsWith(d))) { PA.tex[k].dispose(); delete PA.tex[k]; } // that world's own pictures
-  PA.g = PA.castle = PA.castleF = PA.castle2 = PA.camp = PA.hoard = PA.bossB = PA.gb = PA.cp = PA.can = PA.heroes = PA.shreds = null; PA.torn = false;
+  PA.g = PA.castle = PA.castleF = PA.castle2 = PA.camp = PA.hoard = PA.bossB = PA.gb = PA.cp = PA.can = PA.heroes = PA.shreds = PA.throne = null; PA.torn = false;
 }
 function paPre() { // the sign pictures are drawn into each gate's lettering, so they must be in hand before the first gate is built
   const font = document.fonts ? Promise.race([document.fonts.load('800 60px Fraunces').catch(() => 0), new Promise(ok => setTimeout(ok, 2500))]) : null; // (v202ae) and the lettering's face, or the boards would be lettered in Georgia
@@ -6079,9 +6104,10 @@ function paTick(dt) { // the paper pieces that move
   if (PB.barrel) PB.barrel.position.z = PA.rec * .16;
   if (PA.can && PAPER === 'a') { PA.can.scale.set(1 + PA.rec * .05, 1 - PA.rec * .09, 1).multiplyScalar(1 / CANNON_K); PA.can.rotation.x = -.5 - PA.rec * .12; }
   // Grimbald, a puppet with four poses
-  const fight = !!(WL.on && WL.b), b = fight ? WL.b : HOLD.i >= 0 ? HOLD.b : null, gb = PA.gb; if (gb) { const on = !!(b && b.g.visible) && !PA.shredded; gb.g.visible = on; // fighting on the road, or watching from his gate
-    if (on) { const st = !fight && PA.poseHold ? PA.poseHold : fight ? WL.state : HOLD.act ? (HOLD.k === 'strike' ? 'wind' : 'stun') : 'idle', pose = PAPER === 'b' ? PB_POSE(st) : st === 'wind' || st === 'smash' ? 'wind' : st === 'roar' ? 'roar' : st === 'stun' || st === 'kneel' || st === 'recover' || st === 'dead' ? 'daze' : 'idle';
-      for (const k in gb.m) gb.m[k].visible = k === pose; b.g.getWorldPosition(_paV); gb.g.position.copy(_paV); if (!fight && PAPER === 'a') { gb.g.position.y += 1.62; gb.g.position.z -= 1.2; } /* on his gate he stands a step up, looking over the wall: clear behind the leaning wall card (it was cutting his legs) */ if (fight && st === 'dead' && PAPER === 'a' && WL.st > .8) { gb.g.updateMatrixWorld(true); paShred(gb); PA.shredded = true; }
+  const kw = PAPER === 'a' && PA.w >= 4 && HOLD.i < 0 && king.visible; // (v202an) the Bone King himself watches from his gate (or his throne)
+  const fight = !!(WL.on && WL.b), b = fight ? WL.b : HOLD.i >= 0 ? HOLD.b : kw ? (PA.kb || (PA.kb = { g: king })) : null, gb = PA.gb; if (gb) { const on = !!(b && b.g.visible) && !PA.shredded; gb.g.visible = on; // fighting on the road, or watching from his gate
+    if (on) { const st = !fight && PA.poseHold ? PA.poseHold : fight ? WL.state : HOLD.act ? (HOLD.k === 'strike' ? 'wind' : 'stun') : kw && kingActs.Throw && kingActs.Throw.isRunning() ? 'wind' : kw && kingActs.Hit_A && kingActs.Hit_A.isRunning() ? 'stun' : 'idle', pose = PAPER === 'b' ? PB_POSE(st) : st === 'wind' || st === 'smash' ? 'wind' : st === 'roar' ? 'roar' : st === 'stun' || st === 'kneel' || st === 'recover' || st === 'dead' ? 'daze' : 'idle';
+      for (const k in gb.m) gb.m[k].visible = k === pose; b.g.getWorldPosition(_paV); gb.g.position.copy(_paV); if (!fight && PAPER === 'a') { if (kw && PA.w === 5) { gb.g.position.y -= 1.1; gb.g.position.z += .9; if (PA.throne) PA.throne.position.z = _paV.z - .6; } else { gb.g.position.y += 1.62; gb.g.position.z -= 1.2; } } /* on his gate he stands a step up, looking over the wall: clear behind the leaning wall card (it was cutting his legs) */ if (fight && st === 'dead' && PAPER === 'a' && WL.st > .8) { gb.g.updateMatrixWorld(true); paShred(gb); PA.shredded = true; }
       const grow = fight ? b.g.scale.x / (WL_S * ((WL.def && WL.def.s) || 1)) : 1; gb.g.scale.set(1, 1 + (st === 'idle' ? Math.sin((G.t || 0) * 2.2) * .018 : 0), 1).multiplyScalar(grow || 1); // (he breathes)
       const walk = st === 'walk' || st === 'enter' || st === 'leap', tt = G.t || 0;
       gb.g.rotation.z = walk ? Math.sin(tt * 9) * .07 : st === 'roar' ? Math.sin(tt * 30) * .02 : 0; gb.g.position.y += walk ? Math.abs(Math.sin(tt * 9)) * .25 : 0;
@@ -6105,7 +6131,7 @@ function paTick(dt) { // the paper pieces that move
     if (hk > 0 && !PA.popped) { PA.popped = true; psLoad('pop').then(() => psSnd('pop', .55)); } }
   if (PA.camp) { const lt = G.mode === 'lost' || G.mode === 'resultLose' ? (PA.lostT = (PA.lostT || 0) + dt) : (PA.lostT = 0), k = Math.min(1, lt / .9); for (const c of PA.camp) c.rotation.x = -.32 + k * k * (Math.PI / 2 + .3); } // tipped over toward the reader
 }
-function paTex(n) { if (PA.w && PA_WKEYS[PA.w] && PA_WKEYS[PA.w].has(n)) n = PA_WD[PA.w] + n; /* (v202ak) this world's own picture */ if (PA.tex[n]) return PA.tex[n]; const url = 'models/paper/' + (PAPER || 'a') + '/' + n + '.webp', t = PA.tex[n] = new THREE.TextureLoader().load(url, undefined, undefined, function retry() { /* (v202s: a picture that failed to arrive is asked for again, or its cut-out would stay invisible all game) */ const k = (t.userData.tries = (t.userData.tries || 0) + 1); if (k > 4) return; setTimeout(() => { const i = new Image(); i.onload = () => { t.image = i; t.needsUpdate = true; }; i.onerror = retry; i.src = url + '?r=' + k + '-' + Date.now(); }, 400 * k); }); t.encoding = THREE.sRGBEncoding; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); return t; }
+function paTex(n) { if (PA.w && PA_WKEYS[PA.w] && PA_WKEYS[PA.w].has(n)) n = PA_WD[PA.w] + n; else if (PA.w === 5 && PA_WKEYS[4].has(n)) n = PA_WD[4] + n; /* (v202ak) this world's own picture */ if (PA.tex[n]) return PA.tex[n]; const url = 'models/paper/' + (PAPER || 'a') + '/' + n + '.webp', t = PA.tex[n] = new THREE.TextureLoader().load(url, undefined, undefined, function retry() { /* (v202s: a picture that failed to arrive is asked for again, or its cut-out would stay invisible all game) */ const k = (t.userData.tries = (t.userData.tries || 0) + 1); if (k > 4) return; setTimeout(() => { const i = new Image(); i.onload = () => { t.image = i; t.needsUpdate = true; }; i.onerror = retry; i.src = url + '?r=' + k + '-' + Date.now(); }, 400 * k); }); t.encoding = THREE.sRGBEncoding; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); return t; }
 function paCard(n, h, x, z, o = {}) { // a cut-out h tall standing on the page at (x, z), its top leaning back toward the reader
   const u = o.u || [0, 1], v = o.v || [0, 1], w = h * PA_DIM[n] * (u[1] - u[0]) / (v[1] - v[0]), geo = new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0);
   if (o.u || o.v) { const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, u[0] + uv.getX(i) * (u[1] - u[0]), v[0] + uv.getY(i) * (v[1] - v[0])); } // just part of the picture
@@ -6157,8 +6183,9 @@ function paBuild() {
   paCard('back', 12.5, 0, -75, { lean: .12, bare: true }); // the mountains at the far page's top edge
   PA.hoard = paCard('hoard', 6, 0, -61.5, { lean: .14 }); PA.hoard.visible = PA.hoard.userData.sh.visible = false; // the Bone King's treasure on the plaza: it pops up when the castle falls
    // the whole castle as one piece of card, for the fall
-  { PA.castle = PA.castleF = paCard('castle', 10.2, 0, FORT_Z - 4.3, { lean: .22 }); PA.castle2 = null; } /* one card: Grimbald stands behind it, and it holds together from any camera */
+  { PA.castle = PA.castleF = paCard('castle', PA.w === 5 ? 6.4 : 10.2, 0, FORT_Z - 4.3, { lean: .22 }); PA.castle2 = null; } /* (v202an: his wall of bone is lower than a gate, so his throne shows over it) */ /* one card: Grimbald stands behind it, and it holds together from any camera */
   PA.camp = [paCard('camp', 4.1, -6.9, -3.7, { lean: .32, u: [0, .47] }), paCard('camp', 4.1, 6.9, -3.7, { lean: .32, u: [.53, 1] })]; // the camp wall's two halves either side of the cannon, where the 3D wall stood
+  PA.throne = PA.w === 5 ? paCard('throne', 10.5, 0, -54, { lean: .12 }) : null; if (PA.w === 5) for (const c of PA.camp) c.visible = false; // (v202an) his throne (it follows him nearer, level by level); in the hall your line of knights holds, not a camp wall
   const PA_SC0 = [ // World 1's scenery (v202al: a world with its own list in PA_SCENE uses that instead)
     ['pines', 5.6, -12.5, -44], ['oak', 4.4, -10.5, -39.2], ['bannerp', 4.2, -7.6, -30, { bare: true }], ['bush', 2.2, -13, -28], ['knight', 4, -9.4, -25],
     ['lamp', 3, -7.2, -19, { bare: true }], ['cottage', 4, -11.5, -18], ['fence', 1.8, -13, -12.5], ['oak', 3.8, -9.6, -10.5, { flip: true }], ['bannerb', 4, -7.4, -6.5, { bare: true }],
@@ -6172,6 +6199,8 @@ function paHide() { world.visible = campWall.visible = hoard.visible = nest.visi
   for (const b of WL.built) if (b && b.g) for (const c of b.g.children) if (c.visible) { c.visible = false; c.userData.paHid = true; } // the warlord's 3D (the paper puppet stands in for him)
   for (const c of launcher.children) if (c !== PA.can && c.visible && !c.isSprite) { c.visible = false; c.userData.paHid = true; } // the cannon model
   if (PAPER === 'a') { if (CAP.b) for (const c of CAP.b.g.children) if (c.visible) { c.visible = false; c.userData.paHid = true; }
+    if (PA.w >= 4) { if (kingRig && kingRig.visible) { kingRig.visible = false; kingRig.userData.paHid = true; } if (kingCrown.visible) { kingCrown.visible = false; kingCrown.userData.paHid = true; } } // (v202an) the Bone King: his puppet stands in
+    if (LINE.g) for (const c of LINE.g.children) if (c.visible) { c.visible = false; c.userData.paHid = true; } // the 3D doors, splinters and standards of your line in his hall (the knights themselves are paper already)
     litter.m.visible = false;
     for (const ks of kingShots) if (ks.on && ks.who === 0) { // a thrown cleaver: a spinning paper cut-out
       if (!ks.pa) { ks.pa = new THREE.Sprite(new THREE.SpriteMaterial({ map: paTex('cleaver_t'), alphaTest: .4, depthWrite: false, toneMapped: false })); ks.pa.scale.set(2.1 * PA_DIM.cleaver_t, 2.1, 1); ks.thrown.add(ks.pa); }
@@ -6214,7 +6243,7 @@ function paperScene(on) { // the storybook level in place of the 3D land, castle
   Object.assign(muzzleFlash.material, on ? { map: PAPER === 'b' ? PB.star : paTex('star'), blending: THREE.NormalBlending } : { map: glowTex, blending: THREE.AdditiveBlending }); muzzleFlash.material.color.set(on ? '#ffffff' : '#ffc860'); muzzleFlash.material.needsUpdate = true;
   if (on) PA.ft = FOE_TINT.clone(); else if (PA.ft) FOE_TINT.copy(PA.ft); paFx(on && PAPER === 'a');
   if (on) { PA.was = { bg: scene.background, far: scene.fog.far, near: scene.fog.near, wc: WCAM.clone(), wl: WLOOK.clone() }; if (PAPER === 'a') { WCAM.set(0, 9.5, -20); WLOOK.set(0, 2.6, -55); }; scene.background = C(PAPER === 'b' ? '#8cc6f2' : '#3b2414'); scene.fog.near = 900; scene.fog.far = 1000; paHide(); }
-  else { scene.background = PA.was.bg; WCAM.copy(PA.was.wc); WLOOK.copy(PA.was.wl); scene.fog.near = PA.was.near; scene.fog.far = PA.was.far; PA.was = null; world.visible = campWall.visible = hoard.visible = nest.visible = true; for (const o of fort.children) if (!paKeep(o)) o.visible = true; for (const b of WL.built) if (b && b.g) for (const c of b.g.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } for (const c of launcher.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } PA.gb.g.visible = false; if (PA.cp) PA.cp.g.visible = false; if (CAP.b) for (const c of CAP.b.g.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } litter.m.visible = true; for (const ks of kingShots) { if (ks.pa) ks.pa.visible = false; for (const c of ks.thrown.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } } for (const c of P2.v.cl || []) if (c && c.q) for (const o of c.q.children) { if (o === c.pa) o.visible = false; else if (o.userData.paHid) { o.visible = true; o.userData.paHid = false; } } }
+  else { scene.background = PA.was.bg; WCAM.copy(PA.was.wc); WLOOK.copy(PA.was.wl); scene.fog.near = PA.was.near; scene.fog.far = PA.was.far; PA.was = null; world.visible = campWall.visible = hoard.visible = nest.visible = true; for (const o of fort.children) if (!paKeep(o)) o.visible = true; for (const b of WL.built) if (b && b.g) for (const c of b.g.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } for (const c of launcher.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } PA.gb.g.visible = false; if (PA.cp) PA.cp.g.visible = false; if (kingRig && kingRig.userData.paHid) { kingRig.visible = true; kingRig.userData.paHid = false; } if (kingCrown.userData.paHid) { kingCrown.visible = king.visible; kingCrown.userData.paHid = false; } if (LINE.g) for (const c of LINE.g.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } if (CAP.b) for (const c of CAP.b.g.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } litter.m.visible = true; for (const ks of kingShots) { if (ks.pa) ks.pa.visible = false; for (const c of ks.thrown.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } } for (const c of P2.v.cl || []) if (c && c.q) for (const o of c.q.children) { if (o === c.pa) o.visible = false; else if (o.userData.paHid) { o.visible = true; o.userData.paHid = false; } } }
 }
 // ---- look B under test (?paper=b): a papercraft diorama. The land, road, walls, castle, camp wall, trees, rocks, river, hills, gates
 //      and cannon are real folded-paper models (matte card, flat-shaded so every fold shows, each sheet with its own grain); the army,
@@ -9906,7 +9935,7 @@ function boot() {
   if (cineDue()) { // the day's first launch: a "tap to begin" card (the tap also lets the sound play), then the opening cinematic
     setupLevel(save.level); prewarm(); render(); requestAnimationFrame(frame); setTimeout(smpPrep, 400); const l = $('loading');
     if (!l) { filmOrCine(); return; }
-    const book = PAPER === 'a'; if (book && save.level <= WORLD_LEN * PA_WORLDS) { paPre(); if (!PA.g) { paSetWorld(Math.min(PA_WORLDS - 1, Math.floor((save.level - 1) / WORLD_LEN))); paBuild(); paExtras(); } }
+    const book = PAPER === 'a'; if (book && save.level <= WORLD_LEN * PA_WORLDS) { paPre(); if (!PA.g) { paSetWorld(paWOf(save.level)); paBuild(); paExtras(); } }
     const w1 = book && save.level <= WORLD_LEN; // (v201) World 1: the desk and the book
     Promise.all([w1 ? paWait() : null, book ? imgWait((w1 ? ['models/paper/a/ui/seal.webp'] : ['models/paper/a/cover_frame.webp', 'models/paper/a/cover_emblem.webp']).concat(['models/paper/a/title_frame.webp', 'models/paper/a/title_vignette.webp']).concat(w1 ? ['models/paper/a/ui/logo.webp', 'models/paper/a/open/p1_back.webp', 'models/paper/a/open/p1_c0.webp'] : [])) : null]).then(() => { // (the paper pieces and the cover are in hand before the tap)
       if (w1) { ptSizes(); const d = dkBuild(); d.classList.add('in'); { const pg = puSnapshot(); if (pg) { const e = d.querySelector('.dk-p2'); e.style.backgroundImage = `url(${pg})`; e.style.backgroundSize = '100% 100%'; } } setTimeout(() => l.remove(), 600); d.addEventListener('click', () => { audio(); if (!DK.on) { d.classList.remove('in'); dkOpen(!save.openSeen); } else if (DK.s && (DK.s.ph === 'type' || DK.s.ph === 'hold')) DK.next(); else if (DK.s && DK.s.ph === 'dive') dkSkip(); }); setTimeout(() => { if (DK.el === d && !DK.on) { d.classList.remove('in'); dkOpen(!save.openSeen); } }, 1300); /* v202h: the book opens by itself (a tap still turns the pages) */ return; }
@@ -9916,7 +9945,7 @@ function boot() {
   }
   showMenu(); prewarm(); render(); requestAnimationFrame(frame); setTimeout(smpPrep, 400); const l = $('loading'); if (l) l.remove(); practiceBoss();
   if (PAPER_FLAG && !G.practice && !/[?&]boss=/.test(location.search)) { G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = +(location.search.match(/[?&]lv=(\d+)/) || [])[1] || 2; save.fails = 0; (PAPER === 'a' ? paPre() : Promise.resolve()).then(() => startPlay()); }
-  if (PAPER === 'a' && !PAPER_FLAG && save.level <= WORLD_LEN * PA_WORLDS) { paPre(); setTimeout(() => { if (!PA.g) { paSetWorld(Math.min(PA_WORLDS - 1, Math.floor((save.level - 1) / WORLD_LEN))); paBuild(); paExtras(); } }, 1200); } // World 1 is paper: its pieces are in hand before the first battle // the paper test: level 2, as a practice round
+  if (PAPER === 'a' && !PAPER_FLAG && save.level <= WORLD_LEN * PA_WORLDS) { paPre(); setTimeout(() => { if (!PA.g) { paSetWorld(paWOf(save.level)); paBuild(); paExtras(); } }, 1200); } // World 1 is paper: its pieces are in hand before the first battle // the paper test: level 2, as a practice round
 }
 // boss practice: Boss fights on the menu (or ?boss=1..4 in the address) drops straight into that world's warlord fight. Nothing is
 // saved: the real save comes back when you return to the menu
