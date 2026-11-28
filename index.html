@@ -4434,6 +4434,24 @@ const allySprites = spriteCrowd(ACAP, spriteMat), foeSprites = spriteCrowd(BCAP,
    his own strip at twice the detail (un/champion_hd.webp, 10 frames of 306x408), baked to the sheet's colour form and drawn by this mesh */
 const giantMat = spriteMat.clone(); giantMat.uniforms.uCell.value = new THREE.Vector2(.1, 1); giantMat.uniforms.uCols.value = 10; giantMat.uniforms.uTexel.value = new THREE.Vector2(1 / 3060, 1 / 408); giantMat.uniforms.uMap.value = null;
 const giantSprites = spriteCrowd(8, giantMat);
+/* (v202ao) the horde on paper draws from its own sheet at twice the detail (each skeleton's strip cut from the source art at 306 x 408 a frame,
+   as the Champion's is): on the shared crowd sheet a frame is 153 x 204, and near the camera its edges showed the pixels */
+const FHD = { ids: ['minion', 'srogue', 'warrior', 'smage', 'sbomb', 'sarcher', 'sshield', 'snecro'], row: {}, rt: null, u: null, on: false, busy: null, CW: 306, CH: 408 };
+function paFoesHD() {
+  if (FHD.rt) return Promise.resolve(FHD.rt); if (FHD.busy) return FHD.busy; if (renderer.capabilities.maxTextureSize < 4096 || !SPR.m) return Promise.resolve(null);
+  return FHD.busy = Promise.all(FHD.ids.map(id => new THREE.TextureLoader().loadAsync('models/paper/a/un/' + id + '_hd.webp').then(t => { t.generateMipmaps = false; t.minFilter = t.magFilter = THREE.LinearFilter; return t; }, () => null))).then(ts => {
+    FHD.busy = null; if (ts.some(t => !t)) { ts.forEach(t => t && t.dispose()); return null; }
+    const W = FHD.CW * 10, H = FHD.CH * ts.length, rt = new THREE.WebGLRenderTarget(W, H, { format: THREE.RGBAFormat, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: true, depthBuffer: false });
+    const cc = renderer.getClearColor(new THREE.Color()), ca = renderer.getClearAlpha(); rt.viewport.set(0, 0, W, H); renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear();
+    ts.forEach((t, k) => { SPR.m.uniforms.uMap.value = t; rt.viewport.set(0, k * FHD.CH, W, FHD.CH); rt.scissor.set(0, k * FHD.CH, W, FHD.CH); rt.scissorTest = true; renderer.setRenderTarget(rt); renderer.render(SPR.qs, SPR.qc); FHD.row[FHD.ids[k]] = k; t.dispose(); });
+    rt.scissorTest = false; rt.viewport.set(0, 0, W, H); SPR.m.uniforms.uMap.value = null; renderer.setRenderTarget(null); renderer.setClearColor(cc, ca);
+    FHD.rt = rt; FHD.u = { value: rt.texture }; return rt; });
+}
+function paFoesUse(on) { // point the horde's material at that sheet, or back at the crowd sheet
+  const U = foeSpriteMat.uniforms; on = on && !!FHD.rt; if (on === FHD.on) return; FHD.on = on;
+  if (on) { U.uMap = FHD.u; U.uCell.value.set(.1, 1 / FHD.ids.length); U.uCols.value = 10; U.uTexel.value.set(1 / (FHD.CW * 10), 1 / (FHD.CH * FHD.ids.length)); }
+  else { U.uMap = spriteMat.uniforms.uMap; U.uCell.value.set(CELL_W / ATLAS_W, CELL_H / ATLAS_H); U.uCols.value = ATLAS_COLS; U.uTexel.value.set(1 / ATLAS_W, 1 / ATLAS_H); }
+}
 function hdBake(t) { const rt = new THREE.WebGLRenderTarget(t.image.width, t.image.height, { format: THREE.RGBAFormat, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: true, depthBuffer: false });
   const cc = renderer.getClearColor(new THREE.Color()), ca = renderer.getClearAlpha(); SPR.m.uniforms.uMap.value = t; renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(SPR.qs, SPR.qc);
   renderer.setRenderTarget(null); renderer.setClearColor(cc, ca); SPR.m.uniforms.uMap.value = null; t.dispose(); return rt; }
@@ -5979,9 +5997,9 @@ const PA_DIM_W = [null, { castle: 1.6298, torch: .575, bannerp: .6767, palm: .74
   { castle: 1.5625, torch: .585, bannerp: .7133, volcano: 1.2397, forge: 1.1538, crypt: 1.0526, crownskull: 1.2024, deadtree: .8667, deadtrees: .905, crystals: .9816, shrooms: 1.0821, boulders: 1.8182, ruinwall: 1.222, lavapool: 1.8634, bones: 1.4815, cauldron: 1.1632 },
   { castle: 1.5152, torch: .5502, bannerp: .535, throne: 1.0889, pillar: .5483, gold: 2.0202, statue: .725, floatrk: .8467, bonespk: 1.0811, crystals: .9862, skulls: 1.6949, stump: 1.1858, urn: .8656, obelisk: .7467, chains: 1.3889, crag: 1.3453 }];
 PA_DIM_W[5] = Object.assign({}, PA_DIM_W[4], { castle: 2.1053 }); // the wall of bone in the gate's place
-const PA_GB_W = [null, { idle: [.7432, 732], wind: [.6781, 730], roar: [1.0594, 690], daze: [.9833, 660] }, { idle: [.9276, 732], wind: [.696, 806], roar: [1.0592, 743], daze: [1.1641, 713] }, { idle: [1.041, 732], wind: [.7849, 809], roar: [1.1959, 730], daze: [1.0794, 743] }, { idle: [1.0369, 732], wind: [.7978, 821], roar: [1.1413, 729], daze: [1.1232, 714] }],
-  PA_CP_W = [null, { walk: [.6755, 601], swing: [.75, 600], hit: [.9319, 587], down: [.9125, 514] }, { walk: [.9268, 601], swing: [.7605, 618], hit: [1.0387, 594], down: [1.3057, 494] }, { walk: [.9002, 601], swing: [.7592, 623], hit: [1.0214, 607], down: [1.1127, 559] }, { walk: [.8918, 601], swing: [.7836, 587], hit: [1.0794, 567], down: [1.2962, 476] }];
-PA_GB_W[5] = PA_GB_W[4]; PA_CP_W[5] = PA_CP_W[4]; // the Bone King, his Royal Guard // each warlord's and captain's poses (width / height, height in pixels): Sek-Ra, the Embalmer; Hrimgar, the Huscarl; Magmaw, the Bellows; the Bone King, the Royal Guard
+const PA_GB_W = [null, { idle: [.7432, 732], wind: [.6781, 730], roar: [1.0594, 690], daze: [.9833, 660] }, { idle: [.8456, 732], wind: [.8397, 761], roar: [1.1632, 668], daze: [1.1118, 689] }, { idle: [1.1339, 732], wind: [.7095, 840], roar: [1.2121, 712], daze: [1.1102, 735] }, { idle: [1.0369, 732], wind: [.7978, 821], roar: [1.1413, 729], daze: [1.1232, 714] }],
+  PA_CP_W = [null, { walk: [.6755, 601], swing: [.75, 600], hit: [.9319, 587], down: [.9125, 514] }, { walk: [.8602, 601], swing: [.7781, 604], hit: [1.0102, 586], down: [1.0925, 530] }, { walk: [.9451, 601], swing: [.7262, 610], hit: [1.0448, 581], down: [1.1686, 522] }, { walk: [.7471, 601], swing: [.7095, 599], hit: [1.0275, 581], down: [1.1042, 528] }];
+PA_GB_W[5] = PA_GB_W[4]; PA_CP_W[5] = PA_CP_W[4]; // the Bone King, his Royal Guard (v202ao: Hrimgar, Magmaw, the Huscarl, the Bellows and the Royal Guard redrawn after their 3D models) // each warlord's and captain's poses (width / height, height in pixels): Sek-Ra, the Embalmer; Hrimgar, the Huscarl; Magmaw, the Bellows; the Bone King, the Royal Guard
 const PA_LOOK = [{ sky: ['#a9cbe6', '#d9e8ef', '#f4ead2'], cloth: '#5a2a34' }, { sky: ['#e9c58e', '#f4dcb0', '#fbefd8'], cloth: '#2a3a6a' },
   { sky: ['#a9c6e4', '#dbe8f3', '#f5f3ee'], cloth: '#284a40' }, { sky: ['#93463a', '#d98d5e', '#f5c78e'], cloth: '#24202a' },
   { sky: ['#4c2c70', '#9478bc', '#e4d6ee'], cloth: '#1e1430' }, { sky: ['#3e2456', '#7c5c9e', '#d6c4e4'], cloth: '#40101e' }]; // the sky behind the book and its cloth cover
@@ -6052,6 +6070,7 @@ async function paUnits(on) { // the army's strips on the sprite sheet: paper dol
   const cc = renderer.getClearColor(new THREE.Color()), ca = renderer.getClearAlpha(); UNIT_TYPES.forEach((u, k) => { if (ts[k]) sprBake(u, ts[k]); }); renderer.setRenderTarget(null); renderer.setClearColor(cc, ca);
   if (on && PAPER === 'a' && !giantMat.uniforms.uMap.value) { const t = await new THREE.TextureLoader().loadAsync('models/paper/a/un/champion_hd.webp').then(t => { t.generateMipmaps = false; t.minFilter = t.magFilter = THREE.LinearFilter; return t; }, () => null);
     if (t && tok === PA.uTok && SPR.m) giantMat.uniforms.uMap.value = hdBake(t).texture; } // (v202aj) the Champion's own sharper strip
+  if (on && PAPER === 'a') paFoesHD(); // (v202ao) and the horde's
 }
 function paLabel(x, g, bx, by, bw, bh, st) { // the gate's number or weapon, lettered on the painted board
   const fam = 'Fraunces, Georgia, serif', arm = g.arm != null, red = g.k < 1 && !g.add && !arm, crew = arm && TIERS[g.arm].merge;
@@ -8027,14 +8046,15 @@ const riseOf = (p, i) => { // v202k, the opening: the horde springs up one by on
 const nearLens = (p, i) => p === beetles && DIR.s.foeZ !== undefined && p.z[i] > DIR.s.foeZ - (p.big[i] || p.tier[i] >= F_BOMB ? 5.5 : 0); // (right by the camera of a scene they would fill the picture)
 function drawSprites(p, sm) {
   const cell = sm.geometry.attributes.aCell.array, party = G.boomed && p === ants;
-  const hd = p === ants && PA.on && PAPER === 'a' && !!giantMat.uniforms.uMap.value, gcell = giantSprites.geometry.attributes.aCell.array; let gn = 0; // (v202aj) the Champion goes to his own sharper mesh
+  const hd = p === ants && PA.on && PAPER === 'a' && !!giantMat.uniforms.uMap.value, gcell = giantSprites.geometry.attributes.aCell.array; let gn = 0;
+  if (p === beetles) paFoesUse(PA.on && PAPER === 'a'); const fhd = p === beetles && FHD.on; // (v202ao) the horde's sharper sheet // (v202aj) the Champion goes to his own sharper mesh
   for (let i = 0; i < p.n; i++) {
     const s = p === beetles && p.tier[i] === F_CAP && CAP.b || DIR.s && nearLens(p, i) || party && PA.on && p.z[i] - camera.position.z > -8 ? .001 : /* (v201b: on the paper win camera, nobody stands in the lens) */ p.s[i] * US * (PA.on && PAPER === 'a' ? 1.18 : 1) * popOf(p, i) * riseOf(p, i), air = liftOf(p, i), flying = air > 0.05, t = unitType(p, i); // (the sculpted captain is drawn in place of his brute)
     const hopK = party ? Math.abs(Math.sin(G.t * 7 + p.ph[i])) : 0;
     let f = p === beetles && p.tier[i] === F_NEC ? p.atk[i] > 0 ? ATK_F : JUMP_F : flying || hopK > .35 || (p === beetles && p.kind[i] && !(p.atk[i] > 0)) ? JUMP_F : p.atk[i] > 0 ? ATK_F : Math.floor(((G.t * (p.big[i] ? 1.1 : 1.55) + p.ph[i] * .16) % 1) * RUN_FRAMES);
     _m.makeScale(s, s, s); _m.setPosition(p.x[i], air + hopK * .55 * s, p.z[i]);
     sm.setMatrixAt(i, _m); // powder kegs are sappers in the sprite sheet now
-    cell[i] = t * FPT + f;
+    cell[i] = fhd ? (FHD.row[UNIT_TYPES[t].id] || 0) * FPT + f : t * FPT + f;
     _c.copy(p === beetles ? FOE_TINT : WHITE); if (p === beetles && p.tier[i] === F_CAP) _c.lerp(wc2.set(WARLORDS[CAP.w].col).convertSRGBToLinear(), .3).multiplyScalar(1.5); if (p === beetles && p.tier[i] === F_NEC) _c.setScalar(1.12); if (p.flash[i] > 0) _c.multiplyScalar(1 + p.flash[i] * 1.2); // skeletons get the world's tint (deeper on snow)
     sm.setColorAt(i, _c);
     if (hd && p.big[i] && gn < 8) { giantSprites.setMatrixAt(gn, _m); gcell[gn] = f; giantSprites.setColorAt(gn, _c); gn++; _m.makeScale(.001, .001, .001); sm.setMatrixAt(i, _m); }
