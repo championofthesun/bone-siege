@@ -5957,7 +5957,25 @@ const PB_DIM = { statue: .6146, skullrock: 1.0756, crownskull: .8438, crystals: 
 const PA_CP = { walk: [.8735, 601], swing: [.6973, 631], hit: [1.0265, 567], down: [1.1417, 515] }; // The Carver's poses: width / height, height in pixels
 const PB_GB = { idle: [.9363, 487], walk: [.8911, 496], wind: [.6147, 558], smash: [.7537, 475], roar: [1.1279, 477], daze: [1.0995, 422] };
 const PA_DIM = PAPER === 'b' ? PB_DIM : PA_DIM_A, PA_GB = PAPER === 'b' ? PB_GB : PA_GB_A;
-const PA = { g: null, on: false, was: null, tex: {}, img: {}, uTok: 0, rec: 0, fired: 0 };
+const PA = { g: null, on: false, was: null, tex: {}, img: {}, uTok: 0, rec: 0, fired: 0, w: 0 };
+/* (v202ak) the storybook, world by world. A world past the first keeps its own pictures in models/paper/a/w<N>/ under the SAME names as
+   World 1's (its palm stands in the oak's place, its sphinx in the statue's), so the layout, the puppets and the boss banners need no
+   changes; only the names listed for it are taken from its folder, the rest (signs, units, cannon, camp, UI) are shared */
+const PA_WORLDS = 2; // worlds drawn as the pop-up book: Meadow Road, Sunscorch Dunes
+const PA_WD = ['', 'w2/', 'w3/', 'w4/', 'w5/'];
+const PA_WOWN = ['page', 'far', 'castle', 'back', 'oak', 'pines', 'bush', 'cottage', 'knight', 'lamp', 'fence', 'torch', 'bannerp', 'gb_idle', 'gb_wind', 'gb_roar', 'gb_daze', 'cp_walk', 'cp_swing', 'cp_hit', 'cp_down'];
+const PA_WKEYS = [null, new Set(PA_WOWN)];
+const PA_DIM_W = [null, { castle: 1.5054, oak: .7417, pines: .845, bush: 1.7241, cottage: 1.3363, knight: 1.1719, lamp: .59, fence: 1.9544, torch: .575, bannerp: .6767 }];
+const PA_GB_W = [null, { idle: [.7432, 732], wind: [.6781, 730], roar: [1.0594, 690], daze: [.9833, 660] }], PA_CP_W = [null, { walk: [.6755, 601], swing: [.75, 600], hit: [.9319, 587], down: [.9125, 514] }]; // each warlord's and captain's poses (width / height, height in pixels): Sek-Ra, the Embalmer
+const PA_LOOK = [{ sky: ['#a9cbe6', '#d9e8ef', '#f4ead2'], cloth: '#5a2a34' }, { sky: ['#e9c58e', '#f4dcb0', '#fbefd8'], cloth: '#2a3a6a' }]; // the sky behind the book and its cloth cover
+const PA_BASE = { dim: Object.assign({}, PA_DIM), gb: Object.assign({}, PA_GB), cp: Object.assign({}, PA_CP) };
+const paW = () => Math.max(0, Math.min(PA_WORLDS - 1, Math.floor(((G.level || 1) - 1) / WORLD_LEN)));
+function paSetWorld(w) { PA.w = w; Object.assign(PA_DIM, PA_BASE.dim, PA_DIM_W[w] || {}); Object.assign(PA_GB, PA_BASE.gb, PA_GB_W[w] || {}); Object.assign(PA_CP, PA_BASE.cp, PA_CP_W[w] || {}); }
+function paTeardown() { // one world's book is put away before another's is built (only while it is off)
+  scene.remove(PA.g); PA.g.traverse(o => { if (o.geometry) o.geometry.dispose(); }); if (PA.can && PA.can.parent) PA.can.parent.remove(PA.can);
+  for (const k of Object.keys(PA.tex)) if (PA_WD.some(d => d && k.startsWith(d))) { PA.tex[k].dispose(); delete PA.tex[k]; } // that world's own pictures
+  PA.g = PA.castle = PA.castleF = PA.castle2 = PA.camp = PA.hoard = PA.bossB = PA.gb = PA.cp = PA.can = PA.heroes = PA.shreds = null; PA.torn = false;
+}
 function paPre() { // the sign pictures are drawn into each gate's lettering, so they must be in hand before the first gate is built
   const font = document.fonts ? Promise.race([document.fonts.load('800 60px Fraunces').catch(() => 0), new Promise(ok => setTimeout(ok, 2500))]) : null; // (v202ae) and the lettering's face, or the boards would be lettered in Georgia
   return Promise.all(['gold', 'blue', 'red', 'purple'].map(k => new Promise(ok => { const i = new Image(); i.onload = () => { PA.img[k] = i; ok(); }; i.onerror = () => ok(); i.src = 'models/paper/a/sign_' + k + '.webp'; })).concat([font]));
@@ -6004,7 +6022,7 @@ function paWard(on) { /* the ward in the paper round: a sheet of purple vellum w
   m.needsUpdate = true;
 }
 function paReset() { // each round: gates lettered on signs, the castle and camp wall stood back up, the horde's bones left their own colour
-  for (const g of G.gates) (PAPER === 'b' ? pbGate : paGate)(g.mesh, g); if (PAPER === 'a' && !PA.img.gold) paPre().then(() => { if (PA.on) for (const g of G.gates) paGate(g.mesh, g); }); /* the signs letter themselves as soon as their pictures are in */ PA.shredded = false; PA.cpShred = false; PS.done = false; if (PAPER === 'a' && isBoss(G.level)) { ['shred', 'turn', 'pop', 'st1'].forEach(psLoad); psFont(); ['story_bg', 'st1_back', 'st1_sekra', 'st1_front'].forEach(paTex); } if (PA.shreds) { for (const q of PA.shreds) PA.g.remove(q.s); PA.shreds = null; } for (const p of PB.castle) p.rotation.set(0, 0, 0); for (const c of PB.camp) c.rotation.set(0, 0, 0); FOE_TINT.setRGB(1, 1, 1);
+  for (const g of G.gates) (PAPER === 'b' ? pbGate : paGate)(g.mesh, g); if (PAPER === 'a' && !PA.img.gold) paPre().then(() => { if (PA.on) for (const g of G.gates) paGate(g.mesh, g); }); /* the signs letter themselves as soon as their pictures are in */ PA.shredded = false; PA.cpShred = false; PS.done = false; if (PAPER === 'a' && isBoss(G.level)) { ['shred', 'turn', 'pop'].forEach(psLoad); if (PA.w === 0) { psLoad('st1'); psFont(); ['story_bg', 'st1_back', 'st1_sekra', 'st1_front'].forEach(paTex); } } if (PA.shreds) { for (const q of PA.shreds) PA.g.remove(q.s); PA.shreds = null; } for (const p of PB.castle) p.rotation.set(0, 0, 0); for (const c of PB.camp) c.rotation.set(0, 0, 0); FOE_TINT.setRGB(1, 1, 1);
   if (PA.castle) PA.castle.rotation.x = -.22; if (PA.castle2) PA.castle2.rotation.x = -.22; PA.torn = false; for (const c of [PA.castle, PA.castle2]) if (c) { c.visible = true; if (c.userData.sh) c.userData.sh.visible = true; } if (PA.castleF) { PA.castleF.visible = true; PA.castleF.rotation.x = -.22; } if (PA.hoard) PA.hoard.visible = PA.hoard.userData.sh.visible = false; PA.popped = false; for (const c of PA.camp || []) c.rotation.x = -.32; PA.rec = 0; PA.fired = G.fired;
 }
 /* (v201b) boss levels on paper: the page turns to dusk (plum shadows, warm orange light) and Grimbald's red banners line the road */
@@ -6047,7 +6065,7 @@ function paTick(dt) { // the paper pieces that move
     if (hk > 0 && !PA.popped) { PA.popped = true; psLoad('pop').then(() => psSnd('pop', .55)); } }
   if (PA.camp) { const lt = G.mode === 'lost' || G.mode === 'resultLose' ? (PA.lostT = (PA.lostT || 0) + dt) : (PA.lostT = 0), k = Math.min(1, lt / .9); for (const c of PA.camp) c.rotation.x = -.32 + k * k * (Math.PI / 2 + .3); } // tipped over toward the reader
 }
-function paTex(n) { if (PA.tex[n]) return PA.tex[n]; const url = 'models/paper/' + (PAPER || 'a') + '/' + n + '.webp', t = PA.tex[n] = new THREE.TextureLoader().load(url, undefined, undefined, function retry() { /* (v202s: a picture that failed to arrive is asked for again, or its cut-out would stay invisible all game) */ const k = (t.userData.tries = (t.userData.tries || 0) + 1); if (k > 4) return; setTimeout(() => { const i = new Image(); i.onload = () => { t.image = i; t.needsUpdate = true; }; i.onerror = retry; i.src = url + '?r=' + k + '-' + Date.now(); }, 400 * k); }); t.encoding = THREE.sRGBEncoding; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); return t; }
+function paTex(n) { if (PA.w && PA_WKEYS[PA.w] && PA_WKEYS[PA.w].has(n)) n = PA_WD[PA.w] + n; /* (v202ak) this world's own picture */ if (PA.tex[n]) return PA.tex[n]; const url = 'models/paper/' + (PAPER || 'a') + '/' + n + '.webp', t = PA.tex[n] = new THREE.TextureLoader().load(url, undefined, undefined, function retry() { /* (v202s: a picture that failed to arrive is asked for again, or its cut-out would stay invisible all game) */ const k = (t.userData.tries = (t.userData.tries || 0) + 1); if (k > 4) return; setTimeout(() => { const i = new Image(); i.onload = () => { t.image = i; t.needsUpdate = true; }; i.onerror = retry; i.src = url + '?r=' + k + '-' + Date.now(); }, 400 * k); }); t.encoding = THREE.sRGBEncoding; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); return t; }
 function paCard(n, h, x, z, o = {}) { // a cut-out h tall standing on the page at (x, z), its top leaning back toward the reader
   const u = o.u || [0, 1], v = o.v || [0, 1], w = h * PA_DIM[n] * (u[1] - u[0]) / (v[1] - v[0]), geo = new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0);
   if (o.u || o.v) { const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, u[0] + uv.getX(i) * (u[1] - u[0]), v[0] + uv.getY(i) * (v[1] - v[0])); } // just part of the picture
@@ -6077,7 +6095,7 @@ function paBuild() {
      at this grazing angle (so the polygon offset), and a soft blob that thin was all hidden behind its card (so it sits further forward) */
   PA.shC = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -8, vertexShader: PA.sh.vertexShader,
     fragmentShader: 'varying vec2 vUv; void main() { float side = 1.0 - smoothstep(.45, 1.0, abs(vUv.x * 2.0 - 1.0)); gl_FragColor = vec4(.12, .08, .05, .72 * pow(vUv.y, 1.4) * side); }' }); // (v202ac) the cut-outs' contact shadow: v = 1 is the card's foot
-  const table = new THREE.Mesh(new THREE.PlaneGeometry(240, 240), new THREE.MeshBasicMaterial({ color: C('#5a2a34'), toneMapped: false, fog: false })); table.rotation.x = -Math.PI / 2; table.position.set(0, -.6, -40); g.add(table); // the book's cloth cover
+  const table = new THREE.Mesh(new THREE.PlaneGeometry(240, 240), new THREE.MeshBasicMaterial({ color: C(PA_LOOK[PA.w].cloth), toneMapped: false, fog: false })); table.rotation.x = -Math.PI / 2; table.position.set(0, -.6, -40); g.add(table); // the book's cloth cover
   const PW = 33, PH = PW * PAGE_H / PAGE_W, PZ = -50 + PH / 2; // the painted road (0.314 of the page) is the game's road; the painted river runs just in front of the castle, a moat
   const under = new THREE.Mesh(new THREE.PlaneGeometry(PW + 1.2, PH + .8), new THREE.MeshBasicMaterial({ color: C('#e9dcc0'), toneMapped: false, fog: false })); under.rotation.x = -Math.PI / 2; under.position.set(0, -.04, PZ + .25); g.add(under); // the stack of pages under the top one
   const page = new THREE.Mesh(new THREE.PlaneGeometry(PW, PH), new THREE.MeshBasicMaterial({ map: paTex('page'), toneMapped: false, fog: false })); page.rotation.x = -Math.PI / 2; page.position.set(0, -.01, PZ); g.add(page);
@@ -6090,7 +6108,7 @@ function paBuild() {
     const ct = canvasTex(8, 256, (x, w, h) => { const q = x.createLinearGradient(0, 0, 0, h); [[0, 0], [.35, .05], [.58, .2], [.676, .42], [.74, .16], [.86, .04], [1, 0]].forEach(([s, a]) => q.addColorStop(s, `rgba(70,40,20,${a})`)); x.fillStyle = q; x.fillRect(0, 0, w, h); });
     const cr = new THREE.Mesh(bend(new THREE.PlaneGeometry(PW + 1.2, 3.7, 1, 16), -50 - 3.7 / 2 + 1.2, .02), new THREE.MeshBasicMaterial({ map: ct, transparent: true, depthWrite: false, toneMapped: false, fog: false })); cr.renderOrder = 1; g.add(cr); } // the crease: a soft shadow, no line
 
-  { const sky = canvasTex(512, 384, (x, w, h) => { const q = x.createLinearGradient(0, 0, 0, h); q.addColorStop(0, '#a9cbe6'); q.addColorStop(.6, '#d9e8ef'); q.addColorStop(1, '#f4ead2'); x.fillStyle = q; x.fillRect(0, 0, w, h);
+  { const sky = canvasTex(512, 384, (x, w, h) => { const q = x.createLinearGradient(0, 0, 0, h); const L = PA_LOOK[PA.w].sky; q.addColorStop(0, L[0]); q.addColorStop(.6, L[1]); q.addColorStop(1, L[2]); x.fillStyle = q; x.fillRect(0, 0, w, h);
       for (let i = 0; i < 2400; i++) { x.fillStyle = `rgba(${Math.random() < .5 ? '90,70,40' : '255,255,255'},${.04 + Math.random() * .05})`; x.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5); } // paper grain
       x.lineWidth = 3; x.strokeStyle = 'rgba(110,80,50,.55)'; x.fillStyle = '#fbf5e6';
       for (const [cx, cy, r] of [[70, 70, 30], [250, 45, 26], [420, 90, 34], [160, 150, 22], [360, 175, 20]]) { x.beginPath(); for (let k = 0; k < 5; k++) x.arc(cx - r * 1.4 + k * r * .7, cy + (k % 2 ? -r * .35 : 0), r * (k % 2 ? .75 : .6), 0, Math.PI * 2); x.fill(); x.stroke(); x.beginPath(); for (let k = 0; k < 5; k++) x.arc(cx - r * 1.4 + k * r * .7, cy + (k % 2 ? -r * .35 : 0), r * (k % 2 ? .75 : .6) - 1.5, 0, Math.PI * 2); x.fill(); }
@@ -6147,7 +6165,8 @@ function paFx(on) { // the paper round's effects and its parchment HUD (and back
   gameEl.classList.toggle('paper', on); HUDP = on ? HUDP_PAPER : HUDP_NAVY; if (GHUD) GHUD.rebuild(); paWard(on && PAPER === 'a');
 }
 function paperScene(on) { // the storybook level in place of the 3D land, castle and camp wall (and back again)
-  if (on && !PA.g) { if (PAPER === 'b') pbBuild(); else paBuild(); paExtras(); } if (!PA.g || on === PA.on) return; PA.on = on; PA.g.visible = on; PA.can.visible = on;
+  if (on && PAPER === 'a' && PA.g && PA.w !== paW()) { if (PA.on) paperScene(false); paTeardown(); } // (v202ak) a new world: its own book (the old one closed first)
+  if (on && !PA.g) { if (PAPER === 'b') pbBuild(); else { paSetWorld(PAPER === 'a' ? paW() : 0); paBuild(); } paExtras(); } if (!PA.g || on === PA.on) return; PA.on = on; PA.g.visible = on; PA.can.visible = on;
   POST.mat.uniforms.uPaper.value = on && PAPER === 'a' ? 1 : 0; paUnits(on);
   { const cm = partMeshes[PK.COIN], u = cm.userData; if (!u.g0) { u.g0 = cm.geometry; u.m0 = cm.material; } if (on && PAPER === 'a' && !u.pg) { u.pg = new THREE.PlaneGeometry(.24, .24); u.pm = new THREE.MeshBasicMaterial({ map: paTex('ui/coin'), alphaTest: .4, side: THREE.DoubleSide, toneMapped: false }); } cm.geometry = on && u.pg ? u.pg : u.g0; cm.material = on && u.pm ? u.pm : u.m0; } // v202k: in the storybook the coins are the painted coin, cut out of paper
   for (const [m, e] of [[spriteMat, '#0c1a3e'], [foeSpriteMat, '#2a0a30'], [giantMat, '#0c1a3e']]) { m.uniforms.uEdge.value.set(on ? (PAPER === 'b' ? '#8d8a96' : '#3a2010') : e); m.uniforms.uOut.value = on ? (PAPER === 'b' ? 1 : 1.2) : 1.3; m.uniforms.uDoll.value = on ? 1 : 0; m.uniforms.uFoot.value = on && PAPER === 'a' ? .16 : SPRITE_FOOT; /* (v202ai: a paper strip's feet sit 31 of 204 px up its cell, not where the 3D bake put them (.256), so the dolls were sunk ~21 px into the page and lost their legs) */ m.uniforms.uQuad.value.set(BAKE_W * UNIT_K, BAKE_H * UNIT_K).multiplyScalar(on ? 1.95 : 1); } /* (v201: dolls 1.35x bigger, so the army reads as an army) */ // a thin brown cut line round each doll's paper edge; the dolls drawn bigger (looks only)
@@ -6331,7 +6350,7 @@ function paShredTick(dt) {
   if (!alive) { for (const q of PA.shreds) { PA.g.remove(q.s); q.s.geometry.dispose(); q.s.material.dispose(); } PA.shreds = null; }
 }
 function paStory() { // true while the tale holds the results card back (Grimbald's level, the paper round only)
-  if (!PA.on || PAPER !== 'a' || G.sim || !isBoss(G.level) || PS.done) return false;
+  if (!PA.on || PAPER !== 'a' || G.sim || !isBoss(G.level) || PS.done || PA.w !== 0) return false; // (v202ak: Grimbald's tale; the other worlds have none yet)
   if (!PS.on) psStart(); return true;
 }
 function psFont() { // the storybook's own typeface (Fraunces, soft: v202f), fetched once
@@ -6531,7 +6550,7 @@ function setupLevel(n) {
   clearBones(); spawnHorde(G.cfg.horde); G.kingT = 4; G.casts = 0; resetKingShots(); resetCharges(); resetHoard(); resetSaws(); resetPaladin(); resetWarlord(); resetCaptain(); setHolder(holderOf(n)); resetHazards(); G.kills = 0; G.dps = 0; G.fortPrev = null; G.surged = false; G.rage = false; rageGlow.visible = false;
   if (FUSE && !G.sim) FUSE.level();
   $('lvlPill').textContent = lvName(n);
-  paperScene(!G.sim && (!G.cine || PAPER === 'a') && !G.menuSetup && (PAPER === 'b' ? !!G.practice : PAPER === 'a' && (!!(G.practice && PAPER_FLAG) || G.level <= WORLD_LEN))); if (PA.on) { paReset(); paBossMood(); } // only the test round; your real game afterwards is the usual one
+  paperScene(!G.sim && (!G.cine || PAPER === 'a') && !G.menuSetup && (PAPER === 'b' ? !!G.practice : PAPER === 'a' && (!!(G.practice && PAPER_FLAG) || G.level <= WORLD_LEN * PA_WORLDS))); if (PA.on) { paReset(); paBossMood(); } // only the test round; your real game afterwards is the usual one
 }
 const lvName = n => n > LAP_LEN ? 'Road ' + (n - LAP_LEN) : 'Level ' + n;
 
@@ -8538,7 +8557,7 @@ function showMenu() {
   closeMore(); openUp(false); if (G.palCardDue) { G.palCardDue = false; setTimeout(showPalUnlock, 700); } // the Paladin card held back while a battle ran
   if (G.practice) { if (G.practiceKeep) save = JSON.parse(G.practiceKeep); G.practice = false; G.practiceKeep = null; }
   $('rewDot').classList.toggle('on', rewardsReady()); // back from a boss practice: your real progress returns
-  gameEl.classList.toggle('papermenu', PAPER === 'a' && save.level <= WORLD_LEN && G.worldOverride == null); ptSizes();
+  gameEl.classList.toggle('papermenu', PAPER === 'a' && save.level <= WORLD_LEN * PA_WORLDS && G.worldOverride == null); ptSizes();
   { const pm = gameEl.classList.contains('papermenu'), up = $('upToggle'), pills = $('mapBtn').parentNode, dot = $('rewDot').classList.contains('on'); // (v201) the title page: Upgrades joins the pills, painted icons in place of emoji
     if (pm && up.parentNode !== pills) pills.insertBefore(up, $('rewardsBtn')); else if (!pm && up.parentNode === pills) $('boonMenu').after(up);
     $('mapBtn').innerHTML = pm ? '<img class="pi" src="models/paper/a/ui/scroll.webp" alt="">Map' : '🗺️ Map'; $('rewardsBtn').innerHTML = (pm ? '<img class="pi" src="models/paper/a/art/r_chest.webp" alt="">Rewards' : '🎁 Rewards') + '<i id="rewDot"></i>'; $('rewDot').classList.toggle('on', dot); }
@@ -8577,7 +8596,7 @@ function startPlay() {
   maybeStory(); const film = G.oneTake ? false : arrival(); if (film || G.chapterTitle || G.oneTake) G.film(); G.film = null; /* (v202k: after the opening the camera is already in place: no second swoop) */
   $('lvlPill').textContent = G.cfg.boss ? 'Boss · ' + (save.level > LAP_LEN ? 'Road ' + roadN(save.level) : save.level) : lvName(save.level); $('lvlPill').classList.toggle('boss', G.cfg.boss);
   if (G.worldOverride != null) toastMsg('PREVIEW', WORLDS[worldIdx].name, { name: true, fly: true });
-  else if (!film && !G.oneTake && PAPER === 'a' && save.level <= WORLD_LEN && (save.level === 1 || G.chapterTitle)) toastMsg('CHAPTER I', save.level === 1 ? WORLDS[0].name : WORLDS[0].name + ' · ' + lvName(save.level), { name: true, fly: true }), G.chapterTitle = false; /* (v201: the storybook's chapter ribbon) */
+  else if (!film && !G.oneTake && PAPER === 'a' && save.level <= WORLD_LEN * PA_WORLDS && ((save.level - 1) % WORLD_LEN === 0 || G.chapterTitle)) { const cw = Math.floor((save.level - 1) / WORLD_LEN), first = (save.level - 1) % WORLD_LEN === 0; toastMsg('CHAPTER ' + ['I', 'II', 'III', 'IV', 'V'][cw], first ? WORLDS[cw].name : WORLDS[cw].name + ' · ' + lvName(save.level), { name: true, fly: true }); G.chapterTitle = false; } /* (v201: the storybook's chapter ribbon; v202ak: each paper world its own chapter) */
   else if (!film && !G.oneTake && (save.level - 1) % (save.level > LAP_LEN ? 5 : WORLD_LEN) === 0) toastMsg(save.level > LAP_LEN ? 'THE ENDLESS ROAD' : 'WORLD ' + (Math.floor((save.level - 1) / WORLD_LEN) + 1), WORLDS[worldIdx].name, { name: true, fly: true });
   if (G.cfg.boss && !$('story').classList.contains('on')) { const wd = WARLORDS[worldOf(save.level) % WARLORDS.length]; toastMsg('BOSS LEVEL', wlName(wd, Math.floor((save.level - 1) / LAP_LEN)) + (worldOf(save.level) === HALLW ? ' is waiting' : ' has nowhere left to run'), { snd: 1 }); } // (his story card says it the first time)
   if (!film && !G.practice && G.worldOverride == null && save.level <= LAP_LEN) { const w = worldOf(save.level), k = (save.level - 1) % WORLD_LEN; if (save.level === 1) { if (!G.oneTake) toastMsg(WARLORDS[0].title.toUpperCase(), 'GRIMBALD', { name: true }); } else if (k === 0 && w) toastMsg('THE BONE KING', ['', 'WAKE UP, SEK-RA!', 'STOP THEM, HRIMGAR!', 'MAGMAW, THEY\'RE AT MY DOOR!', 'GUARDS! HOLD THE BRIDGE!'][w], { fly: true }); else if (save.level === 46) toastMsg('YOU ARE INSIDE', 'THE THRONE ROOM', { name: true }); }
@@ -8686,7 +8705,7 @@ function paResult(won) {
   if (!$('resStars').querySelector('img')) [...$('resStars').querySelectorAll('svg')].forEach((s, i) => { const im = document.createElement('img'); im.src = 'models/paper/a/ui/' + (i === 1 ? 'seal' : 'seal_s') + '.webp'; im.alt = ''; im.draggable = false; im.className = 'seal'; s.after(im); }); // (each seal follows its star's "on")
   $('resTitle').textContent = won ? 'Victory!' : $('resTitle').textContent === 'SO CLOSE!' ? 'So close!' : 'Overrun!';
   bendTitle($('resTitle'));
-  $('collectBtn').textContent = won ? (G.level < WORLD_LEN && !G.practice ? 'Next page ›' : 'Collect') : 'Upgrade & retry';
+  $('collectBtn').textContent = won ? (G.level % WORLD_LEN !== 0 && G.level < WORLD_LEN * PA_WORLDS && !G.practice ? 'Next page ›' : 'Collect') : 'Upgrade & retry';
   if (won && !G.practice && boonDue(G.level)) { // a boon is on offer: three painted cards on the scroll; nothing moves on until one is taken
     const q = save.boonDue; G.rbNeed = true; $('result').classList.add('rbwait'); $('resBoons').hidden = false; const row = $('rbRow'); row.innerHTML = '';
     q.ids.map(id => BOON_BY[id]).forEach((b, k) => { const el = document.createElement('button'); el.className = 'rb'; el.style.animationDelay = (.9 + k * .12) + 's';
@@ -8714,7 +8733,7 @@ function collect(mult) {
   const unlock = !hadPal && palReady() && !G.practice; // the first captain has fallen: the Paladin joins you
   persist();
   const retry = G.mode === 'resultLose' && mult === 1;
-  const paNext = paperUI() && G.mode === 'resultWin' && !unlock && save.level <= WORLD_LEN; // v201: World 1 turns the page straight onto the next level
+  const paNext = paperUI() && G.mode === 'resultWin' && !unlock && save.level <= WORLD_LEN * PA_WORLDS && (save.level - 1) % WORLD_LEN !== 0; // v201: World 1 turns the page straight onto the next level
   const after = paNext ? () => pageTurn(paNextLevel) : () => pageTurn(() => { showMenu(); coinFly(before, gained); if (retry) setTimeout(() => { if (G.mode === 'menu' && $('upSheet').hidden && $('menu').classList.contains('on')) openUp(true); }, 1300); // Upgrade & retry: the sheet opens as the last coin lands
     if (unlock) setTimeout(() => { if (G.mode === 'menu') showPalUnlock(); else G.palCardDue = true; }, 700); }); // (never over a battle the player already started)
   const interstitial = G.mode === 'resultWin' && save.level > 3 && save.wins % 2 === 0 && mult === 1, due = G.mode === 'resultWin' && !G.rbDone && !(G.rbNeed && !save.boonDue) && boonDue(save.level - 1), go =() => { if (interstitial) showAd('Interstitial · plays between levels', 2, after); else after(); };
@@ -9847,7 +9866,7 @@ function boot() {
   if (cineDue()) { // the day's first launch: a "tap to begin" card (the tap also lets the sound play), then the opening cinematic
     setupLevel(save.level); prewarm(); render(); requestAnimationFrame(frame); setTimeout(smpPrep, 400); const l = $('loading');
     if (!l) { filmOrCine(); return; }
-    const book = PAPER === 'a'; if (book && save.level <= WORLD_LEN) { paPre(); if (!PA.g) { paBuild(); paExtras(); } }
+    const book = PAPER === 'a'; if (book && save.level <= WORLD_LEN * PA_WORLDS) { paPre(); if (!PA.g) { paSetWorld(Math.min(PA_WORLDS - 1, Math.floor((save.level - 1) / WORLD_LEN))); paBuild(); paExtras(); } }
     const w1 = book && save.level <= WORLD_LEN; // (v201) World 1: the desk and the book
     Promise.all([w1 ? paWait() : null, book ? imgWait((w1 ? ['models/paper/a/ui/seal.webp'] : ['models/paper/a/cover_frame.webp', 'models/paper/a/cover_emblem.webp']).concat(['models/paper/a/title_frame.webp', 'models/paper/a/title_vignette.webp']).concat(w1 ? ['models/paper/a/ui/logo.webp', 'models/paper/a/open/p1_back.webp', 'models/paper/a/open/p1_c0.webp'] : [])) : null]).then(() => { // (the paper pieces and the cover are in hand before the tap)
       if (w1) { ptSizes(); const d = dkBuild(); d.classList.add('in'); { const pg = puSnapshot(); if (pg) { const e = d.querySelector('.dk-p2'); e.style.backgroundImage = `url(${pg})`; e.style.backgroundSize = '100% 100%'; } } setTimeout(() => l.remove(), 600); d.addEventListener('click', () => { audio(); if (!DK.on) { d.classList.remove('in'); dkOpen(!save.openSeen); } else if (DK.s && (DK.s.ph === 'type' || DK.s.ph === 'hold')) DK.next(); else if (DK.s && DK.s.ph === 'dive') dkSkip(); }); setTimeout(() => { if (DK.el === d && !DK.on) { d.classList.remove('in'); dkOpen(!save.openSeen); } }, 1300); /* v202h: the book opens by itself (a tap still turns the pages) */ return; }
@@ -9857,7 +9876,7 @@ function boot() {
   }
   showMenu(); prewarm(); render(); requestAnimationFrame(frame); setTimeout(smpPrep, 400); const l = $('loading'); if (l) l.remove(); practiceBoss();
   if (PAPER_FLAG && !G.practice && !/[?&]boss=/.test(location.search)) { G.practiceKeep = JSON.stringify(save); G.practice = true; save.level = +(location.search.match(/[?&]lv=(\d+)/) || [])[1] || 2; save.fails = 0; (PAPER === 'a' ? paPre() : Promise.resolve()).then(() => startPlay()); }
-  if (PAPER === 'a' && !PAPER_FLAG && save.level <= WORLD_LEN) { paPre(); setTimeout(() => { if (!PA.g) { paBuild(); paExtras(); } }, 1200); } // World 1 is paper: its pieces are in hand before the first battle // the paper test: level 2, as a practice round
+  if (PAPER === 'a' && !PAPER_FLAG && save.level <= WORLD_LEN * PA_WORLDS) { paPre(); setTimeout(() => { if (!PA.g) { paSetWorld(Math.min(PA_WORLDS - 1, Math.floor((save.level - 1) / WORLD_LEN))); paBuild(); paExtras(); } }, 1200); } // World 1 is paper: its pieces are in hand before the first battle // the paper test: level 2, as a practice round
 }
 // boss practice: Boss fights on the menu (or ?boss=1..4 in the address) drops straight into that world's warlord fight. Nothing is
 // saved: the real save comes back when you return to the menu
