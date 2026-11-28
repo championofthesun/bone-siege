@@ -5961,15 +5961,23 @@ const PA = { g: null, on: false, was: null, tex: {}, img: {}, uTok: 0, rec: 0, f
 /* (v202ak) the storybook, world by world. A world past the first keeps its own pictures in models/paper/a/w<N>/ under the SAME names as
    World 1's (its palm stands in the oak's place, its sphinx in the statue's), so the layout, the puppets and the boss banners need no
    changes; only the names listed for it are taken from its folder, the rest (signs, units, cannon, camp, UI) are shared */
-const PA_WORLDS = 2; // worlds drawn as the pop-up book: Meadow Road, Sunscorch Dunes
+const PA_WORLDS = 4; // worlds drawn as the pop-up book: Meadow Road, Sunscorch Dunes, Frostbite Peaks, Ember Hollow
 const PA_WD = ['', 'w2/', 'w3/', 'w4/', 'w5/'];
 const PA_WOWN = ['page', 'far', 'castle', 'back', 'oak', 'pines', 'bush', 'cottage', 'knight', 'lamp', 'fence', 'torch', 'bannerp', 'gb_idle', 'gb_wind', 'gb_roar', 'gb_daze', 'cp_walk', 'cp_swing', 'cp_hit', 'cp_down'];
 const PA_WKEYS = [null, new Set(['page', 'far', 'castle', 'back', 'torch', 'bannerp', 'gb_idle', 'gb_wind', 'gb_roar', 'gb_daze', 'cp_walk', 'cp_swing', 'cp_hit', 'cp_down', // (v202al) the names each world takes from its own folder: World 1's that it replaces, then its own pieces
-  'palm', 'palms', 'shrub', 'house', 'sphinx', 'brazier', 'ruin', 'obelisk', 'pyr1', 'pyr2', 'colossus', 'tomb', 'saguaro', 'prickly', 'tent', 'butte', 'columns', 'skullrk', 'bones', 'pots', 'well'])];
+  'palm', 'palms', 'shrub', 'house', 'sphinx', 'brazier', 'ruin', 'obelisk', 'pyr1', 'pyr2', 'colossus', 'tomb', 'saguaro', 'prickly', 'tent', 'butte', 'columns', 'skullrk', 'bones', 'pots', 'well']),
+  new Set(['page', 'far', 'castle', 'back', 'torch', 'bannerp', 'gb_idle', 'gb_wind', 'gb_roar', 'gb_daze', 'cp_walk', 'cp_swing', 'cp_hit', 'cp_down', 'pines', 'bush', // (v202am) Frostbite Peaks
+    'icetower', 'icecabin', 'throne', 'longhouse', 'pine', 'birch', 'igloo', 'snowman', 'logs', 'icecrys', 'skullrk']),
+  new Set(['page', 'far', 'castle', 'back', 'torch', 'bannerp', 'gb_idle', 'gb_wind', 'gb_roar', 'gb_daze', 'cp_walk', 'cp_swing', 'cp_hit', 'cp_down', // Ember Hollow
+    'volcano', 'forge', 'crypt', 'crownskull', 'deadtree', 'deadtrees', 'crystals', 'shrooms', 'boulders', 'ruinwall', 'lavapool', 'bones', 'cauldron'])];
 const PA_DIM_W = [null, { castle: 1.6298, torch: .575, bannerp: .6767, palm: .7417, palms: .845, shrub: 1.7241, house: 1.3363, sphinx: 1.1719, brazier: .59, ruin: 1.9544, obelisk: .7717,
-  pyr1: 1.2766, pyr2: 1.2371, colossus: .8433, tomb: 1.227, saguaro: .7517, prickly: 1.0947, tent: 1.107, butte: 1.0714, columns: 1.0345, skullrk: 1.1811, bones: 1.0989, pots: 1.3158, well: 1.1696 }];
-const PA_GB_W = [null, { idle: [.7432, 732], wind: [.6781, 730], roar: [1.0594, 690], daze: [.9833, 660] }], PA_CP_W = [null, { walk: [.6755, 601], swing: [.75, 600], hit: [.9319, 587], down: [.9125, 514] }]; // each warlord's and captain's poses (width / height, height in pixels): Sek-Ra, the Embalmer
-const PA_LOOK = [{ sky: ['#a9cbe6', '#d9e8ef', '#f4ead2'], cloth: '#5a2a34' }, { sky: ['#e9c58e', '#f4dcb0', '#fbefd8'], cloth: '#2a3a6a' }]; // the sky behind the book and its cloth cover
+  pyr1: 1.2766, pyr2: 1.2371, colossus: .8433, tomb: 1.227, saguaro: .7517, prickly: 1.0947, tent: 1.107, butte: 1.0714, columns: 1.0345, skullrk: 1.1811, bones: 1.0989, pots: 1.3158, well: 1.1696 },
+  { castle: 1.5301, torch: .5283, bannerp: .595, icetower: .915, icecabin: 1.2295, throne: .9517, longhouse: 1.6129, pine: .7317, pines: .8917, birch: .7433, bush: 1.5075, igloo: 1.4218, snowman: .9167, logs: 1.6667, icecrys: 1.1627, skullrk: 1.2766 },
+  { castle: 1.5625, torch: .585, bannerp: .7133, volcano: 1.2397, forge: 1.1538, crypt: 1.0526, crownskull: 1.2024, deadtree: .8667, deadtrees: .905, crystals: .9816, shrooms: 1.0821, boulders: 1.8182, ruinwall: 1.222, lavapool: 1.8634, bones: 1.4815, cauldron: 1.1632 }];
+const PA_GB_W = [null, { idle: [.7432, 732], wind: [.6781, 730], roar: [1.0594, 690], daze: [.9833, 660] }, { idle: [.9276, 732], wind: [.696, 806], roar: [1.0592, 743], daze: [1.1641, 713] }, { idle: [1.041, 732], wind: [.7849, 809], roar: [1.1959, 730], daze: [1.0794, 743] }],
+  PA_CP_W = [null, { walk: [.6755, 601], swing: [.75, 600], hit: [.9319, 587], down: [.9125, 514] }, { walk: [.9268, 601], swing: [.7605, 618], hit: [1.0387, 594], down: [1.3057, 494] }, { walk: [.9002, 601], swing: [.7592, 623], hit: [1.0214, 607], down: [1.1127, 559] }]; // each warlord's and captain's poses (width / height, height in pixels): Sek-Ra, the Embalmer; Hrimgar, the Huscarl; Magmaw, the Bellows
+const PA_LOOK = [{ sky: ['#a9cbe6', '#d9e8ef', '#f4ead2'], cloth: '#5a2a34' }, { sky: ['#e9c58e', '#f4dcb0', '#fbefd8'], cloth: '#2a3a6a' },
+  { sky: ['#a9c6e4', '#dbe8f3', '#f5f3ee'], cloth: '#284a40' }, { sky: ['#93463a', '#d98d5e', '#f5c78e'], cloth: '#24202a' }]; // the sky behind the book and its cloth cover
 const PA_SCENE = [null, [ // (v202al) each world's own scenery: [name, height, x, z, options]; World 1's is PA_SC0 in paBuild. World 2 follows the 3D Dunes:
   // pyramids either side behind Sek-Ra's gate, his colossus beside it, his tomb thrown open by the road, obelisks and cacti, a camp of striped tents by your walls
   ['pyr1', 9.5, -13.5, -57], ['pyr2', 8.5, 13.8, -59, { flip: true }], ['skullrk', 4.2, 10.8, -50.5], ['saguaro', 4.4, -10.8, -65.5], ['saguaro', 4, 11.6, -66.5, { flip: true }],
@@ -5979,6 +5987,26 @@ const PA_SCENE = [null, [ // (v202al) each world's own scenery: [name, height, x
   ['tomb', 5, -10, -25], ['obelisk', 5.2, 8.4, -25.5], ['obelisk', 4.6, 9.8, -20.5, { flip: true }], ['prickly', 2.2, -8.6, -20], ['torch', 2.8, -7.2, -17, { bare: true }], ['saguaro', 3.8, -12.8, -18],
   ['brazier', 3, 7.2, -15.5, { bare: true }], ['tent', 4, 10.2, -14.5], ['tent', 3.6, 11, -9.8, { flip: true }], ['pots', 1.8, 8.4, -11.2],
   ['columns', 3, -10, -13], ['well', 2.6, -10.2, -8.4], ['palm', 4.2, -12.4, -11, { flip: true }],
+  ['bannerb', 4, -7.4, -6.5, { bare: true }], ['bannerb', 4, 7.4, -6.5, { bare: true, flip: true }]],
+  [ // (v202am) Frostbite Peaks, after the 3D one: his ice tower and a longhouse behind the gate, an ice-bound cabin and an igloo by the frozen river,
+    // Hrimgar's empty throne on the left, a cabin on the right, snowmen, crystals and pines, an old skull in the snow
+  ['icetower', 8.6, -13.5, -57], ['longhouse', 6, 14, -58.5, { flip: true }], ['skullrk', 3.8, 10.8, -50.5], ['birch', 5, -10.8, -65.5], ['icecrys', 3.4, 11.6, -66.5, { flip: true }],
+  ['pines', 6.4, -17.8, -66], ['pine', 5.8, 17.6, -67.5, { flip: true }], ['pines', 6.2, -17.4, -52], ['pine', 5.4, 17.4, -51.5, { flip: true }], ['pines', 5.8, 16.8, -59, { flip: true }],
+  ['icecabin', 5.4, -11, -40.5], ['pines', 5.4, 12.8, -43, { flip: true }], ['igloo', 3.4, 10.6, -38], ['icecrys', 2.6, -9.8, -32.5],
+  ['bannerp', 4.2, -7.6, -30, { bare: true }], ['bannerp', 4.2, 7.6, -30, { bare: true, flip: true }], ['bush', 1.8, 12.8, -30.5, { flip: true }],
+  ['throne', 4.8, -10.6, -23.5], ['longhouse', 3.8, 10.9, -25], ['snowman', 2.4, 8.6, -19.5], ['torch', 2.8, -7.2, -17, { bare: true }], ['pine', 4.2, -12.8, -17.5],
+  ['torch', 2.8, 7.2, -15.5, { bare: true }], ['skullrk', 2.8, 11.4, -14, { flip: true }], ['snowman', 2.2, -9.2, -13.5, { flip: true }], ['logs', 1.9, 9.4, -10.4],
+  ['pines', 4.4, 12, -9, { flip: true }], ['birch', 4, -12.4, -10.5, { flip: true }], ['bush', 1.7, -9.8, -8.2],
+  ['bannerb', 4, -7.4, -6.5, { bare: true }], ['bannerb', 4, 7.4, -6.5, { bare: true, flip: true }]],
+  [ // Ember Hollow: two volcanoes and a crypt behind the gate, Magmaw's crowned skull by the lava, his forge on the right of the road and a cauldron of
+    // molten metal facing it, crystals, dead trees, boulders and a broken wall
+  ['volcano', 9.6, -13.5, -57], ['volcano', 7.2, 14, -60, { flip: true }], ['crypt', 5, 11.6, -51], ['crystals', 4, -10.8, -65.5], ['lavapool', 2.4, 11.6, -66.5],
+  ['deadtrees', 6.2, -17.8, -66], ['deadtree', 5.6, 17.6, -67.5, { flip: true }], ['deadtrees', 6, -17.4, -52], ['deadtree', 5.4, 17.4, -51.5, { flip: true }], ['boulders', 3.4, 16.8, -59, { flip: true }],
+  ['ruinwall', 4, -11.6, -42], ['deadtrees', 5.4, 12.8, -43, { flip: true }], ['crownskull', 5.2, 11, -36], ['crystals', 2.8, -9.6, -32.5],
+  ['bannerp', 4.2, -7.6, -30, { bare: true }], ['bannerp', 4.2, 7.6, -30, { bare: true, flip: true }], ['bones', 1.9, -12.8, -28],
+  ['forge', 4.8, 10.5, -24.5], ['cauldron', 2.6, -9.8, -23.5], ['torch', 2.8, -7.2, -17, { bare: true }], ['shrooms', 2.6, -12.4, -18], ['boulders', 2.1, 9.8, -19.8],
+  ['torch', 2.8, 7.2, -15.5, { bare: true }], ['ruinwall', 3, -10.6, -12.5, { flip: true }], ['deadtree', 4.4, 11.8, -12, { flip: true }], ['lavapool', 1.6, 9, -9.4],
+  ['bones', 1.7, -9.8, -8.2, { flip: true }], ['deadtrees', 4, -13, -9, { flip: true }],
   ['bannerb', 4, -7.4, -6.5, { bare: true }], ['bannerb', 4, 7.4, -6.5, { bare: true, flip: true }]]];
 const PA_BASE = { dim: Object.assign({}, PA_DIM), gb: Object.assign({}, PA_GB), cp: Object.assign({}, PA_CP) };
 const paW = () => Math.max(0, Math.min(PA_WORLDS - 1, Math.floor(((G.level || 1) - 1) / WORLD_LEN)));
