@@ -2573,6 +2573,7 @@ const moteMat = new THREE.PointsMaterial({ map: glowTex, size: .3, transparent: 
 const motes = new THREE.Points(moteGeo, moteMat); motes.frustumCulled = false; scene.add(motes);
 let moteCfg = { vx: 0, vy: .3, sway: .4 };
 function updateMotes(dt, t) {
+  motes.visible = !(PA.on && PAPER === 'a'); // (v202ar) the 3D world's drifting motes stay off the page
   for (let i = 0; i < MOTES; i++) {
     const k = i * 3; motePos[k] += (moteCfg.vx + Math.sin(t * .8 + i) * moteCfg.sway) * dt; motePos[k + 1] += moteCfg.vy * (.6 + (i % 5) * .2) * dt;
     if (motePos[k + 1] > 8.5) motePos[k + 1] = .3; else if (motePos[k + 1] < .2) motePos[k + 1] = 8.5;
@@ -5274,7 +5275,8 @@ function burst(x, y, z, color, n, speed = 4, o) {
   if (PA.on && color === FOE_FX) color = '#f3f3f1';
   if (PA.on && o && o.kind === PK.ROCK) color = PAPER === 'b' ? ['#e9dcbc', '#d8453a', '#cdb994', '#ffffff'] : ['#ffffff', '#fdfaf2', '#f3ecdc']; if (PA.on && PAPER === 'a' && o && o.kind === PK.ROCK) o = Object.assign({}, o, { kind: PK.PAPER, sz: (o.sz || 2) * .8 }); /* flat scraps, not stones */ // in the storybook the rubble is scraps of paper
   if (G.lowQ && n > 1) n = Math.ceil(n * .5);
-  const kind = o && o.kind != null ? o.kind : o && o.g < 10 ? PK.SPARK : PK.ROCK; // hits throw bouncing chips (bone, armour) rather than goo
+  let kind = o && o.kind != null ? o.kind : o && o.g < 10 ? PK.SPARK : PK.ROCK; // hits throw bouncing chips (bone, armour) rather than goo
+  if (kind === PK.ROCK && PA.on && PAPER === 'a') kind = PK.PAPER; // (v202ar) on paper: scraps, never 3D stones
   if (P.n > 650) n = Math.min(n, 1);
   let szk = 1; if (!G.sim && G.mode === 'play' && G.gates && y < 2.4) for (const g of G.gates) if (z > g.z - 1.5 && z < g.z + 1 && Math.abs(x - g.cx) < g.w / 2 + .3) { szk = .6; n = Math.ceil(n * .34); break; } // fewer and smaller round a gate, so its number stays readable
   for (let k = 0; k < n && P.n < PCAP; k++) {
@@ -6089,13 +6091,18 @@ function paLabel(x, g, bx, by, bw, bh, st) { // the gate's number or weapon, let
   if (crew) { const c = crew + ' \u2192 1'; x.font = `800 ${Math.round(bh * .22)}px ${fam}`; x.textAlign = 'center'; x.lineWidth = 6; x.strokeText(c, bx + bw / 2, by + bh * .86); x.fillStyle = '#173a8a'; x.fillText(c, bx + bw / 2, by + bh * .86); }
 }
 function paGate(grp, g) { // the gate as a painted signpost standing on the page
-  const p = grp.userData.panel; if (!p || p.userData.pa || g.shift) return; const kind = g.arm != null ? 'blue' : g.k < 1 && !g.add ? 'red' : 'gold', img = PA.img[kind]; if (!img) return;
+  const p = grp.userData.panel; if (!p || p.userData.pa) return; const kind = g.shift ? 'purple' : g.arm != null ? 'blue' : g.k < 1 && !g.add ? 'red' : 'gold', img = PA.img[kind]; if (!img) return;
   for (const o of grp.children) if (o !== p && o !== grp.userData.ice) o.visible = false; // the 3D posts, bands, pennants, glint and glow
   const A = PA_DIM['sign_' + kind], B = PA_BOARD[kind], W = g.w + .75, H = W / A;
   const tex = canvasTex(640, Math.round(640 / A), (x, w, h) => { x.drawImage(img, 0, 0, w, h); x.save(); x.globalCompositeOperation = 'multiply'; x.fillStyle = PA_BTINT[kind]; x.fillRect(B[0] * w, (1 - B[3]) * h, (B[1] - B[0]) * w, (B[3] - B[2]) * h); x.restore(); paLabel(x, g, B[0] * w, (1 - B[3]) * h, (B[1] - B[0]) * w, (B[3] - B[2]) * h, { stroke: '#4a2810', fill: '#ffffff', lw: .24 }); });
-  p.geometry.dispose(); p.geometry = new THREE.PlaneGeometry(W, H).translate(0, H / 2, 0); if (p.material.map) p.material.map.dispose();
+  if (g.shift) { const alt = canvasTex(640, Math.round(640 / A), (x, w, h) => { x.drawImage(img, 0, 0, w, h); x.save(); x.globalCompositeOperation = 'multiply'; x.fillStyle = PA_BTINT[kind]; x.fillRect(B[0] * w, (1 - B[3]) * h, (B[1] - B[0]) * w, (B[3] - B[2]) * h); x.restore(); paLabel(x, { ...g, k: 1 / g.k }, B[0] * w, (1 - B[3]) * h, (B[1] - B[0]) * w, (B[3] - B[2]) * h, { stroke: '#4a2810', fill: '#ffffff', lw: .24 }); });
+    grp.userData.good = g.k > 1 ? tex : alt; grp.userData.poor = g.k > 1 ? alt : tex; } // (v202ar) the shifting pair: a purple board for each face, the flip swaps them as on the 3D gate
+  p.geometry.dispose(); p.geometry = new THREE.PlaneGeometry(W, H).translate(0, H / 2, 0); if (p.material.map && !g.shift) p.material.map.dispose();
   Object.assign(p.material, { map: tex, transparent: false, alphaTest: .5, depthWrite: true }); p.material.needsUpdate = true; p.position.set(0, 0, 0); p.rotation.set(-.38, 0, 0); p.renderOrder = 0; p.userData.pa = true;
   if (grp.userData.bar) grp.userData.bar.position.set(0, B[2] * H + .2, .04); // a +N gate's recharge bar sits along the foot of the board
+  const iceG = grp.userData.ice; if (iceG) { for (const c of iceG.children) if (c.isMesh) c.visible = false; // (v202ar) a frozen gate: a paper slab of ice hung over the board and a spray of ice spikes at its foot, in place of the glassy 3D ice
+    const pm = (n, w, h, x, y, z, fl) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: paTex('fx/' + n), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false })); m.position.set(x, y, z); m.rotation.x = -.38; if (fl) m.scale.x = -1; m.renderOrder = 1; iceG.add(m); };
+    const sh = W * 1.1 / PFX_DIM.iceslab, kw = W * .34, kh = kw / PFX_DIM.icespikes; pm('iceslab', W * 1.1, sh, 0, H + sh * .12, .12); pm('icespikes', kw, kh, -W * .4, kh * .4, .26); pm('icespikes', kw, kh, W * .4, kh * .4, .26, true); } // the slab hangs along the board's top edge and the spikes stand at its feet, so the number stays readable
 }
 function paGrain(c, w, h, n = 260) { c.save(); c.globalCompositeOperation = 'source-atop'; for (let i = 0; i < n; i++) { c.fillStyle = Math.random() < .55 ? 'rgba(70,40,15,.14)' : 'rgba(255,250,235,.18)'; c.fillRect(Math.random() * w, Math.random() * h, 1.3, 1.3); } c.restore(); } /* paper grain on a drawn piece */
 function paWard(on) { /* the ward in the paper round: a sheet of purple vellum with inked hexes, held up across the gate */
@@ -6230,16 +6237,38 @@ function paBuild() {
     ['pines', 6.4, -17.8, -66], ['oak', 5, -17.4, -56.5], ['pines', 6, -16.6, -50.5], ['pines', 6.2, 17.8, -65, { flip: true }], ['oak', 5, 17.4, -55.5, { flip: true }], ['pines', 5.8, 16.6, -49.5, { flip: true }]]; for (const [n, h, x, z, o] of (PA_SCENE[PA.w] || PA_SC0)) paCard(n, h * (z > -46 ? .8 : 1) * (PA_UP[n] || 1), x, z, o); /* (v201b: the roadside pieces 0.8x, now the dolls are bigger) */
 }
 const paKeep = o => o === king || o.userData.holder || WL.built.some(b => b && b.g === o);
-function paHide() { world.visible = campWall.visible = hoard.visible = nest.visible = false; if (PA.can && PA.can.visible !== PA.on) PA.can.visible = PA.on; /* (v202t: the cannon card is always shown while the paper world is: a rebuilt card used to start hidden and stay so) */ for (const o of fort.children) if (o.visible && !paKeep(o)) o.visible = false;
+const PA_THROW = { 0: 'cleaver_t', 1: 'fx/scarab', 2: 'fx/spear', 3: 'fx/lavark', 4: 'fx/skullorb', [-1]: 'fx/skullorb' };
+function paSaws() { // (v202ar) the bone saw's blade as a paper cut-out (it spins with the 3D blade's group); the slot in the road stays
+  for (const sw of saws) { if (sw.pa) continue; sw.pa = true; for (const c of sw.g.children) if (c !== sw.blade) c.visible = false; for (const c of sw.blade.children) c.visible = false;
+    const h = 2.3, m = new THREE.Mesh(new THREE.PlaneGeometry(h * PFX_DIM.sawblade, h), new THREE.MeshBasicMaterial({ map: paTex('fx/sawblade'), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false })); sw.blade.add(m); }
+}
+function paTower() { // the Guard Tower as a paper cut-out standing where the 3D one did
+  if (!turret.visible) return; if (!PA.tower || PA.tower.parent !== turret) { const h = (TOWER_TOP || 1.7) / .62; PA.tower = new THREE.Mesh(new THREE.PlaneGeometry(h * PFX_DIM.tower, h).translate(0, h / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('fx/tower'), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false })); PA.tower.rotation.x = -.25; turret.add(PA.tower); }
+  for (const c of turret.children) if (c !== PA.tower && c !== turretHead && c.visible) { c.visible = false; c.userData.paHid = true; } for (const c of turretHead.children) if (c.visible) { c.visible = false; c.userData.paHid = true; } PA.tower.visible = true;
+}
+function paPaladin() { // Rowan the Paladin as a paper puppet: two gallop strides while he charges, rearing at the end of it, standing otherwise
+  const P = G.pal, on = paladin.visible && !!P; if (!PA.pal) { const g = PA.pal = { g: new THREE.Group(), m: {} }; PA.g.add(g.g); for (const k of ['gallop', 'charge', 'rear', 'stand']) { const h = 4.3 * (k === 'rear' ? 1.25 : k === 'stand' ? 1.12 : k === 'charge' ? .91 : 1), w = h * PFX_DIM['pal_' + k];
+    const m = g.m[k] = new THREE.Mesh(new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('fx/pal_' + k), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false })); m.rotation.x = -.28; m.visible = false; g.g.add(m); } }
+  PA.pal.g.visible = on; if (!on) return; for (const c of paladin.children) if (c.visible) { c.visible = false; c.userData.paHid = true; }
+  const pose = P.rear >= 0 ? 'rear' : P.ph !== undefined ? (Math.floor(P.ph / Math.PI) % 2 ? 'charge' : 'gallop') : 'stand'; for (const k in PA.pal.m) PA.pal.m[k].visible = k === pose;
+  paladin.getWorldPosition(_paV); PA.pal.g.position.copy(_paV); PA.pal.g.position.y = pose === 'rear' ? 0 : Math.abs(Math.sin((P.ph || 0) * .5)) * .25;
+}
+function paStand(n, h, parent, x = 0, z = 0, lean = .25) { const w = h * (PFX_DIM[n] || PA_DIM[n] || 1), m = new THREE.Mesh(new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0), new THREE.MeshBasicMaterial({ map: paTex(n in PFX_DIM ? 'fx/' + n : n), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false })); m.position.set(x, 0, z); m.rotation.x = -lean; parent.add(m); return m; } // (v202ar)
+function paKerbs() { // (v202ar) the lane walls as painted kerbs on the page: a row of cut-stone blocks inked flat, in place of the 3D ones
+  const w = G.walls; if (!laneWalls || !w || laneWalls.userData.pa) return; laneWalls.userData.pa = true; for (const c of laneWalls.children) c.visible = false;
+  const t = PA.kerb || (PA.kerb = canvasTex(64, 512, (x, cw, ch) => { const n = 9, bh = ch / n; for (let i = 0; i < n; i++) { const y = i * bh + 2; x.fillStyle = i % 2 ? '#d9cdb4' : '#e6dbc3'; x.beginPath(); x.roundRect(5, y, cw - 10, bh - 4, 6); x.fill(); x.lineWidth = 3; x.strokeStyle = '#5a3c22'; x.stroke(); x.fillStyle = 'rgba(90,60,34,.18)'; x.fillRect(8, y + bh - 12, cw - 16, 5); } }));
+  for (const sx of [-1, 1]) { const L = w.z0 - w.z1, m = new THREE.Mesh(new THREE.PlaneGeometry(.5, L), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, toneMapped: false, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 })); m.rotation.x = -Math.PI / 2; m.position.set(sx * w.x, .03, (w.z0 + w.z1) / 2); m.renderOrder = 1; laneWalls.add(m); }
+}
+function paHide() { world.visible = campWall.visible = hoard.visible = nest.visible = false; if (PAPER === 'a') { paKerbs(); paSaws(); paTower(); paPaladin(); } if (PA.can && PA.can.visible !== PA.on) PA.can.visible = PA.on; /* (v202t: the cannon card is always shown while the paper world is: a rebuilt card used to start hidden and stay so) */ for (const o of fort.children) if (o.visible && !paKeep(o)) o.visible = false;
   for (const b of WL.built) if (b && b.g) for (const c of b.g.children) if (c.visible) { c.visible = false; c.userData.paHid = true; } // the warlord's 3D (the paper puppet stands in for him)
   for (const c of launcher.children) if (c !== PA.can && c.visible && !c.isSprite) { c.visible = false; c.userData.paHid = true; } // the cannon model
   if (PAPER === 'a') { if (CAP.b) for (const c of CAP.b.g.children) if (c.visible) { c.visible = false; c.userData.paHid = true; }
     if (PA.w >= 4) { if (kingRig && kingRig.visible) { kingRig.visible = false; kingRig.userData.paHid = true; } if (kingCrown.visible) { kingCrown.visible = false; kingCrown.userData.paHid = true; } } // (v202an) the Bone King: his puppet stands in
     if (LINE.g) for (const c of LINE.g.children) if (c.visible) { c.visible = false; c.userData.paHid = true; } // the 3D doors, splinters and standards of your line in his hall (the knights themselves are paper already)
     litter.m.visible = false;
-    for (const ks of kingShots) if (ks.on && ks.who === 0) { // a thrown cleaver: a spinning paper cut-out
-      if (!ks.pa) { ks.pa = new THREE.Sprite(new THREE.SpriteMaterial({ map: paTex('cleaver_t'), alphaTest: .4, depthWrite: false, toneMapped: false })); ks.pa.scale.set(2.1 * PA_DIM.cleaver_t, 2.1, 1); ks.thrown.add(ks.pa); }
-      for (const c of ks.thrown.children) if (c !== ks.pa && c.visible) { c.visible = false; c.userData.paHid = true; } ks.pa.visible = true; ks.pa.material.rotation -= .22; ks.glow.visible = false; } }
+    for (const ks of kingShots) if (ks.on) { // what a warlord throws, as a spinning paper cut-out: the cleaver, Sek-Ra's scarab, Hrimgar's spear, Magmaw's lava rock, the King's skull orb (v202ar: all of them)
+      const n = PA_THROW[ks.who] || 'fx/skullorb'; if (!ks.pa || ks.pa.parent !== ks.thrown || ks.paN !== n) { ks.pa = new THREE.Sprite(new THREE.SpriteMaterial({ map: paTex(n), alphaTest: .4, depthWrite: false, toneMapped: false })); const h = n === 'cleaver_t' ? 2.1 : 1.5; ks.pa.scale.set(h * (n === 'cleaver_t' ? PA_DIM.cleaver_t : PFX_DIM[n.slice(3)] || 1), h, 1); ks.thrown.add(ks.pa); ks.paN = n; }
+      for (const c of ks.thrown.children) if (c !== ks.pa && c.visible) { c.visible = false; c.userData.paHid = true; } ks.pa.visible = true; ks.pa.material.rotation -= n === 'fx/spear' ? 0 : n === 'fx/skullorb' ? .05 : .22; ks.glow.visible = false; if (ks.core) ks.core.visible = false; } }
   if (PAPER === 'a') for (const c of P2.v.cl || []) if (c && c.q) { // Grimbald's thrown cleavers: a painted cut-out stands in for the 3D one
     if (!c.pa) { const h = 3.3, w = h * PA_DIM.cleaver_t; c.pa = new THREE.Mesh(new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('cleaver_t'), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false })); c.pa.rotation.x = -.3; c.pa.position.y = -.15; c.q.add(c.pa); }
     c.pa.visible = true; for (const o of c.q.children) if (o !== c.pa && o.visible) { o.visible = false; o.userData.paHid = true; } }
@@ -6278,7 +6307,7 @@ function paperScene(on) { // the storybook level in place of the 3D land, castle
   Object.assign(muzzleFlash.material, on ? { map: PAPER === 'b' ? PB.star : paTex('star'), blending: THREE.NormalBlending } : { map: glowTex, blending: THREE.AdditiveBlending }); muzzleFlash.material.color.set(on ? '#ffffff' : '#ffc860'); muzzleFlash.material.needsUpdate = true;
   if (on) PA.ft = FOE_TINT.clone(); else if (PA.ft) FOE_TINT.copy(PA.ft); paFx(on && PAPER === 'a');
   if (on) { PA.was = { bg: scene.background, far: scene.fog.far, near: scene.fog.near, wc: WCAM.clone(), wl: WLOOK.clone() }; if (PAPER === 'a') { WCAM.set(0, 9.5, -20); WLOOK.set(0, 2.6, -55); }; scene.background = C(PAPER === 'b' ? '#8cc6f2' : '#3b2414'); scene.fog.near = 900; scene.fog.far = 1000; paHide(); }
-  else { scene.background = PA.was.bg; WCAM.copy(PA.was.wc); WLOOK.copy(PA.was.wl); scene.fog.near = PA.was.near; scene.fog.far = PA.was.far; PA.was = null; world.visible = campWall.visible = hoard.visible = nest.visible = true; for (const o of fort.children) if (!paKeep(o)) o.visible = true; for (const b of WL.built) if (b && b.g) for (const c of b.g.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } for (const c of launcher.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } PA.gb.g.visible = false; if (PA.cp) PA.cp.g.visible = false; if (kingRig && kingRig.userData.paHid) { kingRig.visible = true; kingRig.userData.paHid = false; } if (kingCrown.userData.paHid) { kingCrown.visible = king.visible; kingCrown.userData.paHid = false; } if (LINE.g) for (const c of LINE.g.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } if (CAP.b) for (const c of CAP.b.g.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } litter.m.visible = true; for (const ks of kingShots) { if (ks.pa) ks.pa.visible = false; for (const c of ks.thrown.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } } for (const c of P2.v.cl || []) if (c && c.q) for (const o of c.q.children) { if (o === c.pa) o.visible = false; else if (o.userData.paHid) { o.visible = true; o.userData.paHid = false; } } }
+  else { scene.background = PA.was.bg; WCAM.copy(PA.was.wc); WLOOK.copy(PA.was.wl); scene.fog.near = PA.was.near; scene.fog.far = PA.was.far; PA.was = null; world.visible = campWall.visible = hoard.visible = nest.visible = true; for (const o of fort.children) if (!paKeep(o)) o.visible = true; for (const b of WL.built) if (b && b.g) for (const c of b.g.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } for (const c of launcher.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } PA.gb.g.visible = false; if (PA.cp) PA.cp.g.visible = false; if (PA.pal) PA.pal.g.visible = false; for (const o of [paladin, turret, turretHead]) for (const c of o.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } if (PA.tower) PA.tower.visible = false; if (kingRig && kingRig.userData.paHid) { kingRig.visible = true; kingRig.userData.paHid = false; } if (kingCrown.userData.paHid) { kingCrown.visible = king.visible; kingCrown.userData.paHid = false; } if (LINE.g) for (const c of LINE.g.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } if (CAP.b) for (const c of CAP.b.g.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } litter.m.visible = true; for (const ks of kingShots) { if (ks.pa) ks.pa.visible = false; for (const c of ks.thrown.children) if (c.userData.paHid) { c.visible = true; c.userData.paHid = false; } } for (const c of P2.v.cl || []) if (c && c.q) for (const o of c.q.children) { if (o === c.pa) o.visible = false; else if (o.userData.paHid) { o.visible = true; o.userData.paHid = false; } } }
 }
 // ---- look B under test (?paper=b): a papercraft diorama. The land, road, walls, castle, camp wall, trees, rocks, river, hills, gates
 //      and cannon are real folded-paper models (matte card, flat-shaded so every fold shows, each sheet with its own grain); the army,
@@ -6853,7 +6882,28 @@ fireGlow.renderOrder = 3;
 const streakM = new THREE.MeshBasicMaterial({ color: C('#fff6dc'), transparent: true, opacity: .45, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
 const arrowTrail = instanced((() => { const g = new THREE.BoxGeometry(.05, .05, 1.1); g.translate(0, 0, .75); return g; })(), streakM, SCAP); arrowTrail.renderOrder = 3;
 const ballGlow = instanced(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTex, color: C('#ff9a3a'), transparent: true, opacity: .8, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }), 200); ballGlow.renderOrder = 3;
+/* (v202ar) the battle's effects as paper cut-outs (models/paper/a/fx/): each kind is one instanced card facing the camera, turned in
+   the picture to follow its flight. The 3D shots, arrows and thrown things are hidden while the book is open */
+const PFX_DIM = { ball: 1.0309, arrow: 1.1223, fireball: 1.362, earrow: 1.0396, bomb: .8824, scarab: 1.2709, spear: .9809, lavark: 1.0924, skullorb: 1.0136, sawblade: 1.0299, icespikes: 1.1259, iceblock: 1.0056, geyser: .7905, tower: .6792, iceslab: 1.7636, rubble: 1.6085,
+  pal_gallop: 1.0217, pal_charge: 1.2596, pal_rear: .6809, pal_stand: .7385 };
+const PFX = {}, _fq = new THREE.Quaternion(), _fz = new THREE.Vector3(0, 0, 1), _fa = new THREE.Vector3(), _fb = new THREE.Vector3();
+const paOn = () => PA.on && PAPER === 'a';
+function pfx(n, cap, h) { if (PFX[n]) return PFX[n]; const w = h * (PFX_DIM[n] || 1), m = new THREE.InstancedMesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: paTex('fx/' + n), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }), cap);
+  m.frustumCulled = false; m.count = 0; m.renderOrder = 2; scene.add(m); return PFX[n] = m; }
+function pfxAngle(a, b) { _fa.copy(a).project(camera); _fb.copy(b).project(camera); return Math.atan2(_fb.y - _fa.y, (_fb.x - _fa.x) * camera.aspect); } // the direction of travel in the picture
+function pfxSet(m, i, pos, ang, sc) { _fq.setFromAxisAngle(_fz, ang); _q.copy(camera.quaternion).multiply(_fq); _m.compose(pos, _q, _s.setScalar(sc)); m.setMatrixAt(i, _m); }
+function pfxEnd(...ms) { for (const m of ms) m.instanceMatrix.needsUpdate = true; }
+function drawShotsPaper() {
+  const A = pfx('arrow', SCAP, .95), F = pfx('fireball', 300, .8), B = pfx('ball', 200, .5); let na = 0, nf = 0, nb = 0;
+  for (let k = 0; k < SH.n; k++) { shotPos(k, _sp); const kind = SH.kind[k]; shotPos(k, _sp2, .02);
+    if (kind === 0 && na < SCAP) pfxSet(A, na++, _sp, pfxAngle(_sp, _sp2) - Math.PI / 4, 1);
+    else if (kind === 1 && nf < 300) pfxSet(F, nf++, _sp, pfxAngle(_sp, _sp2), 1 + Math.sin(G.t * 30 + k) * .06);
+    else if (kind === 2 && nb < 200) pfxSet(B, nb++, _sp, 0, 1); }
+  A.count = na; F.count = nf; B.count = nb; pfxEnd(A, F, B);
+  arrowMesh.count = arrowTrail.count = fireGlow.count = fireCore.count = ballMesh.count = ballGlow.count = 0;
+}
 function drawShots() {
+  if (paOn()) { drawShotsPaper(); return; } else for (const n of ['arrow', 'fireball', 'ball']) if (PFX[n]) PFX[n].count = 0;
   let na = 0, nf = 0, nb = 0;
   for (let k = 0; k < SH.n; k++) {
     shotPos(k, _sp); const kind = SH.kind[k];
@@ -7052,12 +7102,12 @@ function drawFoeExtras() {
     _m.compose(_v.set(beetles.x[j], .62 * beetles.s[j], beetles.z[j] - .35), camera.quaternion, _s.setScalar(s * .62)); bombHalo.setMatrixAt(nb++, _m);
   }
   bombGlow.count = bombHalo.count = nb; bombGlow.instanceMatrix.needsUpdate = bombHalo.instanceMatrix.needsUpdate = true;
-  let na = 0;
+  let na = 0; const pp = paOn(), EP = pp ? pfx('earrow', ECAP, 1) : PFX.earrow;
   for (let k = 0; k < EA.n; k++) {
-    if (EA.t[k] < 0) continue; eaPos(k, _sp); eaPos(k, _sp2, .02); _m.lookAt(_sp, _sp2, _up); _m.scale(_v.set(1.6, 1.6, 1.6)); _m.setPosition(_sp); earrowMesh.setMatrixAt(na, _m); efletchMesh.setMatrixAt(na, _m);
+    if (EA.t[k] < 0) continue; eaPos(k, _sp); eaPos(k, _sp2, .02); if (pp) { pfxSet(EP, na++, _sp, pfxAngle(_sp, _sp2) - Math.PI / 4, 1); continue; } /* (v202ar) a paper arrow */ _m.lookAt(_sp, _sp2, _up); _m.scale(_v.set(1.6, 1.6, 1.6)); _m.setPosition(_sp); earrowMesh.setMatrixAt(na, _m); efletchMesh.setMatrixAt(na, _m);
     _m.compose(_sp, camera.quaternion, _s.setScalar(.62 + .1 * Math.sin(G.t * 30 + k))); eglowMesh.setMatrixAt(na++, _m); // each arrow burns with a magenta glow, so a volley reads from across the field
   }
-  earrowMesh.count = efletchMesh.count = eglowMesh.count = na; earrowMesh.instanceMatrix.needsUpdate = efletchMesh.instanceMatrix.needsUpdate = eglowMesh.instanceMatrix.needsUpdate = true;
+  if (EP) { EP.count = pp ? na : 0; pfxEnd(EP); } earrowMesh.count = efletchMesh.count = eglowMesh.count = pp ? 0 : na; earrowMesh.instanceMatrix.needsUpdate = efletchMesh.instanceMatrix.needsUpdate = eglowMesh.instanceMatrix.needsUpdate = true;
 }
 // sounds: a ragged chorus of bowstrings from the back row, then the hiss of the arrows coming down; a dull thock when one
 // lands; and the bomb: a deep boom, a hard crack on top, then debris pattering down
@@ -7418,7 +7468,7 @@ function wlFx(b, dt, at, k) { // a warlord's own signs of life, wherever he stan
 function updateWarlord(dt, play) {
   captainTick(dt, play); holdTick(dt); p2Tick(dt, play);
   // effects keep animating whatever happens
-  for (const s of spikes) { if (s.t <= 0) continue; s.t -= dt; const k = s.t > .9 ? (1.1 - s.t) / .2 : s.t < .35 ? s.t / .35 : 1; s.m.scale.y = Math.max(.01, k * 1.2); if (s.t <= 0) s.m.visible = false; }
+  for (const s of spikes) { if (s.t <= 0) continue; if (paOn() !== !!s.pa) { if (!s.g0) { s.g0 = s.m.geometry; s.m0 = s.m.material; const h = 1.25; s.g1 = new THREE.PlaneGeometry(h * PFX_DIM.icespikes, h).translate(0, h / 2, 0); s.m1 = new THREE.MeshBasicMaterial({ map: paTex('fx/icespikes'), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }); } s.pa = paOn(); s.m.geometry = s.pa ? s.g1 : s.g0; s.m.material = s.pa ? s.m1 : s.m0; } if (s.pa) s.m.rotation.set(-.25, 0, 0); s.t -= dt; /* (v202ar) on paper: cut-out ice spikes */ const k = s.t > .9 ? (1.1 - s.t) / .2 : s.t < .35 ? s.t / .35 : 1; s.m.scale.y = Math.max(.01, k * 1.2); if (s.t <= 0) s.m.visible = false; }
   if (fireRing.visible) { const u = (fireRing.userData.t += dt) / .45; if (u >= 1) fireRing.visible = false; else { fireRing.scale.setScalar(.3 + u * fireRing.userData.R); fireRing.material.opacity = 1 - u; } }
   if (ward.visible) { const pw = PA.on && PAPER === 'a'; ward.material.opacity = pw ? .9 + .08 * Math.sin(G.t * 2.4) : .28 + .14 * Math.sin(G.t * 5); if (!pw) wardTex.offset.y = (G.t * .08) % 1; ward.rotation.z = pw ? Math.sin(G.t * 1.3) * .012 : 0; }
   for (let k = 0; k < WL.tg.length; k++) { const t = WL.tg[k], p = .5 + .5 * Math.abs(Math.sin(WL.st * 12)), RR = tgRings[t.ri || 0], mk = t.kind === 's' ? tgStrips[k].mark : RR.mark;
@@ -7571,7 +7621,7 @@ function gateCharge(g, k) { if (g.ready && g.shownK === k) return; g.shownK = g.
   const ud = g.mesh.userData, pm = ud.panel.material, u = g.ready ? 1 : Math.max(0, 1 - g.cool / g.re);
   pm.opacity = (g.ready ? 1 : .8) * (1 - .9 * k); pm.color.setScalar(g.ready ? 1 : .45 + .25 * u);
   if (ud.bar) { ud.bar.visible = !g.ready && k < .5; ud.barFill.scale.x = Math.max(.001, u * ud.barW); } }
-function sandFade(k) { for (const g of G.gates) { if (g.add) gateCharge(g, k); else g.mesh.userData.panel.material.opacity = 1 - .9 * k; } }
+function sandFade(k) { for (const g of G.gates) { if (g.add) gateCharge(g, k); else { const m = g.mesh.userData.panel.material; if (m.transparent !== (k > .01)) { m.transparent = k > .01; m.needsUpdate = true; } m.opacity = 1 - .9 * k; } } }
 function resetHazards() {
   HZ.w = worldOf(G.level); HZ.on = (G.level - 1) % WORLD_LEN >= 2 && HZ.w < HALLW && !G.noHaz; HZ.st = 'idle'; HZ.t = 5 + rand() * 2; HZ.k = 0; HZ.told = false;
   for (const s of streaks) s.m.visible = false; windArrow.visible = false; hazeTo(0);
@@ -7601,8 +7651,9 @@ function updateHazards(dt, play) {
     else {
       if (!g.blown) { g.blown = true; if (play) geyserBlow(g); }
       const u = (g.t - 1.05) / .7; g.ring.visible = false; g.pool.material.opacity = .55 * Math.max(0, 1 - u); g.jet.visible = u < 1;
+      if (paOn()) { if (!g.pc) { const h = 4.6; g.pc = new THREE.Mesh(new THREE.PlaneGeometry(h * PFX_DIM.geyser, h).translate(0, h / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('fx/geyser'), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false })); g.pc.rotation.x = -.25; scene.add(g.pc); } g.pc.visible = u < 1; g.jet.visible = false; g.pc.position.set(g.x, 0, g.z); g.pc.scale.set(g.R * .9, Math.sin(Math.min(1, u * 1.6) * Math.PI / 2) * (1 - u * .4) + .01, 1); } // (v202ar) a paper jet of lava
       g.jet.scale.set(g.R * (1 - u * .3), 4.5 * Math.sin(Math.min(1, u * 1.6) * Math.PI / 2) * (1 - u * .4) + .01, g.R * (1 - u * .3)); g.jet.material.opacity = Math.max(0, 1 - u);
-      if (u >= 1) { g.t = -1; g.pool.visible = false; g.jet.visible = false; }
+      if (u >= 1) { g.t = -1; g.pool.visible = false; g.jet.visible = false; if (g.pc) g.pc.visible = false; }
     }
   }
   if (!play || !HZ.on || WL.on) { if (HZ.k > 0) { HZ.k = Math.max(0, HZ.k - dt * 2); hazeTo((HZ.k * .55).toFixed(2)); if (HZ.w === 1) sandFade(HZ.k); } windArrow.visible = false; return; }
@@ -8109,7 +8160,7 @@ function drawBlobs() {
     _m.makeScale(s, 1, s * .8); _m.setPosition(p.x[i], 0.025, p.z[i] + s * .06); blobMesh.setMatrixAt(k++, _m);
   }
   if (LINE.on && G.mode !== 'won' && G.mode !== 'resultWin') for (const q of LINE.men) { if (q[3] >= LINE.k) continue; _m.makeScale(US * .8, 1, US * .64); _m.setPosition(q[0], .025, q[1] + US * .06); blobMesh.setMatrixAt(k++, _m); }
-  blobMesh.count = k; blobMesh.instanceMatrix.needsUpdate = true;
+  blobMesh.count = PA.on && PAPER === 'a' ? 0 : k; blobMesh.instanceMatrix.needsUpdate = true; // (v202ar: none on the page)
 }
 function drawDecals() {
   let k = 0;
@@ -9358,18 +9409,22 @@ function p2Cleaver(k) {
   else { mesh(new THREE.BoxGeometry(1.5, 1.7, .16), std('#8d93a6', .35, { metalness: .5 }), 0, .7, 0, q, false); mesh(new THREE.CylinderGeometry(.11, .13, 1.5, 8), std('#6a4226', .8), .4, 2.2, 0, q, false); }
   const t = P2.v.crat || (P2.v.crat = canvasTex(128, 128, (x, w) => { const r = x.createRadialGradient(64, 64, 4, 64, 64, 62); r.addColorStop(0, 'rgba(20,10,20,.85)'); r.addColorStop(.45, 'rgba(30,16,26,.55)'); r.addColorStop(1, 'rgba(30,16,26,0)'); x.fillStyle = r; x.fillRect(0, 0, w, w); x.strokeStyle = 'rgba(15,8,14,.9)'; x.lineWidth = 3; for (let k2 = 0; k2 < 9; k2++) { let a = k2 * .7, px = 64, py = 64; x.beginPath(); x.moveTo(px, py); for (let j = 0; j < 4; j++) { a += Math.sin(k2 * 9 + j * 3) * .4; px += Math.cos(a) * 14; py += Math.sin(a) * 14; x.lineTo(px, py); } x.stroke(); } }));
   const d = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 3.6), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })); d.rotation.x = -Math.PI / 2; d.position.y = .05; d.renderOrder = -.5; g.add(d);
-  const st = std('#a89c8c', .9); for (let j = 0; j < 7; j++) { const a = j * .9; mesh(new THREE.DodecahedronGeometry(.1 + .08 * (j % 3), 0), st, Math.cos(a) * (.75 + .25 * (j % 2)), .08, Math.sin(a) * (.55 + .2 * (j % 2)), g, false).rotation.set(j, j, j); }
+  const st = std('#a89c8c', .9); if (paOn()) { paStand('rubble', .75, g, -.9, .5); paStand('rubble', .6, g, .95, .3).scale.x = -1; } else for (let j = 0; j < 7; j++) { const a = j * .9; mesh(new THREE.DodecahedronGeometry(.1 + .08 * (j % 3), 0), st, Math.cos(a) * (.75 + .25 * (j % 2)), .08, Math.sin(a) * (.55 + .2 * (j % 2)), g, false).rotation.set(j, j, j); } // (v202ar) on paper: cut-out rubble
   g.visible = false; p2Group().add(p2Mark(g)); return (L[k] = { g, q, d });
 }
 function p2Tomb(k) {
   const L = P2.v.tomb || (P2.v.tomb = []); if (L[k]) return L[k]; const g = new THREE.Group(), q = new THREE.Group(); g.add(q);
   if (LMART.dunes) lmMesh('dunes', 'tomb', q, 0, 0, 0, { s: .68 }); else { mesh(new THREE.BoxGeometry(2.4, 2, 1.6), std('#c9913f', .9), 0, 1, 0, q, false); mesh(new THREE.PlaneGeometry(1.2, 1.5), new THREE.MeshBasicMaterial({ color: C('#8a30d0') }), 0, .8, .82, q, false); }
-  const s = mesh(new THREE.SphereGeometry(1, 20, 10), std('#c9913f', 1), 0, 0, .2, g, false); s.scale.set(1.85, .3, 1.3); const h = halo('#c050ff', 3.2, 0, 1.1, .9, g, .5); g.rotation.y = k ? -.22 : .22; g.visible = false; p2Group().add(p2Mark(g)); return (L[k] = { g, q, h });
+  const s = mesh(new THREE.SphereGeometry(1, 20, 10), std('#c9913f', 1), 0, 0, .2, g, false); s.scale.set(1.85, .3, 1.3); const h = halo('#c050ff', 3.2, 0, 1.1, .9, g, .5); g.rotation.y = k ? -.22 : .22; g.visible = false; p2Group().add(p2Mark(g));
+  if (paOn()) { for (const c of q.children) c.visible = false; s.visible = false; paStand('tomb', 3.2, q); } // (v202ar) on paper: Sek-Ra's tomb cut-out
+  return (L[k] = { g, q, h });
 }
 function p2Ice() {
   if (P2.v.ice) return P2.v.ice; const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: C('#9fdcff'), emissive: C('#2a7cc0'), emissiveIntensity: .35, roughness: .12, transparent: true, opacity: .6, flatShading: true, depthWrite: false }), m2 = m.clone(); m2.opacity = .94; m2.depthWrite = true;
   const b = new THREE.Mesh(new THREE.DodecahedronGeometry(1.55, 0), m); b.scale.set(1.02, .95, 1.5); b.position.set(0, 1.1, -.15); g.add(b); for (let k = 0; k < 16; k++) { const a = k / 16 * 6.283, c = new THREE.Mesh(new THREE.ConeGeometry(.22 + .1 * (k % 3), .9 + .5 * ((k * 5) % 4) / 3, 5), m2); c.position.set(Math.cos(a) * 1.65, .35, -.15 + Math.sin(a) * 2.1); c.rotation.set(Math.sin(a) * .55, k, -Math.cos(a) * .55); g.add(c); }
-  halo('#8fe6ff', 6, 0, 1.4, -.4, g, .4); g.visible = false; p2Group().add(p2Mark(g)); return (P2.v.ice = { g });
+  halo('#8fe6ff', 6, 0, 1.4, -.4, g, .4); g.visible = false; p2Group().add(p2Mark(g));
+  if (paOn()) { for (const c of g.children) if (c.isMesh) c.visible = false; paStand('iceblock', 3.4, g, 0, .4); } // (v202ar) on paper: a cut-out block of ice frozen over the cannon
+  return (P2.v.ice = { g });
 }
 function p2Lava() {
   if (P2.v.lava) return P2.v.lava; const t = canvasTex(512, 96, (x, w) => { const jag = (o, a) => { x.beginPath(); for (let i = 0; i <= 32; i++) { const px = i * 16, y = 48 + o * (26 + 8 * Math.sin(i * 2.3) + 6 * Math.sin(i * 5.1)); i ? x.lineTo(px, y) : x.moveTo(px, y); } for (let i = 32; i >= 0; i--) x.lineTo(i * 16, 48 - o * (26 + 8 * Math.sin(i * 1.9 + 1) + 6 * Math.sin(i * 4.3))); x.closePath(); x.fillStyle = a; x.fill(); }; jag(1.4, 'rgba(60,14,6,.7)'); jag(1.15, '#3a0c06'); jag(.96, '#e8460c'); jag(.66, '#ff8a22'); jag(.34, '#ffd45a'); });
@@ -9577,7 +9632,7 @@ function startCine(full) {
     tick: (t, dt, once) => {
       G.cine && (G.cine.t = t); if (king0 && t < T.h) { king.visible = kingCrown.visible = true; }
       if (long && once('th', .5)) thunderClap(.6); if (long && !pa && once('c1', .9)) endCap('The crown commands the dead.'); if (long && once('c1x', T.e - .25)) endCap(''); if (long && (once('g1', 1.1) || once('g2', 2.5))) shine(.8, 1568);
-      if (once('eyes', T.e + (long ? .95 : .55))) { if (pa) { PA.poseHold = 'roar'; bossSay('roar', 0, .9); } cineEyes(true); if (!king0 && HOLD.b) rxGlow(HOLD.b, 1.6); hitBoom(.9); thunderClap(.5); buzz([20, 30, 60]); swell(.9, .08, 2400, 260); }
+      if (once('eyes', T.e + (long ? .95 : .55))) { if (pa) { PA.poseHold = 'roar'; bossSay('roar', HOLD.i >= 0 ? HOLD.i : 4, .9); } cineEyes(true); if (!king0 && HOLD.b) rxGlow(HOLD.b, 1.6); hitBoom(.9); thunderClap(.5); buzz([20, 30, 60]); swell(.9, .08, 2400, 260); }
       if (once('march', T.h)) { PA.poseHold = null; cineEyes(false); if (king0 && HOLD.i >= 0) { king.visible = kingCrown.visible = false; if (HOLD.b) HOLD.b.g.visible = true; } orbit(true); if (HOLD.b) rxGlow(HOLD.b, 0); for (let j = 0; j < beetles.n; j++) beetles.kind[j] = 0; }
       if (t > T.h && t < T.r) { const b = Math.floor((t - T.h) / .42); if (b !== DIR.beat) { DIR.beat = b; tone(62, .32, 'sine', .2, .6); noise(.12, .05, 'lowpass', 320, 90); } }
       if (long && t > T.r && t < T.k) { if (once('row', T.r)) { if (!palArt) { DIR.t = T.k; return; } buildPaladin(); paladin.visible = true; paladin.scale.setScalar(1.5); paladin.position.set(.2, 0, -13); paladin.rotation.y = .3; for (const o of paladin.children) if (o.isSprite) o.visible = false; horseGait(0, 1); for (let j = 0; j < beetles.n; j++) if (beetles.z[j] > -19) beetles.hp[j] = 0; pad([130.8, 196, 246.9, 329.6], 3.4, .026, 1800); [196, 294, 392].forEach((f, q) => brass(f, .8 - q * .1, .05, q * .22)); }
