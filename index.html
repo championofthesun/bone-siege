@@ -6135,7 +6135,7 @@ function paStage() {
 function paBossMood() {
   if (PAPER !== 'a' || !PA.g) return; const boss = !!(G.cfg && G.cfg.boss) && !G.cine;
   if (boss) { const u = POST.mat.uniforms; u.uShadow.value.set(1.06, .82, 1.1); u.uHigh.value.set(1.14, .93, .76); u.uSat.value = 1.08; u.uCon.value = 1.12; } else { applyGrade(Math.max(0, worldIdx)); paStage(); }
-  if (PA.sky) PA.sky.material.color.copy(boss ? _paSky.set(1, .8, .78) : _paSky.copy(PA.skyK || WHITE));
+  if (PA.sky) PA.sky.material.color.copy(boss ? _paSky.setRGB(1, .8, .78) : _paSky.copy(PA.skyK || WHITE));
   if (boss && !PA.bossB) PA.bossB = [[-7.7, -12.5], [7.7, -11], [-7.7, -38], [7.7, -38.5]].map(([x, z], i) => paCard('bannerp', 3.4, x, z, { bare: true, flip: i % 2 === 1 }));
   for (const b of PA.bossB || []) b.visible = boss;
 }
@@ -6247,7 +6247,7 @@ function paTower() { // the Guard Tower as a paper cut-out standing where the 3D
   for (const c of turret.children) if (c !== PA.tower && c !== turretHead && c.visible) { c.visible = false; c.userData.paHid = true; } for (const c of turretHead.children) if (c.visible) { c.visible = false; c.userData.paHid = true; } PA.tower.visible = true;
 }
 function paPaladin() { // Rowan the Paladin as a paper puppet: two gallop strides while he charges, rearing at the end of it, standing otherwise
-  const P = G.pal, on = paladin.visible && !!P; if (!PA.pal) { const g = PA.pal = { g: new THREE.Group(), m: {} }; PA.g.add(g.g); for (const k of ['gallop', 'charge', 'rear', 'stand']) { const h = 4.3 * (k === 'rear' ? 1.25 : k === 'stand' ? 1.12 : k === 'charge' ? .91 : 1), w = h * PFX_DIM['pal_' + k];
+  const P = G.pal || (DIR.s && paladin.visible ? { ph: G.t * 13, rear: -1 } : null), on = paladin.visible && !!P; if (!PA.pal) { const g = PA.pal = { g: new THREE.Group(), m: {} }; PA.g.add(g.g); for (const k of ['gallop', 'charge', 'rear', 'stand']) { const h = 4.3 * (k === 'rear' ? 1.25 : k === 'stand' ? 1.12 : k === 'charge' ? .91 : 1), w = h * PFX_DIM['pal_' + k];
     const m = g.m[k] = new THREE.Mesh(new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('fx/pal_' + k), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false })); m.rotation.x = -.28; m.visible = false; g.g.add(m); } }
   PA.pal.g.visible = on; if (!on) return; for (const c of paladin.children) if (c.visible) { c.visible = false; c.userData.paHid = true; }
   const pose = P.rear >= 0 ? 'rear' : P.ph !== undefined ? (Math.floor(P.ph / Math.PI) % 2 ? 'charge' : 'gallop') : 'stand'; for (const k in PA.pal.m) PA.pal.m[k].visible = k === pose;
@@ -6445,13 +6445,31 @@ function pbGate(grp, g) { // the gate as a folded-paper signpost: card posts wit
     fl.geometry.computeVertexNormals(); fl.position.set(x, 2.3, -.05); gp.add(fl); }
   if (grp.userData.bar) grp.userData.bar.position.set(0, Y - .1, .2);
 }
-const PS_DIM = { st1_back: 2.3988, st1_sekra: .6982, st1_front: 2.4768 };
+const PS_DIM = { st1_back: 2.3988, st1_sekra: .6982, st1_front: 2.4768, 'tale/t2_back': 2.3324, 'tale/t2_front': 2.3564, 'tale/t3_back': 2.3392, 'tale/t3_front': 2.3324, 'tale/t4_back': 2.3564, 'tale/t4_front': 2.3324, 'tale/e_hall': 2.3426, 'tale/e_crown': 2.623, 'tale/e_peace': 2.6756, 'tale/e_night': 2.3324, 'tale/e_hand': 2.7073, 'tale/rowan_crown': .5889, 'tale/rowan_dark': .5889,
+  'w3/gb_idle': .8456, 'w4/gb_roar': 1.2121, 'w5/gb_idle': 1.0369, 'w5/gb_daze': 1.1232 }; // (v202as) every tale's layers
 // ---- the tale between the worlds (look A under test): the beaten warlord tears away as paper on the wind; after the win the
 //      battlefield page itself turns over like a book's, and the next part of the story stands up off the new page as a pop-up,
 //      read aloud by the narrator ----
 const PS = { on: false, ready: false, done: false, t: 0, once: {} };
 const PSND = {};
 const PS_TEXT = ['And so the Bone Butcher knelt in the road. “At last,” he whispered… and the wind carried him away, like scraps of paper.', 'But the King’s road ran on, into the golden dunes, where Sek-Ra, the Sand Pharaoh, was waiting.'];
+/* (v202as) every tale of the book: after each warlord falls, his farewell and the next one's land stand up off the page; at the end the
+   three pages of the ending. Layers: [picture, height of the page, depth from the spine, when it stands, lean, sways]. Narrated by Myrddin */
+const PS_TALES = {
+  0: { txt: PS_TEXT, snd: 'st1', layers: [['st1_back', .4, .14, 1.35, .06], ['st1_sekra', .32, .7, 1.6, .12, 1], ['st1_front', .24, 1.55, 1.85, .18]] },
+  1: { txt: ['The Sand Pharaoh’s golden mask cracked in two. “Let it sleep,” he sighed… and the desert wind carried him away.', 'But the King’s road climbed on, into the frozen peaks, where Hrimgar, the Frost Jarl, stood guard.'], snd: 'st2',
+    layers: [['tale/t2_back', .4, .14, 1.35, .06], ['w3/gb_idle', .34, .7, 1.6, .12, 1], ['tale/t2_front', .24, 1.55, 1.85, .18]] },
+  2: { txt: ['The Frost Jarl’s crown of ice shattered in the snow. “Leave it,” he rumbled… and the blizzard carried him away.', 'Beyond the peaks, the road sank into Ember Hollow, where Magmaw, the smith who made the crown, was waiting at his forge.'], snd: 'st3',
+    layers: [['tale/t3_back', .4, .14, 1.35, .06], ['w4/gb_roar', .32, .7, 1.6, .12, 1], ['tale/t3_front', .24, 1.55, 1.85, .18]] },
+  3: { txt: ['The great forge went cold, and Magmaw crumbled into grey ash. “Not again…” he groaned.', 'Only one road was left now: the bridge to the Bone King’s citadel, where the crown still sat upon his head.'], snd: 'st4',
+    layers: [['tale/t4_back', .4, .14, 1.35, .06], ['w5/gb_idle', .34, .7, 1.6, .12, 1], ['tale/t4_front', .24, 1.55, 1.85, .18]] },
+  e1: { txt: ['At last the Bone King fell, and his crown rolled across the floor, to Rowan’s feet.', '“Don’t… put it… on,” the old king whispered.'], snd: 'se1', next: 'e2',
+    layers: [['tale/e_hall', .4, .14, 1.35, .06], ['w5/gb_daze', .3, .7, 1.6, .1], ['tale/e_crown', .24, 1.55, 1.85, .18]] },
+  e2: { txt: ['But the war was won, and a kingdom needs a king.', 'Rowan set the crown upon his head… and all across the realm, the dead lay down to rest.'], snd: 'se2', next: 'e3',
+    layers: [['tale/e_hall', .4, .14, 1.35, .06], ['tale/rowan_crown', .36, .7, 1.6, .12, 1], ['tale/e_peace', .24, 1.55, 1.85, .18]] },
+  e3: { txt: ['Yet that night, Rowan’s eyes burned violet. And far away, beside a quiet road, a bony hand rose from the earth.', 'The road goes on. It always does.'], snd: 'se3', end: () => finishEnding(),
+    layers: [['tale/e_night', .4, .14, 1.35, .06], ['tale/rowan_dark', .36, .7, 1.6, .12, 1], ['tale/e_hand', .24, 1.55, 1.85, .18]] },
+};
 function psLoad(k) { // a paper sound or the narrator, decoded once
   if (PSND[k]) return PSND[k].p; const o = PSND[k] = {};
   o.p = fetch('models/paper/a/snd/' + k + '.mp3').then(r => r.ok ? r.arrayBuffer() : null).then(a => a && new Promise(ok => { audio(); if (!actx) return ok(null); actx.decodeAudioData(a, b => { o.buf = b; ok(b); }, () => ok(null)); })).catch(() => null);
@@ -6482,19 +6500,19 @@ function paShredTick(dt) {
     const f = 1 - Math.min(1, t / 2.6); q.s.material.opacity = Math.min(1, f * 1.6); q.s.scale.multiplyScalar(1 + dt * .3); if (f > 0) alive++; else q.s.visible = false; }
   if (!alive) { for (const q of PA.shreds) { PA.g.remove(q.s); q.s.geometry.dispose(); q.s.material.dispose(); } PA.shreds = null; }
 }
-function paStory() { // true while the tale holds the results card back (Grimbald's level, the paper round only)
-  if (!PA.on || PAPER !== 'a' || G.sim || !isBoss(G.level) || PS.done || PA.w !== 0) return false; // (v202ak: Grimbald's tale; the other worlds have none yet)
-  if (!PS.on) psStart(); return true;
+function paStory() { // true while the tale holds the results card back (the paper round only): after each of the first four warlords, once per save
+  if (!PA.on || PAPER !== 'a' || G.sim || !isBoss(G.level) || G.level > WORLD_LEN * 4 || PS.doneLv === G.level || !PS_TALES[PA.w]) return false;
+  if (!PS.on) { const T = save.tales || (save.tales = {}); if (T[G.level] && !G.practice) { PS.doneLv = G.level; return false; } T[G.level] = 1; if (!G.practice) persist(); psStart(PA.w); } return true;
 }
 function psFont() { // the storybook's own typeface (Fraunces, soft: v202f), fetched once
   if (PS.font) return; PS.font = 1; const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,400..900,100,0;1,9..144,400..900,100,0&display=swap'; document.head.appendChild(l);
   setTimeout(() => { if (document.fonts) Promise.all(['italic 40px Fraunces', '800 40px Fraunces', '40px Fraunces'].map(f => document.fonts.load(f))).catch(() => {}); }, 300);
 }
 const PS_SERIF = 'Fraunces, Georgia, "Times New Roman", serif';
-function psStart() {
-  PS.on = true; PS.ready = false; PS.t = 0; PS.once = {}; clearToasts(); endCap(''); ['turn', 'pop', 'st1'].forEach(psLoad); psFont();
+function psStart(key = 0, snap0) {
+  const TL = PS.T = PS_TALES[key]; PS.key = key; PS.on = true; PS.ready = false; PS.t = 0; PS.once = {}; Object.assign(PS, { lay: null, nch: -1, dn: false, t0: null, full: false, shown: 0 }); clearToasts(); endCap(''); ['turn', 'pop', TL.snd].forEach(psLoad); psFont();
   for (const f of floats) { f.t = 0; if (f.el) f.el.style.opacity = '0'; } // (v201: his last words were still fading and showed through the story page)
-  render(); const cv = renderer.domElement, snap = document.createElement('canvas'); snap.width = cv.width; snap.height = cv.height; snap.getContext('2d').drawImage(cv, 0, 0); // the battlefield as it is now
+  const cv = renderer.domElement; let snap = snap0; if (!snap) { render(); snap = document.createElement('canvas'); snap.width = cv.width; snap.height = cv.height; snap.getContext('2d').drawImage(cv, 0, 0); } // the battlefield as it is now (or the last page, when the tale runs on)
   const sc = PS.scene = new THREE.Scene(), asp = cv.width / cv.height, fov = 40, H = 10, W = H * asp, D = H / 2 / Math.tan(fov * Math.PI / 360), SP = -.5, HU = 5 + SP, HL = 5 - SP;
   Object.assign(PS, { W, H, D, SP, HU, HL, asp });
   { const bg = paTex('story_bg'), ta = 1152 / 2048; bg.wrapS = bg.wrapT = THREE.ClampToEdgeWrapping; if (asp > ta) { bg.repeat.set(1, ta / asp); bg.offset.set(0, (1 - ta / asp) / 2); } else { bg.repeat.set(asp / ta, 1); bg.offset.set((1 - asp / ta) / 2, 0); } sc.background = bg; } // a painted glow of storybook gold behind the book (cover-fitted)
@@ -6542,19 +6560,19 @@ function psStart() {
   PS.front.renderOrder = PS.back.renderOrder = 5; sc.add(PS.front, PS.back);
   // the pop-up pieces stand on the lower page in front of the upper one
   PS.layers = [];
-  for (const [nm, hk, zk, at, lean] of [['st1_back', .4, .14, 1.35, .06], ['st1_sekra', .32, .7, 1.6, .12], ['st1_front', .24, 1.55, 1.85, .18]]) {
-    let h = H * hk, w = h * PS_DIM[nm]; if (w > W * 1.0) { w = W * 1.0; h = w / PS_DIM[nm]; }
+  for (const [nm, hk, zk, at, lean, sway] of TL.layers) {
+    let h = H * hk, w = h * (PS_DIM[nm] || 1); if (w > W * 1.0) { w = W * 1.0; h = w / PS_DIM[nm]; }
     const g = new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0), o = new THREE.Mesh(g, basic({ map: paTex(nm), alphaTest: .5, side: THREE.DoubleSide }));
     o.position.set(0, .004 * (PS.layers.length + 2), SP + zk); o.rotation.x = -Math.PI / 2; sc.add(o);
     const sh = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.05, h * .4), basic({ map: blobTex, color: C('#5a3818'), transparent: true, opacity: 0, depthWrite: false })); sh.rotation.x = -Math.PI / 2; sh.position.set(0, .003, SP + zk - h * .14); sh.renderOrder = 1; sc.add(sh); // its shadow on the page as it stands
-    PS.layers.push({ o, sh, at, lean, sway: nm === 'st1_sekra' });
+    PS.layers.push({ o, sh, at, lean, sway: !!sway });
   }
   PS.tap = () => { if (!PS.on || PS.t < 2.8 || PT.on) return; if (PS.shown < 1) PS.full = true; else pageTurn(() => psEnd()); };
   window.addEventListener('pointerdown', PS.tap);
   PS.ready = true;
 }
 function psLayout() { // the story set in lines on the page once, with a big drop cap; then only the first n letters are drawn
-  const c = PS.tc, x = c.getContext('2d'), w = c.width, h = c.height, all = PS_TEXT.join(' '), body = all.slice(1);
+  const c = PS.tc, x = c.getContext('2d'), w = c.width, h = c.height, all = PS.T.txt.join(' '), body = all.slice(1);
   let fs = Math.round(h / 6.2), lines; const cap = () => fs * 2.05;
   for (let tries = 0; tries < 12; tries++) {
     x.font = `italic ${fs}px ${PS_SERIF}`; lines = []; let line = '', start = 1, lineNo = 0; const words = body.split(' ');
@@ -6592,16 +6610,18 @@ function psTick(dt) {
   for (const L of P.layers) { const k = clamp((t - L.at) / .6, 0, 1), c1 = 1.9, y = k <= 0 ? 0 : 1 + (c1 + 1) * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2);
     L.o.rotation.x = -Math.PI / 2 + (Math.PI / 2 - L.lean) * y; L.sh.material.opacity = .42 * Math.min(1, Math.max(0, y)); if (L.sway && k >= 1) L.o.rotation.z = Math.sin((t - L.at) * 1.7) * .035; }
   // the narrator reads; the words write themselves on the page in time with him
-  if (P.t0 == null && t >= 2.6 && (PSND.st1 && PSND.st1.buf || t > 6 || muted || !actx) && once('read', 2.6)) { P.src = psSnd('st1', 1); P.dur = P.src && PSND.st1.buf ? PSND.st1.buf.duration : 11; P.t0 = t; }
-  if (P.t0 != null) { const all = PS_TEXT.join(' '), sh = P.full ? 1 : clamp((t - P.t0) / (P.dur * .92), 0, 1), nch = Math.round(all.length * sh), done = sh >= 1;
+  const sk = P.T.snd; if (P.t0 == null && t >= 2.6 && (PSND[sk] && PSND[sk].buf || t > 6 || muted || !actx) && once('read', 2.6)) { P.src = psSnd(sk, 1); P.dur = P.src && PSND[sk].buf ? PSND[sk].buf.duration : 11; P.t0 = t; }
+  if (P.t0 != null) { const all = P.T.txt.join(' '), sh = P.full ? 1 : clamp((t - P.t0) / (P.dur * .92), 0, 1), nch = Math.round(all.length * sh), done = sh >= 1;
     if (nch !== P.nch || done !== P.dn) { P.nch = nch; P.dn = done; psText(nch, done); } P.shown = sh;
     if (t > P.t0 + P.dur + 6 && !PT.on) pageTurn(() => psEnd()); } // (it moves on by itself in the end)
 }
 function psRender() { renderer.setRenderTarget(null); renderer.setScissorTest(false); const s = renderer.getSize(new THREE.Vector2()); renderer.setViewport(0, 0, s.x, s.y); renderer.render(PS.scene, PS.cam); }
-function psEnd() {
+function psEnd(stop) { // (stop: leaving the tale altogether, to the menu or the next level: no next page)
   if (!PS.on) return; window.removeEventListener('pointerdown', PS.tap); if (PS.src) try { PS.src.stop(); } catch (e) {}
+  const TL = stop ? {} : PS.T; let snap = null; if (TL.next) { psRender(); const cv = renderer.domElement; snap = document.createElement('canvas'); snap.width = cv.width; snap.height = cv.height; snap.getContext('2d').drawImage(cv, 0, 0); } // the next page turns over this one
   PS.scene.traverse(o => { try { if (o.geometry) o.geometry.dispose(); for (const m of [].concat(o.material || [])) { if (m.map && m.map.isTexture && !Object.values(PA.tex).includes(m.map)) m.map.dispose(); if (m.dispose) m.dispose(); } } catch (e) {} }); /* (the hardcover's boxes carry several materials each) */ 
-  Object.assign(PS, { on: false, ready: false, done: true, motes: null, scene: null, cam: null, layers: null, up: null, src: null, t0: null, full: false, shown: 0, nch: -1, dn: false, lay: null, tc: null, tt: null });
+  Object.assign(PS, { on: false, ready: false, done: true, doneLv: G.level, motes: null, scene: null, cam: null, layers: null, up: null, src: null, t0: null, full: false, shown: 0, nch: -1, dn: false, lay: null, tc: null, tt: null });
+  if (TL.next) psStart(TL.next, snap); else if (TL.end) TL.end();
 }
 /* ---- turning the page: every move from one screen to the next is a page of the book turning over the spine on the left ---- */
 const PT = { on: false, N: 10, set: null, fin: null };
@@ -8707,7 +8727,7 @@ function maTick(dt) { // the world's air over the painting (a 2D canvas: a few d
 }
 const maShowing = () => MART.on && G.mode === 'menu' && $('menu').classList.contains('on') && !DIR.s && !G.cine && !FILM.on && !G.fin;
 function showMenu() {
-  if (PS.on) psEnd(); if (PA.on) paperScene(false);
+  if (PS.on) psEnd(true); if (PA.on) paperScene(false);
   storyWarm();
   if (!G.menuIntroDone) { G.menuIntroDone = true; $('menu').classList.add('intro'); setTimeout(() => $('menu').classList.remove('intro'), 1500); } // the first open of a session: the logo drops in, the rest rises after it
   closeMore(); openUp(false); if (G.palCardDue) { G.palCardDue = false; setTimeout(showPalUnlock, 700); } // the Paladin card held back while a battle ran
@@ -8755,7 +8775,7 @@ function startPlay() {
   else if (!film && !G.oneTake && PAPER === 'a' && save.level <= WORLD_LEN * PA_WORLDS && ((save.level - 1) % WORLD_LEN === 0 || G.chapterTitle)) { const cw = Math.floor((save.level - 1) / WORLD_LEN), first = (save.level - 1) % WORLD_LEN === 0; toastMsg('CHAPTER ' + ['I', 'II', 'III', 'IV', 'V'][cw], first ? WORLDS[cw].name : WORLDS[cw].name + ' · ' + lvName(save.level), { name: true, fly: true }); G.chapterTitle = false; } /* (v201: the storybook's chapter ribbon; v202ak: each paper world its own chapter) */
   else if (!film && !G.oneTake && (save.level - 1) % (save.level > LAP_LEN ? 5 : WORLD_LEN) === 0) toastMsg(save.level > LAP_LEN ? 'THE ENDLESS ROAD' : 'WORLD ' + (Math.floor((save.level - 1) / WORLD_LEN) + 1), WORLDS[worldIdx].name, { name: true, fly: true });
   if (G.cfg.boss && !$('story').classList.contains('on')) { const wd = WARLORDS[worldOf(save.level) % WARLORDS.length]; toastMsg('BOSS LEVEL', wlName(wd, Math.floor((save.level - 1) / LAP_LEN)) + (worldOf(save.level) === HALLW ? ' is waiting' : ' has nowhere left to run'), { snd: 1 }); } // (his story card says it the first time)
-  if (!film && !G.practice && G.worldOverride == null && save.level <= LAP_LEN) { const w = worldOf(save.level), k = (save.level - 1) % WORLD_LEN; if (save.level === 1) { if (!G.oneTake) toastMsg(WARLORDS[0].title.toUpperCase(), 'GRIMBALD', { name: true }); } else if (k === 0 && w) toastMsg('THE BONE KING', ['', 'WAKE UP, SEK-RA!', 'STOP THEM, HRIMGAR!', 'MAGMAW, THEY\'RE AT MY DOOR!', 'GUARDS! HOLD THE BRIDGE!'][w], { fly: true }); else if (save.level === 46) toastMsg('YOU ARE INSIDE', 'THE THRONE ROOM', { name: true }); }
+  if (!film && !G.practice && G.worldOverride == null && save.level <= LAP_LEN) { const w = worldOf(save.level), k = (save.level - 1) % WORLD_LEN; if (save.level === 1) { if (!G.oneTake) toastMsg(WARLORDS[0].title.toUpperCase(), 'GRIMBALD', { name: true }); } else if (k === 0 && w) toastMsg('THE BONE KING', ROAR[w].toUpperCase(), { fly: true }); else if (save.level === 46) toastMsg('YOU ARE INSIDE', 'THE THRONE ROOM', { name: true }); }
   if (!film && !G.practice && G.worldOverride == null && save.level === LAP_LEN + 1) toastMsg('NOW ON THE WALL', 'ROWAN', { name: true });
   if (G.cfg.feat && TWISTS[G.cfg.feat]) { const f = G.cfg.feat; save.featTold = save.featTold || {}; if (save.level > LAP_LEN || !save.featTold[f]) toastMsg(TWISTS[f][0], TWISTS[f][1], { snd: 1, on: () => { save.featTold[f] = 1; persist(); } }); } // the world's new thing the first time; on the Endless Road, this level's twist
   if (isGold(save.level)) toastMsg('GOLD RUSH', 'Double coins on this level', { snd: 1 });
@@ -8896,7 +8916,7 @@ function collect(mult) {
   if (due) { persist(); showBoons(go); } else go();
 }
 function paNextLevel() { // (the page underneath the turn: the next level, set up and running, with no stop at the title page)
-  if (PS.on) psEnd(); if (PA.on) paperScene(false); storyWarm();
+  if (PS.on) psEnd(true); if (PA.on) paperScene(false); storyWarm();
   $('result').classList.remove('on', 'rbwait'); $('boon').classList.remove('on'); gameEl.classList.remove('overlay', 'lostwash'); POST.mat.uniforms.uWash.value = 0; G.resBusy = false;
   startPlay();
 }
@@ -9192,7 +9212,7 @@ function frame(now) {
 
 /* debug hooks for automated playtests */
 window.__CR = {
-  G, ants, beetles, get save() { return save; }, get PA() { return PA; }, get DIR() { return DIR; }, get GHUD() { return GHUD; }, pause: () => pauseGame(), musicProbe, winProbe, start: startPlay, menu: showMenu,
+  G, ants, beetles, get save() { return save; }, get PA() { return PA; }, get DIR() { return DIR; }, get GHUD() { return GHUD; }, pause: () => pauseGame(), musicProbe, winProbe, start: startPlay, menu: showMenu, tale: (k, at) => { psStart(k); if (at) PS.t = at; }, get PS() { return PS; }, win: () => win(), ending: () => startEnding(), arrival: () => { const p = G.practice; G.practice = false; delete (save.scenes || {})["a" + G.level]; const r = arrival(); G.practice = p; return r; },
   step(sec, opts = {}) { const n = Math.round(sec * 60); for (let i = 0; i < n; i++) { if (opts.aim) G.lx = opts.aim(G); if (opts.fire !== undefined) G.firing = opts.fire; if (opts.giant) sendGiant(); update(1 / 60); } render(); return { mode: G.mode, ants: ants.n, beetles: beetles.n, fort: Math.ceil(G.fortHp), nest: Math.ceil(G.nestHp), t: +G.t.toFixed(1) }; },
   boonAfter(C) { const sv = { boons: { w: boonWorld(C.lv), list: C.boons } }; if (C.lv < 2) return; boonTake(sv, C.lv, null); const ids = boonOffer(sv, C.lv, Math.random); boonTake(sv, C.lv, ids[(Math.random() * ids.length) | 0]); C.boons = sv.boons.list; },
   UPG, upCost, freshSave, levelCfg, coinFly, TIERS, get world() { return world; }, get KK() { return KK; },
@@ -9752,24 +9772,32 @@ $('film').addEventListener('click', e => { e.stopPropagation(); if (FILM.on && p
 addEventListener('keydown', e => { if (FILM.on) { e.stopPropagation(); if (/^(Escape|Enter| )$/.test(e.key) && performance.now() - FILM.t0 > 700) filmEnd(true); } }, true);
 function endCine() { if (DIR.s && DIR.s.cine) dirStop(true); }
 // ---- a new land: the King shouts for its warlord from his battlements, the warlord wakes, and the camera sweeps back to your cannon
-const ROAR = ['', 'Wake up, Sek-Ra!', 'Stop them, Hrimgar!', 'Magmaw! They’re at my door!', 'Guards! Hold the bridge!'];
+const ROAR = ['', 'Sek-Ra! They’re coming!', 'Stop them, Hrimgar!', 'Magmaw! They’re at my door!', 'Guards! Hold the bridge!'];
 function arrival() {
   const n = G.level, k = (n - 1) % WORLD_LEN, w = worldOf(n), road = onRoadLv(n), key = 'a' + n; save.scenes = save.scenes || {};
   if (G.sim || G.practice || G.fin || G.worldOverride != null || G.paused || G.lowQ || save.scenes[key]) return false; if (n === 1 && PAPER === 'a' && save.openSeen) return false; /* (v201: the opening already showed him on his gate) */ if (!(n === 46 || n === LAP_LEN + 1 || (!road && k === 0) || (road && k % 5 === 0))) return false;
   const [cz, up] = citAt(), shots = [], ev = [], cl = [], hallIn = inHall(), far = !road && k === 0 && w > 0 && w < HALLW && kingRig, onW = HOLD.b && HOLD.b.fx.head; let t0 = 0; const at = (t, f) => ev.push([t, f]);
   king.updateMatrixWorld(true); const kz = cz + 4.6, ky = 9.4 + up, gr = road ? 'storm' : WGRADE[w];
+  if (paOn() && !road) { // (v202as) the paper arrival
+    const gp = PA.gb && PA.gb.g.visible ? PA.gb.g.position.clone() : new THREE.Vector3(0, 2.2, -41.5), Y = gp.y + 3.4, Z = gp.z, i = HOLD.i >= 0 ? HOLD.i : 4, wl = WARLORDS[i], line = n === 46 ? 'Out of my hall!' : ROAR[w];
+    const d = i === 4 ? 1.3 : 1, Yk = i === 4 ? Y + 1.2 : Y; shots.push({ t: [0, 2.7], pos: [[0, Yk + .9, Z + 13 * d], [0, Yk + .5, Z + 10.2 * d]], at: [[0, Yk, Z], [0, Yk + .15, Z]], fov: [34, 30], grade: gr, vig: .7 }); // (the King's card is the biggest: a step further back)
+    if (line) at(.3, () => { endCap('“' + line + '”'); kingVoice('roar', .95, 4); });
+    at(1.05, () => { PA.poseHold = 'roar'; bossSay('roar', i, .9); hitBoom(.6); buzz(40); if (wl) dirTitle(wlName(wl), wl.title); });
+    at(2.45, () => { endCap(''); dirTitle(); PA.poseHold = null; }); t0 = 2.7;
+  } else {
   if (far) { const KH = ky + 2.9, KE = KH + 1.4; shots.push({ t: [0, 2.3], pos: [[3.6, KE - 4.2, kz + 17], [2.2, KE - 2.6, kz + 12.6]], at: [[0, KE - 1.2, kz], [0, KE - .6, kz]], fov: [42, 37], foc: [.5, .45, .75, 1.2], blur: .8, grade: 'storm', vig: .75 });
     at(.35, () => { endCap('“' + ROAR[w] + '”'); kingVoice('roar', .95, 4); hitBoom(.5); buzz(50); }); at(.1, () => { king.visible = kingCrown.visible = true; }); at(2.2, () => endCap('')); at(2.3, () => { king.visible = kingCrown.visible = false; king.position.z = KPOS.z; G.kingSink = 0; }); cl.push([0, 2.3, 'v24']); t0 = 2.3; }
   else if (HOLD.i < 0 && !road && k === 0 && w === HALLW && kingRig) { const H = worldPt(kingHead), E = H[1] + 1.42; shots.push({ t: [0, 2.3], pos: [[2.6, E + 1.0, H[2] + 12], [1.5, E + .7, H[2] + 9.2]], at: [[0, E - .6, H[2]], [0, E - .2, H[2]]], fov: [40, 36], foc: [.5, .42, .7, 1.2], blur: .8, grade: 'storm', vig: .75 }); at(.35, () => { endCap('“' + ROAR[w] + '”'); kingVoice('roar', .95); hitBoom(.5); }); at(2.2, () => endCap('')); cl.push([0, 2.3, 'v25']); t0 = 2.3; }
   if (n === 46 && kingRig) { const H = worldPt(kingHead), E = H[1] + 1.42; shots.push({ t: [0, 2.2], pos: [[.9, 3.9, 3.4], [0, 3.7, -2.5], [0, 2.9, -11]], at: [[0, 2.0, -18], [0, 4.2, -42]], fov: [54, 44], grade: 'dusk', vig: .75 }, { t: [2.2, 4.1], pos: [[2.4, E - 1.6, H[2] + 8.6], [1.5, E - 1.1, H[2] + 7.8]], at: [[0, E - .2, H[2]], [0, E, H[2]]], fov: [46, 41], foc: [.5, .42, .6, 1.2], grade: 'storm', vig: .8 }); at(0, () => { pad([98, 116.5, 146.8], 4.4, .028, 900); }); at(2.35, () => { endCap('“Out of my hall!”'); cineEyes(true); kingVoice('roar', .95); hitBoom(.6); }); at(4.0, () => { endCap(''); cineEyes(false); }); cl.push([0, 2.2, 'v26'], [2.2, 4.1, 'v27']); t0 = 4.1; }
   if (onW && (far || n === 1 || n === LAP_LEN + 1)) { const H = worldPt(HOLD.b.fx.head), E = H[1] + 1.45, i = HOLD.i; shots.push({ t: [t0, t0 + 1.1], pos: [[1.3, E - .5, H[2] + 9.2], [1.1, E - .4, H[2] + 8.4]], at: [[0, E - .1, H[2]], [0, E, H[2]]], fov: [30, 28], foc: [.5, .43, .5], grade: gr, vig: .85 }, { t: [t0 + 1.1, t0 + 2.9], pos: [[2.7, H[1] - 2.6, H[2] + 13.4], [2.1, H[1] - 2.9, H[2] + 15.4]], at: [[0, E - 1.2, H[2]], [0, E - 1.4, H[2]]], fov: [42, 44], foc: [.5, .4, .7, 1.25], blur: .8, grade: gr, flare: { x: .5, y: .1, r: .7, k: .3, c: WARLORDS[i].col } });
     at(t0, () => { if (HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = false; rxGlow(HOLD.b, -.85); HOLD.b.mixer.timeScale = .2; swell(.75, .09, 220, 2600); }); at(t0 + .7, () => { rxGlow(HOLD.b, 1.8); hitBoom(.8); kingVoice('growl', .8); buzz(40); }); at(t0 + 1.1, () => { if (HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = true; HOLD.b.mixer.timeScale = 1; rxGlow(HOLD.b, .4); const M = RX_MOVES[i]; if (M) { RX.mv = RX.last = M[i === 3 ? 1 : 0]; RX.t = .05; RX.w = 1; RX.once = {}; RX.side = 1; } kingVoice('roar', .85); dirTitle(wlName(WARLORDS[i]), n === LAP_LEN + 1 ? 'Now on the wall' : WARLORDS[i].title); if (n === LAP_LEN + 1) endCap(''); }); at(t0 + 2.75, () => { dirTitle(); rxGlow(HOLD.b, 0); }); cl.push([t0, t0 + 2.9, i === ROWAN ? 'v28' : (CUT.boss[i] || [])[0], 0, i === ROWAN ? 0 : 1.1]); t0 += 2.9; }
+  }
   const L = 2.5, name = n === 3 ? null : n === 46 ? ['The Throne Room', 'You are inside'] : road ? [WORLDS[worldIdx].name, 'The Endless Road'] : [WORLDS[worldIdx].name, 'World ' + (w + 1)];
   shots.push({ t: [t0, t0 + L], raw: true, pos: PA.on && PAPER === 'a' ? [[0, 12, -25], [0, 18, -9], () => [CAM.x, CAM.y, CAM.z]] : hallIn ? [[2.6, 8.4, -30], [1.5, 12, -18], () => [CAM.x, CAM.y, CAM.z]] : n === 3 || w === HALLW ? [[3, 6, -24], [1, 12, -12], () => [CAM.x, CAM.y, CAM.z]] : [[16, 15 + up, cz + 36], [7, 25, -32], () => [CAM.x, CAM.y, CAM.z]], at: [PA.on && PAPER === 'a' ? [0, 5, -47] : hallIn ? [0, 5, -46] : n === 3 || w === HALLW ? [0, 4.6, -42] : [0, 9 + up, cz], () => [LOOK.x, LOOK.y, LOOK.z]], fov: [46, () => 0], grade: gr, gk: .3, vig: .45 });
   at(t0 + .12, () => { if (name) { dirTitle(name[0], name[1]); brass(196, .5, .05); brass(294, .9, .05, .14); } swell(L * .8, .05, 1800, 260); }); at(t0 + L * .62, () => dirTitle()); at(t0 + L * .7, () => { for (const g of G.gates) { g.mesh.visible = true; g.pulse = 1; } if (laneWalls) laneWalls.visible = true; sawGroup.visible = true; tone(660, .08, 'triangle', .04, 1.4); });
   const s = { len: t0 + L, clips: cl.filter(c => c[2]), freeze: true, noAnts: false, shots, fadeIn: true, start: () => { hold(s.len * .8); if (far) { king.visible = kingCrown.visible = true; } },
     tick: t => { if (far && t < 2.3) { king.position.z = kz + 39.75; G.kingSink = KPOS.y - ky; } for (const e of ev) if (!e[2] && t >= e[0]) { e[2] = 1; e[1](); } } };
-  const tidy = () => { if (far) { king.visible = kingCrown.visible = false; king.position.z = KPOS.z; G.kingSink = 0; } cineEyes(false); if (HOLD.b) { rxGlow(HOLD.b, 0); HOLD.b.mixer.timeScale = 1; if (HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = true; } };
+  const tidy = () => { PA.poseHold = null; endCap(''); if (far) { king.visible = kingCrown.visible = false; king.position.z = KPOS.z; G.kingSink = 0; } cineEyes(false); if (HOLD.b) { rxGlow(HOLD.b, 0); HOLD.b.mixer.timeScale = 1; if (HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = true; } };
   s.done = () => { tidy(); save.scenes[key] = 1; persist(); }; s.abort = tidy; dirStart(s); return true;
 }
 // ---- a captain marches out: a second and a half
@@ -9846,6 +9874,8 @@ const handMid = (F, o) => { const l = F.hl || (F.hl = F.root.getObjectByName('ha
 const _hm = new THREE.Vector3();
 function startEnding() {
   if (!G.practice) { save.trophies = save.trophies || {}; save.trophies[4] = 1; save.crowned = 1; persist(); }
+  if (paOn()) { clearToasts(); $('giant').classList.remove('last'); for (const f of floats) f.t = Math.min(f.t, .01); G.mode = 'ending'; G.firing = false; G.kneel = false; G.toastT = 0; ants.n = beetles.n = P.n = 0; clearBones(); hideTelegraphs(); ward.visible = false; resetPaladin(); rageGlow.visible = false; if (WL.b) WL.b.g.visible = false; WL.on = false; WL.state = 'over';
+    const g = new THREE.Group(); scene.add(g); G.end = { t: 0, ev: {}, g, gold: 0, paper: true }; gameEl.classList.add('cine'); psStart('e1'); return; } // (v202as) the paper ending: three pages of the book, then the results
   clearToasts(); $('giant').classList.remove('last'); for (const f of floats) f.t = Math.min(f.t, .01);
   G.mode = 'ending'; G.firing = false; G.kneel = false; G.toastT = 0;
   ants.n = beetles.n = P.n = 0; clearBones(); hideTelegraphs(); ward.visible = false; resetPaladin(); rageGlow.visible = false;
