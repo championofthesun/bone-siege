@@ -6004,6 +6004,7 @@ const PA_DIM_W = [null, { castle: 1.6298, torch: .575, bannerp: .6767, palm: .74
 PA_DIM_W[5] = Object.assign({}, PA_DIM_W[4], { castle: 2.1053 }); // the wall of bone in the gate's place
 const PA_GB_W = [null, { idle: [.7432, 732], wind: [.6781, 730], roar: [1.0594, 690], daze: [.9833, 660] }, { idle: [.8456, 732], wind: [.8397, 761], roar: [1.1632, 668], daze: [1.1118, 689] }, { idle: [1.1339, 732], wind: [.7095, 840], roar: [1.2121, 712], daze: [1.1102, 735] }, { idle: [1.0369, 732], wind: [.7978, 821], roar: [1.1413, 729], daze: [1.1232, 714] }],
   PA_CP_W = [null, { walk: [.6755, 601], swing: [.75, 600], hit: [.9319, 587], down: [.9125, 514] }, { walk: [.8602, 601], swing: [.7781, 604], hit: [1.0102, 586], down: [1.0925, 530] }, { walk: [.9451, 601], swing: [.7262, 610], hit: [1.0448, 581], down: [1.1686, 522] }, { walk: [.7471, 601], swing: [.7095, 599], hit: [1.0275, 581], down: [1.1042, 528] }];
+const PA_RW = { idle: [.6311, 732], wind: [.8297, 728], roar: [.9066, 707], daze: [1.0189, 583] }; // (v202as) Rowan, crowned, on the gates of the Endless Road
 PA_GB_W[5] = PA_GB_W[4]; PA_CP_W[5] = PA_CP_W[4]; // the Bone King, his Royal Guard (v202ao: Hrimgar, Magmaw, the Huscarl, the Bellows and the Royal Guard redrawn after their 3D models) // each warlord's and captain's poses (width / height, height in pixels): Sek-Ra, the Embalmer; Hrimgar, the Huscarl; Magmaw, the Bellows; the Bone King, the Royal Guard
 const PA_LOOK = [{ sky: ['#a9cbe6', '#d9e8ef', '#f4ead2'], cloth: '#5a2a34' }, { sky: ['#e9c58e', '#f4dcb0', '#fbefd8'], cloth: '#2a3a6a' },
   { sky: ['#a9c6e4', '#dbe8f3', '#f5f3ee'], cloth: '#284a40' }, { sky: ['#93463a', '#d98d5e', '#f5c78e'], cloth: '#24202a' },
@@ -6059,7 +6060,7 @@ const PA_SCENE = [null, [ // (v202al) each world's own scenery: [name, height, x
 /* (v202aq) street-level props at a person's scale: a lamp or a torch stood shorter than the soldiers walking past it */
 const PA_UP = { lamp: 1.45, torch: 1.4, brazier: 1.35, knight: 1.2, statue: 1.15, snowman: 1.3, logs: 1.2, pots: 1.25, bones: 1.2, urn: 1.3, skulls: 1.2, chains: 1.25, cauldron: 1.2, shrooms: 1.15, well: 1.15, bannerp: 1.12 };
 const PA_BASE = { dim: Object.assign({}, PA_DIM), gb: Object.assign({}, PA_GB), cp: Object.assign({}, PA_CP) };
-const paWOf = n => { const w = Math.max(0, Math.min(PA_WORLDS - 1, Math.floor((n - 1) / WORLD_LEN))); return w === HALLW && citK(n) > 5 ? 5 : w; }, paW = () => paWOf(G.level || 1); // (v202an) the Citadel's second half is the throne hall's book
+const paWOf = n => { if (n > LAP_LEN) { const r = roadWorld(n); return r === HALLW ? (isBoss(n) ? 5 : 4) : r; } /* (v202as) the Endless Road on paper */ const w = Math.max(0, Math.min(PA_WORLDS - 1, Math.floor((n - 1) / WORLD_LEN))); return w === HALLW && citK(n) > 5 ? 5 : w; }, paW = () => paWOf(G.level || 1); // (v202an) the Citadel's second half is the throne hall's book
 function paSetWorld(w) { PA.w = w; Object.assign(PA_DIM, PA_BASE.dim, PA_DIM_W[w] || {}); Object.assign(PA_GB, PA_BASE.gb, PA_GB_W[w] || {}); Object.assign(PA_CP, PA_BASE.cp, PA_CP_W[w] || {}); }
 function paTeardown() { // one world's book is put away before another's is built (only while it is off)
   scene.remove(PA.g); PA.g.traverse(o => { if (o.geometry) o.geometry.dispose(); }); if (PA.can && PA.can.parent) PA.can.parent.remove(PA.can);
@@ -6127,7 +6128,7 @@ function paReset() { // each round: gates lettered on signs, the castle and camp
    painted colours stay true: the grade is multiplied, and the sky behind the book is tinted with it */
 const PA_DUSK = { sh: [1.07, .95, .9], hi: [1.08, .98, .84], sat: 1.05, con: 1.02, sky: [1, .8, .66] }, PA_STORM = { sh: [.84, .82, 1.08], hi: [.9, .88, .98], sat: .82, con: 1.1, sky: [.6, .56, .8] }, _paSky = new THREE.Color();
 function paStage() {
-  const k = ((G.level || 1) - 1) % WORLD_LEN, a = clamp(k / 5, 0, 1), b = clamp((k - 5) / 3, 0, 1), u = POST.mat.uniforms, mx = (i, key) => (1 + (PA_DUSK[key][i] - 1) * a) * (1 - b) + PA_STORM[key][i] * b;
+  const n = G.level || 1, k = n > LAP_LEN ? [0, 5, 8][roadStage(n)] : (n - 1) % WORLD_LEN, a = clamp(k / 5, 0, 1), b = clamp((k - 5) / 3, 0, 1), u = POST.mat.uniforms, mx = (i, key) => (1 + (PA_DUSK[key][i] - 1) * a) * (1 - b) + PA_STORM[key][i] * b;
   u.uShadow.value.multiply(_v.set(mx(0, 'sh'), mx(1, 'sh'), mx(2, 'sh'))); u.uHigh.value.multiply(_v.set(mx(0, 'hi'), mx(1, 'hi'), mx(2, 'hi')));
   u.uSat.value *= ((1 + (PA_DUSK.sat - 1) * a) * (1 - b) + PA_STORM.sat * b); u.uCon.value *= ((1 + (PA_DUSK.con - 1) * a) * (1 - b) + PA_STORM.con * b);
   PA.skyK = new THREE.Color(mx(0, 'sky'), mx(1, 'sky'), mx(2, 'sky'));
@@ -6147,7 +6148,7 @@ function paTick(dt) { // the paper pieces that move
   if (PA.can && PAPER === 'a') { PA.can.scale.set(1 + PA.rec * .05, 1 - PA.rec * .09, 1).multiplyScalar(1 / CANNON_K); PA.can.rotation.x = -.5 - PA.rec * .12; }
   // Grimbald, a puppet with four poses
   const kw = PAPER === 'a' && PA.w >= 4 && HOLD.i < 0 && king.visible; // (v202an) the Bone King himself watches from his gate (or his throne)
-  const fight = !!(WL.on && WL.b), b = fight ? WL.b : HOLD.i >= 0 ? HOLD.b : kw ? (PA.kb || (PA.kb = { g: king })) : null, gb = PA.gb; if (gb) { const on = !!(b && b.g.visible) && !PA.shredded; gb.g.visible = on; // fighting on the road, or watching from his gate
+  const fight = !!(WL.on && WL.b), b = fight ? WL.b : HOLD.i >= 0 ? HOLD.b : kw ? (PA.kb || (PA.kb = { g: king })) : null, gb = !fight && HOLD.i === ROWAN && PA.rw ? PA.rw : PA.gb; if (PA.rw && gb !== PA.rw) PA.rw.g.visible = false; if (PA.gb && gb !== PA.gb) PA.gb.g.visible = false; if (gb) { const on = !!(b && b.g.visible) && !PA.shredded; gb.g.visible = on; // fighting on the road, or watching from his gate
     if (on) { const st = !fight && PA.poseHold ? PA.poseHold : fight ? WL.state : HOLD.act ? (HOLD.k === 'strike' ? 'wind' : 'stun') : kw && kingActs.Throw && kingActs.Throw.isRunning() ? 'wind' : kw && kingActs.Hit_A && kingActs.Hit_A.isRunning() ? 'stun' : 'idle', pose = PAPER === 'b' ? PB_POSE(st) : st === 'wind' || st === 'smash' ? 'wind' : st === 'roar' ? 'roar' : st === 'stun' || st === 'kneel' || st === 'recover' || st === 'dead' ? 'daze' : 'idle';
       for (const k in gb.m) gb.m[k].visible = k === pose; b.g.getWorldPosition(_paV); gb.g.position.copy(_paV); if (!fight && PAPER === 'a') { if (kw && PA.w === 5) { gb.g.position.y -= 1.1; gb.g.position.z += .9; if (PA.throne) PA.throne.position.z = _paV.z - .6; } else { gb.g.position.y += 1.62; gb.g.position.z -= 1.2; } } /* on his gate he stands a step up, looking over the wall: clear behind the leaning wall card (it was cutting his legs) */ if (fight && st === 'dead' && PAPER === 'a' && WL.st > .8) { gb.g.updateMatrixWorld(true); paShred(gb); PA.shredded = true; }
       const grow = fight ? b.g.scale.x / (WL_S * ((WL.def && WL.def.s) || 1)) : 1; gb.g.scale.set(1, 1 + (st === 'idle' ? Math.sin((G.t || 0) * 2.2) * .018 : 0), 1).multiplyScalar(grow || 1); // (he breathes)
@@ -6261,6 +6262,7 @@ function paKerbs() { // (v202ar) the lane walls as painted kerbs on the page: a 
 }
 function paHide() { world.visible = campWall.visible = hoard.visible = nest.visible = false; if (PAPER === 'a') { paKerbs(); paSaws(); paTower(); paPaladin(); } if (PA.can && PA.can.visible !== PA.on) PA.can.visible = PA.on; /* (v202t: the cannon card is always shown while the paper world is: a rebuilt card used to start hidden and stay so) */ for (const o of fort.children) if (o.visible && !paKeep(o)) o.visible = false;
   for (const b of WL.built) if (b && b.g) for (const c of b.g.children) if (c.visible) { c.visible = false; c.userData.paHid = true; } // the warlord's 3D (the paper puppet stands in for him)
+  if (PAPER === 'a' && HOLD.i === ROWAN && HOLD.b && HOLD.b.g) for (const c of HOLD.b.g.children) if (c.visible) { c.visible = false; c.userData.paHid = true; } // (v202as) Rowan on the road's gates: his paper puppet stands in
   for (const c of launcher.children) if (c !== PA.can && c.visible && !c.isSprite) { c.visible = false; c.userData.paHid = true; } // the cannon model
   if (PAPER === 'a') { if (CAP.b) for (const c of CAP.b.g.children) if (c.visible) { c.visible = false; c.userData.paHid = true; }
     if (PA.w >= 4) { if (kingRig && kingRig.visible) { kingRig.visible = false; kingRig.userData.paHid = true; } if (kingCrown.visible) { kingCrown.visible = false; kingCrown.userData.paHid = true; } } // (v202an) the Bone King: his puppet stands in
@@ -6283,6 +6285,9 @@ function paExtras() { // the cannon card (on the real cannon, so it slides and l
   const gb = PA.gb = { g: new THREE.Group(), m: {} }; PA.g.add(gb.g); gb.g.visible = false;
   for (const k in PA_GB) { const h = 6.6 * PA_GB[k][1] / PA_GB.idle[1], w = h * PA_GB[k][0], m = gb.m[k] = new THREE.Mesh(new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('gb_' + k), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }));
     m.rotation.x = -.28; m.visible = false; gb.g.add(m); }
+  if (PAPER === 'a') { const rw = PA.rw = { g: new THREE.Group(), m: {} }; PA.g.add(rw.g); rw.g.visible = false; // (v202as) Rowan, crowned, on the Endless Road
+    for (const k in PA_RW) { const h = 5.6 * PA_RW[k][1] / PA_RW.idle[1], w = h * PA_RW[k][0], m = rw.m[k] = new THREE.Mesh(new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('rowan/gb_' + k), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }));
+      m.rotation.x = -.28; m.visible = false; rw.g.add(m); } }
   const sh = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 2.2), PA.sh); sh.rotation.x = -Math.PI / 2; sh.position.set(1.6, .03, -.3); sh.renderOrder = 1; /* (v202ad) not added: no shadows on the page */
   if (PAPER === 'a') { const cp = PA.cp = { g: new THREE.Group(), m: {} }; PA.g.add(cp.g); cp.g.visible = false; // The Carver
     for (const k in PA_CP) { const h = 5.2 * PA_CP[k][1] / PA_CP.walk[1], w = h * PA_CP[k][0], m = cp.m[k] = new THREE.Mesh(new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0), new THREE.MeshBasicMaterial({ map: paTex('cp_' + k), alphaTest: .5, side: THREE.DoubleSide, toneMapped: false, fog: false }));
@@ -6703,7 +6708,7 @@ function setupLevel(n) {
   clearBones(); spawnHorde(G.cfg.horde); G.kingT = 4; G.casts = 0; resetKingShots(); resetCharges(); resetHoard(); resetSaws(); resetPaladin(); resetWarlord(); resetCaptain(); setHolder(holderOf(n)); resetHazards(); G.kills = 0; G.dps = 0; G.fortPrev = null; G.surged = false; G.rage = false; rageGlow.visible = false;
   if (FUSE && !G.sim) FUSE.level();
   $('lvlPill').textContent = lvName(n);
-  paperScene(!G.sim && (!G.cine || PAPER === 'a') && !G.menuSetup && (PAPER === 'b' ? !!G.practice : PAPER === 'a' && (!!(G.practice && PAPER_FLAG) || G.level <= WORLD_LEN * PA_WORLDS))); if (PA.on) { paReset(); paBossMood(); } // only the test round; your real game afterwards is the usual one
+  paperScene(!G.sim && (!G.cine || PAPER === 'a') && !G.menuSetup && (PAPER === 'b' ? !!G.practice : PAPER === 'a')); if (PA.on) { paReset(); paBossMood(); } // only the test round; your real game afterwards is the usual one
 }
 const lvName = n => n > LAP_LEN ? 'Road ' + (n - LAP_LEN) : 'Level ' + n;
 
@@ -8790,7 +8795,7 @@ function win() {
   G.mode = 'won'; G.endT = PA.on && PAPER === 'a' ? 4.4 : 2.9; G.winT = 0; /* (v201: World 1 holds on the falling castle and the treasure before the scroll) */ G.firing = false; G.shake = 0.5; buzz(40); gameEl.classList.add('cine');
   for (let j = 0; j < beetles.n; j++) { if (j < 60) { burst(beetles.x[j], .4, beetles.z[j], FOE_FX, 3); splat(beetles.x[j], beetles.z[j], FOE, .9); } beetles.hp[j] = 0; }
   tone(180, BOOM_AT + .15, 'sawtooth', .03, 5); // rising whine while the king swells
-  const cries = wallSay().cry, cry = isFinale() ? ['THIS CANNOT BE!', 'no'] : G.level === 1 ? ['LUCK!', 'scoff'] : cries[(G.level - 1) % cries.length]; // a different last word on every level
+  const cries = wallSay().cry, cry = G.level === 1 ? ['LUCK!', 'scoff'] : cries[(G.level - 1) % cries.length]; // a different last word on every level
   const onWall = HOLD.b || king.visible || isFinale(); victoryFanfare(); if (onWall) kingVoice(cry[1], .82); holdAct('flinch'); // his cry, and the band strikes up
   hideTelegraphs(); resetKingShots(); resetCharges(); // no warning marks or landing rings left on the road while his castle falls
   if (onWall) { const f = kingSays(cry[0], HOLD.i < 0 ? '#ff5ad0' : wallSay().col); if (f && G.level < 3) f.hold = 1; }
@@ -9778,11 +9783,11 @@ function arrival() {
   if (G.sim || G.practice || G.fin || G.worldOverride != null || G.paused || G.lowQ || save.scenes[key]) return false; if (n === 1 && PAPER === 'a' && save.openSeen) return false; /* (v201: the opening already showed him on his gate) */ if (!(n === 46 || n === LAP_LEN + 1 || (!road && k === 0) || (road && k % 5 === 0))) return false;
   const [cz, up] = citAt(), shots = [], ev = [], cl = [], hallIn = inHall(), far = !road && k === 0 && w > 0 && w < HALLW && kingRig, onW = HOLD.b && HOLD.b.fx.head; let t0 = 0; const at = (t, f) => ev.push([t, f]);
   king.updateMatrixWorld(true); const kz = cz + 4.6, ky = 9.4 + up, gr = road ? 'storm' : WGRADE[w];
-  if (paOn() && !road) { // (v202as) the paper arrival
-    const gp = PA.gb && PA.gb.g.visible ? PA.gb.g.position.clone() : new THREE.Vector3(0, 2.2, -41.5), Y = gp.y + 3.4, Z = gp.z, i = HOLD.i >= 0 ? HOLD.i : 4, wl = WARLORDS[i], line = n === 46 ? 'Out of my hall!' : ROAR[w];
+  if (paOn()) { // (v202as) the paper arrival
+    const gp = PA.gb && PA.gb.g.visible ? PA.gb.g.position.clone() : new THREE.Vector3(0, 2.2, -41.5), Y = gp.y + 3.4, Z = gp.z, i = HOLD.i >= 0 ? HOLD.i : 4, wl = WARLORDS[i], line = road ? '' : n === 46 ? 'Out of my hall!' : ROAR[w];
     const d = i === 4 ? 1.3 : 1, Yk = i === 4 ? Y + 1.2 : Y; shots.push({ t: [0, 2.7], pos: [[0, Yk + .9, Z + 13 * d], [0, Yk + .5, Z + 10.2 * d]], at: [[0, Yk, Z], [0, Yk + .15, Z]], fov: [34, 30], grade: gr, vig: .7 }); // (the King's card is the biggest: a step further back)
     if (line) at(.3, () => { endCap('“' + line + '”'); kingVoice('roar', .95, 4); });
-    at(1.05, () => { PA.poseHold = 'roar'; bossSay('roar', i, .9); hitBoom(.6); buzz(40); if (wl) dirTitle(wlName(wl), wl.title); });
+    at(1.05, () => { PA.poseHold = 'roar'; bossSay('roar', i, .9); hitBoom(.6); buzz(40); if (wl) dirTitle(wlName(wl), n === LAP_LEN + 1 ? 'Now on the wall' : wl.title); });
     at(2.45, () => { endCap(''); dirTitle(); PA.poseHold = null; }); t0 = 2.7;
   } else {
   if (far) { const KH = ky + 2.9, KE = KH + 1.4; shots.push({ t: [0, 2.3], pos: [[3.6, KE - 4.2, kz + 17], [2.2, KE - 2.6, kz + 12.6]], at: [[0, KE - 1.2, kz], [0, KE - .6, kz]], fov: [42, 37], foc: [.5, .45, .75, 1.2], blur: .8, grade: 'storm', vig: .75 });
@@ -9792,7 +9797,7 @@ function arrival() {
   if (onW && (far || n === 1 || n === LAP_LEN + 1)) { const H = worldPt(HOLD.b.fx.head), E = H[1] + 1.45, i = HOLD.i; shots.push({ t: [t0, t0 + 1.1], pos: [[1.3, E - .5, H[2] + 9.2], [1.1, E - .4, H[2] + 8.4]], at: [[0, E - .1, H[2]], [0, E, H[2]]], fov: [30, 28], foc: [.5, .43, .5], grade: gr, vig: .85 }, { t: [t0 + 1.1, t0 + 2.9], pos: [[2.7, H[1] - 2.6, H[2] + 13.4], [2.1, H[1] - 2.9, H[2] + 15.4]], at: [[0, E - 1.2, H[2]], [0, E - 1.4, H[2]]], fov: [42, 44], foc: [.5, .4, .7, 1.25], blur: .8, grade: gr, flare: { x: .5, y: .1, r: .7, k: .3, c: WARLORDS[i].col } });
     at(t0, () => { if (HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = false; rxGlow(HOLD.b, -.85); HOLD.b.mixer.timeScale = .2; swell(.75, .09, 220, 2600); }); at(t0 + .7, () => { rxGlow(HOLD.b, 1.8); hitBoom(.8); kingVoice('growl', .8); buzz(40); }); at(t0 + 1.1, () => { if (HOLD.b.fx.orbit) HOLD.b.fx.orbit.visible = true; HOLD.b.mixer.timeScale = 1; rxGlow(HOLD.b, .4); const M = RX_MOVES[i]; if (M) { RX.mv = RX.last = M[i === 3 ? 1 : 0]; RX.t = .05; RX.w = 1; RX.once = {}; RX.side = 1; } kingVoice('roar', .85); dirTitle(wlName(WARLORDS[i]), n === LAP_LEN + 1 ? 'Now on the wall' : WARLORDS[i].title); if (n === LAP_LEN + 1) endCap(''); }); at(t0 + 2.75, () => { dirTitle(); rxGlow(HOLD.b, 0); }); cl.push([t0, t0 + 2.9, i === ROWAN ? 'v28' : (CUT.boss[i] || [])[0], 0, i === ROWAN ? 0 : 1.1]); t0 += 2.9; }
   }
-  const L = 2.5, name = n === 3 ? null : n === 46 ? ['The Throne Room', 'You are inside'] : road ? [WORLDS[worldIdx].name, 'The Endless Road'] : [WORLDS[worldIdx].name, 'World ' + (w + 1)];
+  const L = 2.5, name = n === 3 ? null : n === 46 ? ['The Throne Room', 'You are inside'] : road ? [WORLDS[worldIdx].name, 'The Endless Road'] : [WORLDS[worldIdx].name, paOn() ? 'Chapter ' + ['I', 'II', 'III', 'IV', 'V'][w] : 'World ' + (w + 1)]; /* (v202as: on paper the book's chapters, as the ribbons have it) */
   shots.push({ t: [t0, t0 + L], raw: true, pos: PA.on && PAPER === 'a' ? [[0, 12, -25], [0, 18, -9], () => [CAM.x, CAM.y, CAM.z]] : hallIn ? [[2.6, 8.4, -30], [1.5, 12, -18], () => [CAM.x, CAM.y, CAM.z]] : n === 3 || w === HALLW ? [[3, 6, -24], [1, 12, -12], () => [CAM.x, CAM.y, CAM.z]] : [[16, 15 + up, cz + 36], [7, 25, -32], () => [CAM.x, CAM.y, CAM.z]], at: [PA.on && PAPER === 'a' ? [0, 5, -47] : hallIn ? [0, 5, -46] : n === 3 || w === HALLW ? [0, 4.6, -42] : [0, 9 + up, cz], () => [LOOK.x, LOOK.y, LOOK.z]], fov: [46, () => 0], grade: gr, gk: .3, vig: .45 });
   at(t0 + .12, () => { if (name) { dirTitle(name[0], name[1]); brass(196, .5, .05); brass(294, .9, .05, .14); } swell(L * .8, .05, 1800, 260); }); at(t0 + L * .62, () => dirTitle()); at(t0 + L * .7, () => { for (const g of G.gates) { g.mesh.visible = true; g.pulse = 1; } if (laneWalls) laneWalls.visible = true; sawGroup.visible = true; tone(660, .08, 'triangle', .04, 1.4); });
   const s = { len: t0 + L, clips: cl.filter(c => c[2]), freeze: true, noAnts: false, shots, fadeIn: true, start: () => { hold(s.len * .8); if (far) { king.visible = kingCrown.visible = true; } },
